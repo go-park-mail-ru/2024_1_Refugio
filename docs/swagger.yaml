@@ -1,0 +1,139 @@
+basePath: /
+definitions:
+  email.Email:
+    properties:
+      dateOfDispatch:
+        description: Дата отправки письма (ставится now).
+        type: string
+      deleted:
+        description: Статус, который показывает, удалено ли письмо (по умолчанию false).
+        type: boolean
+      draftStatus:
+        description: Статус, который показывает, что письмо является черновиком (по
+          умолчанию false).
+        type: boolean
+      id:
+        description: Уникальный идентификатор письма в бд.
+        type: integer
+      mark:
+        description: Какой-нибудь флаг, например, избранное (по умолчанию пусто).
+        type: string
+      photoId:
+        description: Ссылка на фото, которое пользователь прикрепил к письму (по умолчанию
+          пусто).
+        type: string
+      readStatus:
+        description: Статус, который показывает, было ли прочитано письмо (по умолчанию
+          false).
+        type: boolean
+      replyToEmailId:
+        description: Id письма, на которое можно отвечать (по умолчанию пусто).
+        type: integer
+      text:
+        description: Текст письма.
+        type: string
+      topic:
+        description: Тема письма.
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API server for mail
+  title: API Mail
+  version: "1.0"
+paths:
+  /email/{id}:
+    get:
+      description: Получить почтовое сообщение по его уникальному идентификатору
+      parameters:
+      - description: ID почтового сообщения
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/email.Email'
+      summary: Получить почтовое сообщение по ID
+  /email/add:
+    post:
+      consumes:
+      - application/json
+      description: Добавить новое почтовое сообщение в систему
+      parameters:
+      - description: Почтовое сообщение в формате JSON
+        format: json
+        in: body
+        name: email
+        required: true
+        schema:
+          $ref: '#/definitions/email.Email'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+      summary: Добавить новое почтовое сообщение
+  /email/delete/{id}:
+    delete:
+      description: Удалить почтовое сообщение по его идентификатору
+      parameters:
+      - description: ID почтового сообщения
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+      summary: Удалить почтовое сообщение
+  /email/update/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Обновить существующее почтовое сообщение по его идентификатору
+      parameters:
+      - description: ID почтового сообщения
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+      summary: Обновить почтовое сообщение
+  /emails:
+    get:
+      description: Получить список всех почтовых сообщений
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/email.Email'
+            type: array
+      summary: Отобразить список почтовых сообщений
+swagger: "2.0"
