@@ -1,0 +1,30 @@
+.
+├── README.md
+├── cmd
+│   └── mail
+│       └── main.go
+├── docs
+│   ├── docs.go
+│   ├── swagger.json
+│   └── swagger.yaml
+├── file_tree.txt
+├── go.mod
+├── go.sum
+└── pkg
+    ├── email
+    │   ├── email.go
+    │   ├── fake_data.go
+    │   └── repo.go
+    ├── handlers
+    │   ├── email.go
+    │   └── user.go
+    ├── middleware
+    │   └── auth.go
+    ├── session
+    │   ├── manager.go
+    │   └── session.go
+    └── user
+        ├── repo.go
+        └── user.go
+
+10 directories, 18 files
