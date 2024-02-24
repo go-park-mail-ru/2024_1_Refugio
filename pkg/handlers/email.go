@@ -20,16 +20,17 @@ type EmailHandler struct {
 // @Summary Display the list of email messages
 // @Description Get a list of all email messages
 // @Produce json
-// @Success 200 {array} email.Email
+// @Success 200 {array} map[string]uint64
 // @Router /emails [get]
 func (h *EmailHandler) List(w http.ResponseWriter, r *http.Request) {
-	emails, err := h.EmailRepository.GetAll()
+	/* emails, err := h.EmailRepository.GetAll()
 	if err != nil {
 		http.Error(w, `DB error`, http.StatusInternalServerError)
 		return
 	}
 
-	respJSON, err := json.Marshal(emails)
+	respJSON, err := json.Marshal(emails)*/
+	respJSON, err := json.Marshal(email.FakeEmails)
 	if err != nil {
 		http.Error(w, `JSON encoding error`, http.StatusInternalServerError)
 		return
@@ -44,8 +45,8 @@ func (h *EmailHandler) List(w http.ResponseWriter, r *http.Request) {
 // @Description Get an email message by its unique identifier
 // @Produce json
 // @Param id path integer true "ID of the email message"
-// @Success 200 {object} email.Email
-// @Router /emails/{id} [get]
+// @Success 200 {object} map[string]uint64
+// @Router /email/{id} [get]
 func (h *EmailHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.ParseUint(vars["id"], 10, 64)
@@ -74,9 +75,9 @@ func (h *EmailHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 // @Description Add a new email message to the system
 // @Accept json
 // @Produce json
-// @Param email body Email true "Email message in JSON format"
+// @Param email body email.Email true "Email message in JSON format"
 // @Success 200 {object} map[string]uint64
-// @Router /emails [post]
+// @Router /email/add [post]
 func (h *EmailHandler) Add(w http.ResponseWriter, r *http.Request) {
 	var newEmail email.Email
 	decoder := schema.NewDecoder()
@@ -105,8 +106,9 @@ func (h *EmailHandler) Add(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param id path integer true "ID of the email message"
+// @Param email body email.Email true "Email message in JSON format"
 // @Success 200 {object} map[string]bool
-// @Router /emails/{id} [put]
+// @Router /email/update/{id} [put]
 func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.ParseUint(vars["id"], 10, 64)
@@ -143,7 +145,7 @@ func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path integer true "ID of the email message"
 // @Success 200 {object} map[string]bool
-// @Router /emails/{id} [delete]
+// @Router /email/delete/{id} [delete]
 func (h *EmailHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.ParseUint(vars["id"], 10, 64)

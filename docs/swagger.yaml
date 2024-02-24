@@ -3,37 +3,34 @@ definitions:
   email.Email:
     properties:
       dateOfDispatch:
-        description: Дата отправки письма (ставится now).
+        description: Date when the email was sent.
         type: string
       deleted:
-        description: Статус, который показывает, удалено ли письмо (по умолчанию false).
+        description: Status indicating whether the email has been deleted.
         type: boolean
       draftStatus:
-        description: Статус, который показывает, что письмо является черновиком (по
-          умолчанию false).
+        description: Status indicating that the email is a draft.
         type: boolean
       id:
-        description: Уникальный идентификатор письма в бд.
+        description: Unique identifier of the email in the database.
         type: integer
       mark:
-        description: Какой-нибудь флаг, например, избранное (по умолчанию пусто).
+        description: A flag, for example, marking the email as a favorite.
         type: string
       photoId:
-        description: Ссылка на фото, которое пользователь прикрепил к письму (по умолчанию
-          пусто).
+        description: Link to the photo attached to the email, if any.
         type: string
       readStatus:
-        description: Статус, который показывает, было ли прочитано письмо (по умолчанию
-          false).
+        description: Status indicating whether the email has been read.
         type: boolean
       replyToEmailId:
-        description: Id письма, на которое можно отвечать (по умолчанию пусто).
+        description: ID of the email to which a reply can be sent.
         type: integer
       text:
-        description: Текст письма.
+        description: Text body of the email.
         type: string
       topic:
-        description: Тема письма.
+        description: Subject of the email.
         type: string
     type: object
 host: localhost:8080
@@ -45,9 +42,9 @@ info:
 paths:
   /email/{id}:
     get:
-      description: Получить почтовое сообщение по его уникальному идентификатору
+      description: Get an email message by its unique identifier
       parameters:
-      - description: ID почтового сообщения
+      - description: ID of the email message
         in: path
         name: id
         required: true
@@ -58,16 +55,63 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/email.Email'
-      summary: Получить почтовое сообщение по ID
+            additionalProperties:
+              type: integer
+            type: object
+      summary: Get an email message by ID
   /email/add:
     post:
       consumes:
       - application/json
-      description: Добавить новое почтовое сообщение в систему
+      description: Add a new email message to the system
       parameters:
-      - description: Почтовое сообщение в формате JSON
-        format: json
+      - description: Email message in JSON format
+        in: body
+        name: email
+        required: true
+        schema:
+          $ref: '#/definitions/email.Email'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: integer
+            type: object
+      summary: Add a new email message
+  /email/delete/{id}:
+    delete:
+      description: Delete an email message based on its identifier
+      parameters:
+      - description: ID of the email message
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+      summary: Delete an email message
+  /email/update/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Update an existing email message based on its identifier
+      parameters:
+      - description: ID of the email message
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Email message in JSON format
         in: body
         name: email
         required: true
@@ -82,50 +126,10 @@ paths:
             additionalProperties:
               type: boolean
             type: object
-      summary: Добавить новое почтовое сообщение
-  /email/delete/{id}:
-    delete:
-      description: Удалить почтовое сообщение по его идентификатору
-      parameters:
-      - description: ID почтового сообщения
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties:
-              type: boolean
-            type: object
-      summary: Удалить почтовое сообщение
-  /email/update/{id}:
-    put:
-      consumes:
-      - application/json
-      description: Обновить существующее почтовое сообщение по его идентификатору
-      parameters:
-      - description: ID почтового сообщения
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties:
-              type: boolean
-            type: object
-      summary: Обновить почтовое сообщение
+      summary: Update an email message
   /emails:
     get:
-      description: Получить список всех почтовых сообщений
+      description: Get a list of all email messages
       produces:
       - application/json
       responses:
@@ -133,7 +137,9 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/email.Email'
+              additionalProperties:
+                type: integer
+              type: object
             type: array
-      summary: Отобразить список почтовых сообщений
+      summary: Display the list of email messages
 swagger: "2.0"
