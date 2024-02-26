@@ -30,6 +30,12 @@ func (h *EmailHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respJSON, err := json.Marshal(emails)*/
+	_, err := SM.Check(r)
+	if err != nil {
+		http.Error(w, "Not Authorized", http.StatusUnauthorized)
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 	respJSON, err := json.Marshal(email.FakeEmails)
 	if err != nil {
 		http.Error(w, `JSON encoding error`, http.StatusInternalServerError)
@@ -48,6 +54,12 @@ func (h *EmailHandler) List(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} map[string]uint64
 // @Router /email/{id} [get]
 func (h *EmailHandler) GetByID(w http.ResponseWriter, r *http.Request) {
+	_, err := SM.Check(r)
+	if err != nil {
+		http.Error(w, "Not Authorized", http.StatusUnauthorized)
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 	vars := mux.Vars(r)
 	id, err := strconv.ParseUint(vars["id"], 10, 64)
 	if err != nil {
@@ -79,11 +91,18 @@ func (h *EmailHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} map[string]uint64
 // @Router /email/add [post]
 func (h *EmailHandler) Add(w http.ResponseWriter, r *http.Request) {
+	_, err := SM.Check(r)
+	if err != nil {
+		http.Error(w, "Not Authorized", http.StatusUnauthorized)
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
 	var newEmail email.Email
 	decoder := schema.NewDecoder()
 	decoder.IgnoreUnknownKeys(true)
 
-	err := json.NewDecoder(r.Body).Decode(&newEmail)
+	err = json.NewDecoder(r.Body).Decode(&newEmail)
 	if err != nil {
 		http.Error(w, `Bad JSON`, http.StatusBadRequest)
 		return
@@ -110,6 +129,13 @@ func (h *EmailHandler) Add(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} map[string]bool
 // @Router /email/update/{id} [put]
 func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) {
+	_, err := SM.Check(r)
+	if err != nil {
+		http.Error(w, "Not Authorized", http.StatusUnauthorized)
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
 	vars := mux.Vars(r)
 	id, err := strconv.ParseUint(vars["id"], 10, 64)
 	if err != nil {
@@ -147,6 +173,13 @@ func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} map[string]bool
 // @Router /email/delete/{id} [delete]
 func (h *EmailHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	_, err := SM.Check(r)
+	if err != nil {
+		http.Error(w, "Not Authorized", http.StatusUnauthorized)
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
 	vars := mux.Vars(r)
 	id, err := strconv.ParseUint(vars["id"], 10, 64)
 	if err != nil {

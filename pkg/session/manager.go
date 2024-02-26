@@ -1,6 +1,7 @@
 package session
 
 import (
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
@@ -49,17 +50,17 @@ func (sm *SessionsManager) Create(w http.ResponseWriter, userID uint32) (*Sessio
 		Path:    "/",
 	}
 	http.SetCookie(w, cookie)
+	fmt.Println(cookie)
 	return sess, nil
 }
 
 func (sm *SessionsManager) DestroyCurrent(w http.ResponseWriter, r *http.Request) error {
-	sess, err := SessionFromContext(r.Context())
+	c, err := r.Cookie("session_id")
 	if err != nil {
 		return err
 	}
-
 	sm.mu.Lock()
-	delete(sm.data, sess.ID)
+	delete(sm.data, c.Value)
 	sm.mu.Unlock()
 
 	cookie := http.Cookie{
