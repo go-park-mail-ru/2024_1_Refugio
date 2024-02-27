@@ -1,6 +1,9 @@
 package email
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+)
 
 // EmailMemoryRepository represents the implementation of EmailRepository using an in-memory storage.
 type EmailMemoryRepository struct {
@@ -16,12 +19,12 @@ func NewEmailMemoryRepository() *EmailMemoryRepository {
 }
 
 // GetAll returns all emails from the storage.
-func (repo *EmailMemoryRepository) GetAll() ([]*Email, error) {
-	repo.mu.RLock()
-	defer repo.mu.RUnlock()
+func (repository *EmailMemoryRepository) GetAll() ([]*Email, error) {
+	repository.mu.RLock()
+	defer repository.mu.RUnlock()
 
-	emails := make([]*Email, 0, len(repo.emails))
-	for _, email := range repo.emails {
+	emails := make([]*Email, 0, len(repository.emails))
+	for _, email := range repository.emails {
 		emails = append(emails, email)
 	}
 
@@ -29,38 +32,38 @@ func (repo *EmailMemoryRepository) GetAll() ([]*Email, error) {
 }
 
 // GetByID returns an email based on its unique identifier.
-func (repo *EmailMemoryRepository) GetByID(id uint64) (*Email, error) {
-	repo.mu.RLock()
-	defer repo.mu.RUnlock()
+func (repository *EmailMemoryRepository) GetByID(id uint64) (*Email, error) {
+	repository.mu.RLock()
+	defer repository.mu.RUnlock()
 
-	email, found := repo.emails[id]
+	email, found := repository.emails[id]
 	if !found {
-		return nil, nil
+		return nil, fmt.Errorf("Email with id %d not found", id)
 	}
 
 	return email, nil
 }
 
 // Add adds a new email to the storage and returns the assigned unique identifier.
-func (repo *EmailMemoryRepository) Add(email *Email) (uint64, error) {
-	repo.mu.Lock()
-	defer repo.mu.Unlock()
+func (repository *EmailMemoryRepository) Add(email *Email) (uint64, error) {
+	repository.mu.Lock()
+	defer repository.mu.Unlock()
 
-	id := uint64(len(repo.emails) + 1)
+	id := uint64(len(repository.emails) + 1)
 	email.ID = id
-	repo.emails[id] = email
+	repository.emails[id] = email
 
 	return id, nil
 }
 
 // Update updates the data of an email in the storage based on the provided new email.
-func (repo *EmailMemoryRepository) Update(newEmail *Email) (bool, error) {
-	repo.mu.Lock()
-	defer repo.mu.Unlock()
+func (repository *EmailMemoryRepository) Update(newEmail *Email) (bool, error) {
+	repository.mu.Lock()
+	defer repository.mu.Unlock()
 
-	existingEmail, found := repo.emails[newEmail.ID]
+	existingEmail, found := repository.emails[newEmail.ID]
 	if !found {
-		return false, nil
+		return false, fmt.Errorf("Email with id %d not found", newEmail.ID)
 	}
 
 	existingEmail.Topic = newEmail.Topic
@@ -77,15 +80,16 @@ func (repo *EmailMemoryRepository) Update(newEmail *Email) (bool, error) {
 }
 
 // Delete removes an email from the storage based on its unique identifier.
-func (repo *EmailMemoryRepository) Delete(id uint64) (bool, error) {
-	repo.mu.Lock()
-	defer repo.mu.Unlock()
+func (repository *EmailMemoryRepository) Delete(id uint64) (bool, error) {
+	repository.mu.Lock()
+	defer repository.mu.Unlock()
 
-	_, found := repo.emails[id]
+	_, found := repository.emails[id]
 	if !found {
-		return false, nil
+		return false, fmt.Errorf("Email with id %d not found", id)
 	}
 
-	delete(repo.emails, id)
+	delete(repository.emails, id)
+
 	return true, nil
 }

@@ -13,7 +13,6 @@ type Session struct {
 }
 
 func NewSession(userID uint32) *Session {
-	// лучше генерировать из заданного алфавита, но так писать меньше и для учебного примера ОК
 	randID := make([]byte, 16)
 	rand.Read(randID)
 
@@ -27,15 +26,16 @@ var (
 	ErrNoAuth = errors.New("No session found")
 )
 
-type sessKey string
+type sessionKey string
 
-var SessionKey sessKey = "sessionKey"
+var SessionKey sessionKey = "sessionKey"
 
 func SessionFromContext(ctx context.Context) (*Session, error) {
 	sess, ok := ctx.Value(SessionKey).(*Session)
 	if !ok || sess == nil {
 		return nil, ErrNoAuth
 	}
+
 	return sess, nil
 }
 

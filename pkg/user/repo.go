@@ -1,14 +1,14 @@
 package user
 
 import (
-	"errors"
+	"fmt"
 	"sync"
 )
 
 // UserMemoryRepository is an in-memory implementation of UserRepository.
 type UserMemoryRepository struct {
-	users map[uint32]*User
 	mutex sync.RWMutex
+	users map[uint32]*User
 }
 
 // NewUserMemoryRepository creates a new instance of UserMemoryRepository.
@@ -44,7 +44,7 @@ func (repo *UserMemoryRepository) GetByID(id uint32) (*User, error) {
 
 	user, exists := repo.users[id]
 	if !exists {
-		return nil, errors.New("user not found")
+		return nil, fmt.Errorf("User with id %d not found", id)
 	}
 
 	return user, nil
@@ -69,10 +69,11 @@ func (repo *UserMemoryRepository) Update(newUser *User) (bool, error) {
 
 	_, exists := repo.users[newUser.ID]
 	if !exists {
-		return false, errors.New("user not found")
+		return false, fmt.Errorf("User with id %d not found", newUser.ID)
 	}
 
 	repo.users[newUser.ID] = newUser
+
 	return true, nil
 }
 
@@ -83,9 +84,10 @@ func (repo *UserMemoryRepository) Delete(id uint32) (bool, error) {
 
 	_, exists := repo.users[id]
 	if !exists {
-		return false, errors.New("user not found")
+		return false, fmt.Errorf("User with id %d not found", id)
 	}
 
 	delete(repo.users, id)
+
 	return true, nil
 }
