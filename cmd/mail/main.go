@@ -6,10 +6,12 @@ import (
 
 	"mail/pkg/email"
 	"mail/pkg/handlers"
+	"mail/pkg/user"
+
+	_ "mail/docs"
 
 	"github.com/gorilla/mux"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
-	_ "mail/docs"
 )
 
 // @title API Mail
@@ -20,17 +22,26 @@ import (
 // @BasePath /
 func main() {
 	emailRepository := email.NewEmailMemoryRepository()
+	userRepository := user.NewInMemoryUserRepository()
 
 	emailHandler := &handlers.EmailHandler{
 		EmailRepository: emailRepository,
+	}
+
+	userHandler := &handlers.UserHandler{
+		UserRepository: userRepository,
 	}
 
 	router := mux.NewRouter()
 	router.HandleFunc("/emails", emailHandler.List).Methods("GET")
 	router.HandleFunc("/email/{id}", emailHandler.GetByID).Methods("GET")
 	router.HandleFunc("/email/add", emailHandler.Add).Methods("POST")
-	router.HandleFunc("/email/edit/{id}", emailHandler.Update).Methods("PUT")
+	router.HandleFunc("/email/update/{id}", emailHandler.Update).Methods("PUT")
 	router.HandleFunc("/email/delete/{id}", emailHandler.Delete).Methods("DELETE")
+
+	router.HandleFunc("/login", userHandler.Login).Methods("POST")
+	router.HandleFunc("/signup", userHandler.Signup).Methods("POST")
+	router.HandleFunc("/logout", userHandler.Logout).Methods("POST")
 
 	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 

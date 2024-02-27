@@ -33,6 +33,24 @@ definitions:
         description: Subject of the email.
         type: string
     type: object
+  user.User:
+    properties:
+      id:
+        description: Unique identifier of the user.
+        type: integer
+      login:
+        description: User's login.
+        type: string
+      name:
+        description: User's first name.
+        type: string
+      password:
+        description: User's password.
+        type: string
+      surname:
+        description: User's last name.
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact: {}
@@ -142,4 +160,81 @@ paths:
               type: object
             type: array
       summary: Display the list of email messages
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Handles user login.
+      parameters:
+      - description: User credentials for login
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/user.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login successful
+          schema:
+            type: string
+        "400":
+          description: Invalid request body
+          schema:
+            type: string
+        "401":
+          description: Invalid credentials
+          schema:
+            type: string
+        "500":
+          description: Failed to create session
+          schema:
+            type: string
+      summary: User login
+      tags:
+      - users
+  /logout:
+    post:
+      description: Handles user logout.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Logout successful
+          schema:
+            type: string
+      summary: User logout
+      tags:
+      - users
+  /signup:
+    post:
+      consumes:
+      - application/json
+      description: Handles user signup.
+      parameters:
+      - description: New user details for signup
+        in: body
+        name: newUser
+        required: true
+        schema:
+          $ref: '#/definitions/user.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Signup successful
+          schema:
+            type: string
+        "400":
+          description: Invalid request body
+          schema:
+            type: string
+        "500":
+          description: Failed to add user
+          schema:
+            type: string
+      summary: User signup
+      tags:
+      - users
 swagger: "2.0"
