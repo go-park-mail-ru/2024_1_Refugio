@@ -8,8 +8,8 @@ import (
 )
 
 type SessionsManager struct {
-	data map[string]*Session
 	mu   *sync.RWMutex
+	data map[string]*Session
 }
 
 func NewSessionsManager() *SessionsManager {
@@ -51,6 +51,7 @@ func (sm *SessionsManager) Create(w http.ResponseWriter, userID uint32) (*Sessio
 	}
 	http.SetCookie(w, cookie)
 	fmt.Println(cookie)
+
 	return sess, nil
 }
 
@@ -69,5 +70,6 @@ func (sm *SessionsManager) DestroyCurrent(w http.ResponseWriter, r *http.Request
 		Path:    "/",
 	}
 	http.SetCookie(w, &cookie)
+
 	return nil
 }

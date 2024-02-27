@@ -2,11 +2,11 @@ package user
 
 // User represents information about a user.
 type User struct {
-	ID       uint32 `json:"id,omitempty"` // Unique identifier of the user.
-	Name     string `json:"name"`         // User's first name.
-	Surname  string `json:"surname"`      // User's last name.
-	Login    string `json:"login"`        // User's login.
-	Password string `json:"password"`     // User's password.
+	ID       uint32 `json:"id,omitempty"`      // Unique identifier of the user.
+	Name     string `json:"name,omitempty"`    // User's first name.
+	Surname  string `json:"surname,omitempty"` // User's last name.
+	Login    string `json:"login"`             // User's login.
+	Password string `json:"password"`          // User's password.
 }
 
 // UserRepository represents the interface for working with users.
