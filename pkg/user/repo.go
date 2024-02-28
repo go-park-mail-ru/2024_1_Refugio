@@ -2,6 +2,7 @@ package user
 
 import (
 	"errors"
+	"golang.org/x/crypto/bcrypt"
 	"sync"
 )
 
@@ -9,6 +10,11 @@ import (
 type UserMemoryRepository struct {
 	users map[uint32]*User
 	mutex sync.RWMutex
+}
+
+func CheckPasswordHash(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
 }
 
 // NewUserMemoryRepository creates a new instance of UserMemoryRepository.
@@ -22,6 +28,20 @@ func NewInMemoryUserRepository() *UserMemoryRepository {
 	return &UserMemoryRepository{
 		users: defaultUsers,
 	}
+}
+
+func NewEmptyInMemoryUserRepository() *UserMemoryRepository {
+	defaultUsers := map[uint32]*User{}
+	return &UserMemoryRepository{
+		users: defaultUsers,
+	}
+}
+
+func ComparingUserObjects(object1, object2 User) bool {
+	if object1.ID == object2.ID && object1.Name == object2.Name && object1.Surname == object2.Surname && object1.Login == object2.Login && CheckPasswordHash(object2.Password, object1.Password) {
+		return true
+	}
+	return false
 }
 
 // GetAll returns all users from the storage.

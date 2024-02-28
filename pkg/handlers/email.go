@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -104,6 +105,7 @@ func (h *EmailHandler) Add(w http.ResponseWriter, r *http.Request) {
 
 	err = json.NewDecoder(r.Body).Decode(&newEmail)
 	if err != nil {
+		fmt.Println(err)
 		http.Error(w, `Bad JSON`, http.StatusBadRequest)
 		return
 	}
