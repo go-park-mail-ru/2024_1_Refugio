@@ -23,33 +23,34 @@ type EmailHandler struct {
 // @Summary Display the list of email messages
 // @Description Get a list of all email messages
 // @Produce json
-// @Success 200 {array} map[string]uint64
-// @Failure 401 {string} string "Not Authorized"
-// @Failure 404 {string} string "DB error"
-// @Failure 500 {string} string "JSON encoding error"
-// @Router /emails [get]
+// @Success 200 {object} Response "List of all email messages"
+// @Failure 401 {object} Response "Not Authorized"
+// @Failure 404 {object} Response "DB error"
+// @Failure 500 {object} Response "JSON encoding error"
+// @Router /api/v1/emails [get]
 func (h *EmailHandler) List(w http.ResponseWriter, r *http.Request) {
 	_, err := h.Sessions.Check(r)
 	if err != nil {
-		http.Error(w, "Not Authorized", http.StatusUnauthorized)
-		w.WriteHeader(http.StatusUnauthorized)
+		handleError(w, http.StatusUnauthorized, "Not Authorized")
 		return
 	}
 
-	dbEmails, err := h.EmailRepository.GetAll()
+	emails, err := h.EmailRepository.GetAll()
 	if err != nil {
-		http.Error(w, fmt.Sprintf("DB error: %s", err.Error()), http.StatusNotFound)
+		handleError(w, http.StatusNotFound, fmt.Sprintf("DB error: %s", err.Error()))
 		return
 	}
-	allEmails := append(dbEmails, email.FakeEmails...)
 
-	respJSON, err := json.Marshal(allEmails)
+	respJSON, err := json.Marshal(Response{
+		Status: http.StatusOK,
+		Body:   emails,
+	})
 	if err != nil {
-		http.Error(w, "JSON encoding error", http.StatusInternalServerError)
+		handleError(w, http.StatusInternalServerError, "JSON encoding error")
 		return
 	}
-
 	w.Header().Set("Content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	w.Write(respJSON)
 }
 
@@ -58,35 +59,38 @@ func (h *EmailHandler) List(w http.ResponseWriter, r *http.Request) {
 // @Description Get an email message by its unique identifier
 // @Produce json
 // @Param id path integer true "ID of the email message"
-// @Success 200 {object} map[string]uint64
-// @Failure 400 {string} string "Bad id in request"
-// @Failure 401 {string} string "Not Authorized"
-// @Failure 404 {string} string "DB error"
-// @Router /email/{id} [get]
+// @Success 200 {object} Response "Email message data"
+// @Failure 400 {object} Response "Bad id in request"
+// @Failure 401 {object} Response "Not Authorized"
+// @Failure 404 {object} Response "Email not found"
+// @Router /api/v1/email/{id} [get]
 func (h *EmailHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	_, err := h.Sessions.Check(r)
 	if err != nil {
-		http.Error(w, "Not Authorized", http.StatusUnauthorized)
-		w.WriteHeader(http.StatusUnauthorized)
+		handleError(w, http.StatusUnauthorized, "Not Authorized")
 		return
 	}
 
 	vars := mux.Vars(r)
 	id, err := strconv.ParseUint(vars["id"], 10, 64)
 	if err != nil {
-		http.Error(w, `Bad id in request`, http.StatusBadRequest)
+		handleError(w, http.StatusBadRequest, "Bad id in request")
 		return
 	}
 
 	email, err := h.EmailRepository.GetByID(id)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("DB error: %s", err.Error()), http.StatusNotFound)
+		handleError(w, http.StatusNotFound, "Email not found")
 		return
 	}
 
-	respJSON, _ := json.Marshal(email)
-	w.Header().Set("Content-type", "application/json")
-	w.Write(respJSON)
+	resp := Response{
+		Status: http.StatusOK,
+		Body:   email,
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(resp)
 }
 
 // Add adds a new email message.
@@ -95,16 +99,15 @@ func (h *EmailHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param email body email.Email true "Email message in JSON format"
-// @Success 200 {object} map[string]uint64
-// @Failure 401 {string} string "Not Authorized"
-// @Failure 400 {string} string "Bad JSON in request"
-// @Failure 500 {string} string "DB error"
-// @Router /email/add [post]
+// @Success 200 {object} Response "ID of the added email message"
+// @Failure 400 {object} Response "Bad JSON in request"
+// @Failure 401 {object} Response "Not Authorized"
+// @Failure 500 {object} Response "Failed to add email message"
+// @Router /api/v1/email/add [post]
 func (h *EmailHandler) Add(w http.ResponseWriter, r *http.Request) {
 	_, err := h.Sessions.Check(r)
 	if err != nil {
-		http.Error(w, "Not Authorized", http.StatusUnauthorized)
-		w.WriteHeader(http.StatusUnauthorized)
+		handleError(w, http.StatusUnauthorized, "Not Authorized")
 		return
 	}
 
@@ -113,19 +116,23 @@ func (h *EmailHandler) Add(w http.ResponseWriter, r *http.Request) {
 	decoder.IgnoreUnknownKeys(true)
 	err = json.NewDecoder(r.Body).Decode(&newEmail)
 	if err != nil {
-		http.Error(w, `Bad JSON in request`, http.StatusBadRequest)
+		handleError(w, http.StatusBadRequest, "Bad JSON in request")
 		return
 	}
 
 	id, err := h.EmailRepository.Add(&newEmail)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("DB error: %s", err.Error()), http.StatusInternalServerError)
+		handleError(w, http.StatusInternalServerError, "Failed to add email message")
 		return
 	}
 
-	respJSON, _ := json.Marshal(map[string]uint64{"id": id})
-	w.Header().Set("Content-type", "application/json")
-	w.Write(respJSON)
+	resp := Response{
+		Status: http.StatusOK,
+		Body:   map[string]uint64{"id": id},
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(resp)
 }
 
 // Update updates an existing email message.
@@ -135,23 +142,22 @@ func (h *EmailHandler) Add(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path integer true "ID of the email message"
 // @Param email body email.Email true "Email message in JSON format"
-// @Success 200 {object} map[string]bool
-// @Failure 401 {string} string "Not Authorized"
-// @Failure 400 {string} string "Bad id or Bad JSON"
-// @Failure 500 {string} string "DB error"
-// @Router /email/update/{id} [put]
+// @Success 200 {object} Response "Update success status"
+// @Failure 400 {object} Response "Bad id or Bad JSON"
+// @Failure 401 {object} Response "Not Authorized"
+// @Failure 500 {object} Response "Failed to update email message"
+// @Router /api/v1/email/update/{id} [put]
 func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) {
 	_, err := h.Sessions.Check(r)
 	if err != nil {
-		http.Error(w, "Not Authorized", http.StatusUnauthorized)
-		w.WriteHeader(http.StatusUnauthorized)
+		handleError(w, http.StatusUnauthorized, "Not Authorized")
 		return
 	}
 
 	vars := mux.Vars(r)
 	id, err := strconv.ParseUint(vars["id"], 10, 64)
 	if err != nil {
-		http.Error(w, `Bad id in request`, http.StatusBadRequest)
+		handleError(w, http.StatusBadRequest, "Bad id in request")
 		return
 	}
 
@@ -160,20 +166,24 @@ func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) {
 	decoder.IgnoreUnknownKeys(true)
 	err = json.NewDecoder(r.Body).Decode(&updatedEmail)
 	if err != nil {
-		http.Error(w, `Bad JSON in request`, http.StatusBadRequest)
+		handleError(w, http.StatusBadRequest, "Bad JSON in request")
 		return
 	}
 	updatedEmail.ID = id
 
 	ok, err := h.EmailRepository.Update(&updatedEmail)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("DB error: %s", err.Error()), http.StatusInternalServerError)
+		handleError(w, http.StatusInternalServerError, "Failed to update email message")
 		return
 	}
 
-	w.Header().Set("Content-type", "application/json")
-	respJSON, _ := json.Marshal(map[string]bool{"success": ok})
-	w.Write(respJSON)
+	resp := Response{
+		Status: http.StatusOK,
+		Body:   map[string]bool{"success": ok},
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(resp)
 }
 
 // Delete deletes an email message.
@@ -181,33 +191,36 @@ func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) {
 // @Description Delete an email message based on its identifier
 // @Produce json
 // @Param id path integer true "ID of the email message"
-// @Success 200 {object} map[string]bool
-// @Failure 400 {string} string "Bad id"
-// @Failure 401 {string} string "Not Authorized"
-// @Failure 500 {string} string "DB error"
-// @Router /email/delete/{id} [delete]
+// @Success 200 {object} Response "Deletion success status"
+// @Failure 400 {object} Response "Bad id"
+// @Failure 401 {object} Response "Not Authorized"
+// @Failure 500 {object} Response "Failed to delete email message"
+// @Router /api/v1/email/delete/{id} [delete]
 func (h *EmailHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	_, err := h.Sessions.Check(r)
 	if err != nil {
-		http.Error(w, "Not Authorized", http.StatusUnauthorized)
-		w.WriteHeader(http.StatusUnauthorized)
+		handleError(w, http.StatusUnauthorized, "Not Authorized")
 		return
 	}
 
 	vars := mux.Vars(r)
 	id, err := strconv.ParseUint(vars["id"], 10, 64)
 	if err != nil {
-		http.Error(w, `Bad id in request`, http.StatusBadRequest)
+		handleError(w, http.StatusBadRequest, "Bad id in request")
 		return
 	}
 
 	ok, err := h.EmailRepository.Delete(id)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("DB error: %s", err.Error()), http.StatusInternalServerError)
+		handleError(w, http.StatusInternalServerError, "Failed to delete email message")
 		return
 	}
 
-	w.Header().Set("Content-type", "application/json")
-	respJSON, _ := json.Marshal(map[string]bool{"success": ok})
-	w.Write(respJSON)
+	resp := Response{
+		Status: http.StatusOK,
+		Body:   map[string]bool{"success": ok},
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(resp)
 }

@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"mail/pkg/session"
 	"mail/pkg/user"
@@ -14,31 +15,28 @@ type UserHandler struct {
 	Sessions       *session.SessionsManager
 }
 
-// NewUserHandler creates a new instance of UserHandler.
-func NewUserHandler(userRepo user.UserRepository) *UserHandler {
-	return &UserHandler{
-		UserRepository: userRepo,
-	}
-}
-
 // VerifyAuth verifies user authentication.
 // @Summary Verify user authentication
 // @Description Verify user authentication using sessions
 // @Tags users
 // @Produce json
-// @Success 200 {string} string "OK"
-// @Failure 401 {string} string "Not Authorized"
-// @Router /verify-auth [get]
+// @Success 200 {object} Response "OK"
+// @Failure 401 {object} Response "Not Authorized"
+// @Router /api/v1/verify-auth [get]
 func (uh *UserHandler) VerifyAuth(w http.ResponseWriter, r *http.Request) {
 	_, err := uh.Sessions.Check(r)
 	if err != nil {
-		http.Error(w, "Not Authorized", http.StatusUnauthorized)
-		w.WriteHeader(http.StatusUnauthorized)
+		handleError(w, http.StatusUnauthorized, "Not Authorized")
 		return
 	}
 
+	response := Response{
+		Status: http.StatusOK,
+		Body:   "OK",
+	}
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("OK"))
+	json.NewEncoder(w).Encode(response)
 }
 
 // Login handles user login.
@@ -48,50 +46,52 @@ func (uh *UserHandler) VerifyAuth(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param credentials body user.User true "User credentials for login"
-// @Success 200 {string} string "Login successful"
-// @Failure 400 {string} string "Invalid request body"
-// @Failure 401 {string} string "Invalid credentials"
-// @Failure 500 {string} string "Failed to create session"
-// @Router /login [post]
+// @Success 200 {object} Response "Login successful"
+// @Failure 400 {object} ErrorResponse "Invalid request body"
+// @Failure 401 {object} ErrorResponse "Invalid credentials"
+// @Failure 500 {object} ErrorResponse "Failed to create session"
+// @Router /api/v1/login [post]
 func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var credentials user.User
 	err := json.NewDecoder(r.Body).Decode(&credentials)
 	if err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		handleError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
-	users, err := uh.UserRepository.GetAll()
-	ourUser, ourUserDefault := user.User{}, user.User{}
+	if isEmpty(credentials.Login) || isEmpty(credentials.Password) {
+		handleError(w, http.StatusInternalServerError, "All fields must be filled in")
+		return
+	}
+
+	users, _ := uh.UserRepository.GetAll()
+	foundUser := false
+	var ourUser user.User
 	for _, u := range users {
-		if u.Login == credentials.Login {
-			if u.Password == credentials.Password {
-				ourUser = *u
-				break
-			} else {
-				break
-			}
+		if u.Login == credentials.Login && u.Password == credentials.Password {
+			ourUser = *u
+			foundUser = true
+			break
 		}
 	}
-	if ourUser == ourUserDefault {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Login failed"))
-		return
-	}
-
-	if err != nil {
-		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+	if !foundUser {
+		handleError(w, http.StatusBadRequest, "Login failed")
 		return
 	}
 
 	_, er := uh.Sessions.Create(w, ourUser.ID)
 	if er != nil {
-		http.Error(w, "Failed to create session", http.StatusInternalServerError)
+		handleError(w, http.StatusInternalServerError, "Failed to create session")
 		return
 	}
 
+	response := Response{
+		Status: http.StatusOK,
+		Body:   "Login successful",
+	}
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Login successful"))
+	json.NewEncoder(w).Encode(response)
 }
 
 // Signup handles user signup.
@@ -101,47 +101,44 @@ func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param newUser body user.User true "New user details for signup"
-// @Success 200 {string} string "Signup successful"
-// @Failure 400 {string} string "Invalid request body"
-// @Failure 500 {string} string "Failed to add user"
-// @Router /signup [post]
+// @Success 200 {object} Response "Signup successful"
+// @Failure 400 {object} ErrorResponse "Invalid request body"
+// @Failure 500 {object} ErrorResponse "Failed to add user"
+// @Router /api/v1/signup [post]
 func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 	var newUser user.User
 	err := json.NewDecoder(r.Body).Decode(&newUser)
 	if err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		handleError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
-	if newUser.Name == "" || newUser.Surname == "" || newUser.Login == "" || newUser.Password == "" {
-		http.Error(w, `All fields must be filled in`, http.StatusInternalServerError)
+
+	if isEmpty(newUser.Name) || isEmpty(newUser.Surname) || isEmpty(newUser.Login) || isEmpty(newUser.Password) {
+		handleError(w, http.StatusInternalServerError, "All fields must be filled in")
 		return
 	}
-	users, er := uh.UserRepository.GetAll()
-	if er != nil {
-		w.WriteHeader(http.StatusBadRequest) // ??
-		return
-	}
+
+	users, _ := uh.UserRepository.GetAll()
 	for _, u := range users {
 		if u.Login == newUser.Login {
-			w.WriteHeader(http.StatusBadRequest) // ??
-			w.Write([]byte("Such a login already exists"))
+			handleError(w, http.StatusBadRequest, "Such a login already exists")
 			return
 		}
 	}
 
-	_, erro := uh.UserRepository.Add(&newUser)
-	if erro != nil {
-		http.Error(w, "Failed to add user", http.StatusInternalServerError)
+	_, er := uh.UserRepository.Add(&newUser)
+	if er != nil {
+		handleError(w, http.StatusInternalServerError, "Failed to add user")
 		return
 	}
 
-	if err != nil {
-		http.Error(w, "Failed to create session", http.StatusInternalServerError)
-		return
+	response := Response{
+		Status: http.StatusOK,
+		Body:   "Signup successful",
 	}
-
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Signup successful"))
+	json.NewEncoder(w).Encode(response)
 }
 
 // Logout handles user logout.
@@ -149,16 +146,58 @@ func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 // @Description Handles user logout.
 // @Tags users
 // @Produce json
-// @Success 200 {string} string "Logout successful"
-// @Router /logout [post]
+// @Success 200 {object} Response "Logout successful"
+// @Router /api/v1/logout [post]
 func (uh *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	err := uh.Sessions.DestroyCurrent(w, r)
 	if err != nil {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte("Logout successful"))
+		handleError(w, http.StatusUnauthorized, "Not Authorized")
 		return
 	}
 
+	response := Response{
+		Status: http.StatusOK,
+		Body:   "Logout successful",
+	}
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Logout successful"))
+	json.NewEncoder(w).Encode(response)
+}
+
+// GetUserBySession retrieves the user associated with the current session.
+// @Summary Get user by session
+// @Description Retrieve the user associated with the current session
+// @Tags users
+// @Produce json
+// @Success 200 {object} Response "User details"
+// @Failure 401 {object} Response "Not Authorized"
+// @Failure 500 {object} ErrorResponse "Internal Server Error"
+// @Router /api/v1/get-user [get]
+func (uh *UserHandler) GetUserBySession(w http.ResponseWriter, r *http.Request) {
+	sessionUser, err := uh.Sessions.Check(r)
+	if err != nil {
+		handleError(w, http.StatusUnauthorized, "Not Authorized")
+		return
+	}
+
+	userData, err := uh.UserRepository.GetByID(sessionUser.UserID)
+	if err != nil {
+		handleError(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+
+	userData.Password = ""
+	response := Response{
+		Status: http.StatusOK,
+		Body:   userData,
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+// isEmpty checks if the given string is empty after trimming leading and trailing whitespace.
+// Returns true if the string is empty, and false otherwise.
+func isEmpty(str string) bool {
+	return strings.TrimSpace(str) == ""
 }

@@ -7,6 +7,7 @@ type User struct {
 	Surname  string `json:"surname,omitempty"` // User's last name.
 	Login    string `json:"login"`             // User's login.
 	Password string `json:"password"`          // User's password.
+	AvatarId string `json:"avatar,omitempty"`  // User's avatar.
 }
 
 // UserRepository represents the interface for working with users.
