@@ -103,6 +103,7 @@ func TestSignupUser(t *testing.T) {
 		fmt.Println(w.Code)
 		if w.Code != http.StatusOK {
 			t.Error("status is not ok")
+			return
 		}
 	}
 
@@ -115,6 +116,7 @@ func TestSignupUser(t *testing.T) {
 	for i, _ := range allUsers {
 		if !user.ComparingUserObjects((*allUsers[i]), expectedUsers[i]) {
 			assert.Equal(t, expectedUsers[i], (*allUsers[i]))
+			return
 		}
 	}
 }
@@ -163,6 +165,7 @@ func TestStatusSignupUser(t *testing.T) {
 		if w.Code != expectedStatus[i] {
 			assert.Equal(t, expectedStatus[i], w.Code)
 			t.Error("status is not ok")
+			return
 		}
 	}
 }
@@ -217,6 +220,7 @@ func TestLoginUser(t *testing.T) {
 		if w.Code != expectedStatus[i] {
 			assert.Equal(t, expectedStatus[i], w.Code)
 			t.Error("status is not ok")
+			return
 		}
 	}
 }
@@ -266,6 +270,7 @@ func TestLogoutUser(t *testing.T) {
 		if w.Code != http.StatusOK {
 			assert.Equal(t, http.StatusOK, w.Code)
 			t.Error("status is not ok")
+			return
 		}
 	}
 }

@@ -94,6 +94,7 @@ func TestEmailAdd(t *testing.T) {
 		if mail["id"] != expectedUsers[i]["id"] {
 			t.Error("status is not ok")
 			assert.Equal(t, expectedUsers[i]["id"], mail["id"])
+			return
 		}
 	}
 
@@ -179,6 +180,7 @@ func TestEmailStatusAdd(t *testing.T) {
 		if w.Code != expectedUsers[i] {
 			t.Error("status is not ok")
 			assert.Equal(t, expectedUsers[i], w.Code)
+			return
 		}
 	}
 
@@ -222,6 +224,7 @@ func TestEmailList(t *testing.T) {
 		if writeEmail[i] != *email.FakeEmails[i] {
 			t.Error("bad values writeEmail[i] != *email.FakeEmails[i] ")
 			assert.Equal(t, *email.FakeEmails[i], writeEmail[i])
+			return
 		}
 	}
 }
@@ -263,6 +266,7 @@ func TestEmailStatusList(t *testing.T) {
 		if w.Code != expectedStatusUsers[i] {
 			t.Error("status is not ok")
 			assert.Equal(t, expectedStatusUsers[1], w.Code)
+			return
 		}
 	}
 }
@@ -315,6 +319,7 @@ func TestEmailGetByID(t *testing.T) {
 		if mail != *email.FakeEmails[i] {
 			t.Error("bad values writeEmail[i] != *email.FakeEmails[i] ")
 			assert.Equal(t, *email.FakeEmails[i], mail)
+			return
 		}
 	}
 }
@@ -375,6 +380,7 @@ func TestEmailStatusGetByID(t *testing.T) {
 		if w.Code != expectedStatusUsers[i] {
 			t.Error("status is not ok")
 			assert.Equal(t, expectedStatusUsers[1], w.Code)
+			return
 		}
 	}
 }
@@ -435,6 +441,7 @@ func TestEmailDelete(t *testing.T) {
 		if w.Code != expectedStatusUsers[i] {
 			t.Error("status is not ok")
 			assert.Equal(t, expectedStatusUsers[1], w.Code)
+			return
 		}
 	}
 }
@@ -495,6 +502,7 @@ func TestEmailUpdate(t *testing.T) {
 		if w.Code != expectedStatusUsers[i] {
 			t.Error("status is not ok")
 			assert.Equal(t, expectedStatusUsers[1], w.Code)
+			return
 		}
 	}
 }
