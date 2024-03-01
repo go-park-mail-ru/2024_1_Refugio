@@ -3,12 +3,13 @@ package handlers
 import (
 	"bytes"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"mail/pkg/user"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var arrBody = [][]byte{
@@ -128,6 +129,30 @@ func TestStatusSignupUser(t *testing.T) {
 	)
 
 	expectedStatus := []int{200, 400, 400}
+
+	var arrBody = [][]byte{
+		[]byte(`{
+					"id": 0,
+					"login": "nasty@mail.ru",
+					"name": "Nasty",
+					"password": "1234",
+					"surname": "Low"
+				}`),
+		[]byte(`{
+					"id": 
+					"login": "karpovIvan@mail.ru",
+					"name": "IvAn",
+					"password": "QWERTY1234",
+					"surname": "Karpov"
+				}`),
+		[]byte(`{
+					"id": 0,
+					"login": "",
+					"name": "Nikita",
+					"password": "qwerty1234",
+					"surname": "Nosov"
+				}`),
+	}
 
 	for i, body := range arrBody {
 		r := httptest.NewRequest("POST", "/signup", bytes.NewReader(body))
