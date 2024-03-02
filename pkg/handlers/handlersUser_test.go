@@ -38,7 +38,7 @@ var arrBody = [][]byte{
 }
 
 func registerUser(t *testing.T, userHandler *UserHandler, body []byte) error {
-	r := httptest.NewRequest("POST", "/signup", bytes.NewReader(body))
+	r := httptest.NewRequest("POST", "/api/v1/signup", bytes.NewReader(body))
 	w := httptest.NewRecorder()
 
 	userHandler.Signup(w, r)
@@ -50,7 +50,7 @@ func registerUser(t *testing.T, userHandler *UserHandler, body []byte) error {
 }
 
 func loginUser(t *testing.T, userHandler *UserHandler, body []byte) (string, error) {
-	r := httptest.NewRequest("POST", "/login", bytes.NewReader(body))
+	r := httptest.NewRequest("POST", "/api/v1/login", bytes.NewReader(body))
 	w := httptest.NewRecorder()
 
 	userHandler.Login(w, r)
@@ -100,7 +100,7 @@ func TestSignupUser(t *testing.T) {
 	}
 
 	for _, body := range arrBody {
-		r := httptest.NewRequest("POST", "/signup", bytes.NewReader(body))
+		r := httptest.NewRequest("POST", "/api/v1/signup", bytes.NewReader(body))
 		w := httptest.NewRecorder()
 
 		userHandler.Signup(w, r)
@@ -164,7 +164,7 @@ func TestStatusSignupUser(t *testing.T) {
 	}
 
 	for i, body := range arrBody {
-		r := httptest.NewRequest("POST", "/signup", bytes.NewReader(body))
+		r := httptest.NewRequest("POST", "/api/v1/signup", bytes.NewReader(body))
 		w := httptest.NewRecorder()
 
 		userHandler.Signup(w, r)
@@ -222,7 +222,7 @@ func TestLoginUser(t *testing.T) {
 
 	expectedStatus := []int{200, 400, 401}
 	for i, body := range arrBadStatusBody {
-		r := httptest.NewRequest("POST", "/login", bytes.NewReader(body))
+		r := httptest.NewRequest("POST", "/api/v1/login", bytes.NewReader(body))
 		w := httptest.NewRecorder()
 
 		userHandler.Login(w, r)
@@ -267,7 +267,7 @@ func TestLogoutUser(t *testing.T) {
 	}
 
 	for _, c := range cookies {
-		r := httptest.NewRequest("POST", "/logout", nil)
+		r := httptest.NewRequest("POST", "/api/v1/logout", nil)
 		fmt.Println("c: ", c)
 		cookie := &http.Cookie{
 			Name:    "session_id",

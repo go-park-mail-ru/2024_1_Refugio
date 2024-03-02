@@ -178,7 +178,7 @@ func TestEmailStatusAdd(t *testing.T) {
 	}
 
 	for i, body := range arrBodyEmailBadStatus {
-		r := httptest.NewRequest("POST", "/email/add", bytes.NewReader(body))
+		r := httptest.NewRequest("POST", "/api/v1/email/add", bytes.NewReader(body))
 		if i != 1 {
 			r.AddCookie(cookie)
 		}
@@ -226,7 +226,7 @@ func TestEmailList(t *testing.T) {
 		Expires: time.Now().Add(90 * 24 * time.Hour),
 		Path:    "/",
 	}
-	r := httptest.NewRequest("GET", "/emails", nil)
+	r := httptest.NewRequest("GET", "/api/v1/emails", nil)
 	r.AddCookie(cookie)
 	w := httptest.NewRecorder()
 
@@ -262,7 +262,7 @@ func TestEmailStatusList(t *testing.T) {
 	expectedStatusUsers := []int{401, 200}
 
 	for i := 0; i < len(expectedStatusUsers); i++ {
-		r := httptest.NewRequest("GET", "/emails", nil)
+		r := httptest.NewRequest("GET", "/api/v1/emails", nil)
 		w := httptest.NewRecorder()
 		if i == 1 { // http.StatusOK
 			registerUser(t, userHandler, arrBody[0])
@@ -322,13 +322,13 @@ func TestEmailGetByID(t *testing.T) {
 	// Add email
 	for _, body := range email.FakeEmails {
 		respJSON, _ := json.Marshal(body)
-		r := httptest.NewRequest("POST", "/email/add", bytes.NewReader(respJSON))
+		r := httptest.NewRequest("POST", "/api/v1/email/add", bytes.NewReader(respJSON))
 		r.AddCookie(cookie)
 		w := httptest.NewRecorder()
 		emailHandler.Add(w, r)
 	}
 
-	r := httptest.NewRequest("GET", "/email/{id}", nil)
+	r := httptest.NewRequest("GET", "/api/v1/email/{id}", nil)
 	r.AddCookie(cookie)
 	w := httptest.NewRecorder()
 	for i, _ := range email.FakeEmails {
@@ -387,7 +387,7 @@ func TestEmailStatusGetByID(t *testing.T) {
 	expectedStatusUsers := []int{401, 404, 200}
 	var cookId string
 	for i := 0; i < len(expectedStatusUsers); i++ {
-		r := httptest.NewRequest("GET", "/email/{id}", nil)
+		r := httptest.NewRequest("GET", "/api/v1/email/{id}", nil)
 		w := httptest.NewRecorder()
 		if i >= 1 { // http.StatusOK
 			if i == 1 {
@@ -408,7 +408,7 @@ func TestEmailStatusGetByID(t *testing.T) {
 			}
 			if i == 2 {
 				respJSON, _ := json.Marshal(email.FakeEmails[1])
-				r = httptest.NewRequest("POST", "/email/add", bytes.NewReader(respJSON))
+				r = httptest.NewRequest("POST", "/api/v1/email/add", bytes.NewReader(respJSON))
 				cookie := &http.Cookie{
 					Name:    "session_id",
 					Value:   cookId,
@@ -452,7 +452,7 @@ func TestEmailDelete(t *testing.T) {
 	expectedStatusUsers := []int{401, 400, 200}
 	var cookId string
 	for i := 0; i < len(expectedStatusUsers); i++ {
-		r := httptest.NewRequest("GET", "/email/{id}", nil)
+		r := httptest.NewRequest("GET", "/api/v1/email/{id}", nil)
 		w := httptest.NewRecorder()
 		if i >= 1 { // http.StatusOK
 			if i == 1 {
@@ -473,7 +473,7 @@ func TestEmailDelete(t *testing.T) {
 			}
 			if i == 2 {
 				respJSON, _ := json.Marshal(email.FakeEmails[1])
-				r = httptest.NewRequest("POST", "/email/add", bytes.NewReader(respJSON))
+				r = httptest.NewRequest("POST", "/api/v1/email/add", bytes.NewReader(respJSON))
 				cookie := &http.Cookie{
 					Name:    "session_id",
 					Value:   cookId,
@@ -517,7 +517,7 @@ func TestEmailUpdate(t *testing.T) {
 	expectedStatusUsers := []int{401, 400, 200}
 	var cookId string
 	for i := 0; i < len(expectedStatusUsers); i++ {
-		r := httptest.NewRequest("GET", "/email/update/{id}", nil)
+		r := httptest.NewRequest("GET", "/api/v1/email/update/{id}", nil)
 		w := httptest.NewRecorder()
 		if i >= 1 { // http.StatusOK
 			if i == 1 {
@@ -538,7 +538,7 @@ func TestEmailUpdate(t *testing.T) {
 			}
 			if i == 2 {
 				respJSON, _ := json.Marshal(email.FakeEmails[1])
-				r = httptest.NewRequest("POST", "/email/add", bytes.NewReader(respJSON))
+				r = httptest.NewRequest("POST", "/api/v1/email/add", bytes.NewReader(respJSON))
 				cookie := &http.Cookie{
 					Name:    "session_id",
 					Value:   cookId,
