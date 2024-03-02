@@ -6,6 +6,8 @@ import (
 
 	"mail/pkg/session"
 	"mail/pkg/user"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 // UserHandler handles user-related HTTP requests.
@@ -14,11 +16,9 @@ type UserHandler struct {
 	Sessions       *session.SessionsManager
 }
 
-// NewUserHandler creates a new instance of UserHandler.
-func NewUserHandler(userRepo user.UserRepository) *UserHandler {
-	return &UserHandler{
-		UserRepository: userRepo,
-	}
+func HashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	return string(bytes), err
 }
 
 // VerifyAuth verifies user authentication.
@@ -61,11 +61,12 @@ func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Data validation
 	users, err := uh.UserRepository.GetAll()
 	ourUser, ourUserDefault := user.User{}, user.User{}
 	for _, u := range users {
 		if u.Login == credentials.Login {
-			if u.Password == credentials.Password {
+			if user.CheckPasswordHash(credentials.Password, u.Password) {
 				ourUser = *u
 				break
 			} else {
@@ -74,11 +75,10 @@ func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if ourUser == ourUserDefault {
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte("Login failed"))
 		return
 	}
-
 	if err != nil {
 		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		return
@@ -112,21 +112,29 @@ func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
+
+	// Data validation
 	if newUser.Name == "" || newUser.Surname == "" || newUser.Login == "" || newUser.Password == "" {
-		http.Error(w, `All fields must be filled in`, http.StatusInternalServerError)
+		http.Error(w, `All fields must be filled in`, http.StatusBadRequest)
 		return
 	}
 	users, er := uh.UserRepository.GetAll()
 	if er != nil {
-		w.WriteHeader(http.StatusBadRequest) // ??
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	for _, u := range users {
 		if u.Login == newUser.Login {
-			w.WriteHeader(http.StatusBadRequest) // ??
+			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("Such a login already exists"))
 			return
 		}
+	}
+
+	newUser.Password, err = HashPassword(newUser.Password)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	_, erro := uh.UserRepository.Add(&newUser)
@@ -154,8 +162,8 @@ func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 func (uh *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	err := uh.Sessions.DestroyCurrent(w, r)
 	if err != nil {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte("Logout successful"))
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Logged out"))
 		return
 	}
 

@@ -18,14 +18,22 @@ func NewEmailMemoryRepository() *EmailMemoryRepository {
 	}
 }
 
+func CreateFakeEmails() *EmailMemoryRepository {
+	repo := NewEmailMemoryRepository()
+	for i := 0; i < len(FakeEmails); i++ {
+		repo.emails[uint64(i+1)] = FakeEmails[i]
+	}
+	return repo
+}
+
 // GetAll returns all emails from the storage.
 func (repository *EmailMemoryRepository) GetAll() ([]*Email, error) {
 	repository.mu.RLock()
 	defer repository.mu.RUnlock()
 
 	emails := make([]*Email, 0, len(repository.emails))
-	for _, email := range repository.emails {
-		emails = append(emails, email)
+	for i := 0; i < len(repository.emails); i++ {
+		emails = append(emails, repository.emails[uint64(i+1)])
 	}
 
 	return emails, nil
