@@ -30,13 +30,7 @@ func (uh *UserHandler) VerifyAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := Response{
-		Status: http.StatusOK,
-		Body:   "OK",
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	handleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "OK"})
 }
 
 // Login handles user login.
@@ -85,13 +79,7 @@ func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := Response{
-		Status: http.StatusOK,
-		Body:   "Login successful",
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	handleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "Login successful"})
 }
 
 // Signup handles user signup.
@@ -132,13 +120,7 @@ func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := Response{
-		Status: http.StatusOK,
-		Body:   "Signup successful",
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	handleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "Signup successful"})
 }
 
 // Logout handles user logout.
@@ -155,13 +137,7 @@ func (uh *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := Response{
-		Status: http.StatusOK,
-		Body:   "Logout successful",
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	handleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "Logout successful"})
 }
 
 // GetUserBySession retrieves the user associated with the current session.
@@ -187,13 +163,7 @@ func (uh *UserHandler) GetUserBySession(w http.ResponseWriter, r *http.Request) 
 	}
 
 	userData.Password = ""
-	response := Response{
-		Status: http.StatusOK,
-		Body:   userData,
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	handleSuccess(w, http.StatusOK, map[string]interface{}{"user": userData})
 }
 
 // isEmpty checks if the given string is empty after trimming leading and trailing whitespace.

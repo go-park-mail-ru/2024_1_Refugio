@@ -41,17 +41,7 @@ func (h *EmailHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respJSON, err := json.Marshal(Response{
-		Status: http.StatusOK,
-		Body:   emails,
-	})
-	if err != nil {
-		handleError(w, http.StatusInternalServerError, "JSON encoding error")
-		return
-	}
-	w.Header().Set("Content-type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(respJSON)
+	handleSuccess(w, http.StatusOK, map[string]interface{}{"emails": emails})
 }
 
 // GetByID returns an email message by its ID.
@@ -84,13 +74,7 @@ func (h *EmailHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := Response{
-		Status: http.StatusOK,
-		Body:   email,
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(resp)
+	handleSuccess(w, http.StatusOK, map[string]interface{}{"email": email})
 }
 
 // Add adds a new email message.
@@ -120,19 +104,13 @@ func (h *EmailHandler) Add(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.EmailRepository.Add(&newEmail)
+	email, err := h.EmailRepository.Add(&newEmail)
 	if err != nil {
 		handleError(w, http.StatusInternalServerError, "Failed to add email message")
 		return
 	}
 
-	resp := Response{
-		Status: http.StatusOK,
-		Body:   map[string]uint64{"id": id},
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(resp)
+	handleSuccess(w, http.StatusOK, map[string]interface{}{"email": email})
 }
 
 // Update updates an existing email message.
@@ -177,13 +155,7 @@ func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := Response{
-		Status: http.StatusOK,
-		Body:   map[string]bool{"success": ok},
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(resp)
+	handleSuccess(w, http.StatusOK, map[string]interface{}{"Success": ok})
 }
 
 // Delete deletes an email message.
@@ -216,11 +188,5 @@ func (h *EmailHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := Response{
-		Status: http.StatusOK,
-		Body:   map[string]bool{"success": ok},
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(resp)
+	handleSuccess(w, http.StatusOK, map[string]interface{}{"Success": ok})
 }

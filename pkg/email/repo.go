@@ -45,7 +45,7 @@ func (repository *EmailMemoryRepository) GetByID(id uint64) (*Email, error) {
 }
 
 // Add adds a new email to the storage and returns the assigned unique identifier.
-func (repository *EmailMemoryRepository) Add(email *Email) (uint64, error) {
+func (repository *EmailMemoryRepository) Add(email *Email) (*Email, error) {
 	repository.mu.Lock()
 	defer repository.mu.Unlock()
 
@@ -53,7 +53,7 @@ func (repository *EmailMemoryRepository) Add(email *Email) (uint64, error) {
 	email.ID = id
 	repository.emails[id] = email
 
-	return id, nil
+	return repository.emails[id], nil
 }
 
 // Update updates the data of an email in the storage based on the provided new email.
