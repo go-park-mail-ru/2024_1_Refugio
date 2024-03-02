@@ -2,7 +2,7 @@ package email
 
 import "time"
 
-// FakeEmails представляет фейковые данные писем для демонстрации.
+// FakeEmails presents fake email data for demonstration.
 var FakeEmails = []*Email{
 	{
 		ID:             1,

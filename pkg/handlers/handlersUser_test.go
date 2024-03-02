@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"fmt"
+	"mail/pkg/session"
 	"mail/pkg/user"
 	"net/http"
 	"net/http/httptest"
@@ -65,9 +66,12 @@ func loginUser(t *testing.T, userHandler *UserHandler, body []byte) (string, err
 func TestSignupUser(t *testing.T) {
 	t.Parallel()
 	var (
+		sessionsManager = session.NewSessionsManager()
+
 		userRepository = user.NewEmptyInMemoryUserRepository()
 		userHandler    = &UserHandler{
 			UserRepository: userRepository,
+			Sessions:       sessionsManager,
 		}
 	)
 
@@ -124,9 +128,12 @@ func TestSignupUser(t *testing.T) {
 func TestStatusSignupUser(t *testing.T) {
 	t.Parallel()
 	var (
+		sessionsManager = session.NewSessionsManager()
+
 		userRepository = user.NewEmptyInMemoryUserRepository()
 		userHandler    = &UserHandler{
 			UserRepository: userRepository,
+			Sessions:       sessionsManager,
 		}
 	)
 
@@ -173,9 +180,12 @@ func TestStatusSignupUser(t *testing.T) {
 func TestLoginUser(t *testing.T) {
 	t.Parallel()
 	var (
+		sessionsManager = session.NewSessionsManager()
+
 		userRepository = user.NewEmptyInMemoryUserRepository()
 		userHandler    = &UserHandler{
 			UserRepository: userRepository,
+			Sessions:       sessionsManager,
 		}
 	)
 	var arrBadStatusBody = [][]byte{
@@ -229,9 +239,12 @@ func TestLogoutUser(t *testing.T) {
 	t.Parallel()
 
 	var (
+		sessionsManager = session.NewSessionsManager()
+
 		userRepository = user.NewEmptyInMemoryUserRepository()
 		userHandler    = &UserHandler{
 			UserRepository: userRepository,
+			Sessions:       sessionsManager,
 		}
 	)
 

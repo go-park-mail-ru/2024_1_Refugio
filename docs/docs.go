@@ -45,6 +45,24 @@ const docTemplate = `{
                                 "type": "integer"
                             }
                         }
+                    },
+                    "400": {
+                        "description": "Bad JSON in request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "DB error",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 }
             }
@@ -73,6 +91,24 @@ const docTemplate = `{
                             "additionalProperties": {
                                 "type": "boolean"
                             }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "DB error",
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 }
@@ -115,6 +151,24 @@ const docTemplate = `{
                                 "type": "boolean"
                             }
                         }
+                    },
+                    "400": {
+                        "description": "Bad id or Bad JSON",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "DB error",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 }
             }
@@ -144,6 +198,24 @@ const docTemplate = `{
                                 "type": "integer"
                             }
                         }
+                    },
+                    "400": {
+                        "description": "Bad id in request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "DB error",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 }
             }
@@ -166,6 +238,24 @@ const docTemplate = `{
                                     "type": "integer"
                                 }
                             }
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "DB error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "JSON encoding error",
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 }
@@ -282,6 +372,32 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Failed to add user",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/verify-auth": {
+            "get": {
+                "description": "Verify user authentication using sessions",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Verify user authentication",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized",
                         "schema": {
                             "type": "string"
                         }

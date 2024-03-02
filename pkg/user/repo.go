@@ -1,15 +1,15 @@
 package user
 
 import (
-	"errors"
+	"fmt"
 	"golang.org/x/crypto/bcrypt"
 	"sync"
 )
 
 // UserMemoryRepository is an in-memory implementation of UserRepository.
 type UserMemoryRepository struct {
-	users map[uint32]*User
 	mutex sync.RWMutex
+	users map[uint32]*User
 }
 
 func CheckPasswordHash(password, hash string) bool {
@@ -38,7 +38,11 @@ func NewEmptyInMemoryUserRepository() *UserMemoryRepository {
 }
 
 func ComparingUserObjects(object1, object2 User) bool {
-	if object1.ID == object2.ID && object1.Name == object2.Name && object1.Surname == object2.Surname && object1.Login == object2.Login && CheckPasswordHash(object2.Password, object1.Password) {
+	if object1.ID == object2.ID &&
+		object1.Name == object2.Name &&
+		object1.Surname == object2.Surname &&
+		object1.Login == object2.Login &&
+		CheckPasswordHash(object2.Password, object1.Password) {
 		return true
 	}
 	return false
@@ -50,8 +54,8 @@ func (repo *UserMemoryRepository) GetAll() ([]*User, error) {
 	defer repo.mutex.RUnlock()
 
 	users := make([]*User, 0, len(repo.users))
-	for _, user := range repo.users {
-		users = append(users, user)
+	for i := 0; i < len(repo.users); i++ {
+		users = append(users, repo.users[uint32(i+1)])
 	}
 
 	return users, nil
@@ -64,7 +68,7 @@ func (repo *UserMemoryRepository) GetByID(id uint32) (*User, error) {
 
 	user, exists := repo.users[id]
 	if !exists {
-		return nil, errors.New("user not found")
+		return nil, fmt.Errorf("User with id %d not found", id)
 	}
 
 	return user, nil
@@ -89,10 +93,11 @@ func (repo *UserMemoryRepository) Update(newUser *User) (bool, error) {
 
 	_, exists := repo.users[newUser.ID]
 	if !exists {
-		return false, errors.New("user not found")
+		return false, fmt.Errorf("User with id %d not found", newUser.ID)
 	}
 
 	repo.users[newUser.ID] = newUser
+
 	return true, nil
 }
 
@@ -103,9 +108,10 @@ func (repo *UserMemoryRepository) Delete(id uint32) (bool, error) {
 
 	_, exists := repo.users[id]
 	if !exists {
-		return false, errors.New("user not found")
+		return false, fmt.Errorf("User with id %d not found", id)
 	}
 
 	delete(repo.users, id)
+
 	return true, nil
 }

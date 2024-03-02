@@ -13,13 +13,32 @@ import (
 // UserHandler handles user-related HTTP requests.
 type UserHandler struct {
 	UserRepository user.UserRepository
+	Sessions       *session.SessionsManager
 }
-
-var SM = session.NewSessionsManager()
 
 func HashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
 	return string(bytes), err
+}
+
+// VerifyAuth verifies user authentication.
+// @Summary Verify user authentication
+// @Description Verify user authentication using sessions
+// @Tags users
+// @Produce json
+// @Success 200 {string} string "OK"
+// @Failure 401 {string} string "Not Authorized"
+// @Router /verify-auth [get]
+func (uh *UserHandler) VerifyAuth(w http.ResponseWriter, r *http.Request) {
+	_, err := uh.Sessions.Check(r)
+	if err != nil {
+		http.Error(w, "Not Authorized", http.StatusUnauthorized)
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
 }
 
 // Login handles user login.
@@ -65,13 +84,12 @@ func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create a new session
-	//sess, err := sessionsManager.Create(w, userID)
-	_, er := SM.Create(w, ourUser.ID)
+	_, er := uh.Sessions.Create(w, ourUser.ID)
 	if er != nil {
 		http.Error(w, "Failed to create session", http.StatusInternalServerError)
 		return
 	}
+
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Login successful"))
 }
@@ -113,32 +131,25 @@ func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Assume you have a function that adds the new user to the UserRepository
-	// and returns the assigned user ID.
-	// userID, err := uh.UserRepository.Add(&newUser)
 	newUser.Password, err = HashPassword(newUser.Password)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
 	_, erro := uh.UserRepository.Add(&newUser)
 	if erro != nil {
 		http.Error(w, "Failed to add user", http.StatusInternalServerError)
 		return
 	}
 
-	// Create a new session
-	//sess, err := sessionsManager.Create(w, userID)
 	if err != nil {
 		http.Error(w, "Failed to create session", http.StatusInternalServerError)
 		return
 	}
 
-	// Return success response or handle errors.
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Signup successful"))
-
-	// You can also include additional information in the response, such as the user ID or session ID.
 }
 
 // Logout handles user logout.
@@ -149,19 +160,13 @@ func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {string} string "Logout successful"
 // @Router /logout [post]
 func (uh *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	err := SM.DestroyCurrent(w, r)
+	err := uh.Sessions.DestroyCurrent(w, r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Logged out"))
 		return
 	}
-	/*err := sessionsManager.DestroyCurrent(w, r)
-	if err != nil {
-		http.Error(w, "Failed to destroy session", http.StatusInternalServerError)
-		return
-	}*/
 
-	// Return success response or handle errors.
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Logout successful"))
 }

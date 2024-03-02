@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"mail/pkg/email"
+	"mail/pkg/session"
 	"mail/pkg/user"
 	"net/http"
 	"net/http/httptest"
@@ -57,14 +58,18 @@ var arrBodyEmail = [][]byte{
 func TestEmailAdd(t *testing.T) {
 	t.Parallel()
 	var (
+		sessionsManager = session.NewSessionsManager()
+
 		emailRepository = email.NewEmailMemoryRepository()
 		emailHandler    = &EmailHandler{
 			EmailRepository: emailRepository,
+			Sessions:        sessionsManager,
 		}
 
 		userRepository = user.NewEmptyInMemoryUserRepository()
 		userHandler    = &UserHandler{
 			UserRepository: userRepository,
+			Sessions:       sessionsManager,
 		}
 	)
 	expectedUsers := []map[string]int{{"id": 1}, {"id": 2}, {"id": 3}}
@@ -142,14 +147,18 @@ func TestEmailStatusAdd(t *testing.T) {
 	}
 
 	var (
+		sessionsManager = session.NewSessionsManager()
+
 		emailRepository = email.NewEmailMemoryRepository()
 		emailHandler    = &EmailHandler{
 			EmailRepository: emailRepository,
+			Sessions:        sessionsManager,
 		}
 
 		userRepository = user.NewEmptyInMemoryUserRepository()
 		userHandler    = &UserHandler{
 			UserRepository: userRepository,
+			Sessions:       sessionsManager,
 		}
 	)
 	expectedUsers := []int{200, 401, 400}
@@ -189,14 +198,18 @@ func TestEmailStatusAdd(t *testing.T) {
 func TestEmailList(t *testing.T) {
 	t.Parallel()
 	var (
+		sessionsManager = session.NewSessionsManager()
+
 		emailRepository = email.NewEmailMemoryRepository()
 		emailHandler    = &EmailHandler{
 			EmailRepository: emailRepository,
+			Sessions:        sessionsManager,
 		}
 
 		userRepository = user.NewEmptyInMemoryUserRepository()
 		userHandler    = &UserHandler{
 			UserRepository: userRepository,
+			Sessions:       sessionsManager,
 		}
 	)
 
@@ -232,14 +245,18 @@ func TestEmailList(t *testing.T) {
 func TestEmailStatusList(t *testing.T) {
 	t.Parallel()
 	var (
+		sessionsManager = session.NewSessionsManager()
+
 		emailRepository = email.NewEmailMemoryRepository()
 		emailHandler    = &EmailHandler{
 			EmailRepository: emailRepository,
+			Sessions:        sessionsManager,
 		}
 
 		userRepository = user.NewEmptyInMemoryUserRepository()
 		userHandler    = &UserHandler{
 			UserRepository: userRepository,
+			Sessions:       sessionsManager,
 		}
 	)
 	expectedStatusUsers := []int{401, 200}
@@ -274,14 +291,18 @@ func TestEmailStatusList(t *testing.T) {
 func TestEmailGetByID(t *testing.T) {
 	t.Parallel()
 	var (
+		sessionsManager = session.NewSessionsManager()
+
 		emailRepository = email.NewEmailMemoryRepository()
 		emailHandler    = &EmailHandler{
 			EmailRepository: emailRepository,
+			Sessions:        sessionsManager,
 		}
 
 		userRepository = user.NewEmptyInMemoryUserRepository()
 		userHandler    = &UserHandler{
 			UserRepository: userRepository,
+			Sessions:       sessionsManager,
 		}
 	)
 
@@ -327,14 +348,18 @@ func TestEmailGetByID(t *testing.T) {
 func TestEmailStatusGetByID(t *testing.T) {
 	t.Parallel()
 	var (
+		sessionsManager = session.NewSessionsManager()
+
 		emailRepository = email.NewEmailMemoryRepository()
 		emailHandler    = &EmailHandler{
 			EmailRepository: emailRepository,
+			Sessions:        sessionsManager,
 		}
 
 		userRepository = user.NewEmptyInMemoryUserRepository()
 		userHandler    = &UserHandler{
 			UserRepository: userRepository,
+			Sessions:       sessionsManager,
 		}
 	)
 	expectedStatusUsers := []int{401, 404, 200}
@@ -388,14 +413,18 @@ func TestEmailStatusGetByID(t *testing.T) {
 func TestEmailDelete(t *testing.T) {
 	t.Parallel()
 	var (
+		sessionsManager = session.NewSessionsManager()
+
 		emailRepository = email.NewEmailMemoryRepository()
 		emailHandler    = &EmailHandler{
 			EmailRepository: emailRepository,
+			Sessions:        sessionsManager,
 		}
 
 		userRepository = user.NewEmptyInMemoryUserRepository()
 		userHandler    = &UserHandler{
 			UserRepository: userRepository,
+			Sessions:       sessionsManager,
 		}
 	)
 	expectedStatusUsers := []int{401, 400, 200}
@@ -449,14 +478,18 @@ func TestEmailDelete(t *testing.T) {
 func TestEmailUpdate(t *testing.T) {
 	t.Parallel()
 	var (
+		sessionsManager = session.NewSessionsManager()
+
 		emailRepository = email.NewEmailMemoryRepository()
 		emailHandler    = &EmailHandler{
 			EmailRepository: emailRepository,
+			Sessions:        sessionsManager,
 		}
 
 		userRepository = user.NewEmptyInMemoryUserRepository()
 		userHandler    = &UserHandler{
 			UserRepository: userRepository,
+			Sessions:       sessionsManager,
 		}
 	)
 	expectedStatusUsers := []int{401, 400, 200}
