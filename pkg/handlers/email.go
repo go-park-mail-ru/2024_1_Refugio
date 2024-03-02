@@ -3,11 +3,11 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"mail/pkg/session"
 	"net/http"
 	"strconv"
 
 	"mail/pkg/email"
+	"mail/pkg/session"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"

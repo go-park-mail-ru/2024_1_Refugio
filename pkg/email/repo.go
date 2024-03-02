@@ -18,14 +18,30 @@ func NewEmailMemoryRepository() *EmailMemoryRepository {
 	}
 }
 
+// NewEmptyInMemoryEmailRepository creates a new email repository in memory with an empty default email list.
+func NewEmptyInMemoryEmailRepository() *EmailMemoryRepository {
+	defaultEmails := map[uint64]*Email{}
+	return &EmailMemoryRepository{
+		emails: defaultEmails,
+	}
+}
+
+func CreateFakeEmails() *EmailMemoryRepository {
+	repo := NewEmailMemoryRepository()
+	for i := 0; i < len(FakeEmails); i++ {
+		repo.emails[uint64(i+1)] = FakeEmails[uint64(i)]
+	}
+	return repo
+}
+
 // GetAll returns all emails from the storage.
 func (repository *EmailMemoryRepository) GetAll() ([]*Email, error) {
 	repository.mu.RLock()
 	defer repository.mu.RUnlock()
 
 	emails := make([]*Email, 0, len(repository.emails))
-	for _, email := range repository.emails {
-		emails = append(emails, email)
+	for i := 0; i < len(repository.emails); i++ {
+		emails = append(emails, repository.emails[uint64(i+1)])
 	}
 
 	return emails, nil

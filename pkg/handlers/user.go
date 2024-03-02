@@ -7,12 +7,19 @@ import (
 
 	"mail/pkg/session"
 	"mail/pkg/user"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 // UserHandler handles user-related HTTP requests.
 type UserHandler struct {
 	UserRepository user.UserRepository
 	Sessions       *session.SessionsManager
+}
+
+func HashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	return string(bytes), err
 }
 
 // VerifyAuth verifies user authentication.
@@ -59,17 +66,19 @@ func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	users, _ := uh.UserRepository.GetAll()
-	foundUser := false
-	var ourUser user.User
+	ourUser, ourUserDefault := user.User{}, user.User{}
 	for _, u := range users {
-		if u.Login == credentials.Login && u.Password == credentials.Password {
-			ourUser = *u
-			foundUser = true
-			break
+		if u.Login == credentials.Login {
+			if user.CheckPasswordHash(credentials.Password, u.Password) {
+				ourUser = *u
+				break
+			} else {
+				break
+			}
 		}
 	}
-	if !foundUser {
-		handleError(w, http.StatusBadRequest, "Login failed")
+	if ourUser == ourUserDefault {
+		handleError(w, http.StatusUnauthorized, "Login failed")
 		return
 	}
 
@@ -103,7 +112,6 @@ func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 
 	if isEmpty(newUser.Name) || isEmpty(newUser.Surname) || isEmpty(newUser.Login) || isEmpty(newUser.Password) {
 		handleError(w, http.StatusInternalServerError, "All fields must be filled in")
-		return
 	}
 
 	users, _ := uh.UserRepository.GetAll()
@@ -114,10 +122,15 @@ func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	newUser.Password, err = HashPassword(newUser.Password)
+	if err != nil {
+		handleError(w, http.StatusInternalServerError, "Failed")
+		return
+	}
+
 	_, er := uh.UserRepository.Add(&newUser)
 	if er != nil {
 		handleError(w, http.StatusInternalServerError, "Failed to add user")
-		return
 	}
 
 	handleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "Signup successful"})
