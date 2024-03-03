@@ -12,12 +12,6 @@ type UserMemoryRepository struct {
 	users map[uint32]*User
 }
 
-// CheckPasswordHash compares a password with a hash and returns true if they match, otherwise false.
-func CheckPasswordHash(password, hash string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	return err == nil
-}
-
 // NewUserMemoryRepository creates a new instance of UserMemoryRepository.
 func NewInMemoryUserRepository() *UserMemoryRepository {
 	return &UserMemoryRepository{
@@ -31,6 +25,22 @@ func NewEmptyInMemoryUserRepository() *UserMemoryRepository {
 	return &UserMemoryRepository{
 		users: defaultUsers,
 	}
+}
+
+// HashPassword takes a plaintext password as input and returns its bcrypt hash.
+func HashPassword(password string) (string, bool) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	if err != nil {
+		return "", false
+	}
+
+	return string(bytes), true
+}
+
+// CheckPasswordHash compares a password with a hash and returns true if they match, otherwise false.
+func CheckPasswordHash(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
 }
 
 // ComparingUserObjects compares two user objects by comparing their IDs, names, surnames, logins, and password hashes.
@@ -79,6 +89,11 @@ func (repo *UserMemoryRepository) Add(user *User) (uint32, error) {
 
 	userID := uint32(len(repo.users) + 1)
 	user.ID = userID
+	var err bool
+	user.Password, err = HashPassword(user.Password)
+	if err == false {
+		return userID, fmt.Errorf("Operation failed")
+	}
 	repo.users[userID] = user
 
 	return userID, nil

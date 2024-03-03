@@ -1,7 +1,6 @@
 package session
 
 import (
-	"fmt"
 	"net/http"
 	"sync"
 	"time"
@@ -50,7 +49,6 @@ func (sm *SessionsManager) Create(w http.ResponseWriter, userID uint32) (*Sessio
 		Path:    "/",
 	}
 	http.SetCookie(w, cookie)
-	fmt.Println(cookie)
 
 	return sess, nil
 }
