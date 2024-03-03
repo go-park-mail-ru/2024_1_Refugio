@@ -38,19 +38,20 @@ func main() {
 	}
 
 	router := mux.NewRouter()
-	router.HandleFunc("/emails", emailHandler.List).Methods("GET")
-	router.HandleFunc("/email/{id}", emailHandler.GetByID).Methods("GET")
-	router.HandleFunc("/email/add", emailHandler.Add).Methods("POST")
-	router.HandleFunc("/email/update/{id}", emailHandler.Update).Methods("PUT")
-	router.HandleFunc("/email/delete/{id}", emailHandler.Delete).Methods("DELETE")
+	router.HandleFunc("/api/v1/emails", emailHandler.List).Methods("GET")
+	router.HandleFunc("/api/v1/email/{id}", emailHandler.GetByID).Methods("GET")
+	router.HandleFunc("/api/v1/email/add", emailHandler.Add).Methods("POST")
+	router.HandleFunc("/api/v1/email/update/{id}", emailHandler.Update).Methods("PUT")
+	router.HandleFunc("/api/v1/email/delete/{id}", emailHandler.Delete).Methods("DELETE")
 
-	router.HandleFunc("/verify-auth", userHandler.VerifyAuth).Methods("GET")
-	router.HandleFunc("/login", userHandler.Login).Methods("POST")
-	router.HandleFunc("/signup", userHandler.Signup).Methods("POST")
-	router.HandleFunc("/logout", userHandler.Logout).Methods("POST")
+	router.HandleFunc("/api/v1/verify-auth", userHandler.VerifyAuth).Methods("GET")
+	router.HandleFunc("/api/v1/login", userHandler.Login).Methods("POST")
+	router.HandleFunc("/api/v1/signup", userHandler.Signup).Methods("POST")
+	router.HandleFunc("/api/v1/logout", userHandler.Logout).Methods("POST")
+	router.HandleFunc("/api/v1/get-user", userHandler.GetUserBySession).Methods("GET")
 
 	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
-
+	//185.211.170.120
 	port := 8080
 	fmt.Printf("The server is running on http://localhost:%d\n", port)
 	fmt.Printf("Swagger is running on http://localhost:%d/swagger/index.html\n", port)

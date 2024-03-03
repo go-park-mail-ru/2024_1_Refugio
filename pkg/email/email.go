@@ -25,7 +25,7 @@ type EmailRepository interface {
 	GetByID(id uint64) (*Email, error)
 
 	// Add adds a new email to the storage and returns its assigned unique identifier.
-	Add(email *Email) (uint64, error)
+	Add(email *Email) (*Email, error)
 
 	// Update updates the information of an email in the storage based on the provided new email.
 	Update(newEmail *Email) (bool, error)

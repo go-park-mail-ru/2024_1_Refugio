@@ -13,15 +13,25 @@ type EmailMemoryRepository struct {
 
 // NewEmailMemoryRepository creates a new instance of EmailMemoryRepository.
 func NewEmailMemoryRepository() *EmailMemoryRepository {
+	fakeEmails := FakeEmails
 	return &EmailMemoryRepository{
-		emails: make(map[uint64]*Email),
+		emails: fakeEmails,
+	}
+}
+
+// NewEmptyInMemoryEmailRepository creates a new email repository in memory with an empty default email list.
+func NewEmptyInMemoryEmailRepository() *EmailMemoryRepository {
+	defaultEmails := map[uint64]*Email{}
+	return &EmailMemoryRepository{
+		emails: defaultEmails,
 	}
 }
 
 func CreateFakeEmails() *EmailMemoryRepository {
-	repo := NewEmailMemoryRepository()
-	for i := 0; i < len(FakeEmails); i++ {
-		repo.emails[uint64(i+1)] = FakeEmails[i]
+	repo := NewEmptyInMemoryEmailRepository()
+
+	for i := 1; i-1 < len(FakeEmails); i++ {
+		repo.emails[uint64(i)] = FakeEmails[uint64(i)]
 	}
 	return repo
 }
@@ -53,7 +63,7 @@ func (repository *EmailMemoryRepository) GetByID(id uint64) (*Email, error) {
 }
 
 // Add adds a new email to the storage and returns the assigned unique identifier.
-func (repository *EmailMemoryRepository) Add(email *Email) (uint64, error) {
+func (repository *EmailMemoryRepository) Add(email *Email) (*Email, error) {
 	repository.mu.Lock()
 	defer repository.mu.Unlock()
 
@@ -61,7 +71,7 @@ func (repository *EmailMemoryRepository) Add(email *Email) (uint64, error) {
 	email.ID = id
 	repository.emails[id] = email
 
-	return id, nil
+	return repository.emails[id], nil
 }
 
 // Update updates the data of an email in the storage based on the provided new email.

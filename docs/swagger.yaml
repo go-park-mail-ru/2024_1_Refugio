@@ -33,8 +33,22 @@ definitions:
         description: Subject of the email.
         type: string
     type: object
+  handlers.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  handlers.Response:
+    properties:
+      body: {}
+      status:
+        type: integer
+    type: object
   user.User:
     properties:
+      avatar:
+        description: User's avatar.
+        type: string
       id:
         description: Unique identifier of the user.
         type: integer
@@ -58,7 +72,7 @@ info:
   title: API Mail
   version: "1.0"
 paths:
-  /email/{id}:
+  /api/v1/email/{id}:
     get:
       description: Get an email message by its unique identifier
       parameters:
@@ -71,25 +85,23 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Email message data
           schema:
-            additionalProperties:
-              type: integer
-            type: object
+            $ref: '#/definitions/handlers.Response'
         "400":
           description: Bad id in request
           schema:
-            type: string
+            $ref: '#/definitions/handlers.Response'
         "401":
           description: Not Authorized
           schema:
-            type: string
+            $ref: '#/definitions/handlers.Response'
         "404":
-          description: DB error
+          description: Email not found
           schema:
-            type: string
+            $ref: '#/definitions/handlers.Response'
       summary: Get an email message by ID
-  /email/add:
+  /api/v1/email/add:
     post:
       consumes:
       - application/json
@@ -105,25 +117,23 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: ID of the added email message
           schema:
-            additionalProperties:
-              type: integer
-            type: object
+            $ref: '#/definitions/handlers.Response'
         "400":
           description: Bad JSON in request
           schema:
-            type: string
+            $ref: '#/definitions/handlers.Response'
         "401":
           description: Not Authorized
           schema:
-            type: string
+            $ref: '#/definitions/handlers.Response'
         "500":
-          description: DB error
+          description: Failed to add email message
           schema:
-            type: string
+            $ref: '#/definitions/handlers.Response'
       summary: Add a new email message
-  /email/delete/{id}:
+  /api/v1/email/delete/{id}:
     delete:
       description: Delete an email message based on its identifier
       parameters:
@@ -136,25 +146,23 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Deletion success status
           schema:
-            additionalProperties:
-              type: boolean
-            type: object
+            $ref: '#/definitions/handlers.Response'
         "400":
           description: Bad id
           schema:
-            type: string
+            $ref: '#/definitions/handlers.Response'
         "401":
           description: Not Authorized
           schema:
-            type: string
+            $ref: '#/definitions/handlers.Response'
         "500":
-          description: DB error
+          description: Failed to delete email message
           schema:
-            type: string
+            $ref: '#/definitions/handlers.Response'
       summary: Delete an email message
-  /email/update/{id}:
+  /api/v1/email/update/{id}:
     put:
       consumes:
       - application/json
@@ -175,52 +183,67 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Update success status
           schema:
-            additionalProperties:
-              type: boolean
-            type: object
+            $ref: '#/definitions/handlers.Response'
         "400":
           description: Bad id or Bad JSON
           schema:
-            type: string
+            $ref: '#/definitions/handlers.Response'
         "401":
           description: Not Authorized
           schema:
-            type: string
+            $ref: '#/definitions/handlers.Response'
         "500":
-          description: DB error
+          description: Failed to update email message
           schema:
-            type: string
+            $ref: '#/definitions/handlers.Response'
       summary: Update an email message
-  /emails:
+  /api/v1/emails:
     get:
       description: Get a list of all email messages
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: List of all email messages
           schema:
-            items:
-              additionalProperties:
-                type: integer
-              type: object
-            type: array
+            $ref: '#/definitions/handlers.Response'
         "401":
           description: Not Authorized
           schema:
-            type: string
+            $ref: '#/definitions/handlers.Response'
         "404":
           description: DB error
           schema:
-            type: string
+            $ref: '#/definitions/handlers.Response'
         "500":
           description: JSON encoding error
           schema:
-            type: string
+            $ref: '#/definitions/handlers.Response'
       summary: Display the list of email messages
-  /login:
+  /api/v1/get-user:
+    get:
+      description: Retrieve the user associated with the current session
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User details
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get user by session
+      tags:
+      - users
+  /api/v1/login:
     post:
       consumes:
       - application/json
@@ -238,23 +261,23 @@ paths:
         "200":
           description: Login successful
           schema:
-            type: string
+            $ref: '#/definitions/handlers.Response'
         "400":
           description: Invalid request body
           schema:
-            type: string
+            $ref: '#/definitions/handlers.ErrorResponse'
         "401":
           description: Invalid credentials
           schema:
-            type: string
+            $ref: '#/definitions/handlers.ErrorResponse'
         "500":
           description: Failed to create session
           schema:
-            type: string
+            $ref: '#/definitions/handlers.ErrorResponse'
       summary: User login
       tags:
       - users
-  /logout:
+  /api/v1/logout:
     post:
       description: Handles user logout.
       produces:
@@ -263,11 +286,11 @@ paths:
         "200":
           description: Logout successful
           schema:
-            type: string
+            $ref: '#/definitions/handlers.Response'
       summary: User logout
       tags:
       - users
-  /signup:
+  /api/v1/signup:
     post:
       consumes:
       - application/json
@@ -285,19 +308,19 @@ paths:
         "200":
           description: Signup successful
           schema:
-            type: string
+            $ref: '#/definitions/handlers.Response'
         "400":
           description: Invalid request body
           schema:
-            type: string
+            $ref: '#/definitions/handlers.ErrorResponse'
         "500":
           description: Failed to add user
           schema:
-            type: string
+            $ref: '#/definitions/handlers.ErrorResponse'
       summary: User signup
       tags:
       - users
-  /verify-auth:
+  /api/v1/verify-auth:
     get:
       description: Verify user authentication using sessions
       produces:
@@ -306,11 +329,11 @@ paths:
         "200":
           description: OK
           schema:
-            type: string
+            $ref: '#/definitions/handlers.Response'
         "401":
           description: Not Authorized
           schema:
-            type: string
+            $ref: '#/definitions/handlers.Response'
       summary: Verify user authentication
       tags:
       - users

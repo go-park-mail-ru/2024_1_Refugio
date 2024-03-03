@@ -12,6 +12,7 @@ type UserMemoryRepository struct {
 	users map[uint32]*User
 }
 
+// CheckPasswordHash compares a password with a hash and returns true if they match, otherwise false.
 func CheckPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
@@ -19,17 +20,12 @@ func CheckPasswordHash(password, hash string) bool {
 
 // NewUserMemoryRepository creates a new instance of UserMemoryRepository.
 func NewInMemoryUserRepository() *UserMemoryRepository {
-	defaultUsers := map[uint32]*User{
-		1: {ID: 1, Name: "Sergey", Surname: "Fedasov", Login: "sergey@mail.ru", Password: "1234"},
-		2: {ID: 2, Name: "Ivan", Surname: "Karpov", Login: "ivan@mail.ru", Password: "1234"},
-		3: {ID: 3, Name: "Max", Surname: "Frelich", Login: "max@mail.ru", Password: "love"},
-	}
-
 	return &UserMemoryRepository{
-		users: defaultUsers,
+		users: FakeUsers,
 	}
 }
 
+// NewEmptyInMemoryUserRepository creates a new user repository in memory with an empty default user list.
 func NewEmptyInMemoryUserRepository() *UserMemoryRepository {
 	defaultUsers := map[uint32]*User{}
 	return &UserMemoryRepository{
@@ -37,6 +33,8 @@ func NewEmptyInMemoryUserRepository() *UserMemoryRepository {
 	}
 }
 
+// ComparingUserObjects compares two user objects by comparing their IDs, names, surnames, logins, and password hashes.
+// If all fields match, the function returns true, otherwise false.
 func ComparingUserObjects(object1, object2 User) bool {
 	if object1.ID == object2.ID &&
 		object1.Name == object2.Name &&
