@@ -53,7 +53,15 @@ func main() {
 
 	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
-	corsHandler := cors.Default().Handler(router)
+	// corsHandler := cors.Default().Handler(router)
+
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://127.0.0.1:8081", "http://localhost:8081", "http://89.208.223.140:8080"},
+		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodDelete, http.MethodPut, http.MethodOptions},
+		AllowCredentials: true,
+	})
+
+	corsHandler := c.Handler(router)
 
 	port := 8080
 	fmt.Printf("The server is running on http://0.0.0.0:%d\n", port)
