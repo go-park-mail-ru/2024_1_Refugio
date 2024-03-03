@@ -56,7 +56,7 @@ func main() {
 	// corsHandler := cors.Default().Handler(router)
 
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://127.0.0.1:8081", "http://localhost:8081", "http://89.208.223.140:8080"},
+		AllowedOrigins:   []string{"http://127.0.0.1:8081", "http://localhost:8081", "http://89.208.223.140:8080", "http://127.0.0.1:8081/"},
 		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodDelete, http.MethodPut, http.MethodOptions},
 		AllowCredentials: true,
 	})
