@@ -20,7 +20,7 @@ import (
 // @version 1.0
 // @description API server for mail
 
-// @host 0.0.0.0:8080
+// @host 89.208.223.140:8080
 // @BasePath /
 func main() {
 	sessionsManager := session.NewSessionsManager()
