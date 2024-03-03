@@ -2,27 +2,17 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 
 	"mail/pkg/session"
 	"mail/pkg/user"
-
-	"golang.org/x/crypto/bcrypt"
 )
 
 // UserHandler handles user-related HTTP requests.
 type UserHandler struct {
 	UserRepository user.UserRepository
 	Sessions       *session.SessionsManager
-}
-
-func HashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
-	b, _ := bcrypt.GenerateFromPassword([]byte("1234"), 14)
-	fmt.Println("1234 ---> ", string(b))
-	return string(bytes), err
 }
 
 // VerifyAuth verifies user authentication.
@@ -34,6 +24,8 @@ func HashPassword(password string) (string, error) {
 // @Failure 401 {object} Response "Not Authorized"
 // @Router /api/v1/verify-auth [get]
 func (uh *UserHandler) VerifyAuth(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w, r)
+
 	_, err := uh.Sessions.Check(r)
 	if err != nil {
 		handleError(w, http.StatusUnauthorized, "Not Authorized")
@@ -56,6 +48,8 @@ func (uh *UserHandler) VerifyAuth(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} ErrorResponse "Failed to create session"
 // @Router /api/v1/login [post]
 func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w, r)
+
 	var credentials user.User
 	err := json.NewDecoder(r.Body).Decode(&credentials)
 	if err != nil {
@@ -106,6 +100,8 @@ func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} ErrorResponse "Failed to add user"
 // @Router /api/v1/signup [post]
 func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w, r)
+
 	var newUser user.User
 	err := json.NewDecoder(r.Body).Decode(&newUser)
 	if err != nil {
@@ -125,12 +121,6 @@ func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	newUser.Password, err = HashPassword(newUser.Password)
-	if err != nil {
-		handleError(w, http.StatusInternalServerError, "Failed")
-		return
-	}
-
 	_, er := uh.UserRepository.Add(&newUser)
 	if er != nil {
 		handleError(w, http.StatusInternalServerError, "Failed to add user")
@@ -147,6 +137,8 @@ func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} Response "Logout successful"
 // @Router /api/v1/logout [post]
 func (uh *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w, r)
+
 	err := uh.Sessions.DestroyCurrent(w, r)
 	if err != nil {
 		handleError(w, http.StatusUnauthorized, "Not Authorized")
@@ -166,6 +158,8 @@ func (uh *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} ErrorResponse "Internal Server Error"
 // @Router /api/v1/get-user [get]
 func (uh *UserHandler) GetUserBySession(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w, r)
+
 	sessionUser, err := uh.Sessions.Check(r)
 	if err != nil {
 		handleError(w, http.StatusUnauthorized, "Not Authorized")

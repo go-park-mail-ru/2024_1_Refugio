@@ -37,3 +37,17 @@ func handleError(w http.ResponseWriter, status int, message string) {
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(response)
 }
+
+// enableCors adds CORS headers to the server response.
+// Headers include allowed origin, methods, and headers.
+// If the request is an OPTIONS preflight request, a successful status is returned without further processing.
+func enableCors(w *http.ResponseWriter, r *http.Request) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+	(*w).Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE")
+	(*w).Header().Set("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With")
+
+	if r.Method == "OPTIONS" {
+		(*w).WriteHeader(http.StatusOK)
+		return
+	}
+}
