@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"mail/pkg/session"
@@ -18,6 +19,8 @@ type UserHandler struct {
 
 func HashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	b, _ := bcrypt.GenerateFromPassword([]byte("1234"), 14)
+	fmt.Println("1234 ---> ", string(b))
 	return string(bytes), err
 }
 
