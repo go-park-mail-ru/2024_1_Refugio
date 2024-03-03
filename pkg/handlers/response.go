@@ -42,7 +42,7 @@ func handleError(w http.ResponseWriter, status int, message string) {
 // Headers include allowed origin, methods, and headers.
 // If the request is an OPTIONS preflight request, a successful status is returned without further processing.
 func enableCors(w *http.ResponseWriter, r *http.Request) {
-	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+	(*w).Header().Set("Access-Control-Allow-Origin", "127.0.0.1, localhost, 89.208.223.140")
 	(*w).Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE")
 	(*w).Header().Set("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With")
 
