@@ -288,6 +288,10 @@ func TestEmailStatusList(t *testing.T) {
 	}
 }
 
+type EmailBody struct {
+	Email email.Email `json:"email"`
+}
+
 func TestEmailGetByID(t *testing.T) {
 	t.Parallel()
 	var (
@@ -320,8 +324,8 @@ func TestEmailGetByID(t *testing.T) {
 		Path:    "/",
 	}
 	// Add email
-	for _, body := range email.FakeEmails {
-		respJSON, _ := json.Marshal(body)
+	for i := 0; i < len(email.FakeEmails); i++ {
+		respJSON, _ := json.Marshal(email.FakeEmails[uint64(i)])
 		r := httptest.NewRequest("POST", "/api/v1/email/add", bytes.NewReader(respJSON))
 		r.AddCookie(cookie)
 		w := httptest.NewRecorder()
@@ -335,35 +339,35 @@ func TestEmailGetByID(t *testing.T) {
 		vars := map[string]string{"id": fmt.Sprintf("%s", strconv.Itoa(int(i+1)))}
 		r = mux.SetURLVars(r, vars)
 		emailHandler.GetByID(w, r)
-		var mail map[string]interface{}
-		err = json.NewDecoder(w.Body).Decode(&mail)
 
-		body := mail["body"].(map[string]interface{})
-		email := body["email"].(map[string]interface{})
+		var emailResponse Response
+		err := json.NewDecoder(w.Body).Decode(&emailResponse)
+		if err != nil {
+			fmt.Println("Error decoding JSON:", err)
+			return
+		}
 
-		// Доступ к значениям email
-		id := email["id"].(float64) // Приводим к нужному типу
-		topic := email["topic"].(string)
-		text := email["text"].(string)
-		readStatus := email["readStatus"].(bool)
-		deleted := email["deleted"].(bool)
-		dateOfDispatch, _ := time.Parse(time.RFC3339, email["dateOfDispatch"].(string))
-		draftStatus := email["draftStatus"].(bool)
+		bodyBytes, err := json.Marshal(emailResponse.Body)
+		if err != nil {
+			fmt.Println("Error encoding JSON:", err)
+			return
+		}
 
-		fmt.Println("Email ID:", id)
-		fmt.Println("Topic:", topic)
-		fmt.Println("Text:", text)
-		fmt.Println("Read Status:", readStatus)
-		fmt.Println("Deleted:", deleted)
-		fmt.Println("Date of Dispatch:", dateOfDispatch)
-		fmt.Println("Draft Status:", draftStatus)
+		bodyReader := bytes.NewReader(bodyBytes)
 
-		//fmt.Println(mail["body"].(map[string]interface{})["email"].(email.Email))
-		/*if mail["body"].(map[string]interface{})["email"].(email.Email) != *email.FakeEmails[i] {
+		var mail EmailBody
+		err = json.NewDecoder(bodyReader).Decode(&mail)
+		if err != nil {
+			fmt.Println("Error decoding JSON:", err)
+			return
+		}
+
+		fakeEmail, _ := emailRepository.GetAll()
+		if mail.Email != *fakeEmail[i] {
 			t.Error("bad values writeEmail[i] != *email.FakeEmails[i] ")
 			assert.Equal(t, *email.FakeEmails[i], mail)
 			return
-		}*/
+		}
 	}
 }
 
