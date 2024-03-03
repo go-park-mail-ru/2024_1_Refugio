@@ -6,7 +6,7 @@
         "contact": {},
         "version": "1.0"
     },
-    "host": "89.208.223.140:8080",
+    "host": "localhost:8080",
     "basePath": "/",
     "paths": {
         "/api/v1/email/add": {
