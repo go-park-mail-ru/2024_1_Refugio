@@ -111,7 +111,7 @@ func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if isEmpty(newUser.Name) || isEmpty(newUser.Surname) || isEmpty(newUser.Login) || isEmpty(newUser.Password) {
-		handleError(w, http.StatusInternalServerError, "All fields must be filled in")
+		handleError(w, http.StatusBadRequest, "All fields must be filled in")
 	}
 
 	users, _ := uh.UserRepository.GetAll()

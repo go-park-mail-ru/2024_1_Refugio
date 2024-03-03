@@ -18,9 +18,9 @@ func TestGetAll(t *testing.T) {
 		return
 	}
 	for i := 0; i < len(emails); i++ {
-		if *emails[i] != *FakeEmails[i] {
+		if *emails[i] != *FakeEmails[uint64(i+1)] {
 			t.Error("emails[i] != FakeEmails[i]")
-			assert.Equal(t, FakeEmails[i], emails[i])
+			assert.Equal(t, FakeEmails[uint64(i)], emails[i])
 		}
 	}
 }
@@ -32,16 +32,16 @@ func TestGetByID(t *testing.T) {
 			fmt.Println(err)
 			return
 		}
-		if *email != *FakeEmails[i-1] {
+		if *email != *FakeEmails[uint64(i)] {
 			t.Error("email != FakeEmails[i]")
-			assert.Equal(t, FakeEmails[i], email)
+			assert.Equal(t, FakeEmails[uint64(i-1)], email)
 			return
 		}
 	}
 }
 
 func TestAdd(t *testing.T) {
-	repo = NewEmailMemoryRepository()
+	repo = NewEmptyInMemoryEmailRepository()
 	arrEmails := []*Email{
 		{
 			ID:             1,
@@ -95,7 +95,7 @@ func TestAdd(t *testing.T) {
 	for i := 0; i < len(arrEmails); i++ {
 		if *arrEmails[i] != *mails[i] {
 			t.Error("arrEmails[i] != mails[i]")
-			assert.Equal(t, FakeEmails[i], mails[i])
+			assert.Equal(t, *arrEmails[i], mails[i])
 			return
 		}
 	}
@@ -160,7 +160,7 @@ func TestUpdate(t *testing.T) {
 	for i := 0; i < len(arrEmails); i++ {
 		if *arrEmails[i] != *mails[i] {
 			t.Error("arrEmails[i] != mails[i]")
-			assert.Equal(t, FakeEmails[i], mails[i])
+			assert.Equal(t, *arrEmails[i], mails[i])
 			return
 		}
 	}
@@ -251,7 +251,7 @@ func TestDelete(t *testing.T) {
 	for i := 0; i < len(expectedEmails); i++ {
 		if *expectedEmails[i] != *mails[i] {
 			t.Error("arrEmails[i] != mails[i]")
-			assert.Equal(t, FakeEmails[i], mails[i])
+			assert.Equal(t, *expectedEmails[i], mails[i])
 			return
 		}
 	}

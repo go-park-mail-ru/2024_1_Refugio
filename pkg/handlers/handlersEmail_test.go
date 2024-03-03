@@ -335,7 +335,8 @@ func TestEmailGetByID(t *testing.T) {
 	r := httptest.NewRequest("GET", "/api/v1/email/{id}", nil)
 	r.AddCookie(cookie)
 	w := httptest.NewRecorder()
-	for i, _ := range email.FakeEmails {
+	fakeEmail, _ := emailRepository.GetAll()
+	for i, _ := range fakeEmail {
 		vars := map[string]string{"id": fmt.Sprintf("%s", strconv.Itoa(int(i+1)))}
 		r = mux.SetURLVars(r, vars)
 		emailHandler.GetByID(w, r)
@@ -362,10 +363,9 @@ func TestEmailGetByID(t *testing.T) {
 			return
 		}
 
-		fakeEmail, _ := emailRepository.GetAll()
 		if mail.Email != *fakeEmail[i] {
 			t.Error("bad values writeEmail[i] != *email.FakeEmails[i] ")
-			assert.Equal(t, *email.FakeEmails[i], mail)
+			assert.Equal(t, *fakeEmail[i], mail)
 			return
 		}
 	}
@@ -376,7 +376,7 @@ func TestEmailStatusGetByID(t *testing.T) {
 	var (
 		sessionsManager = session.NewSessionsManager()
 
-		emailRepository = email.NewEmailMemoryRepository()
+		emailRepository = email.NewEmptyInMemoryEmailRepository()
 		emailHandler    = &EmailHandler{
 			EmailRepository: emailRepository,
 			Sessions:        sessionsManager,

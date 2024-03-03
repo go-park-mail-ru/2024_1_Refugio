@@ -13,8 +13,9 @@ type EmailMemoryRepository struct {
 
 // NewEmailMemoryRepository creates a new instance of EmailMemoryRepository.
 func NewEmailMemoryRepository() *EmailMemoryRepository {
+	fakeEmails := FakeEmails
 	return &EmailMemoryRepository{
-		emails: FakeEmails,
+		emails: fakeEmails,
 	}
 }
 
@@ -27,9 +28,10 @@ func NewEmptyInMemoryEmailRepository() *EmailMemoryRepository {
 }
 
 func CreateFakeEmails() *EmailMemoryRepository {
-	repo := NewEmailMemoryRepository()
-	for i := 0; i < len(FakeEmails); i++ {
-		repo.emails[uint64(i+1)] = FakeEmails[uint64(i)]
+	repo := NewEmptyInMemoryEmailRepository()
+
+	for i := 1; i-1 < len(FakeEmails); i++ {
+		repo.emails[uint64(i)] = FakeEmails[uint64(i)]
 	}
 	return repo
 }
