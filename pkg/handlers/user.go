@@ -177,8 +177,14 @@ func (uh *UserHandler) GetUserBySession(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	userData.Password = ""
-	handleSuccess(w, http.StatusOK, map[string]interface{}{"user": userData})
+	userJson := user.User{
+		Login:    userData.Login,
+		Name:     userData.Name,
+		Surname:  userData.Surname,
+		AvatarId: userData.AvatarId,
+	}
+	
+	handleSuccess(w, http.StatusOK, map[string]interface{}{"user": userJson})
 }
 
 // isEmpty checks if the given string is empty after trimming leading and trailing whitespace.
