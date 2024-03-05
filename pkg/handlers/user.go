@@ -68,19 +68,18 @@ func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("credentials:%d\n", credentials)
 	ourUser, ourUserDefault := user.User{}, user.User{}
 	for _, u := range users {
+		fmt.Printf("Login:%d\n", u.Login)
+		fmt.Printf("Password:%d\n", u.Password)
 		if u.Login == credentials.Login {
 			if user.CheckPasswordHash(credentials.Password, u.Password) {
 				ourUser = *u
-				fmt.Printf("u:%d\n", *u)
 				break
 			} else {
 				break
 			}
 		}
 	}
-	if ourUser.Login == "" || ourUser == ourUserDefault {
-		fmt.Printf("ourUser:%d\n", ourUser)
-		fmt.Printf("ourUserDefault:%d\n", ourUserDefault)
+	if ourUser == ourUserDefault {
 		handleError(w, http.StatusUnauthorized, "Login failed")
 		return
 	}
