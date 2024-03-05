@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -64,12 +63,8 @@ func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	users, _ := uh.UserRepository.GetAll()
-	fmt.Printf("users:%d\n", users)
-	fmt.Printf("credentials:%d\n", credentials)
 	ourUser, ourUserDefault := user.User{}, user.User{}
 	for _, u := range users {
-		fmt.Printf("Login:%d\n", u.Login)
-		fmt.Printf("Password:%d\n", u.Password)
 		if u.Login == credentials.Login {
 			if user.CheckPasswordHash(credentials.Password, u.Password) {
 				ourUser = *u
@@ -183,7 +178,7 @@ func (uh *UserHandler) GetUserBySession(w http.ResponseWriter, r *http.Request) 
 		Surname:  userData.Surname,
 		AvatarId: userData.AvatarId,
 	}
-	
+
 	handleSuccess(w, http.StatusOK, map[string]interface{}{"user": userJson})
 }
 
