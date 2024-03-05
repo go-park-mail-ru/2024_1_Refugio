@@ -62,8 +62,8 @@ func main() {
 	corsHandler := c.Handler(router)
 
 	port := 8080
-	fmt.Printf("The server is running on http://0.0.0.0:%d\n", port)
-	fmt.Printf("Swagger is running on http://0.0.0.0:%d/swagger/index.html\n", port)
+	fmt.Printf("The server is running on http://localhost:%d\n", port)
+	fmt.Printf("Swagger is running on http://localhost:%d/swagger/index.html\n", port)
 
 	err := http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", port), corsHandler)
 	if err != nil {

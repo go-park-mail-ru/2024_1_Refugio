@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -68,13 +69,17 @@ func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		if u.Login == credentials.Login {
 			if user.CheckPasswordHash(credentials.Password, u.Password) {
 				ourUser = *u
+				fmt.Printf("u:%d\n", *u)
+				fmt.Printf("ourUser:%d\n", ourUser)
 				break
 			} else {
 				break
 			}
 		}
 	}
-	if ourUser == ourUserDefault {
+	if ourUser.Login == "" || ourUser == ourUserDefault {
+		fmt.Printf("ourUser:%d\n", ourUser)
+		fmt.Printf("ourUserDefault:%d\n", ourUserDefault)
 		handleError(w, http.StatusUnauthorized, "Login failed")
 		return
 	}
