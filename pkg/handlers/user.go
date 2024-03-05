@@ -64,13 +64,14 @@ func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	users, _ := uh.UserRepository.GetAll()
+	fmt.Printf("users:%d\n", users)
+	fmt.Printf("credentials:%d\n", credentials)
 	ourUser, ourUserDefault := user.User{}, user.User{}
 	for _, u := range users {
 		if u.Login == credentials.Login {
 			if user.CheckPasswordHash(credentials.Password, u.Password) {
 				ourUser = *u
 				fmt.Printf("u:%d\n", *u)
-				fmt.Printf("ourUser:%d\n", ourUser)
 				break
 			} else {
 				break
