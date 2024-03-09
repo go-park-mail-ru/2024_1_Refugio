@@ -65,7 +65,7 @@ definitions:
         description: User's last name.
         type: string
     type: object
-host: 89.208.223.140:8080
+host: localhost:8080
 info:
   contact: {}
   description: API server for mail
