@@ -61,11 +61,11 @@
 				
 				<option value="file2">mail/pkg/email/repo.go (89.6%)</option>
 				
-				<option value="file3">mail/pkg/handlers/email.go (82.5%)</option>
+				<option value="file3">mail/pkg/handlers/email.go (81.3%)</option>
 				
-				<option value="file4">mail/pkg/handlers/response.go (85.7%)</option>
+				<option value="file4">mail/pkg/handlers/response.go (100.0%)</option>
 				
-				<option value="file5">mail/pkg/handlers/user.go (59.1%)</option>
+				<option value="file5">mail/pkg/handlers/user.go (55.6%)</option>
 				
 				<option value="file6">mail/pkg/middleware/auth.go (100.0%)</option>
 				
@@ -73,7 +73,7 @@
 				
 				<option value="file8">mail/pkg/session/session.go (100.0%)</option>
 				
-				<option value="file9">mail/pkg/user/repo.go (81.2%)</option>
+				<option value="file9">mail/pkg/user/repo.go (87.9%)</option>
 				
 				</select>
 			</div>
@@ -109,7 +109,7 @@ import (
 // @version 1.0
 // @description API server for mail
 
-// @host 89.208.223.140:8080
+// @host localhost:8080
 // @BasePath /
 func main() <span class="cov0" title="0">{
         sessionsManager := session.NewSessionsManager()
@@ -143,7 +143,7 @@ func main() <span class="cov0" title="0">{
         router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
         c := cors.New(cors.Options{
-                AllowedOrigins:   []string{"http://127.0.0.1:8081", "http://localhost:8080", "http://89.208.223.140:8080", "http://89.208.223.140:8081"},
+                AllowedOrigins:   []string{"http://127.0.0.1:8081", "http://89.208.223.140:8081", "http://localhost:8080", "http://localhost:8081", "http://89.208.223.140:8080"},
                 AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodDelete, http.MethodPut, http.MethodOptions},
                 AllowCredentials: true,
         })
@@ -682,7 +682,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &amp;swag.Spec{
         Version:          "1.0",
-        Host:             "89.208.223.140:8080",
+        Host:             "localhost:8080",
         BasePath:         "/",
         Schemes:          []string{},
         Title:            "API Mail",
@@ -818,11 +818,10 @@ func (repository *EmailMemoryRepository) Delete(id uint64) (bool, error) <span c
 import (
         "encoding/json"
         "fmt"
-        "net/http"
-        "strconv"
-
         "mail/pkg/email"
         "mail/pkg/session"
+        "net/http"
+        "strconv"
 
         "github.com/gorilla/mux"
         "github.com/gorilla/schema"
@@ -844,8 +843,6 @@ type EmailHandler struct {
 // @Failure 500 {object} Response "JSON encoding error"
 // @Router /api/v1/emails [get]
 func (h *EmailHandler) List(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
-        enableCors(&amp;w, r)
-
         _, err := h.Sessions.Check(r)
         if err != nil </span><span class="cov8" title="1">{
                 handleError(w, http.StatusUnauthorized, "Not Authorized")
@@ -872,8 +869,6 @@ func (h *EmailHandler) List(w http.ResponseWriter, r *http.Request) <span class=
 // @Failure 404 {object} Response "Email not found"
 // @Router /api/v1/email/{id} [get]
 func (h *EmailHandler) GetByID(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
-        enableCors(&amp;w, r)
-
         _, err := h.Sessions.Check(r)
         if err != nil </span><span class="cov8" title="1">{
                 handleError(w, http.StatusUnauthorized, "Not Authorized")
@@ -908,8 +903,6 @@ func (h *EmailHandler) GetByID(w http.ResponseWriter, r *http.Request) <span cla
 // @Failure 500 {object} Response "Failed to add email message"
 // @Router /api/v1/email/add [post]
 func (h *EmailHandler) Add(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
-        enableCors(&amp;w, r)
-
         _, err := h.Sessions.Check(r)
         if err != nil </span><span class="cov8" title="1">{
                 handleError(w, http.StatusUnauthorized, "Not Authorized")
@@ -947,8 +940,6 @@ func (h *EmailHandler) Add(w http.ResponseWriter, r *http.Request) <span class="
 // @Failure 500 {object} Response "Failed to update email message"
 // @Router /api/v1/email/update/{id} [put]
 func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
-        enableCors(&amp;w, r)
-
         _, err := h.Sessions.Check(r)
         if err != nil </span><span class="cov8" title="1">{
                 handleError(w, http.StatusUnauthorized, "Not Authorized")
@@ -992,8 +983,6 @@ func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) <span clas
 // @Failure 500 {object} Response "Failed to delete email message"
 // @Router /api/v1/email/delete/{id} [delete]
 func (h *EmailHandler) Delete(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
-        enableCors(&amp;w, r)
-
         _, err := h.Sessions.Check(r)
         if err != nil </span><span class="cov8" title="1">{
                 handleError(w, http.StatusUnauthorized, "Not Authorized")
@@ -1056,20 +1045,6 @@ func handleError(w http.ResponseWriter, status int, message string) <span class=
         w.WriteHeader(status)
         json.NewEncoder(w).Encode(response)
 }</span>
-
-// enableCors adds CORS headers to the server response.
-// Headers include allowed origin, methods, and headers.
-// If the request is an OPTIONS preflight request, a successful status is returned without further processing.
-func enableCors(w *http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
-        (*w).Header().Set("Access-Control-Allow-Origin", "http://89.208.223.140:8081")
-        (*w).Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE")
-        (*w).Header().Set("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With")
-
-        if r.Method == "OPTIONS" </span><span class="cov0" title="0">{
-                (*w).WriteHeader(http.StatusOK)
-                return
-        }</span>
-}
 </pre>
 		
 		<pre class="file" id="file5" style="display: none">package handlers
@@ -1098,8 +1073,6 @@ type UserHandler struct {
 // @Failure 401 {object} Response "Not Authorized"
 // @Router /api/v1/verify-auth [get]
 func (uh *UserHandler) VerifyAuth(w http.ResponseWriter, r *http.Request) <span class="cov0" title="0">{
-        enableCors(&amp;w, r)
-
         _, err := uh.Sessions.Check(r)
         if err != nil </span><span class="cov0" title="0">{
                 handleError(w, http.StatusUnauthorized, "Not Authorized")
@@ -1122,8 +1095,6 @@ func (uh *UserHandler) VerifyAuth(w http.ResponseWriter, r *http.Request) <span 
 // @Failure 500 {object} ErrorResponse "Failed to create session"
 // @Router /api/v1/login [post]
 func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
-        enableCors(&amp;w, r)
-
         var credentials user.User
         err := json.NewDecoder(r.Body).Decode(&amp;credentials)
         if err != nil </span><span class="cov8" title="1">{
@@ -1136,19 +1107,8 @@ func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) <span class
                 return
         }</span>
 
-        <span class="cov8" title="1">users, _ := uh.UserRepository.GetAll()
-        ourUser, ourUserDefault := user.User{}, user.User{}
-        for _, u := range users </span><span class="cov8" title="1">{
-                if u.Login == credentials.Login </span><span class="cov8" title="1">{
-                        if user.CheckPasswordHash(credentials.Password, u.Password) </span><span class="cov8" title="1">{
-                                ourUser = *u
-                                break</span>
-                        } else<span class="cov0" title="0"> {
-                                break</span>
-                        }
-                }
-        }
-        <span class="cov8" title="1">if ourUser == ourUserDefault </span><span class="cov8" title="1">{
+        <span class="cov8" title="1">ourUser, err := uh.UserRepository.GetUserByLogin(credentials.Login, credentials.Password)
+        if err != nil </span><span class="cov8" title="1">{
                 handleError(w, http.StatusUnauthorized, "Login failed")
                 return
         }</span>
@@ -1174,8 +1134,6 @@ func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) <span class
 // @Failure 500 {object} ErrorResponse "Failed to add user"
 // @Router /api/v1/signup [post]
 func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
-        enableCors(&amp;w, r)
-
         var newUser user.User
         err := json.NewDecoder(r.Body).Decode(&amp;newUser)
         if err != nil </span><span class="cov8" title="1">{
@@ -1211,8 +1169,6 @@ func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) <span clas
 // @Success 200 {object} Response "Logout successful"
 // @Router /api/v1/logout [post]
 func (uh *UserHandler) Logout(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
-        enableCors(&amp;w, r)
-
         err := uh.Sessions.DestroyCurrent(w, r)
         if err != nil </span><span class="cov0" title="0">{
                 handleError(w, http.StatusUnauthorized, "Not Authorized")
@@ -1232,8 +1188,6 @@ func (uh *UserHandler) Logout(w http.ResponseWriter, r *http.Request) <span clas
 // @Failure 500 {object} ErrorResponse "Internal Server Error"
 // @Router /api/v1/get-user [get]
 func (uh *UserHandler) GetUserBySession(w http.ResponseWriter, r *http.Request) <span class="cov0" title="0">{
-        enableCors(&amp;w, r)
-
         sessionUser, err := uh.Sessions.Check(r)
         if err != nil </span><span class="cov0" title="0">{
                 handleError(w, http.StatusUnauthorized, "Not Authorized")
@@ -1437,16 +1391,19 @@ func NewEmptyInMemoryUserRepository() *UserMemoryRepository <span class="cov8" t
 
 // HashPassword takes a plaintext password as input and returns its bcrypt hash.
 func HashPassword(password string) (string, bool) <span class="cov8" title="1">{
-        bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+        bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
         if err != nil </span><span class="cov0" title="0">{
                 return "", false
         }</span>
 
-        <span class="cov8" title="1">return string(bytes), true</span>
+        <span class="cov8" title="1">hashedPassword := string(bytes)
+        fmt.Println("Hashed Password:", hashedPassword)
+
+        return string(bytes), true</span>
 }
 
 // CheckPasswordHash compares a password with a hash and returns true if they match, otherwise false.
-func CheckPasswordHash(password, hash string) bool <span class="cov0" title="0">{
+func CheckPasswordHash(password, hash string) bool <span class="cov8" title="1">{
         err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
         return err == nil
 }</span>
@@ -1488,6 +1445,24 @@ func (repo *UserMemoryRepository) GetByID(id uint32) (*User, error) <span class=
         }</span>
 
         <span class="cov8" title="1">return user, nil</span>
+}
+
+// GetUserByLogin returns the user by login.
+func (repo *UserMemoryRepository) GetUserByLogin(login string, password string) (*User, error) <span class="cov8" title="1">{
+        repo.mutex.RLock()
+        defer repo.mutex.RUnlock()
+
+        for _, u := range repo.users </span><span class="cov8" title="1">{
+                if u.Login == login </span><span class="cov8" title="1">{
+                        if CheckPasswordHash(password, u.Password) </span><span class="cov8" title="1">{
+                                return u, nil
+                        }</span> else<span class="cov8" title="1"> {
+                                return nil, fmt.Errorf("User with the username %s was not found", login)
+                        }</span>
+                }
+        }
+
+        <span class="cov8" title="1">return nil, fmt.Errorf("User with the username %s was not found", login)</span>
 }
 
 // Add adds a new user to the storage and returns its assigned unique identifier.

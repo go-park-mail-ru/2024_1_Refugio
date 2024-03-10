@@ -24,8 +24,6 @@ type UserHandler struct {
 // @Failure 401 {object} Response "Not Authorized"
 // @Router /api/v1/verify-auth [get]
 func (uh *UserHandler) VerifyAuth(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w, r)
-
 	_, err := uh.Sessions.Check(r)
 	if err != nil {
 		handleError(w, http.StatusUnauthorized, "Not Authorized")
@@ -48,8 +46,6 @@ func (uh *UserHandler) VerifyAuth(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} ErrorResponse "Failed to create session"
 // @Router /api/v1/login [post]
 func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w, r)
-
 	var credentials user.User
 	err := json.NewDecoder(r.Body).Decode(&credentials)
 	if err != nil {
@@ -62,19 +58,8 @@ func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	users, _ := uh.UserRepository.GetAll()
-	ourUser, ourUserDefault := user.User{}, user.User{}
-	for _, u := range users {
-		if u.Login == credentials.Login {
-			if user.CheckPasswordHash(credentials.Password, u.Password) {
-				ourUser = *u
-				break
-			} else {
-				break
-			}
-		}
-	}
-	if ourUser == ourUserDefault {
+	ourUser, err := uh.UserRepository.GetUserByLogin(credentials.Login, credentials.Password)
+	if err != nil {
 		handleError(w, http.StatusUnauthorized, "Login failed")
 		return
 	}
@@ -100,8 +85,6 @@ func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} ErrorResponse "Failed to add user"
 // @Router /api/v1/signup [post]
 func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w, r)
-
 	var newUser user.User
 	err := json.NewDecoder(r.Body).Decode(&newUser)
 	if err != nil {
@@ -137,8 +120,6 @@ func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} Response "Logout successful"
 // @Router /api/v1/logout [post]
 func (uh *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w, r)
-
 	err := uh.Sessions.DestroyCurrent(w, r)
 	if err != nil {
 		handleError(w, http.StatusUnauthorized, "Not Authorized")
@@ -158,8 +139,6 @@ func (uh *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} ErrorResponse "Internal Server Error"
 // @Router /api/v1/get-user [get]
 func (uh *UserHandler) GetUserBySession(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w, r)
-
 	sessionUser, err := uh.Sessions.Check(r)
 	if err != nil {
 		handleError(w, http.StatusUnauthorized, "Not Authorized")
