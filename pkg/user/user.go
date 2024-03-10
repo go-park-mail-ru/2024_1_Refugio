@@ -18,6 +18,9 @@ type UserRepository interface {
 	// GetByID returns the user by its unique identifier.
 	GetByID(id uint32) (*User, error)
 
+	// GetUserByLogin returns the user by login.
+	GetUserByLogin(login string, password string) (*User, error)
+
 	// Add adds a new user to the storage and returns its assigned unique identifier.
 	Add(user *User) (uint32, error)
 

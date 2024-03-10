@@ -29,10 +29,13 @@ func NewEmptyInMemoryUserRepository() *UserMemoryRepository {
 
 // HashPassword takes a plaintext password as input and returns its bcrypt hash.
 func HashPassword(password string) (string, bool) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return "", false
 	}
+
+	hashedPassword := string(bytes)
+	fmt.Println("Hashed Password:", hashedPassword)
 
 	return string(bytes), true
 }
@@ -80,6 +83,24 @@ func (repo *UserMemoryRepository) GetByID(id uint32) (*User, error) {
 	}
 
 	return user, nil
+}
+
+// GetUserByLogin returns the user by login.
+func (repo *UserMemoryRepository) GetUserByLogin(login string, password string) (*User, error) {
+	repo.mutex.RLock()
+	defer repo.mutex.RUnlock()
+
+	for _, u := range repo.users {
+		if u.Login == login {
+			if CheckPasswordHash(password, u.Password) {
+				return u, nil
+			} else {
+				return nil, fmt.Errorf("User with the username %s was not found", login)
+			}
+		}
+	}
+
+	return nil, fmt.Errorf("User with the username %s was not found", login)
 }
 
 // Add adds a new user to the storage and returns its assigned unique identifier.

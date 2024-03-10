@@ -121,3 +121,33 @@ func TestDeleteUser(t *testing.T) {
 	// Проверяем, что удаленного пользователя нет
 	assert.Nil(t, deletedUser)
 }
+
+func TestGetUserByLogin(t *testing.T) {
+	// Создаем репозиторий в памяти
+	repo := NewInMemoryUserRepository()
+
+	// Создаем нового пользователя
+	newUser := &User{
+		Name:     "John",
+		Surname:  "Doe",
+		Login:    "john_doe",
+		Password: "1234",
+	}
+
+	// Добавляем пользователя в репозиторий
+	_, _ = repo.Add(newUser)
+
+	// Тестируем успешный поиск пользователя
+	foundUser, err := repo.GetUserByLogin("john_doe", "1234")
+	assert.NoError(t, err)
+	assert.NotNil(t, foundUser)
+	assert.Equal(t, newUser.Login, foundUser.Login)
+
+	// Тестируем поиск пользователя с неверным паролем
+	_, err = repo.GetUserByLogin(newUser.Login, "wrong_password")
+	assert.Error(t, err)
+
+	// Тестируем поиск несуществующего пользователя
+	_, err = repo.GetUserByLogin("nonexistent_user", "some_password")
+	assert.Error(t, err)
+}
