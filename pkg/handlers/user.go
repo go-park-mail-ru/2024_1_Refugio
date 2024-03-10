@@ -24,7 +24,7 @@ type UserHandler struct {
 // @Failure 401 {object} Response "Not Authorized"
 // @Router /api/v1/verify-auth [get]
 func (uh *UserHandler) VerifyAuth(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w, r)
+	// enableCors(&w, r)
 
 	_, err := uh.Sessions.Check(r)
 	if err != nil {
@@ -48,7 +48,7 @@ func (uh *UserHandler) VerifyAuth(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} ErrorResponse "Failed to create session"
 // @Router /api/v1/login [post]
 func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w, r)
+	// enableCors(&w, r)
 
 	var credentials user.User
 	err := json.NewDecoder(r.Body).Decode(&credentials)
@@ -100,7 +100,7 @@ func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} ErrorResponse "Failed to add user"
 // @Router /api/v1/signup [post]
 func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w, r)
+	// enableCors(&w, r)
 
 	var newUser user.User
 	err := json.NewDecoder(r.Body).Decode(&newUser)
@@ -137,7 +137,7 @@ func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} Response "Logout successful"
 // @Router /api/v1/logout [post]
 func (uh *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w, r)
+	// enableCors(&w, r)
 
 	err := uh.Sessions.DestroyCurrent(w, r)
 	if err != nil {
@@ -158,7 +158,7 @@ func (uh *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} ErrorResponse "Internal Server Error"
 // @Router /api/v1/get-user [get]
 func (uh *UserHandler) GetUserBySession(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w, r)
+	// enableCors(&w, r)
 
 	sessionUser, err := uh.Sessions.Check(r)
 	if err != nil {
