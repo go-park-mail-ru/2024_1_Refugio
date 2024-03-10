@@ -3,11 +3,10 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"strconv"
-
 	"mail/pkg/email"
 	"mail/pkg/session"
+	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
@@ -29,8 +28,6 @@ type EmailHandler struct {
 // @Failure 500 {object} Response "JSON encoding error"
 // @Router /api/v1/emails [get]
 func (h *EmailHandler) List(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w, r)
-
 	_, err := h.Sessions.Check(r)
 	if err != nil {
 		handleError(w, http.StatusUnauthorized, "Not Authorized")
@@ -57,8 +54,6 @@ func (h *EmailHandler) List(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} Response "Email not found"
 // @Router /api/v1/email/{id} [get]
 func (h *EmailHandler) GetByID(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w, r)
-
 	_, err := h.Sessions.Check(r)
 	if err != nil {
 		handleError(w, http.StatusUnauthorized, "Not Authorized")
@@ -93,8 +88,6 @@ func (h *EmailHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} Response "Failed to add email message"
 // @Router /api/v1/email/add [post]
 func (h *EmailHandler) Add(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w, r)
-
 	_, err := h.Sessions.Check(r)
 	if err != nil {
 		handleError(w, http.StatusUnauthorized, "Not Authorized")
@@ -132,8 +125,6 @@ func (h *EmailHandler) Add(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} Response "Failed to update email message"
 // @Router /api/v1/email/update/{id} [put]
 func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w, r)
-
 	_, err := h.Sessions.Check(r)
 	if err != nil {
 		handleError(w, http.StatusUnauthorized, "Not Authorized")
@@ -177,8 +168,6 @@ func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} Response "Failed to delete email message"
 // @Router /api/v1/email/delete/{id} [delete]
 func (h *EmailHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w, r)
-
 	_, err := h.Sessions.Check(r)
 	if err != nil {
 		handleError(w, http.StatusUnauthorized, "Not Authorized")
