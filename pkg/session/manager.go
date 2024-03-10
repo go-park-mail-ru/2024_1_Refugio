@@ -43,10 +43,11 @@ func (sm *SessionsManager) Create(w http.ResponseWriter, userID uint32) (*Sessio
 	sm.mu.RUnlock()
 
 	cookie := &http.Cookie{
-		Name:    "session_id",
-		Value:   sess.ID,
-		Expires: time.Now().Add(90 * 24 * time.Hour),
-		Path:    "/",
+		Name:     "session_id",
+		Value:    sess.ID,
+		Expires:  time.Now().Add(90 * 24 * time.Hour),
+		Path:     "/",
+		HttpOnly: true,
 	}
 	http.SetCookie(w, cookie)
 
