@@ -1,9 +1,12 @@
 package email
 
-import "time"
+import (
+	"mail/pkg/repository/models"
+	"time"
+)
 
 // FakeEmails presents fake email data for demonstration.
-var FakeEmails = map[uint64]*Email{
+var FakeEmails = map[uint64]*models.Email{
 	1: {
 		ID:             1,
 		Topic:          "Приглашение на мероприятие",

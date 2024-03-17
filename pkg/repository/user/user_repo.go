@@ -3,13 +3,16 @@ package user
 import (
 	"fmt"
 	"golang.org/x/crypto/bcrypt"
+	userCore "mail/pkg/domain/models"
+	"mail/pkg/repository/converters"
+	"mail/pkg/repository/models"
 	"sync"
 )
 
 // UserMemoryRepository is an in-memory implementation of UserRepository.
 type UserMemoryRepository struct {
 	mutex sync.RWMutex
-	users map[uint32]*User
+	users map[uint32]*models.User
 }
 
 // NewUserMemoryRepository creates a new instance of UserMemoryRepository.
@@ -21,7 +24,7 @@ func NewInMemoryUserRepository() *UserMemoryRepository {
 
 // NewEmptyInMemoryUserRepository creates a new user repository in memory with an empty default user list.
 func NewEmptyInMemoryUserRepository() *UserMemoryRepository {
-	defaultUsers := map[uint32]*User{}
+	defaultUsers := map[uint32]*models.User{}
 	return &UserMemoryRepository{
 		users: defaultUsers,
 	}
@@ -48,32 +51,36 @@ func CheckPasswordHash(password, hash string) bool {
 
 // ComparingUserObjects compares two user objects by comparing their IDs, names, surnames, logins, and password hashes.
 // If all fields match, the function returns true, otherwise false.
-func ComparingUserObjects(object1, object2 User) bool {
-	if object1.ID == object2.ID &&
-		object1.Name == object2.Name &&
-		object1.Surname == object2.Surname &&
-		object1.Login == object2.Login &&
-		CheckPasswordHash(object2.Password, object1.Password) {
+func ComparingUserObjects(object1, object2 userCore.User) bool {
+	userDb1 := converters.UserConvertCoreInDb(object1)
+	userDb2 := converters.UserConvertCoreInDb(object2)
+
+	if userDb1.ID == userDb2.ID &&
+		userDb1.Name == userDb2.Name &&
+		userDb1.Surname == userDb2.Surname &&
+		userDb1.Login == userDb2.Login &&
+		CheckPasswordHash(userDb2.Password, userDb1.Password) {
 		return true
 	}
+
 	return false
 }
 
 // GetAll returns all users from the storage.
-func (repo *UserMemoryRepository) GetAll() ([]*User, error) {
+func (repo *UserMemoryRepository) GetAll() ([]*userCore.User, error) {
 	repo.mutex.RLock()
 	defer repo.mutex.RUnlock()
 
-	users := make([]*User, 0, len(repo.users))
+	users := make([]*userCore.User, 0, len(repo.users))
 	for i := 0; i < len(repo.users); i++ {
-		users = append(users, repo.users[uint32(i+1)])
+		users = append(users, converters.UserConvertDbInCore(*repo.users[uint32(i+1)]))
 	}
 
 	return users, nil
 }
 
 // GetByID returns the user by its unique identifier.
-func (repo *UserMemoryRepository) GetByID(id uint32) (*User, error) {
+func (repo *UserMemoryRepository) GetByID(id uint32) (*userCore.User, error) {
 	repo.mutex.RLock()
 	defer repo.mutex.RUnlock()
 
@@ -82,18 +89,18 @@ func (repo *UserMemoryRepository) GetByID(id uint32) (*User, error) {
 		return nil, fmt.Errorf("User with id %d not found", id)
 	}
 
-	return user, nil
+	return converters.UserConvertDbInCore(*user), nil
 }
 
 // GetUserByLogin returns the user by login.
-func (repo *UserMemoryRepository) GetUserByLogin(login string, password string) (*User, error) {
+func (repo *UserMemoryRepository) GetUserByLogin(login string, password string) (*userCore.User, error) {
 	repo.mutex.RLock()
 	defer repo.mutex.RUnlock()
 
 	for _, u := range repo.users {
 		if u.Login == login {
 			if CheckPasswordHash(password, u.Password) {
-				return u, nil
+				return converters.UserConvertDbInCore(*u), nil
 			} else {
 				return nil, fmt.Errorf("User with the username %s was not found", login)
 			}
@@ -104,33 +111,37 @@ func (repo *UserMemoryRepository) GetUserByLogin(login string, password string) 
 }
 
 // Add adds a new user to the storage and returns its assigned unique identifier.
-func (repo *UserMemoryRepository) Add(user *User) (uint32, error) {
+func (repo *UserMemoryRepository) Add(user *userCore.User) (uint32, error) {
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
 
+	userDb := converters.UserConvertCoreInDb(*user)
+
 	userID := uint32(len(repo.users) + 1)
-	user.ID = userID
+	userDb.ID = userID
 	var err bool
-	user.Password, err = HashPassword(user.Password)
+	userDb.Password, err = HashPassword(userDb.Password)
 	if err == false {
 		return userID, fmt.Errorf("Operation failed")
 	}
-	repo.users[userID] = user
+	repo.users[userID] = userDb
 
 	return userID, nil
 }
 
 // Update updates the information of a user in the storage based on the provided new user.
-func (repo *UserMemoryRepository) Update(newUser *User) (bool, error) {
+func (repo *UserMemoryRepository) Update(newUser *userCore.User) (bool, error) {
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
 
-	_, exists := repo.users[newUser.ID]
+	newUserDb := converters.UserConvertCoreInDb(*newUser)
+
+	_, exists := repo.users[newUserDb.ID]
 	if !exists {
-		return false, fmt.Errorf("User with id %d not found", newUser.ID)
+		return false, fmt.Errorf("User with id %d not found", newUserDb.ID)
 	}
 
-	repo.users[newUser.ID] = newUser
+	repo.users[newUserDb.ID] = newUserDb
 
 	return true, nil
 }

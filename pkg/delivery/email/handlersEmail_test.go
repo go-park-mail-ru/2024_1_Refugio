@@ -1,4 +1,4 @@
-package handlers
+package email
 
 import (
 	"bytes"
@@ -6,9 +6,21 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
-	"mail/pkg/email"
-	"mail/pkg/session"
-	"mail/pkg/user"
+	"mail/pkg/delivery/models"
+
+	"mail/pkg/delivery"
+	"mail/pkg/delivery/session"
+
+	converters2 "mail/pkg/delivery/converters"
+	converters1 "mail/pkg/repository/converters"
+
+	emailRepo "mail/pkg/repository/email"
+	userRepo "mail/pkg/repository/user"
+	emailUc "mail/pkg/usecase/email"
+	userUc "mail/pkg/usecase/user"
+
+	userHand "mail/pkg/delivery/user"
+
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -55,21 +67,75 @@ var arrBodyEmail = [][]byte{
 		}`),
 }
 
+var arrBody = [][]byte{
+	[]byte(`{
+				"id": 0,
+				"login": "nasty@mail.ru",
+				"name": "Nasty",
+				"password": "1234",
+				"surname": "Low"
+			}`),
+	[]byte(`{
+				"id": 0,
+				"login": "karpovIvan@mail.ru",
+				"name": "IvAn",
+				"password": "QWERTY1234",
+				"surname": "Karpov"
+			}`),
+	[]byte(`{
+				"id": 0,
+				"login": "nikita@mail.ru",
+				"name": "Nikita",
+				"password": "qwerty1234",
+				"surname": "Nosov"
+			}`),
+}
+
+func registerUser(t *testing.T, userHandler *userHand.UserHandler, body []byte) error {
+	r := httptest.NewRequest("POST", "/delivery/v1/signup", bytes.NewReader(body))
+	w := httptest.NewRecorder()
+
+	userHandler.Signup(w, r)
+	if w.Code != http.StatusOK {
+		t.Error("status is not ok")
+		return fmt.Errorf("No register")
+	}
+
+	return nil
+}
+
+func loginUser(t *testing.T, userHandler *userHand.UserHandler, body []byte) (string, error) {
+	r := httptest.NewRequest("POST", "/delivery/v1/login", bytes.NewReader(body))
+	w := httptest.NewRecorder()
+
+	userHandler.Login(w, r)
+	cookie := w.Header().Get("Set-Cookie")[11:43]
+	if w.Code != http.StatusOK {
+		assert.Equal(t, http.StatusOK, w.Code)
+		t.Error("status is not ok")
+		return cookie, fmt.Errorf("Not login")
+	}
+
+	return cookie, nil
+}
+
 func TestEmailAdd(t *testing.T) {
 	t.Parallel()
 	var (
 		sessionsManager = session.NewSessionsManager()
 
-		emailRepository = email.NewEmptyInMemoryEmailRepository()
+		emailRepository = emailRepo.NewEmptyInMemoryEmailRepository()
+		emailUseCase    = emailUc.NewEmailUseCase(emailRepository)
 		emailHandler    = &EmailHandler{
-			EmailRepository: emailRepository,
-			Sessions:        sessionsManager,
+			EmailUseCase: emailUseCase,
+			Sessions:     sessionsManager,
 		}
 
-		userRepository = user.NewEmptyInMemoryUserRepository()
-		userHandler    = &UserHandler{
-			UserRepository: userRepository,
-			Sessions:       sessionsManager,
+		userRepository = userRepo.NewEmptyInMemoryUserRepository()
+		userUseCase    = userUc.NewUserUseCase(userRepository)
+		userHandler    = &userHand.UserHandler{
+			UserUseCase: userUseCase,
+			Sessions:    sessionsManager,
 		}
 	)
 	expectedUsers := []map[string]uint64{{"id": 1}, {"id": 2}, {"id": 3}}
@@ -89,7 +155,7 @@ func TestEmailAdd(t *testing.T) {
 	}
 
 	for i, body := range arrBodyEmail {
-		r := httptest.NewRequest("POST", "/api/v1/email/add", bytes.NewReader(body))
+		r := httptest.NewRequest("POST", "/delivery/v1/email/add", bytes.NewReader(body))
 		r.AddCookie(cookie)
 		w := httptest.NewRecorder()
 
@@ -149,16 +215,18 @@ func TestEmailStatusAdd(t *testing.T) {
 	var (
 		sessionsManager = session.NewSessionsManager()
 
-		emailRepository = email.NewEmailMemoryRepository()
+		emailRepository = emailRepo.NewEmailMemoryRepository()
+		emailUseCase    = emailUc.NewEmailUseCase(emailRepository)
 		emailHandler    = &EmailHandler{
-			EmailRepository: emailRepository,
-			Sessions:        sessionsManager,
+			EmailUseCase: emailUseCase,
+			Sessions:     sessionsManager,
 		}
 
-		userRepository = user.NewEmptyInMemoryUserRepository()
-		userHandler    = &UserHandler{
-			UserRepository: userRepository,
-			Sessions:       sessionsManager,
+		userRepository = userRepo.NewEmptyInMemoryUserRepository()
+		userUseCase    = userUc.NewUserUseCase(userRepository)
+		userHandler    = &userHand.UserHandler{
+			UserUseCase: userUseCase,
+			Sessions:    sessionsManager,
 		}
 	)
 	expectedUsers := []int{200, 401, 400}
@@ -178,7 +246,7 @@ func TestEmailStatusAdd(t *testing.T) {
 	}
 
 	for i, body := range arrBodyEmailBadStatus {
-		r := httptest.NewRequest("POST", "/api/v1/email/add", bytes.NewReader(body))
+		r := httptest.NewRequest("POST", "/delivery/v1/email/add", bytes.NewReader(body))
 		if i != 1 {
 			r.AddCookie(cookie)
 		}
@@ -200,16 +268,18 @@ func TestEmailList(t *testing.T) {
 	var (
 		sessionsManager = session.NewSessionsManager()
 
-		emailRepository = email.NewEmailMemoryRepository()
+		emailRepository = emailRepo.NewEmailMemoryRepository()
+		emailUseCase    = emailUc.NewEmailUseCase(emailRepository)
 		emailHandler    = &EmailHandler{
-			EmailRepository: emailRepository,
-			Sessions:        sessionsManager,
+			EmailUseCase: emailUseCase,
+			Sessions:     sessionsManager,
 		}
 
-		userRepository = user.NewEmptyInMemoryUserRepository()
-		userHandler    = &UserHandler{
-			UserRepository: userRepository,
-			Sessions:       sessionsManager,
+		userRepository = userRepo.NewEmptyInMemoryUserRepository()
+		userUseCase    = userUc.NewUserUseCase(userRepository)
+		userHandler    = &userHand.UserHandler{
+			UserUseCase: userUseCase,
+			Sessions:    sessionsManager,
 		}
 	)
 
@@ -226,17 +296,17 @@ func TestEmailList(t *testing.T) {
 		Expires: time.Now().Add(90 * 24 * time.Hour),
 		Path:    "/",
 	}
-	r := httptest.NewRequest("GET", "/api/v1/emails", nil)
+	r := httptest.NewRequest("GET", "/delivery/v1/emails", nil)
 	r.AddCookie(cookie)
 	w := httptest.NewRecorder()
 
 	emailHandler.List(w, r)
-	var writeEmail []email.Email
+	var writeEmail []models.Email
 	err = json.NewDecoder(w.Body).Decode(&writeEmail)
 	for i := 0; i < len(writeEmail); i++ {
-		if writeEmail[i] != *email.FakeEmails[uint64(i)] {
+		if writeEmail[i] != *converters2.EmailConvertCoreInApi(*converters1.EmailConvertDbInCore(*emailRepo.FakeEmails[uint64(i)])) {
 			t.Error("bad values writeEmail[i] != *email.FakeEmails[i] ")
-			assert.Equal(t, *email.FakeEmails[uint64(i)], writeEmail[i])
+			assert.Equal(t, *converters2.EmailConvertCoreInApi(*converters1.EmailConvertDbInCore(*emailRepo.FakeEmails[uint64(i)])), writeEmail[i])
 			return
 		}
 	}
@@ -247,22 +317,24 @@ func TestEmailStatusList(t *testing.T) {
 	var (
 		sessionsManager = session.NewSessionsManager()
 
-		emailRepository = email.NewEmailMemoryRepository()
+		emailRepository = emailRepo.NewEmailMemoryRepository()
+		emailUseCase    = emailUc.NewEmailUseCase(emailRepository)
 		emailHandler    = &EmailHandler{
-			EmailRepository: emailRepository,
-			Sessions:        sessionsManager,
+			EmailUseCase: emailUseCase,
+			Sessions:     sessionsManager,
 		}
 
-		userRepository = user.NewEmptyInMemoryUserRepository()
-		userHandler    = &UserHandler{
-			UserRepository: userRepository,
-			Sessions:       sessionsManager,
+		userRepository = userRepo.NewEmptyInMemoryUserRepository()
+		userUseCase    = userUc.NewUserUseCase(userRepository)
+		userHandler    = &userHand.UserHandler{
+			UserUseCase: userUseCase,
+			Sessions:    sessionsManager,
 		}
 	)
 	expectedStatusUsers := []int{401, 200}
 
 	for i := 0; i < len(expectedStatusUsers); i++ {
-		r := httptest.NewRequest("GET", "/api/v1/emails", nil)
+		r := httptest.NewRequest("GET", "/delivery/v1/emails", nil)
 		w := httptest.NewRecorder()
 		if i == 1 { // http.StatusOK
 			registerUser(t, userHandler, arrBody[0])
@@ -289,7 +361,7 @@ func TestEmailStatusList(t *testing.T) {
 }
 
 type EmailBody struct {
-	Email email.Email `json:"email"`
+	Email models.Email `json:"email"`
 }
 
 func TestEmailGetByID(t *testing.T) {
@@ -297,16 +369,18 @@ func TestEmailGetByID(t *testing.T) {
 	var (
 		sessionsManager = session.NewSessionsManager()
 
-		emailRepository = email.NewEmptyInMemoryEmailRepository()
+		emailRepository = emailRepo.NewEmptyInMemoryEmailRepository()
+		emailUseCase    = emailUc.NewEmailUseCase(emailRepository)
 		emailHandler    = &EmailHandler{
-			EmailRepository: emailRepository,
-			Sessions:        sessionsManager,
+			EmailUseCase: emailUseCase,
+			Sessions:     sessionsManager,
 		}
 
-		userRepository = user.NewEmptyInMemoryUserRepository()
-		userHandler    = &UserHandler{
-			UserRepository: userRepository,
-			Sessions:       sessionsManager,
+		userRepository = userRepo.NewEmptyInMemoryUserRepository()
+		userUseCase    = userUc.NewUserUseCase(userRepository)
+		userHandler    = &userHand.UserHandler{
+			UserUseCase: userUseCase,
+			Sessions:    sessionsManager,
 		}
 	)
 
@@ -324,15 +398,15 @@ func TestEmailGetByID(t *testing.T) {
 		Path:    "/",
 	}
 	// Add email
-	for i := 0; i < len(email.FakeEmails); i++ {
-		respJSON, _ := json.Marshal(email.FakeEmails[uint64(i)])
-		r := httptest.NewRequest("POST", "/api/v1/email/add", bytes.NewReader(respJSON))
+	for i := 0; i < len(emailRepo.FakeEmails); i++ {
+		respJSON, _ := json.Marshal(emailRepo.FakeEmails[uint64(i)])
+		r := httptest.NewRequest("POST", "/delivery/v1/email/add", bytes.NewReader(respJSON))
 		r.AddCookie(cookie)
 		w := httptest.NewRecorder()
 		emailHandler.Add(w, r)
 	}
 
-	r := httptest.NewRequest("GET", "/api/v1/email/{id}", nil)
+	r := httptest.NewRequest("GET", "/delivery/v1/email/{id}", nil)
 	r.AddCookie(cookie)
 	w := httptest.NewRecorder()
 	fakeEmail, _ := emailRepository.GetAll()
@@ -341,7 +415,7 @@ func TestEmailGetByID(t *testing.T) {
 		r = mux.SetURLVars(r, vars)
 		emailHandler.GetByID(w, r)
 
-		var emailResponse Response
+		var emailResponse delivery.Response
 		err := json.NewDecoder(w.Body).Decode(&emailResponse)
 		if err != nil {
 			fmt.Println("Error decoding JSON:", err)
@@ -363,7 +437,7 @@ func TestEmailGetByID(t *testing.T) {
 			return
 		}
 
-		if mail.Email != *fakeEmail[i] {
+		if mail.Email != *converters2.EmailConvertCoreInApi(*fakeEmail[i]) {
 			t.Error("bad values writeEmail[i] != *email.FakeEmails[i] ")
 			assert.Equal(t, *fakeEmail[i], mail)
 			return
@@ -376,22 +450,24 @@ func TestEmailStatusGetByID(t *testing.T) {
 	var (
 		sessionsManager = session.NewSessionsManager()
 
-		emailRepository = email.NewEmptyInMemoryEmailRepository()
+		emailRepository = emailRepo.NewEmptyInMemoryEmailRepository()
+		emailUseCase    = emailUc.NewEmailUseCase(emailRepository)
 		emailHandler    = &EmailHandler{
-			EmailRepository: emailRepository,
-			Sessions:        sessionsManager,
+			EmailUseCase: emailUseCase,
+			Sessions:     sessionsManager,
 		}
 
-		userRepository = user.NewEmptyInMemoryUserRepository()
-		userHandler    = &UserHandler{
-			UserRepository: userRepository,
-			Sessions:       sessionsManager,
+		userRepository = userRepo.NewEmptyInMemoryUserRepository()
+		userUseCase    = userUc.NewUserUseCase(userRepository)
+		userHandler    = &userHand.UserHandler{
+			UserUseCase: userUseCase,
+			Sessions:    sessionsManager,
 		}
 	)
 	expectedStatusUsers := []int{401, 404, 200}
 	var cookId string
 	for i := 0; i < len(expectedStatusUsers); i++ {
-		r := httptest.NewRequest("GET", "/api/v1/email/{id}", nil)
+		r := httptest.NewRequest("GET", "/delivery/v1/email/{id}", nil)
 		w := httptest.NewRecorder()
 		if i >= 1 { // http.StatusOK
 			if i == 1 {
@@ -411,8 +487,8 @@ func TestEmailStatusGetByID(t *testing.T) {
 				r.AddCookie(cookie)
 			}
 			if i == 2 {
-				respJSON, _ := json.Marshal(email.FakeEmails[1])
-				r = httptest.NewRequest("POST", "/api/v1/email/add", bytes.NewReader(respJSON))
+				respJSON, _ := json.Marshal(emailRepo.FakeEmails[1])
+				r = httptest.NewRequest("POST", "/delivery/v1/email/add", bytes.NewReader(respJSON))
 				cookie := &http.Cookie{
 					Name:    "session_id",
 					Value:   cookId,
@@ -441,22 +517,24 @@ func TestEmailDelete(t *testing.T) {
 	var (
 		sessionsManager = session.NewSessionsManager()
 
-		emailRepository = email.NewEmailMemoryRepository()
+		emailRepository = emailRepo.NewEmailMemoryRepository()
+		emailUseCase    = emailUc.NewEmailUseCase(emailRepository)
 		emailHandler    = &EmailHandler{
-			EmailRepository: emailRepository,
-			Sessions:        sessionsManager,
+			EmailUseCase: emailUseCase,
+			Sessions:     sessionsManager,
 		}
 
-		userRepository = user.NewEmptyInMemoryUserRepository()
-		userHandler    = &UserHandler{
-			UserRepository: userRepository,
-			Sessions:       sessionsManager,
+		userRepository = userRepo.NewEmptyInMemoryUserRepository()
+		userUseCase    = userUc.NewUserUseCase(userRepository)
+		userHandler    = &userHand.UserHandler{
+			UserUseCase: userUseCase,
+			Sessions:    sessionsManager,
 		}
 	)
 	expectedStatusUsers := []int{401, 400, 200}
 	var cookId string
 	for i := 0; i < len(expectedStatusUsers); i++ {
-		r := httptest.NewRequest("GET", "/api/v1/email/{id}", nil)
+		r := httptest.NewRequest("GET", "/delivery/v1/email/{id}", nil)
 		w := httptest.NewRecorder()
 		if i >= 1 { // http.StatusOK
 			if i == 1 {
@@ -476,8 +554,8 @@ func TestEmailDelete(t *testing.T) {
 				r.AddCookie(cookie)
 			}
 			if i == 2 {
-				respJSON, _ := json.Marshal(email.FakeEmails[1])
-				r = httptest.NewRequest("POST", "/api/v1/email/add", bytes.NewReader(respJSON))
+				respJSON, _ := json.Marshal(emailRepo.FakeEmails[1])
+				r = httptest.NewRequest("POST", "/delivery/v1/email/add", bytes.NewReader(respJSON))
 				cookie := &http.Cookie{
 					Name:    "session_id",
 					Value:   cookId,
@@ -506,22 +584,24 @@ func TestEmailUpdate(t *testing.T) {
 	var (
 		sessionsManager = session.NewSessionsManager()
 
-		emailRepository = email.NewEmailMemoryRepository()
+		emailRepository = emailRepo.NewEmailMemoryRepository()
+		emailUseCase    = emailUc.NewEmailUseCase(emailRepository)
 		emailHandler    = &EmailHandler{
-			EmailRepository: emailRepository,
-			Sessions:        sessionsManager,
+			EmailUseCase: emailUseCase,
+			Sessions:     sessionsManager,
 		}
 
-		userRepository = user.NewEmptyInMemoryUserRepository()
-		userHandler    = &UserHandler{
-			UserRepository: userRepository,
-			Sessions:       sessionsManager,
+		userRepository = userRepo.NewEmptyInMemoryUserRepository()
+		userUseCase    = userUc.NewUserUseCase(userRepository)
+		userHandler    = &userHand.UserHandler{
+			UserUseCase: userUseCase,
+			Sessions:    sessionsManager,
 		}
 	)
 	expectedStatusUsers := []int{401, 400, 200}
 	var cookId string
 	for i := 0; i < len(expectedStatusUsers); i++ {
-		r := httptest.NewRequest("GET", "/api/v1/email/update/{id}", nil)
+		r := httptest.NewRequest("GET", "/delivery/v1/email/update/{id}", nil)
 		w := httptest.NewRecorder()
 		if i >= 1 { // http.StatusOK
 			if i == 1 {
@@ -541,8 +621,8 @@ func TestEmailUpdate(t *testing.T) {
 				r.AddCookie(cookie)
 			}
 			if i == 2 {
-				respJSON, _ := json.Marshal(email.FakeEmails[1])
-				r = httptest.NewRequest("POST", "/api/v1/email/add", bytes.NewReader(respJSON))
+				respJSON, _ := json.Marshal(emailRepo.FakeEmails[1])
+				r = httptest.NewRequest("POST", "/delivery/v1/email/add", bytes.NewReader(respJSON))
 				cookie := &http.Cookie{
 					Name:    "session_id",
 					Value:   cookId,

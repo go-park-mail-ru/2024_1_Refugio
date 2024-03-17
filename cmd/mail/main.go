@@ -3,17 +3,19 @@ package main
 import (
 	"fmt"
 	"github.com/rs/cors"
+	"mail/pkg/delivery/session"
 	"net/http"
 
-	"mail/pkg/email"
-	"mail/pkg/handlers"
-	"mail/pkg/session"
-	"mail/pkg/user"
-
-	_ "mail/docs"
+	emailHand "mail/pkg/delivery/email"
+	userHand "mail/pkg/delivery/user"
+	emailRepo "mail/pkg/repository/email"
+	userRepo "mail/pkg/repository/user"
+	emailUc "mail/pkg/usecase/email"
+	userUc "mail/pkg/usecase/user"
 
 	"github.com/gorilla/mux"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
+	_ "mail/docs"
 )
 
 // @title API Mail
@@ -25,17 +27,20 @@ import (
 func main() {
 	sessionsManager := session.NewSessionsManager()
 
-	emailRepository := email.NewEmailMemoryRepository()
-	userRepository := user.NewInMemoryUserRepository()
+	emailRepository := emailRepo.NewEmailMemoryRepository()
+	emailUseCase := emailUc.NewEmailUseCase(emailRepository)
 
-	emailHandler := &handlers.EmailHandler{
-		EmailRepository: emailRepository,
-		Sessions:        sessionsManager,
+	userRepository := userRepo.NewInMemoryUserRepository()
+	userUseCase := userUc.NewUserUseCase(userRepository)
+
+	emailHandler := &emailHand.EmailHandler{
+		EmailUseCase: emailUseCase,
+		Sessions:     sessionsManager,
 	}
 
-	userHandler := &handlers.UserHandler{
-		UserRepository: userRepository,
-		Sessions:       sessionsManager,
+	userHandler := &userHand.UserHandler{
+		UserUseCase: userUseCase,
+		Sessions:    sessionsManager,
 	}
 
 	router := mux.NewRouter()

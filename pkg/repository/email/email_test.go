@@ -3,6 +3,9 @@ package email
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	emailCore "mail/pkg/domain/models"
+	"mail/pkg/repository/converters"
+	"sort"
 	"testing"
 	"time"
 )
@@ -17,8 +20,9 @@ func TestGetAll(t *testing.T) {
 		fmt.Println(err)
 		return
 	}
+	SortEmailsByID(emails)
 	for i := 0; i < len(emails); i++ {
-		if *emails[i] != *FakeEmails[uint64(i+1)] {
+		if *emails[i] != *converters.EmailConvertDbInCore(*FakeEmails[uint64(i+1)]) {
 			t.Error("emails[i] != FakeEmails[i]")
 			assert.Equal(t, FakeEmails[uint64(i)], emails[i])
 		}
@@ -32,7 +36,7 @@ func TestGetByID(t *testing.T) {
 			fmt.Println(err)
 			return
 		}
-		if *email != *FakeEmails[uint64(i)] {
+		if *email != *converters.EmailConvertDbInCore(*FakeEmails[uint64(i)]) {
 			t.Error("email != FakeEmails[i]")
 			assert.Equal(t, FakeEmails[uint64(i-1)], email)
 			return
@@ -42,7 +46,7 @@ func TestGetByID(t *testing.T) {
 
 func TestAdd(t *testing.T) {
 	repo = NewEmptyInMemoryEmailRepository()
-	arrEmails := []*Email{
+	arrEmails := []*emailCore.Email{
 		{
 			ID:             1,
 			Topic:          "Приглашение на мероприятие",
@@ -102,7 +106,7 @@ func TestAdd(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	arrEmails := []*Email{
+	arrEmails := []*emailCore.Email{
 		{
 			ID:             1,
 			Topic:          "",
@@ -168,7 +172,7 @@ func TestUpdate(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 	repo = CreateFakeEmails()
-	expectedEmails := []*Email{
+	expectedEmails := []*emailCore.Email{
 		{
 			ID:             1,
 			Topic:          "Приглашение на мероприятие",
@@ -244,6 +248,7 @@ func TestDelete(t *testing.T) {
 		}
 	}
 	mails, err := repo.GetAll()
+	SortEmailsByID(mails)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -255,4 +260,10 @@ func TestDelete(t *testing.T) {
 			return
 		}
 	}
+}
+
+func SortEmailsByID(emails []*emailCore.Email) {
+	sort.Slice(emails, func(i, j int) bool {
+		return emails[i].ID < (emails[j].ID)
+	})
 }

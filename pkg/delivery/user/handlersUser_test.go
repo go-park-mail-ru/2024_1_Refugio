@@ -1,14 +1,17 @@
-package handlers
+package user
 
 import (
 	"bytes"
 	"fmt"
-	"mail/pkg/session"
-	"mail/pkg/user"
+	"mail/pkg/delivery/session"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	userCore "mail/pkg/domain/models"
+	userRepo "mail/pkg/repository/user"
+	userUc "mail/pkg/usecase/user"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -38,7 +41,7 @@ var arrBody = [][]byte{
 }
 
 func registerUser(t *testing.T, userHandler *UserHandler, body []byte) error {
-	r := httptest.NewRequest("POST", "/api/v1/signup", bytes.NewReader(body))
+	r := httptest.NewRequest("POST", "/delivery/v1/signup", bytes.NewReader(body))
 	w := httptest.NewRecorder()
 
 	userHandler.Signup(w, r)
@@ -46,11 +49,12 @@ func registerUser(t *testing.T, userHandler *UserHandler, body []byte) error {
 		t.Error("status is not ok")
 		return fmt.Errorf("No register")
 	}
+
 	return nil
 }
 
 func loginUser(t *testing.T, userHandler *UserHandler, body []byte) (string, error) {
-	r := httptest.NewRequest("POST", "/api/v1/login", bytes.NewReader(body))
+	r := httptest.NewRequest("POST", "/delivery/v1/login", bytes.NewReader(body))
 	w := httptest.NewRecorder()
 
 	userHandler.Login(w, r)
@@ -60,6 +64,7 @@ func loginUser(t *testing.T, userHandler *UserHandler, body []byte) (string, err
 		t.Error("status is not ok")
 		return cookie, fmt.Errorf("Not login")
 	}
+
 	return cookie, nil
 }
 
@@ -68,14 +73,16 @@ func TestSignupUser(t *testing.T) {
 	var (
 		sessionsManager = session.NewSessionsManager()
 
-		userRepository = user.NewEmptyInMemoryUserRepository()
-		userHandler    = &UserHandler{
-			UserRepository: userRepository,
-			Sessions:       sessionsManager,
+		userRepository = userRepo.NewEmptyInMemoryUserRepository()
+		userUseCase    = userUc.NewUserUseCase(userRepository)
+
+		userHandler = &UserHandler{
+			UserUseCase: userUseCase,
+			Sessions:    sessionsManager,
 		}
 	)
 
-	expectedUsers := []user.User{
+	expectedUsers := []userCore.User{
 		{
 			ID:       1,
 			Name:     "Nasty",
@@ -100,7 +107,7 @@ func TestSignupUser(t *testing.T) {
 	}
 
 	for _, body := range arrBody {
-		r := httptest.NewRequest("POST", "/api/v1/signup", bytes.NewReader(body))
+		r := httptest.NewRequest("POST", "/delivery/v1/signup", bytes.NewReader(body))
 		w := httptest.NewRecorder()
 
 		userHandler.Signup(w, r)
@@ -111,14 +118,14 @@ func TestSignupUser(t *testing.T) {
 		}
 	}
 
-	allUsers, err := userHandler.UserRepository.GetAll()
+	allUsers, err := userHandler.UserUseCase.GetAllUsers()
 
 	if err != nil {
 		return
 	}
 
 	for i, _ := range allUsers {
-		if !user.ComparingUserObjects((*allUsers[i]), expectedUsers[i]) {
+		if !userRepo.ComparingUserObjects((*allUsers[i]), expectedUsers[i]) {
 			assert.Equal(t, expectedUsers[i], (*allUsers[i]))
 			return
 		}
@@ -130,10 +137,12 @@ func TestStatusSignupUser(t *testing.T) {
 	var (
 		sessionsManager = session.NewSessionsManager()
 
-		userRepository = user.NewEmptyInMemoryUserRepository()
-		userHandler    = &UserHandler{
-			UserRepository: userRepository,
-			Sessions:       sessionsManager,
+		userRepository = userRepo.NewEmptyInMemoryUserRepository()
+		userUseCase    = userUc.NewUserUseCase(userRepository)
+
+		userHandler = &UserHandler{
+			UserUseCase: userUseCase,
+			Sessions:    sessionsManager,
 		}
 	)
 
@@ -164,7 +173,7 @@ func TestStatusSignupUser(t *testing.T) {
 	}
 
 	for i, body := range arrBody {
-		r := httptest.NewRequest("POST", "/api/v1/signup", bytes.NewReader(body))
+		r := httptest.NewRequest("POST", "/delivery/v1/signup", bytes.NewReader(body))
 		w := httptest.NewRecorder()
 
 		userHandler.Signup(w, r)
@@ -182,10 +191,12 @@ func TestLoginUser(t *testing.T) {
 	var (
 		sessionsManager = session.NewSessionsManager()
 
-		userRepository = user.NewEmptyInMemoryUserRepository()
-		userHandler    = &UserHandler{
-			UserRepository: userRepository,
-			Sessions:       sessionsManager,
+		userRepository = userRepo.NewEmptyInMemoryUserRepository()
+		userUseCase    = userUc.NewUserUseCase(userRepository)
+
+		userHandler = &UserHandler{
+			UserUseCase: userUseCase,
+			Sessions:    sessionsManager,
 		}
 	)
 	var arrBadStatusBody = [][]byte{
@@ -222,7 +233,7 @@ func TestLoginUser(t *testing.T) {
 
 	expectedStatus := []int{200, 400, 401}
 	for i, body := range arrBadStatusBody {
-		r := httptest.NewRequest("POST", "/api/v1/login", bytes.NewReader(body))
+		r := httptest.NewRequest("POST", "/delivery/v1/login", bytes.NewReader(body))
 		w := httptest.NewRecorder()
 
 		userHandler.Login(w, r)
@@ -241,10 +252,12 @@ func TestLogoutUser(t *testing.T) {
 	var (
 		sessionsManager = session.NewSessionsManager()
 
-		userRepository = user.NewEmptyInMemoryUserRepository()
-		userHandler    = &UserHandler{
-			UserRepository: userRepository,
-			Sessions:       sessionsManager,
+		userRepository = userRepo.NewEmptyInMemoryUserRepository()
+		userUseCase    = userUc.NewUserUseCase(userRepository)
+
+		userHandler = &UserHandler{
+			UserUseCase: userUseCase,
+			Sessions:    sessionsManager,
 		}
 	)
 
@@ -267,7 +280,7 @@ func TestLogoutUser(t *testing.T) {
 	}
 
 	for _, c := range cookies {
-		r := httptest.NewRequest("POST", "/api/v1/logout", nil)
+		r := httptest.NewRequest("POST", "/delivery/v1/logout", nil)
 		fmt.Println("c: ", c)
 		cookie := &http.Cookie{
 			Name:    "session_id",

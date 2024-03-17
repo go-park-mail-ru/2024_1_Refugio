@@ -2,6 +2,7 @@ package user
 
 import (
 	"github.com/stretchr/testify/assert"
+	userCore "mail/pkg/domain/models"
 	"testing"
 )
 
@@ -23,7 +24,7 @@ func TestAddUser(t *testing.T) {
 	repo := NewEmptyInMemoryUserRepository()
 
 	// Создаем нового пользователя
-	newUser := &User{
+	newUser := &userCore.User{
 		Name:     "John",
 		Surname:  "Doe",
 		Login:    "john_doe",
@@ -45,8 +46,7 @@ func TestAddUser(t *testing.T) {
 	assert.True(t, newUser.Name == addedUser.Name &&
 		newUser.Surname == addedUser.Surname &&
 		newUser.Login == addedUser.Login &&
-		newUser.Password == addedUser.Password,
-		newUser.AvatarId == addedUser.AvatarId)
+		newUser.AvatarID == addedUser.AvatarID)
 }
 
 func TestUpdateUser(t *testing.T) {
@@ -54,7 +54,7 @@ func TestUpdateUser(t *testing.T) {
 	repo := NewEmptyInMemoryUserRepository()
 
 	// Создаем нового пользователя
-	newUser := &User{
+	newUser := &userCore.User{
 		Name:     "John",
 		Surname:  "Doe",
 		Login:    "john_doe",
@@ -65,7 +65,7 @@ func TestUpdateUser(t *testing.T) {
 	userID, _ := repo.Add(newUser)
 
 	// Меняем данные пользователя
-	newUserData := &User{
+	newUserData := &userCore.User{
 		ID:       userID,
 		Name:     "Jane",
 		Surname:  "Doe",
@@ -88,8 +88,7 @@ func TestUpdateUser(t *testing.T) {
 	assert.True(t, newUserData.Name == updatedUser.Name &&
 		newUserData.Surname == updatedUser.Surname &&
 		newUserData.Login == updatedUser.Login &&
-		newUserData.Password == updatedUser.Password,
-		newUserData.AvatarId == updatedUser.AvatarId)
+		newUserData.AvatarID == updatedUser.AvatarID)
 }
 
 func TestDeleteUser(t *testing.T) {
@@ -97,7 +96,7 @@ func TestDeleteUser(t *testing.T) {
 	repo := NewEmptyInMemoryUserRepository()
 
 	// Создаем нового пользователя
-	newUser := &User{
+	newUser := &userCore.User{
 		Name:     "John",
 		Surname:  "Doe",
 		Login:    "john_doe",
@@ -127,7 +126,7 @@ func TestGetUserByLogin(t *testing.T) {
 	repo := NewInMemoryUserRepository()
 
 	// Создаем нового пользователя
-	newUser := &User{
+	newUser := &userCore.User{
 		Name:     "John",
 		Surname:  "Doe",
 		Login:    "john_doe",
