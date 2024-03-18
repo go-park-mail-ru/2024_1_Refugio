@@ -7,6 +7,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"mail/pkg/delivery/models"
+	emailCore "mail/pkg/domain/models"
+	"sort"
 
 	"mail/pkg/delivery"
 	"mail/pkg/delivery/session"
@@ -409,7 +411,8 @@ func TestEmailGetByID(t *testing.T) {
 	r := httptest.NewRequest("GET", "/delivery/v1/email/{id}", nil)
 	r.AddCookie(cookie)
 	w := httptest.NewRecorder()
-	fakeEmail, _ := emailRepository.GetAll()
+	fakeEmail, _ := emailUseCase.GetAllEmails()
+	SortEmailsByID(fakeEmail)
 	for i, _ := range fakeEmail {
 		vars := map[string]string{"id": fmt.Sprintf("%s", strconv.Itoa(int(i+1)))}
 		r = mux.SetURLVars(r, vars)
@@ -644,4 +647,10 @@ func TestEmailUpdate(t *testing.T) {
 			return
 		}
 	}
+}
+
+func SortEmailsByID(emails []*emailCore.Email) {
+	sort.Slice(emails, func(i, j int) bool {
+		return emails[i].ID < (emails[j].ID)
+	})
 }
