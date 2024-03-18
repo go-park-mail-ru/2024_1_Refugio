@@ -20,7 +20,7 @@ import (
 // @version 1.0
 // @description API server for mail
 
-// @host 89.208.223.140:8080
+// @host localhost:8080
 // @BasePath /
 func main() {
 	sessionsManager := session.NewSessionsManager()
@@ -54,7 +54,7 @@ func main() {
 	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://127.0.0.1:8081", "http://localhost:8080", "http://89.208.223.140:8080", "http://89.208.223.140:8081"},
+		AllowedOrigins:   []string{"http://127.0.0.1:8081", "http://89.208.223.140:8081", "http://localhost:8080", "http://localhost:8081", "http://89.208.223.140:8080"},
 		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodDelete, http.MethodPut, http.MethodOptions},
 		AllowCredentials: true,
 	})
