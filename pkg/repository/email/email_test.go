@@ -96,6 +96,7 @@ func TestAdd(t *testing.T) {
 		fmt.Println(err)
 		return
 	}
+	SortEmailsByID(mails)
 	for i := 0; i < len(arrEmails); i++ {
 		if *arrEmails[i] != *mails[i] {
 			t.Error("arrEmails[i] != mails[i]")
@@ -161,6 +162,7 @@ func TestUpdate(t *testing.T) {
 		fmt.Println(err)
 		return
 	}
+	SortEmailsByID(mails)
 	for i := 0; i < len(arrEmails); i++ {
 		if *arrEmails[i] != *mails[i] {
 			t.Error("arrEmails[i] != mails[i]")
@@ -248,11 +250,11 @@ func TestDelete(t *testing.T) {
 		}
 	}
 	mails, err := repo.GetAll()
-	SortEmailsByID(mails)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+	SortEmailsByID(mails)
 	for i := 0; i < len(expectedEmails); i++ {
 		if *expectedEmails[i] != *mails[i] {
 			t.Error("arrEmails[i] != mails[i]")
