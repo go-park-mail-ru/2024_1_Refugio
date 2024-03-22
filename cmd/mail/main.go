@@ -50,7 +50,7 @@ func main() {
 	router := mux.NewRouter()
 
 	auth := mux.NewRouter().PathPrefix("/api/v1/auth").Subrouter()
-	auth.Use(middleware.AuthMiddleware)
+	auth.Use(middleware.AccessLogMiddleware, middleware.PanicMiddleware, middleware.AuthMiddleware)
 	router.PathPrefix("/api/v1/auth").Handler(auth)
 
 	auth.HandleFunc("/verify-auth", userHandler.VerifyAuth).Methods("GET", "OPTIONS")
@@ -67,18 +67,6 @@ func main() {
 	router.HandleFunc("/api/v1/logout", userHandler.Logout).Methods("POST", "OPTIONS")
 
 	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
-
-	/*router.HandleFunc("/api/v1/emails", emailHandler.List).Methods("GET", "OPTIONS")
-	router.HandleFunc("/api/v1/email/{id}", emailHandler.GetByID).Methods("GET", "OPTIONS")
-	router.HandleFunc("/api/v1/email/add", emailHandler.Add).Methods("POST", "OPTIONS")
-	router.HandleFunc("/api/v1/email/update/{id}", emailHandler.Update).Methods("PUT", "OPTIONS")
-	router.HandleFunc("/api/v1/email/delete/{id}", emailHandler.Delete).Methods("DELETE", "OPTIONS")
-
-	router.HandleFunc("/api/v1/verify-auth", userHandler.VerifyAuth).Methods("GET", "OPTIONS")
-	router.HandleFunc("/api/v1/login", userHandler.Login).Methods("POST", "OPTIONS")
-	router.HandleFunc("/api/v1/signup", userHandler.Signup).Methods("POST", "OPTIONS")
-	router.HandleFunc("/api/v1/logout", userHandler.Logout).Methods("POST", "OPTIONS")
-	router.HandleFunc("/api/v1/get-user", userHandler.GetUserBySession).Methods("GET", "OPTIONS")*/
 
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://127.0.0.1:8081", "http://89.208.223.140:8081", "http://localhost:8080", "http://localhost:8081", "http://89.208.223.140:8080"},
