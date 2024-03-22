@@ -17,10 +17,18 @@ import (
 	"github.com/gorilla/schema"
 )
 
+var (
+	EHandler = &EmailHandler{}
+)
+
 // EmailHandler represents the handler for email operations.
 type EmailHandler struct {
 	EmailUseCase emailUsecase.EmailUseCase
 	Sessions     *session.SessionsManager
+}
+
+func InitializationEmailHandler(emailHandler *EmailHandler) {
+	EHandler = emailHandler
 }
 
 // List displays the list of email messages.
@@ -33,12 +41,6 @@ type EmailHandler struct {
 // @Failure 500 {object} delivery.Response "JSON encoding error"
 // @Router /api/v1/emails [get]
 func (h *EmailHandler) List(w http.ResponseWriter, r *http.Request) {
-	_, err := h.Sessions.Check(r)
-	if err != nil {
-		delivery.HandleError(w, http.StatusUnauthorized, "Not Authorized")
-		return
-	}
-
 	emails, err := h.EmailUseCase.GetAllEmails()
 	if err != nil {
 		delivery.HandleError(w, http.StatusNotFound, fmt.Sprintf("DB error: %s", err.Error()))
@@ -64,12 +66,6 @@ func (h *EmailHandler) List(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} delivery.Response "Email not found"
 // @Router /api/v1/email/{id} [get]
 func (h *EmailHandler) GetByID(w http.ResponseWriter, r *http.Request) {
-	_, err := h.Sessions.Check(r)
-	if err != nil {
-		delivery.HandleError(w, http.StatusUnauthorized, "Not Authorized")
-		return
-	}
-
 	vars := mux.Vars(r)
 	id, err := strconv.ParseUint(vars["id"], 10, 64)
 	if err != nil {
@@ -98,16 +94,10 @@ func (h *EmailHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} delivery.Response "Failed to add email message"
 // @Router /api/v1/email/add [post]
 func (h *EmailHandler) Add(w http.ResponseWriter, r *http.Request) {
-	_, err := h.Sessions.Check(r)
-	if err != nil {
-		delivery.HandleError(w, http.StatusUnauthorized, "Not Authorized")
-		return
-	}
-
 	var newEmail emailApi.Email
 	decoder := schema.NewDecoder()
 	decoder.IgnoreUnknownKeys(true)
-	err = json.NewDecoder(r.Body).Decode(&newEmail)
+	err := json.NewDecoder(r.Body).Decode(&newEmail)
 	if err != nil {
 		delivery.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
 		return
@@ -135,12 +125,6 @@ func (h *EmailHandler) Add(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} delivery.Response "Failed to update email message"
 // @Router /api/v1/email/update/{id} [put]
 func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) {
-	_, err := h.Sessions.Check(r)
-	if err != nil {
-		delivery.HandleError(w, http.StatusUnauthorized, "Not Authorized")
-		return
-	}
-
 	vars := mux.Vars(r)
 	id, err := strconv.ParseUint(vars["id"], 10, 64)
 	if err != nil {
@@ -178,12 +162,6 @@ func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} delivery.Response "Failed to delete email message"
 // @Router /api/v1/email/delete/{id} [delete]
 func (h *EmailHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	_, err := h.Sessions.Check(r)
-	if err != nil {
-		delivery.HandleError(w, http.StatusUnauthorized, "Not Authorized")
-		return
-	}
-
 	vars := mux.Vars(r)
 	id, err := strconv.ParseUint(vars["id"], 10, 64)
 	if err != nil {

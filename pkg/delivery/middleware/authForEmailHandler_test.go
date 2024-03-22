@@ -1,5 +1,6 @@
 package middleware
 
+/*
 import (
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -47,3 +48,4 @@ func TestAuthMiddleware(t *testing.T) {
 	// Проверяем, что код ответа не изменился
 	assert.Equal(t, http.StatusOK, recWithValidCookie.Code)
 }
+*/

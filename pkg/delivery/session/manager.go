@@ -6,9 +6,17 @@ import (
 	"time"
 )
 
+var (
+	GlobalSeaaionManager = &SessionsManager{}
+)
+
 type SessionsManager struct {
 	mu   *sync.RWMutex
 	data map[string]*Session
+}
+
+func InitializationGlobalSeaaionManager(sessionManager *SessionsManager) {
+	GlobalSeaaionManager = sessionManager
 }
 
 func NewSessionsManager() *SessionsManager {
@@ -16,6 +24,16 @@ func NewSessionsManager() *SessionsManager {
 		data: make(map[string]*Session, 10),
 		mu:   &sync.RWMutex{},
 	}
+}
+
+func (sm *SessionsManager) GetSession(r *http.Request) *Session {
+	sessionCookie, _ := r.Cookie("session_id")
+
+	sm.mu.RLock()
+	sess, _ := sm.data[sessionCookie.Value]
+	sm.mu.RUnlock()
+
+	return sess
 }
 
 func (sm *SessionsManager) Check(r *http.Request) (*Session, error) {

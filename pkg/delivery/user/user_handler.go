@@ -11,10 +11,18 @@ import (
 	"strings"
 )
 
+var (
+	UHandler = &UserHandler{}
+)
+
 // UserHandler handles user-related HTTP requests.
 type UserHandler struct {
 	UserUseCase usecase.UserUseCase
 	Sessions    *session.SessionsManager
+}
+
+func InitializationEmailHandler(userHandler *UserHandler) {
+	UHandler = userHandler
 }
 
 // VerifyAuth verifies user authentication.
@@ -26,12 +34,6 @@ type UserHandler struct {
 // @Failure 401 {object} delivery.Response "Not Authorized"
 // @Router /api/v1/verify-auth [get]
 func (uh *UserHandler) VerifyAuth(w http.ResponseWriter, r *http.Request) {
-	_, err := uh.Sessions.Check(r)
-	if err != nil {
-		delivery.HandleError(w, http.StatusUnauthorized, "Not Authorized")
-		return
-	}
-
 	delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "OK"})
 }
 
@@ -141,12 +143,7 @@ func (uh *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} delivery.ErrorResponse "Internal Server Error"
 // @Router /api/v1/get-user [get]
 func (uh *UserHandler) GetUserBySession(w http.ResponseWriter, r *http.Request) {
-	sessionUser, err := uh.Sessions.Check(r)
-	if err != nil {
-		delivery.HandleError(w, http.StatusUnauthorized, "Not Authorized")
-		return
-	}
-
+	sessionUser := uh.Sessions.GetSession(r)
 	userData, err := uh.UserUseCase.GetUserByID(sessionUser.UserID)
 	if err != nil {
 		delivery.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
