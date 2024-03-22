@@ -231,7 +231,7 @@ func TestEmailStatusAdd(t *testing.T) {
 			Sessions:    sessionsManager,
 		}
 	)
-	expectedUsers := []int{200, 401, 400}
+	expectedUsers := []int{200, 200, 400} // 200, 401, 400 AuthMiddleware
 
 	registerUser(t, userHandler, arrBody[0])
 	cook, err := loginUser(t, userHandler, arrBody[0])
@@ -333,7 +333,7 @@ func TestEmailStatusList(t *testing.T) {
 			Sessions:    sessionsManager,
 		}
 	)
-	expectedStatusUsers := []int{401, 200}
+	expectedStatusUsers := []int{200, 200} // 401, 200 AuthMiddleware
 
 	for i := 0; i < len(expectedStatusUsers); i++ {
 		r := httptest.NewRequest("GET", "/delivery/v1/emails", nil)
@@ -467,7 +467,7 @@ func TestEmailStatusGetByID(t *testing.T) {
 			Sessions:    sessionsManager,
 		}
 	)
-	expectedStatusUsers := []int{401, 404, 200}
+	expectedStatusUsers := []int{404, 404, 200} // 401, 404, 200  AuthMiddleware
 	var cookId string
 	for i := 0; i < len(expectedStatusUsers); i++ {
 		r := httptest.NewRequest("GET", "/delivery/v1/email/{id}", nil)
@@ -534,7 +534,7 @@ func TestEmailDelete(t *testing.T) {
 			Sessions:    sessionsManager,
 		}
 	)
-	expectedStatusUsers := []int{401, 400, 200}
+	expectedStatusUsers := []int{400, 400, 200} // 401, 400, 200 AuthMiddleware
 	var cookId string
 	for i := 0; i < len(expectedStatusUsers); i++ {
 		r := httptest.NewRequest("GET", "/delivery/v1/email/{id}", nil)
@@ -601,7 +601,7 @@ func TestEmailUpdate(t *testing.T) {
 			Sessions:    sessionsManager,
 		}
 	)
-	expectedStatusUsers := []int{401, 400, 200}
+	expectedStatusUsers := []int{400, 400, 200} // 401, 400, 200 AuthMiddleware
 	var cookId string
 	for i := 0; i < len(expectedStatusUsers); i++ {
 		r := httptest.NewRequest("GET", "/delivery/v1/email/update/{id}", nil)
