@@ -36,13 +36,3 @@ func (uc *UserUseCase) GetUserByLogin(login string, password string) (*userCore.
 func (uc *UserUseCase) CreateUser(user *userCore.User) (uint32, error) {
 	return uc.repo.Add(user)
 }
-
-// UpdateUser updates the user's information.
-func (uc *UserUseCase) UpdateUser(user *userCore.User) (bool, error) {
-	return uc.repo.Update(user)
-}
-
-// DeleteUser deletes the user.
-func (uc *UserUseCase) DeleteUser(id uint32) (bool, error) {
-	return uc.repo.Delete(id)
-}

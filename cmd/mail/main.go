@@ -1,17 +1,20 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
+	_ "github.com/jackc/pgx/stdlib"
 	"github.com/rs/cors"
-	httpSwagger "github.com/swaggo/http-swagger/v2"
+	"log"
 	"mail/pkg/delivery/middleware"
 	"mail/pkg/delivery/session"
 	"net/http"
 
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 	emailHand "mail/pkg/delivery/email"
 	userHand "mail/pkg/delivery/user"
-	emailRepo "mail/pkg/repository/email"
-	userRepo "mail/pkg/repository/user"
+	emailRepo "mail/pkg/repository/maps/email"
+	userRepo "mail/pkg/repository/maps/user"
 	emailUc "mail/pkg/usecase/email"
 	userUc "mail/pkg/usecase/user"
 
@@ -26,6 +29,17 @@ import (
 // @host localhost:8080
 // @BasePath /
 func main() {
+	dsn := "user=postgres dbname=Mail password=postgres host=localhost port=5432 sslmode=disable"
+	db, errDb := sql.Open("pgx", dsn)
+	if errDb != nil {
+		log.Fatalln("Can't parse config", errDb)
+	}
+	errDb = db.Ping()
+	if errDb != nil {
+		log.Fatalln(errDb)
+	}
+	db.SetMaxOpenConns(10)
+
 	sessionsManager := session.NewSessionsManager()
 	session.InitializationGlobalSeaaionManager(sessionsManager)
 
@@ -89,3 +103,19 @@ func main() {
 	}
 	// 89.208.223.140
 }
+
+/*func runMigrations(db *sql.DB) error {
+	// Создание мигратора
+	m, err := migrate.New("file://path/to/migrations", "user=postgres dbname=Mail password=postgres host=localhost port=5432 sslmode=disable")
+	if err != nil {
+		return err
+	}
+
+	// Применение миграций
+	err = m.Up()
+	if err != nil && err != migrate.ErrNoChange {
+		return err
+	}
+
+	return nil
+}*/

@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"fmt"
 	"mail/pkg/delivery/session"
+	userRepo "mail/pkg/repository/maps/user"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
 	userCore "mail/pkg/domain/models"
-	userRepo "mail/pkg/repository/user"
 	userUc "mail/pkg/usecase/user"
 
 	"github.com/stretchr/testify/assert"

@@ -17,10 +17,4 @@ type UserUseCase interface {
 
 	// CreateUser creates a new user.
 	CreateUser(user *userCore.User) (uint32, error)
-
-	// UpdateUser updates the user's information.
-	UpdateUser(user *userCore.User) (bool, error)
-
-	// DeleteUser deletes the user.
-	DeleteUser(id uint32) (bool, error)
 }

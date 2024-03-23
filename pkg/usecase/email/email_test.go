@@ -4,17 +4,17 @@ import (
 	"github.com/stretchr/testify/assert"
 	emailCore "mail/pkg/domain/models"
 	"mail/pkg/repository/converters"
-	mockRepo "mail/pkg/repository/email"
+	"mail/pkg/repository/maps/email"
 	"sort"
 	"testing"
 )
 
 func TestEmailUseCase_GetAllEmails(t *testing.T) {
-	emails := make([]*emailCore.Email, 0, len(mockRepo.FakeEmails))
-	for _, email := range mockRepo.FakeEmails {
+	emails := make([]*emailCore.Email, 0, len(email.FakeEmails))
+	for _, email := range email.FakeEmails {
 		emails = append(emails, converters.EmailConvertDbInCore(*email))
 	}
-	emailRepo := mockRepo.NewEmailMemoryRepository()
+	emailRepo := email.NewEmailMemoryRepository()
 	useCase := NewEmailUseCase(emailRepo)
 	result, err := useCase.GetAllEmails()
 	SortEmailsByID(emails)
@@ -25,12 +25,12 @@ func TestEmailUseCase_GetAllEmails(t *testing.T) {
 }
 
 func TestEmailUseCase_GetEmailByID(t *testing.T) {
-	emails := make([]*emailCore.Email, 0, len(mockRepo.FakeEmails))
-	for _, email := range mockRepo.FakeEmails {
+	emails := make([]*emailCore.Email, 0, len(email.FakeEmails))
+	for _, email := range email.FakeEmails {
 		emails = append(emails, converters.EmailConvertDbInCore(*email))
 	}
 	SortEmailsByID(emails)
-	emailRepo := mockRepo.NewEmailMemoryRepository()
+	emailRepo := email.NewEmailMemoryRepository()
 	useCase := NewEmailUseCase(emailRepo)
 	result, err := useCase.GetEmailByID(1)
 
@@ -39,8 +39,8 @@ func TestEmailUseCase_GetEmailByID(t *testing.T) {
 }
 
 func TestEmailUseCase_CreateEmail(t *testing.T) {
-	newEmail := converters.EmailConvertDbInCore(*mockRepo.FakeEmails[1])
-	emailRepo := mockRepo.NewEmptyInMemoryEmailRepository()
+	newEmail := converters.EmailConvertDbInCore(*email.FakeEmails[1])
+	emailRepo := email.NewEmptyInMemoryEmailRepository()
 	useCase := NewEmailUseCase(emailRepo)
 	result, err := useCase.CreateEmail(newEmail)
 
@@ -49,9 +49,9 @@ func TestEmailUseCase_CreateEmail(t *testing.T) {
 }
 
 func TestEmailUseCase_UpdateEmail(t *testing.T) {
-	updatedEmail := converters.EmailConvertDbInCore(*mockRepo.FakeEmails[1])
+	updatedEmail := converters.EmailConvertDbInCore(*email.FakeEmails[1])
 	updatedEmail.ReadStatus = true
-	emailRepo := mockRepo.NewEmailMemoryRepository()
+	emailRepo := email.NewEmailMemoryRepository()
 	useCase := NewEmailUseCase(emailRepo)
 	result, err := useCase.UpdateEmail(updatedEmail)
 
@@ -60,7 +60,7 @@ func TestEmailUseCase_UpdateEmail(t *testing.T) {
 }
 
 func TestEmailUseCase_DeleteEmail(t *testing.T) {
-	emailRepo := mockRepo.NewEmailMemoryRepository()
+	emailRepo := email.NewEmailMemoryRepository()
 	useCase := NewEmailUseCase(emailRepo)
 	result, err := useCase.DeleteEmail(1)
 

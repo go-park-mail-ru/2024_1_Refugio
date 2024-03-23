@@ -89,26 +89,3 @@ func TestUserUseCase_CreateUser(t *testing.T) {
 	assert.Equal(t, uint32(1), id)
 	repo.AssertExpectations(t)
 }
-
-func TestUserUseCase_UpdateUser(t *testing.T) {
-	repo := new(mockUserRepository)
-	updatedUser := &models.User{ID: 1, Name: "Jane"}
-	repo.On("Update", updatedUser).Return(true, nil)
-
-	uc := NewUserUseCase(repo)
-	success, err := uc.UpdateUser(updatedUser)
-	assert.NoError(t, err)
-	assert.True(t, success)
-	repo.AssertExpectations(t)
-}
-
-func TestUserUseCase_DeleteUser(t *testing.T) {
-	repo := new(mockUserRepository)
-	repo.On("Delete", uint32(1)).Return(true, nil)
-
-	uc := NewUserUseCase(repo)
-	success, err := uc.DeleteUser(1)
-	assert.NoError(t, err)
-	assert.True(t, success)
-	repo.AssertExpectations(t)
-}
