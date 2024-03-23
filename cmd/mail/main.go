@@ -39,32 +39,36 @@ func main() {
 		EmailUseCase: emailUseCase,
 		Sessions:     sessionsManager,
 	}
-	//emailHand.InitializationEmailHandler(emailHandler)		// !!!
 
 	userHandler := &userHand.UserHandler{
 		UserUseCase: userUseCase,
 		Sessions:    sessionsManager,
 	}
-	//userHand.InitializationEmailHandler(userHandler)			// !!!
+
+	port := 8080
+	Logrus := middleware.InitializationAcceslog(port)
 
 	router := mux.NewRouter()
 
 	auth := mux.NewRouter().PathPrefix("/api/v1/auth").Subrouter()
-	auth.Use(middleware.AccessLogMiddleware, middleware.PanicMiddleware, middleware.AuthMiddleware)
+	auth.Use(Logrus.AccessLogMiddleware, middleware.PanicMiddleware, middleware.AuthMiddleware)
 	router.PathPrefix("/api/v1/auth").Handler(auth)
 
 	auth.HandleFunc("/verify-auth", userHandler.VerifyAuth).Methods("GET", "OPTIONS")
 	auth.HandleFunc("/get-user", userHandler.GetUserBySession).Methods("GET", "OPTIONS") //??
-
 	auth.HandleFunc("/emails", emailHandler.List).Methods("GET", "OPTIONS")
 	auth.HandleFunc("/email/{id}", emailHandler.GetByID).Methods("GET", "OPTIONS")
 	auth.HandleFunc("/email/add", emailHandler.Add).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/email/update/{id}", emailHandler.Update).Methods("PUT", "OPTIONS")
 	auth.HandleFunc("/email/delete/{id}", emailHandler.Delete).Methods("DELETE", "OPTIONS")
 
-	router.HandleFunc("/api/v1/login", userHandler.Login).Methods("POST", "OPTIONS")
-	router.HandleFunc("/api/v1/signup", userHandler.Signup).Methods("POST", "OPTIONS")
-	router.HandleFunc("/api/v1/logout", userHandler.Logout).Methods("POST", "OPTIONS")
+	logRouter := mux.NewRouter().PathPrefix("/api/v1").Subrouter()
+	logRouter.Use(Logrus.AccessLogMiddleware, middleware.PanicMiddleware, middleware.AuthMiddleware)
+	router.PathPrefix("/api/v1").Handler(logRouter)
+
+	logRouter.HandleFunc("/login", userHandler.Login).Methods("POST", "OPTIONS")
+	logRouter.HandleFunc("/signup", userHandler.Signup).Methods("POST", "OPTIONS")
+	logRouter.HandleFunc("/logout", userHandler.Logout).Methods("POST", "OPTIONS")
 
 	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
@@ -76,7 +80,6 @@ func main() {
 
 	corsHandler := c.Handler(router)
 
-	port := 8080
 	fmt.Printf("The server is running on http://localhost:%d\n", port)
 	fmt.Printf("Swagger is running on http://localhost:%d/swagger/index.html\n", port)
 
