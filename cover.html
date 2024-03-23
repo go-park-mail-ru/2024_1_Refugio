@@ -59,21 +59,33 @@
 				
 				<option value="file1">mail/docs/docs.go (0.0%)</option>
 				
-				<option value="file2">mail/pkg/email/repo.go (89.6%)</option>
+				<option value="file2">mail/pkg/delivery/converters/email_converter.go (100.0%)</option>
 				
-				<option value="file3">mail/pkg/handlers/email.go (81.3%)</option>
+				<option value="file3">mail/pkg/delivery/converters/user_converter.go (50.0%)</option>
 				
-				<option value="file4">mail/pkg/handlers/response.go (100.0%)</option>
+				<option value="file4">mail/pkg/delivery/email/email_handler.go (82.1%)</option>
 				
-				<option value="file5">mail/pkg/handlers/user.go (55.6%)</option>
+				<option value="file5">mail/pkg/delivery/middleware/auth.go (100.0%)</option>
 				
-				<option value="file6">mail/pkg/middleware/auth.go (100.0%)</option>
+				<option value="file6">mail/pkg/delivery/response.go (100.0%)</option>
 				
-				<option value="file7">mail/pkg/session/manager.go (92.3%)</option>
+				<option value="file7">mail/pkg/delivery/session/manager.go (92.3%)</option>
 				
-				<option value="file8">mail/pkg/session/session.go (100.0%)</option>
+				<option value="file8">mail/pkg/delivery/session/session.go (100.0%)</option>
 				
-				<option value="file9">mail/pkg/user/repo.go (87.9%)</option>
+				<option value="file9">mail/pkg/delivery/user/user_handler.go (56.6%)</option>
+				
+				<option value="file10">mail/pkg/repository/converters/email_converter.go (100.0%)</option>
+				
+				<option value="file11">mail/pkg/repository/converters/user_converter.go (100.0%)</option>
+				
+				<option value="file12">mail/pkg/repository/email/email_repo.go (90.0%)</option>
+				
+				<option value="file13">mail/pkg/repository/user/user_repo.go (85.5%)</option>
+				
+				<option value="file14">mail/pkg/usecase/email/email_service.go (100.0%)</option>
+				
+				<option value="file15">mail/pkg/usecase/user/user_service.go (100.0%)</option>
 				
 				</select>
 			</div>
@@ -92,17 +104,19 @@
 import (
         "fmt"
         "github.com/rs/cors"
+        "mail/pkg/delivery/session"
         "net/http"
 
-        "mail/pkg/email"
-        "mail/pkg/handlers"
-        "mail/pkg/session"
-        "mail/pkg/user"
-
-        _ "mail/docs"
+        emailHand "mail/pkg/delivery/email"
+        userHand "mail/pkg/delivery/user"
+        emailRepo "mail/pkg/repository/email"
+        userRepo "mail/pkg/repository/user"
+        emailUc "mail/pkg/usecase/email"
+        userUc "mail/pkg/usecase/user"
 
         "github.com/gorilla/mux"
         httpSwagger "github.com/swaggo/http-swagger/v2"
+        _ "mail/docs"
 )
 
 // @title API Mail
@@ -114,17 +128,20 @@ import (
 func main() <span class="cov0" title="0">{
         sessionsManager := session.NewSessionsManager()
 
-        emailRepository := email.NewEmailMemoryRepository()
-        userRepository := user.NewInMemoryUserRepository()
+        emailRepository := emailRepo.NewEmailMemoryRepository()
+        emailUseCase := emailUc.NewEmailUseCase(emailRepository)
 
-        emailHandler := &amp;handlers.EmailHandler{
-                EmailRepository: emailRepository,
-                Sessions:        sessionsManager,
+        userRepository := userRepo.NewInMemoryUserRepository()
+        userUseCase := userUc.NewUserUseCase(userRepository)
+
+        emailHandler := &amp;emailHand.EmailHandler{
+                EmailUseCase: emailUseCase,
+                Sessions:     sessionsManager,
         }
 
-        userHandler := &amp;handlers.UserHandler{
-                UserRepository: userRepository,
-                Sessions:       sessionsManager,
+        userHandler := &amp;userHand.UserHandler{
+                UserUseCase: userUseCase,
+                Sessions:    sessionsManager,
         }
 
         router := mux.NewRouter()
@@ -196,7 +213,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/email.Email"
+                            "$ref": "#/definitions/delivery.Email"
                         }
                     }
                 ],
@@ -204,25 +221,25 @@ const docTemplate = `{
                     "200": {
                         "description": "ID of the added email message",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "400": {
                         "description": "Bad JSON in request",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "401": {
                         "description": "Not Authorized",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "500": {
                         "description": "Failed to add email message",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     }
                 }
@@ -248,25 +265,25 @@ const docTemplate = `{
                     "200": {
                         "description": "Deletion success status",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "400": {
                         "description": "Bad id",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "401": {
                         "description": "Not Authorized",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "500": {
                         "description": "Failed to delete email message",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     }
                 }
@@ -296,7 +313,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/email.Email"
+                            "$ref": "#/definitions/delivery.Email"
                         }
                     }
                 ],
@@ -304,25 +321,25 @@ const docTemplate = `{
                     "200": {
                         "description": "Update success status",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "400": {
                         "description": "Bad id or Bad JSON",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "401": {
                         "description": "Not Authorized",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "500": {
                         "description": "Failed to update email message",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     }
                 }
@@ -348,25 +365,25 @@ const docTemplate = `{
                     "200": {
                         "description": "Email message data",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "400": {
                         "description": "Bad id in request",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "401": {
                         "description": "Not Authorized",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "404": {
                         "description": "Email not found",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     }
                 }
@@ -383,25 +400,25 @@ const docTemplate = `{
                     "200": {
                         "description": "List of all email messages",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "401": {
                         "description": "Not Authorized",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "404": {
                         "description": "DB error",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "500": {
                         "description": "JSON encoding error",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     }
                 }
@@ -421,19 +438,19 @@ const docTemplate = `{
                     "200": {
                         "description": "User details",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "401": {
                         "description": "Not Authorized",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/delivery.ErrorResponse"
                         }
                     }
                 }
@@ -459,7 +476,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user.User"
+                            "$ref": "#/definitions/delivery.User"
                         }
                     }
                 ],
@@ -467,25 +484,25 @@ const docTemplate = `{
                     "200": {
                         "description": "Login successful",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "400": {
                         "description": "Invalid request body",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/delivery.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Invalid credentials",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/delivery.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Failed to create session",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/delivery.ErrorResponse"
                         }
                     }
                 }
@@ -505,7 +522,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Logout successful",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     }
                 }
@@ -531,7 +548,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user.User"
+                            "$ref": "#/definitions/delivery.User"
                         }
                     }
                 ],
@@ -539,19 +556,19 @@ const docTemplate = `{
                     "200": {
                         "description": "Signup successful",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "400": {
                         "description": "Invalid request body",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/delivery.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Failed to add user",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/delivery.ErrorResponse"
                         }
                     }
                 }
@@ -571,13 +588,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "401": {
                         "description": "Not Authorized",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     }
                 }
@@ -585,52 +602,10 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "email.Email": {
-            "type": "object",
-            "properties": {
-                "dateOfDispatch": {
-                    "description": "Date when the email was sent.",
-                    "type": "string"
-                },
-                "deleted": {
-                    "description": "Status indicating whether the email has been deleted.",
-                    "type": "boolean"
-                },
-                "draftStatus": {
-                    "description": "Status indicating that the email is a draft.",
-                    "type": "boolean"
-                },
-                "id": {
-                    "description": "Unique identifier of the email in the database.",
-                    "type": "integer"
-                },
-                "mark": {
-                    "description": "A flag, for example, marking the email as a favorite.",
-                    "type": "string"
-                },
-                "photoId": {
-                    "description": "Link to the photo attached to the email, if any.",
-                    "type": "string"
-                },
-                "readStatus": {
-                    "description": "Status indicating whether the email has been read.",
-                    "type": "boolean"
-                },
-                "replyToEmailId": {
-                    "description": "ID of the email to which a reply can be sent.",
-                    "type": "integer"
-                },
-                "text": {
-                    "description": "Text body of the email.",
-                    "type": "string"
-                },
-                "topic": {
-                    "description": "Subject of the email.",
-                    "type": "string"
-                }
-            }
+        "delivery.Email": {
+            "type": "object"
         },
-        "handlers.ErrorResponse": {
+        "delivery.ErrorResponse": {
             "type": "object",
             "properties": {
                 "error": {
@@ -638,7 +613,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.Response": {
+        "delivery.Response": {
             "type": "object",
             "properties": {
                 "body": {},
@@ -647,34 +622,8 @@ const docTemplate = `{
                 }
             }
         },
-        "user.User": {
-            "type": "object",
-            "properties": {
-                "avatar": {
-                    "description": "User's avatar.",
-                    "type": "string"
-                },
-                "id": {
-                    "description": "Unique identifier of the user.",
-                    "type": "integer"
-                },
-                "login": {
-                    "description": "User's login.",
-                    "type": "string"
-                },
-                "name": {
-                    "description": "User's first name.",
-                    "type": "string"
-                },
-                "password": {
-                    "description": "User's password.",
-                    "type": "string"
-                },
-                "surname": {
-                    "description": "User's last name.",
-                    "type": "string"
-                }
-            }
+        "delivery.User": {
+            "type": "object"
         }
     }
 }`
@@ -698,130 +647,87 @@ func init() <span class="cov0" title="0">{
 }</span>
 </pre>
 		
-		<pre class="file" id="file2" style="display: none">package email
+		<pre class="file" id="file2" style="display: none">package converters
 
 import (
-        "fmt"
-        "sync"
+        emailApi "mail/pkg/delivery/models"
+        emailCore "mail/pkg/domain/models"
 )
 
-// EmailMemoryRepository represents the implementation of EmailRepository using an in-memory storage.
-type EmailMemoryRepository struct {
-        mu     sync.RWMutex
-        emails map[uint64]*Email
-}
-
-// NewEmailMemoryRepository creates a new instance of EmailMemoryRepository.
-func NewEmailMemoryRepository() *EmailMemoryRepository <span class="cov0" title="0">{
-        fakeEmails := FakeEmails
-        return &amp;EmailMemoryRepository{
-                emails: fakeEmails,
+func EmailConvertCoreInApi(emailModelDb emailCore.Email) *emailApi.Email <span class="cov8" title="1">{
+        return &amp;emailApi.Email{
+                ID:             emailModelDb.ID,
+                Topic:          emailModelDb.Topic,
+                Text:           emailModelDb.Text,
+                PhotoID:        emailModelDb.PhotoID,
+                ReadStatus:     emailModelDb.ReadStatus,
+                Mark:           emailModelDb.Mark,
+                Deleted:        emailModelDb.Deleted,
+                DateOfDispatch: emailModelDb.DateOfDispatch,
+                ReplyToEmailID: emailModelDb.ReplyToEmailID,
+                DraftStatus:    emailModelDb.DraftStatus,
         }
 }</span>
 
-// NewEmptyInMemoryEmailRepository creates a new email repository in memory with an empty default email list.
-func NewEmptyInMemoryEmailRepository() *EmailMemoryRepository <span class="cov8" title="1">{
-        defaultEmails := map[uint64]*Email{}
-        return &amp;EmailMemoryRepository{
-                emails: defaultEmails,
+func EmailConvertApiInCore(emailModelCore emailApi.Email) *emailCore.Email <span class="cov8" title="1">{
+        return &amp;emailCore.Email{
+                ID:             emailModelCore.ID,
+                Topic:          emailModelCore.Topic,
+                Text:           emailModelCore.Text,
+                PhotoID:        emailModelCore.PhotoID,
+                ReadStatus:     emailModelCore.ReadStatus,
+                Mark:           emailModelCore.Mark,
+                Deleted:        emailModelCore.Deleted,
+                DateOfDispatch: emailModelCore.DateOfDispatch,
+                ReplyToEmailID: emailModelCore.ReplyToEmailID,
+                DraftStatus:    emailModelCore.DraftStatus,
         }
 }</span>
-
-func CreateFakeEmails() *EmailMemoryRepository <span class="cov8" title="1">{
-        repo := NewEmptyInMemoryEmailRepository()
-
-        for i := 1; i-1 &lt; len(FakeEmails); i++ </span><span class="cov8" title="1">{
-                repo.emails[uint64(i)] = FakeEmails[uint64(i)]
-        }</span>
-        <span class="cov8" title="1">return repo</span>
-}
-
-// GetAll returns all emails from the storage.
-func (repository *EmailMemoryRepository) GetAll() ([]*Email, error) <span class="cov8" title="1">{
-        repository.mu.RLock()
-        defer repository.mu.RUnlock()
-
-        emails := make([]*Email, 0, len(repository.emails))
-        for i := 0; i &lt; len(repository.emails); i++ </span><span class="cov8" title="1">{
-                emails = append(emails, repository.emails[uint64(i+1)])
-        }</span>
-
-        <span class="cov8" title="1">return emails, nil</span>
-}
-
-// GetByID returns an email based on its unique identifier.
-func (repository *EmailMemoryRepository) GetByID(id uint64) (*Email, error) <span class="cov8" title="1">{
-        repository.mu.RLock()
-        defer repository.mu.RUnlock()
-
-        email, found := repository.emails[id]
-        if !found </span><span class="cov0" title="0">{
-                return nil, fmt.Errorf("Email with id %d not found", id)
-        }</span>
-
-        <span class="cov8" title="1">return email, nil</span>
-}
-
-// Add adds a new email to the storage and returns the assigned unique identifier.
-func (repository *EmailMemoryRepository) Add(email *Email) (*Email, error) <span class="cov8" title="1">{
-        repository.mu.Lock()
-        defer repository.mu.Unlock()
-
-        id := uint64(len(repository.emails) + 1)
-        email.ID = id
-        repository.emails[id] = email
-
-        return repository.emails[id], nil
-}</span>
-
-// Update updates the data of an email in the storage based on the provided new email.
-func (repository *EmailMemoryRepository) Update(newEmail *Email) (bool, error) <span class="cov8" title="1">{
-        repository.mu.Lock()
-        defer repository.mu.Unlock()
-
-        existingEmail, found := repository.emails[newEmail.ID]
-        if !found </span><span class="cov0" title="0">{
-                return false, fmt.Errorf("Email with id %d not found", newEmail.ID)
-        }</span>
-
-        <span class="cov8" title="1">existingEmail.Topic = newEmail.Topic
-        existingEmail.Text = newEmail.Text
-        existingEmail.PhotoID = newEmail.PhotoID
-        existingEmail.ReadStatus = newEmail.ReadStatus
-        existingEmail.Mark = newEmail.Mark
-        existingEmail.Deleted = newEmail.Deleted
-        existingEmail.DateOfDispatch = newEmail.DateOfDispatch
-        existingEmail.ReplyToEmailID = newEmail.ReplyToEmailID
-        existingEmail.DraftStatus = newEmail.DraftStatus
-
-        return true, nil</span>
-}
-
-// Delete removes an email from the storage based on its unique identifier.
-func (repository *EmailMemoryRepository) Delete(id uint64) (bool, error) <span class="cov8" title="1">{
-        repository.mu.Lock()
-        defer repository.mu.Unlock()
-
-        _, found := repository.emails[id]
-        if !found </span><span class="cov0" title="0">{
-                return false, fmt.Errorf("Email with id %d not found", id)
-        }</span>
-
-        <span class="cov8" title="1">delete(repository.emails, id)
-
-        return true, nil</span>
-}
 </pre>
 		
-		<pre class="file" id="file3" style="display: none">package handlers
+		<pre class="file" id="file3" style="display: none">package converters
+
+import (
+        userApi "mail/pkg/delivery/models"
+        userCore "mail/pkg/domain/models"
+)
+
+func UserConvertCoreInApi(userModelCore userCore.User) *userApi.User <span class="cov0" title="0">{
+        return &amp;userApi.User{
+                ID:       userModelCore.ID,
+                Login:    userModelCore.Login,
+                Name:     userModelCore.Name,
+                Surname:  userModelCore.Surname,
+                AvatarID: userModelCore.AvatarID,
+        }
+}</span>
+
+func UserConvertApiInCore(userModelApi userApi.User) *userCore.User <span class="cov8" title="1">{
+        return &amp;userCore.User{
+                ID:       userModelApi.ID,
+                Login:    userModelApi.Login,
+                Password: userModelApi.Password,
+                Name:     userModelApi.Name,
+                Surname:  userModelApi.Surname,
+                AvatarID: userModelApi.AvatarID,
+        }
+}</span>
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package email
 
 import (
         "encoding/json"
         "fmt"
-        "mail/pkg/email"
-        "mail/pkg/session"
         "net/http"
         "strconv"
+
+        "mail/pkg/delivery"
+        "mail/pkg/delivery/converters"
+
+        emailApi "mail/pkg/delivery/models"
+        "mail/pkg/delivery/session"
+        emailUsecase "mail/pkg/domain/usecase"
 
         "github.com/gorilla/mux"
         "github.com/gorilla/schema"
@@ -829,33 +735,38 @@ import (
 
 // EmailHandler represents the handler for email operations.
 type EmailHandler struct {
-        EmailRepository email.EmailRepository
-        Sessions        *session.SessionsManager
+        EmailUseCase emailUsecase.EmailUseCase
+        Sessions     *session.SessionsManager
 }
 
 // List displays the list of email messages.
 // @Summary Display the list of email messages
 // @Description Get a list of all email messages
 // @Produce json
-// @Success 200 {object} Response "List of all email messages"
-// @Failure 401 {object} Response "Not Authorized"
-// @Failure 404 {object} Response "DB error"
-// @Failure 500 {object} Response "JSON encoding error"
+// @Success 200 {object} delivery.Response "List of all email messages"
+// @Failure 401 {object} delivery.Response "Not Authorized"
+// @Failure 404 {object} delivery.Response "DB error"
+// @Failure 500 {object} delivery.Response "JSON encoding error"
 // @Router /api/v1/emails [get]
 func (h *EmailHandler) List(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
         _, err := h.Sessions.Check(r)
         if err != nil </span><span class="cov8" title="1">{
-                handleError(w, http.StatusUnauthorized, "Not Authorized")
+                delivery.HandleError(w, http.StatusUnauthorized, "Not Authorized")
                 return
         }</span>
 
-        <span class="cov8" title="1">emails, err := h.EmailRepository.GetAll()
+        <span class="cov8" title="1">emails, err := h.EmailUseCase.GetAllEmails()
         if err != nil </span><span class="cov0" title="0">{
-                handleError(w, http.StatusNotFound, fmt.Sprintf("DB error: %s", err.Error()))
+                delivery.HandleError(w, http.StatusNotFound, fmt.Sprintf("DB error: %s", err.Error()))
                 return
         }</span>
 
-        <span class="cov8" title="1">handleSuccess(w, http.StatusOK, map[string]interface{}{"emails": emails})</span>
+        <span class="cov8" title="1">emailsApi := make([]*emailApi.Email, 0, len(emails))
+        for _, email := range emails </span><span class="cov8" title="1">{
+                emailsApi = append(emailsApi, converters.EmailConvertCoreInApi(*email))
+        }</span>
+
+        <span class="cov8" title="1">delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"emails": emailsApi})</span>
 }
 
 // GetByID returns an email message by its ID.
@@ -863,32 +774,32 @@ func (h *EmailHandler) List(w http.ResponseWriter, r *http.Request) <span class=
 // @Description Get an email message by its unique identifier
 // @Produce json
 // @Param id path integer true "ID of the email message"
-// @Success 200 {object} Response "Email message data"
-// @Failure 400 {object} Response "Bad id in request"
-// @Failure 401 {object} Response "Not Authorized"
-// @Failure 404 {object} Response "Email not found"
+// @Success 200 {object} delivery.Response "Email message data"
+// @Failure 400 {object} delivery.Response "Bad id in request"
+// @Failure 401 {object} delivery.Response "Not Authorized"
+// @Failure 404 {object} delivery.Response "Email not found"
 // @Router /api/v1/email/{id} [get]
 func (h *EmailHandler) GetByID(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
         _, err := h.Sessions.Check(r)
         if err != nil </span><span class="cov8" title="1">{
-                handleError(w, http.StatusUnauthorized, "Not Authorized")
+                delivery.HandleError(w, http.StatusUnauthorized, "Not Authorized")
                 return
         }</span>
 
         <span class="cov8" title="1">vars := mux.Vars(r)
         id, err := strconv.ParseUint(vars["id"], 10, 64)
         if err != nil </span><span class="cov0" title="0">{
-                handleError(w, http.StatusBadRequest, "Bad id in request")
+                delivery.HandleError(w, http.StatusBadRequest, "Bad id in request")
                 return
         }</span>
 
-        <span class="cov8" title="1">email, err := h.EmailRepository.GetByID(id)
+        <span class="cov8" title="1">email, err := h.EmailUseCase.GetEmailByID(id)
         if err != nil </span><span class="cov8" title="1">{
-                handleError(w, http.StatusNotFound, "Email not found")
+                delivery.HandleError(w, http.StatusNotFound, "Email not found")
                 return
         }</span>
 
-        <span class="cov8" title="1">handleSuccess(w, http.StatusOK, map[string]interface{}{"email": email})</span>
+        <span class="cov8" title="1">delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*email)})</span>
 }
 
 // Add adds a new email message.
@@ -896,35 +807,35 @@ func (h *EmailHandler) GetByID(w http.ResponseWriter, r *http.Request) <span cla
 // @Description Add a new email message to the system
 // @Accept json
 // @Produce json
-// @Param email body email.Email true "Email message in JSON format"
-// @Success 200 {object} Response "ID of the added email message"
-// @Failure 400 {object} Response "Bad JSON in request"
-// @Failure 401 {object} Response "Not Authorized"
-// @Failure 500 {object} Response "Failed to add email message"
+// @Param email body delivery.Email true "Email message in JSON format"
+// @Success 200 {object} delivery.Response "ID of the added email message"
+// @Failure 400 {object} delivery.Response "Bad JSON in request"
+// @Failure 401 {object} delivery.Response "Not Authorized"
+// @Failure 500 {object} delivery.Response "Failed to add email message"
 // @Router /api/v1/email/add [post]
 func (h *EmailHandler) Add(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
         _, err := h.Sessions.Check(r)
         if err != nil </span><span class="cov8" title="1">{
-                handleError(w, http.StatusUnauthorized, "Not Authorized")
+                delivery.HandleError(w, http.StatusUnauthorized, "Not Authorized")
                 return
         }</span>
 
-        <span class="cov8" title="1">var newEmail email.Email
+        <span class="cov8" title="1">var newEmail emailApi.Email
         decoder := schema.NewDecoder()
         decoder.IgnoreUnknownKeys(true)
         err = json.NewDecoder(r.Body).Decode(&amp;newEmail)
         if err != nil </span><span class="cov8" title="1">{
-                handleError(w, http.StatusBadRequest, "Bad JSON in request")
+                delivery.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
                 return
         }</span>
 
-        <span class="cov8" title="1">email, err := h.EmailRepository.Add(&amp;newEmail)
+        <span class="cov8" title="1">email, err := h.EmailUseCase.CreateEmail(converters.EmailConvertApiInCore(newEmail))
         if err != nil </span><span class="cov0" title="0">{
-                handleError(w, http.StatusInternalServerError, "Failed to add email message")
+                delivery.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
                 return
         }</span>
 
-        <span class="cov8" title="1">handleSuccess(w, http.StatusOK, map[string]interface{}{"email": email})</span>
+        <span class="cov8" title="1">delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*email)})</span>
 }
 
 // Update updates an existing email message.
@@ -933,43 +844,43 @@ func (h *EmailHandler) Add(w http.ResponseWriter, r *http.Request) <span class="
 // @Accept json
 // @Produce json
 // @Param id path integer true "ID of the email message"
-// @Param email body email.Email true "Email message in JSON format"
-// @Success 200 {object} Response "Update success status"
-// @Failure 400 {object} Response "Bad id or Bad JSON"
-// @Failure 401 {object} Response "Not Authorized"
-// @Failure 500 {object} Response "Failed to update email message"
+// @Param email body delivery.Email true "Email message in JSON format"
+// @Success 200 {object} delivery.Response "Update success status"
+// @Failure 400 {object} delivery.Response "Bad id or Bad JSON"
+// @Failure 401 {object} delivery.Response "Not Authorized"
+// @Failure 500 {object} delivery.Response "Failed to update email message"
 // @Router /api/v1/email/update/{id} [put]
 func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
         _, err := h.Sessions.Check(r)
         if err != nil </span><span class="cov8" title="1">{
-                handleError(w, http.StatusUnauthorized, "Not Authorized")
+                delivery.HandleError(w, http.StatusUnauthorized, "Not Authorized")
                 return
         }</span>
 
         <span class="cov8" title="1">vars := mux.Vars(r)
         id, err := strconv.ParseUint(vars["id"], 10, 64)
         if err != nil </span><span class="cov8" title="1">{
-                handleError(w, http.StatusBadRequest, "Bad id in request")
+                delivery.HandleError(w, http.StatusBadRequest, "Bad id in request")
                 return
         }</span>
 
-        <span class="cov8" title="1">var updatedEmail email.Email
+        <span class="cov8" title="1">var updatedEmail emailApi.Email
         decoder := schema.NewDecoder()
         decoder.IgnoreUnknownKeys(true)
         err = json.NewDecoder(r.Body).Decode(&amp;updatedEmail)
         if err != nil </span><span class="cov8" title="1">{
-                handleError(w, http.StatusBadRequest, "Bad JSON in request")
+                delivery.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
                 return
         }</span>
         <span class="cov0" title="0">updatedEmail.ID = id
 
-        ok, err := h.EmailRepository.Update(&amp;updatedEmail)
+        ok, err := h.EmailUseCase.UpdateEmail(converters.EmailConvertApiInCore(updatedEmail))
         if err != nil </span><span class="cov0" title="0">{
-                handleError(w, http.StatusInternalServerError, "Failed to update email message")
+                delivery.HandleError(w, http.StatusInternalServerError, "Failed to update email message")
                 return
         }</span>
 
-        <span class="cov0" title="0">handleSuccess(w, http.StatusOK, map[string]interface{}{"Success": ok})</span>
+        <span class="cov0" title="0">delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": ok})</span>
 }
 
 // Delete deletes an email message.
@@ -977,247 +888,36 @@ func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) <span clas
 // @Description Delete an email message based on its identifier
 // @Produce json
 // @Param id path integer true "ID of the email message"
-// @Success 200 {object} Response "Deletion success status"
-// @Failure 400 {object} Response "Bad id"
-// @Failure 401 {object} Response "Not Authorized"
-// @Failure 500 {object} Response "Failed to delete email message"
+// @Success 200 {object} delivery.Response "Deletion success status"
+// @Failure 400 {object} delivery.Response "Bad id"
+// @Failure 401 {object} delivery.Response "Not Authorized"
+// @Failure 500 {object} delivery.Response "Failed to delete email message"
 // @Router /api/v1/email/delete/{id} [delete]
 func (h *EmailHandler) Delete(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
         _, err := h.Sessions.Check(r)
         if err != nil </span><span class="cov8" title="1">{
-                handleError(w, http.StatusUnauthorized, "Not Authorized")
+                delivery.HandleError(w, http.StatusUnauthorized, "Not Authorized")
                 return
         }</span>
 
         <span class="cov8" title="1">vars := mux.Vars(r)
         id, err := strconv.ParseUint(vars["id"], 10, 64)
         if err != nil </span><span class="cov8" title="1">{
-                handleError(w, http.StatusBadRequest, "Bad id in request")
+                delivery.HandleError(w, http.StatusBadRequest, "Bad id in request")
                 return
         }</span>
 
-        <span class="cov8" title="1">ok, err := h.EmailRepository.Delete(id)
+        <span class="cov8" title="1">ok, err := h.EmailUseCase.DeleteEmail(id)
         if err != nil </span><span class="cov0" title="0">{
-                handleError(w, http.StatusInternalServerError, "Failed to delete email message")
+                delivery.HandleError(w, http.StatusInternalServerError, "Failed to delete email message")
                 return
         }</span>
 
-        <span class="cov8" title="1">handleSuccess(w, http.StatusOK, map[string]interface{}{"Success": ok})</span>
+        <span class="cov8" title="1">delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": ok})</span>
 }
 </pre>
 		
-		<pre class="file" id="file4" style="display: none">package handlers
-
-import (
-        "encoding/json"
-        "net/http"
-)
-
-// Response represents the response format.
-type Response struct {
-        Status int         `json:"status"`
-        Body   interface{} `json:"body"`
-}
-
-// ErrorResponse represents the error response format.
-type ErrorResponse struct {
-        Error string `json:"error"`
-}
-
-// handleSuccess is a utility function to handle successful responses uniformly in the API.
-func handleSuccess(w http.ResponseWriter, status int, body interface{}) <span class="cov8" title="1">{
-        response := Response{
-                Status: status,
-                Body:   body,
-        }
-        w.Header().Set("Content-Type", "application/json")
-        w.WriteHeader(status)
-        json.NewEncoder(w).Encode(response)
-}</span>
-
-// handleError is a utility function to handle errors uniformly in the API responses.
-func handleError(w http.ResponseWriter, status int, message string) <span class="cov8" title="1">{
-        response := Response{
-                Status: status,
-                Body:   ErrorResponse{Error: message},
-        }
-        w.Header().Set("Content-Type", "application/json")
-        w.WriteHeader(status)
-        json.NewEncoder(w).Encode(response)
-}</span>
-</pre>
-		
-		<pre class="file" id="file5" style="display: none">package handlers
-
-import (
-        "encoding/json"
-        "net/http"
-        "strings"
-
-        "mail/pkg/session"
-        "mail/pkg/user"
-)
-
-// UserHandler handles user-related HTTP requests.
-type UserHandler struct {
-        UserRepository user.UserRepository
-        Sessions       *session.SessionsManager
-}
-
-// VerifyAuth verifies user authentication.
-// @Summary Verify user authentication
-// @Description Verify user authentication using sessions
-// @Tags users
-// @Produce json
-// @Success 200 {object} Response "OK"
-// @Failure 401 {object} Response "Not Authorized"
-// @Router /api/v1/verify-auth [get]
-func (uh *UserHandler) VerifyAuth(w http.ResponseWriter, r *http.Request) <span class="cov0" title="0">{
-        _, err := uh.Sessions.Check(r)
-        if err != nil </span><span class="cov0" title="0">{
-                handleError(w, http.StatusUnauthorized, "Not Authorized")
-                return
-        }</span>
-
-        <span class="cov0" title="0">handleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "OK"})</span>
-}
-
-// Login handles user login.
-// @Summary User login
-// @Description Handles user login.
-// @Tags users
-// @Accept json
-// @Produce json
-// @Param credentials body user.User true "User credentials for login"
-// @Success 200 {object} Response "Login successful"
-// @Failure 400 {object} ErrorResponse "Invalid request body"
-// @Failure 401 {object} ErrorResponse "Invalid credentials"
-// @Failure 500 {object} ErrorResponse "Failed to create session"
-// @Router /api/v1/login [post]
-func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
-        var credentials user.User
-        err := json.NewDecoder(r.Body).Decode(&amp;credentials)
-        if err != nil </span><span class="cov8" title="1">{
-                handleError(w, http.StatusBadRequest, "Invalid request body")
-                return
-        }</span>
-
-        <span class="cov8" title="1">if isEmpty(credentials.Login) || isEmpty(credentials.Password) </span><span class="cov0" title="0">{
-                handleError(w, http.StatusInternalServerError, "All fields must be filled in")
-                return
-        }</span>
-
-        <span class="cov8" title="1">ourUser, err := uh.UserRepository.GetUserByLogin(credentials.Login, credentials.Password)
-        if err != nil </span><span class="cov8" title="1">{
-                handleError(w, http.StatusUnauthorized, "Login failed")
-                return
-        }</span>
-
-        <span class="cov8" title="1">_, er := uh.Sessions.Create(w, ourUser.ID)
-        if er != nil </span><span class="cov0" title="0">{
-                handleError(w, http.StatusInternalServerError, "Failed to create session")
-                return
-        }</span>
-
-        <span class="cov8" title="1">handleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "Login successful"})</span>
-}
-
-// Signup handles user signup.
-// @Summary User signup
-// @Description Handles user signup.
-// @Tags users
-// @Accept json
-// @Produce json
-// @Param newUser body user.User true "New user details for signup"
-// @Success 200 {object} Response "Signup successful"
-// @Failure 400 {object} ErrorResponse "Invalid request body"
-// @Failure 500 {object} ErrorResponse "Failed to add user"
-// @Router /api/v1/signup [post]
-func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
-        var newUser user.User
-        err := json.NewDecoder(r.Body).Decode(&amp;newUser)
-        if err != nil </span><span class="cov8" title="1">{
-                handleError(w, http.StatusBadRequest, "Invalid request body")
-                return
-        }</span>
-
-        <span class="cov8" title="1">if isEmpty(newUser.Name) || isEmpty(newUser.Surname) || isEmpty(newUser.Login) || isEmpty(newUser.Password) </span><span class="cov8" title="1">{
-                handleError(w, http.StatusBadRequest, "All fields must be filled in")
-        }</span>
-
-        <span class="cov8" title="1">users, _ := uh.UserRepository.GetAll()
-        for _, u := range users </span><span class="cov8" title="1">{
-                if u.Login == newUser.Login </span><span class="cov0" title="0">{
-                        handleError(w, http.StatusBadRequest, "Such a login already exists")
-                        return
-                }</span>
-        }
-
-        <span class="cov8" title="1">_, er := uh.UserRepository.Add(&amp;newUser)
-        if er != nil </span><span class="cov0" title="0">{
-                handleError(w, http.StatusInternalServerError, "Failed to add user")
-        }</span>
-
-        <span class="cov8" title="1">handleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "Signup successful"})</span>
-}
-
-// Logout handles user logout.
-// @Summary User logout
-// @Description Handles user logout.
-// @Tags users
-// @Produce json
-// @Success 200 {object} Response "Logout successful"
-// @Router /api/v1/logout [post]
-func (uh *UserHandler) Logout(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
-        err := uh.Sessions.DestroyCurrent(w, r)
-        if err != nil </span><span class="cov0" title="0">{
-                handleError(w, http.StatusUnauthorized, "Not Authorized")
-                return
-        }</span>
-
-        <span class="cov8" title="1">handleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "Logout successful"})</span>
-}
-
-// GetUserBySession retrieves the user associated with the current session.
-// @Summary Get user by session
-// @Description Retrieve the user associated with the current session
-// @Tags users
-// @Produce json
-// @Success 200 {object} Response "User details"
-// @Failure 401 {object} Response "Not Authorized"
-// @Failure 500 {object} ErrorResponse "Internal Server Error"
-// @Router /api/v1/get-user [get]
-func (uh *UserHandler) GetUserBySession(w http.ResponseWriter, r *http.Request) <span class="cov0" title="0">{
-        sessionUser, err := uh.Sessions.Check(r)
-        if err != nil </span><span class="cov0" title="0">{
-                handleError(w, http.StatusUnauthorized, "Not Authorized")
-                return
-        }</span>
-
-        <span class="cov0" title="0">userData, err := uh.UserRepository.GetByID(sessionUser.UserID)
-        if err != nil </span><span class="cov0" title="0">{
-                handleError(w, http.StatusInternalServerError, "Internal Server Error")
-                return
-        }</span>
-
-        <span class="cov0" title="0">userJson := user.User{
-                Login:    userData.Login,
-                Name:     userData.Name,
-                Surname:  userData.Surname,
-                AvatarId: userData.AvatarId,
-        }
-
-        handleSuccess(w, http.StatusOK, map[string]interface{}{"user": userJson})</span>
-}
-
-// isEmpty checks if the given string is empty after trimming leading and trailing whitespace.
-// Returns true if the string is empty, and false otherwise.
-func isEmpty(str string) bool <span class="cov8" title="1">{
-        return strings.TrimSpace(str) == ""
-}</span>
-</pre>
-		
-		<pre class="file" id="file6" style="display: none">package middleware
+		<pre class="file" id="file5" style="display: none">package middleware
 
 import (
         "net/http"
@@ -1237,6 +937,52 @@ func AuthMiddleware(next http.Handler) http.Handler <span class="cov8" title="1"
                 <span class="cov8" title="1">next.ServeHTTP(w, r)</span>
         })
 }
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">package delivery
+
+import (
+        "encoding/json"
+        "net/http"
+
+        api "mail/pkg/delivery/models"
+)
+
+// Response represents the response format.
+type Response struct {
+        Status int         `json:"status"`
+        Body   interface{} `json:"body"`
+}
+
+// ErrorResponse represents the error response format.
+type ErrorResponse struct {
+        Error string `json:"error"`
+}
+
+// HandleSuccess is a utility function to handle successful responses uniformly in the API.
+func HandleSuccess(w http.ResponseWriter, status int, body interface{}) <span class="cov8" title="1">{
+        response := Response{
+                Status: status,
+                Body:   body,
+        }
+        w.Header().Set("Content-Type", "application/json")
+        w.WriteHeader(status)
+        json.NewEncoder(w).Encode(response)
+}</span>
+
+// HandleError is a utility function to handle errors uniformly in the API responses.
+func HandleError(w http.ResponseWriter, status int, message string) <span class="cov8" title="1">{
+        response := Response{
+                Status: status,
+                Body:   ErrorResponse{Error: message},
+        }
+        w.Header().Set("Content-Type", "application/json")
+        w.WriteHeader(status)
+        json.NewEncoder(w).Encode(response)
+}</span>
+
+type Email = api.Email
+type User = api.User
 </pre>
 		
 		<pre class="file" id="file7" style="display: none">package session
@@ -1363,15 +1109,377 @@ func ContextWithSession(ctx context.Context, sess *Session) context.Context <spa
 		<pre class="file" id="file9" style="display: none">package user
 
 import (
+        "encoding/json"
+        "mail/pkg/delivery"
+        "mail/pkg/delivery/converters"
+        "mail/pkg/delivery/models"
+        "mail/pkg/delivery/session"
+        "mail/pkg/domain/usecase"
+        "net/http"
+        "strings"
+)
+
+// UserHandler handles user-related HTTP requests.
+type UserHandler struct {
+        UserUseCase usecase.UserUseCase
+        Sessions    *session.SessionsManager
+}
+
+// VerifyAuth verifies user authentication.
+// @Summary Verify user authentication
+// @Description Verify user authentication using sessions
+// @Tags users
+// @Produce json
+// @Success 200 {object} delivery.Response "OK"
+// @Failure 401 {object} delivery.Response "Not Authorized"
+// @Router /api/v1/verify-auth [get]
+func (uh *UserHandler) VerifyAuth(w http.ResponseWriter, r *http.Request) <span class="cov0" title="0">{
+        _, err := uh.Sessions.Check(r)
+        if err != nil </span><span class="cov0" title="0">{
+                delivery.HandleError(w, http.StatusUnauthorized, "Not Authorized")
+                return
+        }</span>
+
+        <span class="cov0" title="0">delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "OK"})</span>
+}
+
+// Login handles user login.
+// @Summary User login
+// @Description Handles user login.
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param credentials body delivery.User true "User credentials for login"
+// @Success 200 {object} delivery.Response "Login successful"
+// @Failure 400 {object} delivery.ErrorResponse "Invalid request body"
+// @Failure 401 {object} delivery.ErrorResponse "Invalid credentials"
+// @Failure 500 {object} delivery.ErrorResponse "Failed to create session"
+// @Router /api/v1/login [post]
+func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+        var credentials models.User
+        err := json.NewDecoder(r.Body).Decode(&amp;credentials)
+        if err != nil </span><span class="cov8" title="1">{
+                delivery.HandleError(w, http.StatusBadRequest, "Invalid request body")
+                return
+        }</span>
+
+        <span class="cov8" title="1">if isEmpty(credentials.Login) || isEmpty(credentials.Password) </span><span class="cov0" title="0">{
+                delivery.HandleError(w, http.StatusInternalServerError, "All fields must be filled in")
+                return
+        }</span>
+
+        <span class="cov8" title="1">ourUser, err := uh.UserUseCase.GetUserByLogin(credentials.Login, credentials.Password)
+        if err != nil </span><span class="cov8" title="1">{
+                delivery.HandleError(w, http.StatusUnauthorized, "Login failed")
+                return
+        }</span>
+
+        <span class="cov8" title="1">_, er := uh.Sessions.Create(w, ourUser.ID)
+        if er != nil </span><span class="cov0" title="0">{
+                delivery.HandleError(w, http.StatusInternalServerError, "Failed to create session")
+                return
+        }</span>
+
+        <span class="cov8" title="1">delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "Login successful"})</span>
+}
+
+// Signup handles user signup.
+// @Summary User signup
+// @Description Handles user signup.
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param newUser body delivery.User true "New user details for signup"
+// @Success 200 {object} delivery.Response "Signup successful"
+// @Failure 400 {object} delivery.ErrorResponse "Invalid request body"
+// @Failure 500 {object} delivery.ErrorResponse "Failed to add user"
+// @Router /api/v1/signup [post]
+func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+        var newUser models.User
+        err := json.NewDecoder(r.Body).Decode(&amp;newUser)
+        if err != nil </span><span class="cov8" title="1">{
+                delivery.HandleError(w, http.StatusBadRequest, "Invalid request body")
+                return
+        }</span>
+
+        <span class="cov8" title="1">if isEmpty(newUser.Name) || isEmpty(newUser.Surname) || isEmpty(newUser.Login) || isEmpty(newUser.Password) </span><span class="cov8" title="1">{
+                delivery.HandleError(w, http.StatusBadRequest, "All fields must be filled in")
+        }</span>
+
+        <span class="cov8" title="1">users, _ := uh.UserUseCase.GetAllUsers()
+        for _, u := range users </span><span class="cov8" title="1">{
+                if u.Login == newUser.Login </span><span class="cov0" title="0">{
+                        delivery.HandleError(w, http.StatusBadRequest, "Such a login already exists")
+                        return
+                }</span>
+        }
+
+        <span class="cov8" title="1">_, er := uh.UserUseCase.CreateUser(converters.UserConvertApiInCore(newUser))
+        if er != nil </span><span class="cov0" title="0">{
+                delivery.HandleError(w, http.StatusInternalServerError, "Failed to add user")
+        }</span>
+
+        <span class="cov8" title="1">delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "Signup successful"})</span>
+}
+
+// Logout handles user logout.
+// @Summary User logout
+// @Description Handles user logout.
+// @Tags users
+// @Produce json
+// @Success 200 {object} delivery.Response "Logout successful"
+// @Router /api/v1/logout [post]
+func (uh *UserHandler) Logout(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+        err := uh.Sessions.DestroyCurrent(w, r)
+        if err != nil </span><span class="cov0" title="0">{
+                delivery.HandleError(w, http.StatusUnauthorized, "Not Authorized")
+                return
+        }</span>
+
+        <span class="cov8" title="1">delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "Logout successful"})</span>
+}
+
+// GetUserBySession retrieves the user associated with the current session.
+// @Summary Get user by session
+// @Description Retrieve the user associated with the current session
+// @Tags users
+// @Produce json
+// @Success 200 {object} delivery.Response "User details"
+// @Failure 401 {object} delivery.Response "Not Authorized"
+// @Failure 500 {object} delivery.ErrorResponse "Internal Server Error"
+// @Router /api/v1/get-user [get]
+func (uh *UserHandler) GetUserBySession(w http.ResponseWriter, r *http.Request) <span class="cov0" title="0">{
+        sessionUser, err := uh.Sessions.Check(r)
+        if err != nil </span><span class="cov0" title="0">{
+                delivery.HandleError(w, http.StatusUnauthorized, "Not Authorized")
+                return
+        }</span>
+
+        <span class="cov0" title="0">userData, err := uh.UserUseCase.GetUserByID(sessionUser.UserID)
+        if err != nil </span><span class="cov0" title="0">{
+                delivery.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+                return
+        }</span>
+
+        <span class="cov0" title="0">delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"user": converters.UserConvertCoreInApi(*userData)})</span>
+}
+
+// isEmpty checks if the given string is empty after trimming leading and trailing whitespace.
+// Returns true if the string is empty, and false otherwise.
+func isEmpty(str string) bool <span class="cov8" title="1">{
+        return strings.TrimSpace(str) == ""
+}</span>
+</pre>
+		
+		<pre class="file" id="file10" style="display: none">package converters
+
+import (
+        emailCore "mail/pkg/domain/models"
+        emailDb "mail/pkg/repository/models"
+)
+
+func EmailConvertDbInCore(emailModelDb emailDb.Email) *emailCore.Email <span class="cov8" title="1">{
+        return &amp;emailCore.Email{
+                ID:             emailModelDb.ID,
+                Topic:          emailModelDb.Topic,
+                Text:           emailModelDb.Text,
+                PhotoID:        emailModelDb.PhotoID,
+                ReadStatus:     emailModelDb.ReadStatus,
+                Mark:           emailModelDb.Mark,
+                Deleted:        emailModelDb.Deleted,
+                DateOfDispatch: emailModelDb.DateOfDispatch,
+                ReplyToEmailID: emailModelDb.ReplyToEmailID,
+                DraftStatus:    emailModelDb.DraftStatus,
+        }
+}</span>
+
+func EmailConvertCoreInDb(emailModelCore emailCore.Email) *emailDb.Email <span class="cov8" title="1">{
+        return &amp;emailDb.Email{
+                ID:             emailModelCore.ID,
+                Topic:          emailModelCore.Topic,
+                Text:           emailModelCore.Text,
+                PhotoID:        emailModelCore.PhotoID,
+                ReadStatus:     emailModelCore.ReadStatus,
+                Mark:           emailModelCore.Mark,
+                Deleted:        emailModelCore.Deleted,
+                DateOfDispatch: emailModelCore.DateOfDispatch,
+                ReplyToEmailID: emailModelCore.ReplyToEmailID,
+                DraftStatus:    emailModelCore.DraftStatus,
+        }
+}</span>
+</pre>
+		
+		<pre class="file" id="file11" style="display: none">package converters
+
+import (
+        userCore "mail/pkg/domain/models"
+        userDb "mail/pkg/repository/models"
+)
+
+func UserConvertDbInCore(userModelDb userDb.User) *userCore.User <span class="cov8" title="1">{
+        return &amp;userCore.User{
+                ID:       userModelDb.ID,
+                Login:    userModelDb.Login,
+                Password: userModelDb.Password,
+                Name:     userModelDb.Name,
+                Surname:  userModelDb.Surname,
+                AvatarID: userModelDb.AvatarID,
+        }
+}</span>
+
+func UserConvertCoreInDb(userModelCore userCore.User) *userDb.User <span class="cov8" title="1">{
+        return &amp;userDb.User{
+                ID:       userModelCore.ID,
+                Login:    userModelCore.Login,
+                Password: userModelCore.Password,
+                Name:     userModelCore.Name,
+                Surname:  userModelCore.Surname,
+                AvatarID: userModelCore.AvatarID,
+        }
+}</span>
+</pre>
+		
+		<pre class="file" id="file12" style="display: none">package email
+
+import (
+        "fmt"
+        "mail/pkg/repository/converters"
+        "sync"
+
+        emailCore "mail/pkg/domain/models"
+        "mail/pkg/repository/models"
+)
+
+// EmailMemoryRepository represents the implementation of EmailRepository using an in-memory storage.
+type EmailMemoryRepository struct {
+        mu     sync.RWMutex
+        emails map[uint64]*models.Email
+}
+
+// NewEmailMemoryRepository creates a new instance of EmailMemoryRepository.
+func NewEmailMemoryRepository() *EmailMemoryRepository <span class="cov0" title="0">{
+        fakeEmails := FakeEmails
+
+        return &amp;EmailMemoryRepository{
+                emails: fakeEmails,
+        }
+}</span>
+
+// NewEmptyInMemoryEmailRepository creates a new email repository in memory with an empty default email list.
+func NewEmptyInMemoryEmailRepository() *EmailMemoryRepository <span class="cov8" title="1">{
+        defaultEmails := map[uint64]*models.Email{}
+
+        return &amp;EmailMemoryRepository{
+                emails: defaultEmails,
+        }
+}</span>
+
+func CreateFakeEmails() *EmailMemoryRepository <span class="cov8" title="1">{
+        repo := NewEmptyInMemoryEmailRepository()
+
+        for i := 1; i-1 &lt; len(FakeEmails); i++ </span><span class="cov8" title="1">{
+                repo.emails[uint64(i)] = FakeEmails[uint64(i)]
+        }</span>
+
+        <span class="cov8" title="1">return repo</span>
+}
+
+// GetAll returns all emails from the storage.
+func (repository *EmailMemoryRepository) GetAll() ([]*emailCore.Email, error) <span class="cov8" title="1">{
+        repository.mu.RLock()
+        defer repository.mu.RUnlock()
+
+        emails := make([]*emailCore.Email, 0, len(repository.emails))
+        for _, email := range repository.emails </span><span class="cov8" title="1">{
+                emails = append(emails, converters.EmailConvertDbInCore(*email))
+        }</span>
+
+        <span class="cov8" title="1">return emails, nil</span>
+}
+
+// GetByID returns an email based on its unique identifier.
+func (repository *EmailMemoryRepository) GetByID(id uint64) (*emailCore.Email, error) <span class="cov8" title="1">{
+        repository.mu.RLock()
+        defer repository.mu.RUnlock()
+
+        email, found := repository.emails[id]
+        if !found </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("Email with id %d not found", id)
+        }</span>
+
+        <span class="cov8" title="1">return converters.EmailConvertDbInCore(*email), nil</span>
+}
+
+// Add adds a new email to the storage and returns the assigned unique identifier.
+func (repository *EmailMemoryRepository) Add(email *emailCore.Email) (*emailCore.Email, error) <span class="cov8" title="1">{
+        repository.mu.Lock()
+        defer repository.mu.Unlock()
+
+        emailDb := converters.EmailConvertCoreInDb(*email)
+
+        id := uint64(len(repository.emails) + 1)
+        emailDb.ID = id
+        repository.emails[id] = emailDb
+
+        return converters.EmailConvertDbInCore(*repository.emails[id]), nil
+}</span>
+
+// Update updates the data of an email in the storage based on the provided new email.
+func (repository *EmailMemoryRepository) Update(newEmail *emailCore.Email) (bool, error) <span class="cov8" title="1">{
+        repository.mu.Lock()
+        defer repository.mu.Unlock()
+
+        emailDb := converters.EmailConvertCoreInDb(*newEmail)
+
+        existingEmail, found := repository.emails[emailDb.ID]
+        if !found </span><span class="cov0" title="0">{
+                return false, fmt.Errorf("Email with id %d not found", emailDb.ID)
+        }</span>
+
+        <span class="cov8" title="1">existingEmail.Topic = emailDb.Topic
+        existingEmail.Text = emailDb.Text
+        existingEmail.PhotoID = emailDb.PhotoID
+        existingEmail.ReadStatus = emailDb.ReadStatus
+        existingEmail.Mark = emailDb.Mark
+        existingEmail.Deleted = emailDb.Deleted
+        existingEmail.DateOfDispatch = emailDb.DateOfDispatch
+        existingEmail.ReplyToEmailID = emailDb.ReplyToEmailID
+        existingEmail.DraftStatus = emailDb.DraftStatus
+
+        return true, nil</span>
+}
+
+// Delete removes an email from the storage based on its unique identifier.
+func (repository *EmailMemoryRepository) Delete(id uint64) (bool, error) <span class="cov8" title="1">{
+        repository.mu.Lock()
+        defer repository.mu.Unlock()
+
+        _, found := repository.emails[id]
+        if !found </span><span class="cov0" title="0">{
+                return false, fmt.Errorf("Email with id %d not found", id)
+        }</span>
+
+        <span class="cov8" title="1">delete(repository.emails, id)
+
+        return true, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file13" style="display: none">package user
+
+import (
         "fmt"
         "golang.org/x/crypto/bcrypt"
+        userCore "mail/pkg/domain/models"
+        "mail/pkg/repository/converters"
+        "mail/pkg/repository/models"
         "sync"
 )
 
 // UserMemoryRepository is an in-memory implementation of UserRepository.
 type UserMemoryRepository struct {
         mutex sync.RWMutex
-        users map[uint32]*User
+        users map[uint32]*models.User
 }
 
 // NewUserMemoryRepository creates a new instance of UserMemoryRepository.
@@ -1383,7 +1491,7 @@ func NewInMemoryUserRepository() *UserMemoryRepository <span class="cov8" title=
 
 // NewEmptyInMemoryUserRepository creates a new user repository in memory with an empty default user list.
 func NewEmptyInMemoryUserRepository() *UserMemoryRepository <span class="cov8" title="1">{
-        defaultUsers := map[uint32]*User{}
+        defaultUsers := map[uint32]*models.User{}
         return &amp;UserMemoryRepository{
                 users: defaultUsers,
         }
@@ -1410,32 +1518,36 @@ func CheckPasswordHash(password, hash string) bool <span class="cov8" title="1">
 
 // ComparingUserObjects compares two user objects by comparing their IDs, names, surnames, logins, and password hashes.
 // If all fields match, the function returns true, otherwise false.
-func ComparingUserObjects(object1, object2 User) bool <span class="cov0" title="0">{
-        if object1.ID == object2.ID &amp;&amp;
-                object1.Name == object2.Name &amp;&amp;
-                object1.Surname == object2.Surname &amp;&amp;
-                object1.Login == object2.Login &amp;&amp;
-                CheckPasswordHash(object2.Password, object1.Password) </span><span class="cov0" title="0">{
+func ComparingUserObjects(object1, object2 userCore.User) bool <span class="cov0" title="0">{
+        userDb1 := converters.UserConvertCoreInDb(object1)
+        userDb2 := converters.UserConvertCoreInDb(object2)
+
+        if userDb1.ID == userDb2.ID &amp;&amp;
+                userDb1.Name == userDb2.Name &amp;&amp;
+                userDb1.Surname == userDb2.Surname &amp;&amp;
+                userDb1.Login == userDb2.Login &amp;&amp;
+                CheckPasswordHash(userDb2.Password, userDb1.Password) </span><span class="cov0" title="0">{
                 return true
         }</span>
+
         <span class="cov0" title="0">return false</span>
 }
 
 // GetAll returns all users from the storage.
-func (repo *UserMemoryRepository) GetAll() ([]*User, error) <span class="cov8" title="1">{
+func (repo *UserMemoryRepository) GetAll() ([]*userCore.User, error) <span class="cov8" title="1">{
         repo.mutex.RLock()
         defer repo.mutex.RUnlock()
 
-        users := make([]*User, 0, len(repo.users))
+        users := make([]*userCore.User, 0, len(repo.users))
         for i := 0; i &lt; len(repo.users); i++ </span><span class="cov8" title="1">{
-                users = append(users, repo.users[uint32(i+1)])
+                users = append(users, converters.UserConvertDbInCore(*repo.users[uint32(i+1)]))
         }</span>
 
         <span class="cov8" title="1">return users, nil</span>
 }
 
 // GetByID returns the user by its unique identifier.
-func (repo *UserMemoryRepository) GetByID(id uint32) (*User, error) <span class="cov8" title="1">{
+func (repo *UserMemoryRepository) GetByID(id uint32) (*userCore.User, error) <span class="cov8" title="1">{
         repo.mutex.RLock()
         defer repo.mutex.RUnlock()
 
@@ -1444,18 +1556,18 @@ func (repo *UserMemoryRepository) GetByID(id uint32) (*User, error) <span class=
                 return nil, fmt.Errorf("User with id %d not found", id)
         }</span>
 
-        <span class="cov8" title="1">return user, nil</span>
+        <span class="cov8" title="1">return converters.UserConvertDbInCore(*user), nil</span>
 }
 
 // GetUserByLogin returns the user by login.
-func (repo *UserMemoryRepository) GetUserByLogin(login string, password string) (*User, error) <span class="cov8" title="1">{
+func (repo *UserMemoryRepository) GetUserByLogin(login string, password string) (*userCore.User, error) <span class="cov8" title="1">{
         repo.mutex.RLock()
         defer repo.mutex.RUnlock()
 
         for _, u := range repo.users </span><span class="cov8" title="1">{
                 if u.Login == login </span><span class="cov8" title="1">{
                         if CheckPasswordHash(password, u.Password) </span><span class="cov8" title="1">{
-                                return u, nil
+                                return converters.UserConvertDbInCore(*u), nil
                         }</span> else<span class="cov8" title="1"> {
                                 return nil, fmt.Errorf("User with the username %s was not found", login)
                         }</span>
@@ -1466,33 +1578,37 @@ func (repo *UserMemoryRepository) GetUserByLogin(login string, password string) 
 }
 
 // Add adds a new user to the storage and returns its assigned unique identifier.
-func (repo *UserMemoryRepository) Add(user *User) (uint32, error) <span class="cov8" title="1">{
+func (repo *UserMemoryRepository) Add(user *userCore.User) (uint32, error) <span class="cov8" title="1">{
         repo.mutex.Lock()
         defer repo.mutex.Unlock()
 
+        userDb := converters.UserConvertCoreInDb(*user)
+
         userID := uint32(len(repo.users) + 1)
-        user.ID = userID
+        userDb.ID = userID
         var err bool
-        user.Password, err = HashPassword(user.Password)
+        userDb.Password, err = HashPassword(userDb.Password)
         if err == false </span><span class="cov0" title="0">{
                 return userID, fmt.Errorf("Operation failed")
         }</span>
-        <span class="cov8" title="1">repo.users[userID] = user
+        <span class="cov8" title="1">repo.users[userID] = userDb
 
         return userID, nil</span>
 }
 
 // Update updates the information of a user in the storage based on the provided new user.
-func (repo *UserMemoryRepository) Update(newUser *User) (bool, error) <span class="cov8" title="1">{
+func (repo *UserMemoryRepository) Update(newUser *userCore.User) (bool, error) <span class="cov8" title="1">{
         repo.mutex.Lock()
         defer repo.mutex.Unlock()
 
-        _, exists := repo.users[newUser.ID]
+        newUserDb := converters.UserConvertCoreInDb(*newUser)
+
+        _, exists := repo.users[newUserDb.ID]
         if !exists </span><span class="cov0" title="0">{
-                return false, fmt.Errorf("User with id %d not found", newUser.ID)
+                return false, fmt.Errorf("User with id %d not found", newUserDb.ID)
         }</span>
 
-        <span class="cov8" title="1">repo.users[newUser.ID] = newUser
+        <span class="cov8" title="1">repo.users[newUserDb.ID] = newUserDb
 
         return true, nil</span>
 }
@@ -1511,6 +1627,101 @@ func (repo *UserMemoryRepository) Delete(id uint32) (bool, error) <span class="c
 
         return true, nil</span>
 }
+</pre>
+		
+		<pre class="file" id="file14" style="display: none">package email
+
+import (
+        emailCore "mail/pkg/domain/models"
+        "mail/pkg/domain/repository"
+)
+
+// EmailUseCase represents the use case for working with emails.
+type EmailUseCase struct {
+        repo repository.EmailRepository
+}
+
+// NewEmailUseCase creates a new instance of EmailUseCase.
+func NewEmailUseCase(repo repository.EmailRepository) *EmailUseCase <span class="cov8" title="1">{
+        return &amp;EmailUseCase{
+                repo: repo,
+        }
+}</span>
+
+// GetAllEmails returns all emails.
+func (uc *EmailUseCase) GetAllEmails() ([]*emailCore.Email, error) <span class="cov8" title="1">{
+        return uc.repo.GetAll()
+}</span>
+
+// GetEmailByID returns the email by its ID.
+func (uc *EmailUseCase) GetEmailByID(id uint64) (*emailCore.Email, error) <span class="cov8" title="1">{
+        return uc.repo.GetByID(id)
+}</span>
+
+// CreateEmail creates a new email.
+func (uc *EmailUseCase) CreateEmail(newEmail *emailCore.Email) (*emailCore.Email, error) <span class="cov8" title="1">{
+        return uc.repo.Add(newEmail)
+}</span>
+
+// UpdateEmail updates the information of an email.
+func (uc *EmailUseCase) UpdateEmail(updatedEmail *emailCore.Email) (bool, error) <span class="cov8" title="1">{
+        return uc.repo.Update(updatedEmail)
+}</span>
+
+// DeleteEmail deletes the email.
+func (uc *EmailUseCase) DeleteEmail(id uint64) (bool, error) <span class="cov8" title="1">{
+        return uc.repo.Delete(id)
+}</span>
+</pre>
+		
+		<pre class="file" id="file15" style="display: none">package user
+
+import (
+        userCore "mail/pkg/domain/models"
+        "mail/pkg/domain/repository"
+)
+
+// UserUseCase represents the use case for working with users.
+type UserUseCase struct {
+        repo repository.UserRepository
+}
+
+// NewUserUseCase creates a new instance of UserUseCase.
+func NewUserUseCase(repo repository.UserRepository) *UserUseCase <span class="cov8" title="1">{
+        return &amp;UserUseCase{
+                repo: repo,
+        }
+}</span>
+
+// GetAllUsers returns all users.
+func (uc *UserUseCase) GetAllUsers() ([]*userCore.User, error) <span class="cov8" title="1">{
+        return uc.repo.GetAll()
+}</span>
+
+// GetUserByID returns the user by its ID.
+func (uc *UserUseCase) GetUserByID(id uint32) (*userCore.User, error) <span class="cov8" title="1">{
+        return uc.repo.GetByID(id)
+}</span>
+
+// GetUserByLogin returns the user by login.
+func (uc *UserUseCase) GetUserByLogin(login string, password string) (*userCore.User, error) <span class="cov8" title="1">{
+        return uc.repo.GetUserByLogin(login, password)
+}</span>
+
+// CreateUser creates a new user.
+func (uc *UserUseCase) CreateUser(user *userCore.User) (uint32, error) <span class="cov8" title="1">{
+        return uc.repo.Add(user)
+}</span>
+
+// UpdateUser updates the user's information.
+func (uc *UserUseCase) UpdateUser(user *userCore.User) (bool, error) <span class="cov8" title="1">{
+        return uc.repo.Update(user)
+}</span>
+
+// DeleteUser deletes the user.
+func (uc *UserUseCase) DeleteUser(id uint32) (bool, error) <span class="cov8" title="1">{
+        return uc.repo.Delete(id)
+}</span>
 </pre>
 		
 		</div>

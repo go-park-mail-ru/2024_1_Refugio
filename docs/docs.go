@@ -15,7 +15,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/v1/email/add": {
+        "/api/v1/auth/email/add": {
             "post": {
                 "description": "Add a new email message to the system",
                 "consumes": [
@@ -64,7 +64,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/email/delete/{id}": {
+        "/api/v1/auth/email/delete/{id}": {
             "delete": {
                 "description": "Delete an email message based on its identifier",
                 "produces": [
@@ -108,7 +108,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/email/update/{id}": {
+        "/api/v1/auth/email/update/{id}": {
             "put": {
                 "description": "Update an existing email message based on its identifier",
                 "consumes": [
@@ -164,7 +164,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/email/{id}": {
+        "/api/v1/auth/email/{id}": {
             "get": {
                 "description": "Get an email message by its unique identifier",
                 "produces": [
@@ -208,7 +208,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/emails": {
+        "/api/v1/auth/emails": {
             "get": {
                 "description": "Get a list of all email messages",
                 "produces": [
@@ -243,7 +243,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/get-user": {
+        "/api/v1/auth/get-user": {
             "get": {
                 "description": "Retrieve the user associated with the current session",
                 "produces": [
@@ -393,7 +393,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/verify-auth": {
+        "/api/v1/auth/verify-auth": {
             "get": {
                 "description": "Verify user authentication using sessions",
                 "produces": [

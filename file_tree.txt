@@ -1,8 +1,12 @@
 .
+├── Dockerfile
 ├── README.md
 ├── cmd
 │   └── mail
 │       └── main.go
+├── cover.html
+├── cover.out
+├── docker-compose.yml
 ├── docs
 │   ├── docs.go
 │   ├── swagger.json
@@ -11,20 +15,59 @@
 ├── go.mod
 ├── go.sum
 └── pkg
-    ├── email
-    │   ├── email.go
-    │   ├── fake_data.go
-    │   └── repo.go
-    ├── handlers
-    │   ├── email.go
-    │   └── user.go
-    ├── middleware
-    │   └── auth.go
-    ├── session
-    │   ├── manager.go
-    │   └── session.go
-    └── user
-        ├── repo.go
-        └── user.go
+    ├── delivery
+    │   ├── converters
+    │   │   ├── email_converter.go
+    │   │   └── user_converter.go
+    │   ├── email
+    │   │   ├── email_handler.go
+    │   │   └── handlersEmail_test.go
+    │   ├── middleware
+    │   │   ├── auth.go
+    │   │   └── auth_test.go
+    │   ├── models
+    │   │   ├── email.go
+    │   │   └── user.go
+    │   ├── response.go
+    │   ├── session
+    │   │   ├── manager.go
+    │   │   ├── manager_test.go
+    │   │   ├── session.go
+    │   │   └── session_test.go
+    │   └── user
+    │       ├── handlersUser_test.go
+    │       └── user_handler.go
+    ├── domain
+    │   ├── models
+    │   │   ├── email.go
+    │   │   └── user.go
+    │   ├── repository
+    │   │   ├── iemail_repo.go
+    │   │   └── iuser_repo.go
+    │   └── usecase
+    │       ├── iemail_service.go
+    │       └── iuser_service.go
+    ├── repository
+    │   ├── converters
+    │   │   ├── email_converter.go
+    │   │   └── user_converter.go
+    │   ├── email
+    │   │   ├── email_repo.go
+    │   │   ├── email_test.go
+    │   │   └── fake_emails.go
+    │   ├── models
+    │   │   ├── email.go
+    │   │   └── user.go
+    │   └── user
+    │       ├── fake_users.go
+    │       ├── user_repo.go
+    │       └── user_test.go
+    └── usecase
+        ├── email
+        │   ├── email_service.go
+        │   └── email_test.go
+        └── user
+            ├── user_service.go
+            └── user_test.go
 
-10 directories, 18 files
+24 directories, 47 files

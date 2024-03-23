@@ -72,17 +72,17 @@ info:
   title: API Mail
   version: "1.0"
 paths:
-  /api/v1/email/{id}:
+  /api/v1/auth/email/{id}:
     get:
       description: Get an email message by its unique identifier
       parameters:
-      - description: ID of the email message
-        in: path
-        name: id
-        required: true
-        type: integer
+        - description: ID of the email message
+          in: path
+          name: id
+          required: true
+          type: integer
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: Email message data
@@ -101,20 +101,20 @@ paths:
           schema:
             $ref: '#/definitions/handlers.Response'
       summary: Get an email message by ID
-  /api/v1/email/add:
+  /api/v1/auth/email/add:
     post:
       consumes:
-      - application/json
+        - application/json
       description: Add a new email message to the system
       parameters:
-      - description: Email message in JSON format
-        in: body
-        name: email
-        required: true
-        schema:
-          $ref: '#/definitions/email.Email'
+        - description: Email message in JSON format
+          in: body
+          name: email
+          required: true
+          schema:
+            $ref: '#/definitions/email.Email'
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: ID of the added email message
@@ -133,17 +133,17 @@ paths:
           schema:
             $ref: '#/definitions/handlers.Response'
       summary: Add a new email message
-  /api/v1/email/delete/{id}:
+  /api/v1/auth/email/delete/{id}:
     delete:
       description: Delete an email message based on its identifier
       parameters:
-      - description: ID of the email message
-        in: path
-        name: id
-        required: true
-        type: integer
+        - description: ID of the email message
+          in: path
+          name: id
+          required: true
+          type: integer
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: Deletion success status
@@ -162,25 +162,25 @@ paths:
           schema:
             $ref: '#/definitions/handlers.Response'
       summary: Delete an email message
-  /api/v1/email/update/{id}:
+  /api/v1/auth/email/update/{id}:
     put:
       consumes:
-      - application/json
+        - application/json
       description: Update an existing email message based on its identifier
       parameters:
-      - description: ID of the email message
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Email message in JSON format
-        in: body
-        name: email
-        required: true
-        schema:
-          $ref: '#/definitions/email.Email'
+        - description: ID of the email message
+          in: path
+          name: id
+          required: true
+          type: integer
+        - description: Email message in JSON format
+          in: body
+          name: email
+          required: true
+          schema:
+            $ref: '#/definitions/email.Email'
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: Update success status
@@ -199,11 +199,11 @@ paths:
           schema:
             $ref: '#/definitions/handlers.Response'
       summary: Update an email message
-  /api/v1/emails:
+  /api/v1/auth/emails:
     get:
       description: Get a list of all email messages
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: List of all email messages
@@ -222,11 +222,11 @@ paths:
           schema:
             $ref: '#/definitions/handlers.Response'
       summary: Display the list of email messages
-  /api/v1/get-user:
+  /api/v1/auth/get-user:
     get:
       description: Retrieve the user associated with the current session
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: User details
@@ -242,21 +242,21 @@ paths:
             $ref: '#/definitions/handlers.ErrorResponse'
       summary: Get user by session
       tags:
-      - users
+        - users
   /api/v1/login:
     post:
       consumes:
-      - application/json
+        - application/json
       description: Handles user login.
       parameters:
-      - description: User credentials for login
-        in: body
-        name: credentials
-        required: true
-        schema:
-          $ref: '#/definitions/user.User'
+        - description: User credentials for login
+          in: body
+          name: credentials
+          required: true
+          schema:
+            $ref: '#/definitions/user.User'
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: Login successful
@@ -276,12 +276,12 @@ paths:
             $ref: '#/definitions/handlers.ErrorResponse'
       summary: User login
       tags:
-      - users
+        - users
   /api/v1/logout:
     post:
       description: Handles user logout.
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: Logout successful
@@ -289,21 +289,21 @@ paths:
             $ref: '#/definitions/handlers.Response'
       summary: User logout
       tags:
-      - users
+        - users
   /api/v1/signup:
     post:
       consumes:
-      - application/json
+        - application/json
       description: Handles user signup.
       parameters:
-      - description: New user details for signup
-        in: body
-        name: newUser
-        required: true
-        schema:
-          $ref: '#/definitions/user.User'
+        - description: New user details for signup
+          in: body
+          name: newUser
+          required: true
+          schema:
+            $ref: '#/definitions/user.User'
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: Signup successful
@@ -319,12 +319,12 @@ paths:
             $ref: '#/definitions/handlers.ErrorResponse'
       summary: User signup
       tags:
-      - users
-  /api/v1/verify-auth:
+        - users
+  /api/v1/auth/verify-auth:
     get:
       description: Verify user authentication using sessions
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: OK
@@ -336,5 +336,5 @@ paths:
             $ref: '#/definitions/handlers.Response'
       summary: Verify user authentication
       tags:
-      - users
+        - users
 swagger: "2.0"
