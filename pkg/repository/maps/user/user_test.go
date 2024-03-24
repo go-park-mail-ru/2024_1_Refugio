@@ -25,10 +25,10 @@ func TestAddUser(t *testing.T) {
 
 	// Создаем нового пользователя
 	newUser := &userCore.User{
-		Name:     "John",
-		Surname:  "Doe",
-		Login:    "john_doe",
-		Password: "secret123",
+		FirstName: "John",
+		Surname:   "Doe",
+		Login:     "john_doe",
+		Password:  "secret123",
 	}
 
 	// Добавляем пользователя в репозиторий
@@ -43,7 +43,7 @@ func TestAddUser(t *testing.T) {
 	addedUser, _ := repo.GetByID(userID)
 
 	// Проверяем, что полученный пользователь соответствует созданному
-	assert.True(t, newUser.Name == addedUser.Name &&
+	assert.True(t, newUser.FirstName == addedUser.FirstName &&
 		newUser.Surname == addedUser.Surname &&
 		newUser.Login == addedUser.Login &&
 		newUser.AvatarID == addedUser.AvatarID)
@@ -55,10 +55,10 @@ func TestUpdateUser(t *testing.T) {
 
 	// Создаем нового пользователя
 	newUser := &userCore.User{
-		Name:     "John",
-		Surname:  "Doe",
-		Login:    "john_doe",
-		Password: "secret123",
+		FirstName: "John",
+		Surname:   "Doe",
+		Login:     "john_doe",
+		Password:  "secret123",
 	}
 
 	// Добавляем пользователя в репозиторий
@@ -66,11 +66,11 @@ func TestUpdateUser(t *testing.T) {
 
 	// Меняем данные пользователя
 	newUserData := &userCore.User{
-		ID:       userID,
-		Name:     "Jane",
-		Surname:  "Doe",
-		Login:    "jane_doe",
-		Password: "newsecret456",
+		ID:        userID,
+		FirstName: "Jane",
+		Surname:   "Doe",
+		Login:     "jane_doe",
+		Password:  "newsecret456",
 	}
 
 	// Обновляем пользователя в репозитории
@@ -85,7 +85,7 @@ func TestUpdateUser(t *testing.T) {
 	updatedUser, _ := repo.GetByID(userID)
 
 	// Проверяем, что данные пользователя обновлены
-	assert.True(t, newUserData.Name == updatedUser.Name &&
+	assert.True(t, newUserData.FirstName == updatedUser.FirstName &&
 		newUserData.Surname == updatedUser.Surname &&
 		newUserData.Login == updatedUser.Login &&
 		newUserData.AvatarID == updatedUser.AvatarID)
@@ -97,10 +97,10 @@ func TestDeleteUser(t *testing.T) {
 
 	// Создаем нового пользователя
 	newUser := &userCore.User{
-		Name:     "John",
-		Surname:  "Doe",
-		Login:    "john_doe",
-		Password: "secret123",
+		FirstName: "John",
+		Surname:   "Doe",
+		Login:     "john_doe",
+		Password:  "secret123",
 	}
 
 	// Добавляем пользователя в репозиторий
@@ -127,10 +127,10 @@ func TestGetUserByLogin(t *testing.T) {
 
 	// Создаем нового пользователя
 	newUser := &userCore.User{
-		Name:     "John",
-		Surname:  "Doe",
-		Login:    "john_doe",
-		Password: "1234",
+		FirstName: "John",
+		Surname:   "Doe",
+		Login:     "john_doe",
+		Password:  "1234",
 	}
 
 	// Добавляем пользователя в репозиторий

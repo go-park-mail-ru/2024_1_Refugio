@@ -1,91 +1,141 @@
 package user
 
 import (
-	"mail/pkg/domain/models"
-	"testing"
-
+	"errors"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
+	mock_repository "mail/pkg/domain/mock"
+	domain "mail/pkg/domain/models"
+	"testing"
 )
 
-type mockUserRepository struct {
-	mock.Mock
-}
+func TestGetAllUsers_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-func (m *mockUserRepository) GetAll() ([]*models.User, error) {
-	args := m.Called()
-	return args.Get(0).([]*models.User), args.Error(1)
-}
+	mockRepo := mock_repository.NewMockUserRepository(ctrl)
+	useCase := NewUserUseCase(mockRepo)
 
-func (m *mockUserRepository) GetByID(id uint32) (*models.User, error) {
-	args := m.Called(id)
-	return args.Get(0).(*models.User), args.Error(1)
-}
+	expectedUsers := []*domain.User{
+		{ID: 1, FirstName: "User 1"},
+		{ID: 2, FirstName: "User 2"},
+	}
+	mockRepo.EXPECT().GetAll(0, 0).Return(expectedUsers, nil)
 
-func (m *mockUserRepository) GetUserByLogin(login string, password string) (*models.User, error) {
-	args := m.Called(login, password)
-	return args.Get(0).(*models.User), args.Error(1)
-}
+	users, err := useCase.GetAllUsers()
 
-func (m *mockUserRepository) Add(user *models.User) (uint32, error) {
-	args := m.Called(user)
-	return uint32(args.Int(0)), args.Error(1)
-}
-
-func (m *mockUserRepository) Update(user *models.User) (bool, error) {
-	args := m.Called(user)
-	return args.Bool(0), args.Error(1)
-}
-
-func (m *mockUserRepository) Delete(id uint32) (bool, error) {
-	args := m.Called(id)
-	return args.Bool(0), args.Error(1)
-}
-
-func TestUserUseCase_GetAllUsers(t *testing.T) {
-	repo := new(mockUserRepository)
-	expectedUsers := []*models.User{{ID: 1, Name: "John"}, {ID: 2, Name: "Jane"}}
-	repo.On("GetAll").Return(expectedUsers, nil)
-
-	uc := NewUserUseCase(repo)
-	users, err := uc.GetAllUsers()
 	assert.NoError(t, err)
 	assert.Equal(t, expectedUsers, users)
-	repo.AssertExpectations(t)
 }
 
-func TestUserUseCase_GetUserByID(t *testing.T) {
-	repo := new(mockUserRepository)
-	expectedUser := &models.User{ID: 1, Name: "John"}
-	repo.On("GetByID", uint32(1)).Return(expectedUser, nil)
+func TestGetAllUsers_ErrorFromRepository(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-	uc := NewUserUseCase(repo)
-	foundUser, err := uc.GetUserByID(1)
-	assert.NoError(t, err)
-	assert.Equal(t, expectedUser, foundUser)
-	repo.AssertExpectations(t)
+	mockRepo := mock_repository.NewMockUserRepository(ctrl)
+	useCase := NewUserUseCase(mockRepo)
+
+	mockRepo.EXPECT().GetAll(0, 0).Return(nil, errors.New("repository error"))
+
+	users, err := useCase.GetAllUsers()
+
+	assert.Error(t, err)
+	assert.Nil(t, users)
 }
 
-func TestUserUseCase_GetUserByLogin(t *testing.T) {
-	repo := new(mockUserRepository)
-	expectedUser := &models.User{ID: 1, Name: "John"}
-	repo.On("GetUserByLogin", "john", "password").Return(expectedUser, nil)
+func TestGetUserByID_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-	uc := NewUserUseCase(repo)
-	foundUser, err := uc.GetUserByLogin("john", "password")
+	mockRepo := mock_repository.NewMockUserRepository(ctrl)
+	useCase := NewUserUseCase(mockRepo)
+
+	expectedUser := &domain.User{ID: 1, FirstName: "User 1"}
+	mockRepo.EXPECT().GetByID(uint32(1)).Return(expectedUser, nil)
+
+	user, err := useCase.GetUserByID(1)
+
 	assert.NoError(t, err)
-	assert.Equal(t, expectedUser, foundUser)
-	repo.AssertExpectations(t)
+	assert.Equal(t, expectedUser, user)
 }
 
-func TestUserUseCase_CreateUser(t *testing.T) {
-	repo := new(mockUserRepository)
-	newUser := &models.User{Name: "John"}
-	repo.On("Add", newUser).Return(1, nil)
+func TestGetUserByID_ErrorFromRepository(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-	uc := NewUserUseCase(repo)
-	id, err := uc.CreateUser(newUser)
+	mockRepo := mock_repository.NewMockUserRepository(ctrl)
+	useCase := NewUserUseCase(mockRepo)
+
+	mockRepo.EXPECT().GetByID(uint32(1)).Return(nil, errors.New("repository error"))
+
+	user, err := useCase.GetUserByID(1)
+
+	assert.Error(t, err)
+	assert.Nil(t, user)
+}
+
+func TestGetUserByLogin_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockUserRepository(ctrl)
+	useCase := NewUserUseCase(mockRepo)
+
+	expectedUser := &domain.User{ID: 1, FirstName: "User 1"}
+	mockRepo.EXPECT().GetUserByLogin("username", "password").Return(expectedUser, nil)
+
+	user, err := useCase.GetUserByLogin("username", "password")
+
 	assert.NoError(t, err)
-	assert.Equal(t, uint32(1), id)
-	repo.AssertExpectations(t)
+	assert.Equal(t, expectedUser, user)
+}
+
+func TestGetUserByLogin_ErrorFromRepository(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockUserRepository(ctrl)
+	useCase := NewUserUseCase(mockRepo)
+
+	mockRepo.EXPECT().GetUserByLogin("username", "password").Return(nil, errors.New("repository error"))
+
+	user, err := useCase.GetUserByLogin("username", "password")
+
+	assert.Error(t, err)
+	assert.Nil(t, user)
+}
+
+func TestCreateUser_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockUserRepository(ctrl)
+	useCase := NewUserUseCase(mockRepo)
+
+	expectedUserID := uint32(1)
+	mockRepo.EXPECT().Add(gomock.Any()).Return(expectedUserID, nil)
+
+	newUser := &domain.User{FirstName: "New User"}
+
+	userID, err := useCase.CreateUser(newUser)
+
+	assert.NoError(t, err)
+	assert.Equal(t, expectedUserID, userID)
+}
+
+func TestCreateUser_ErrorFromRepository(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockUserRepository(ctrl)
+	useCase := NewUserUseCase(mockRepo)
+
+	mockRepo.EXPECT().Add(gomock.Any()).Return(uint32(0), errors.New("repository error"))
+
+	newUser := &domain.User{FirstName: "New User"}
+
+	userID, err := useCase.CreateUser(newUser)
+
+	assert.Error(t, err)
+	assert.Zero(t, userID)
 }

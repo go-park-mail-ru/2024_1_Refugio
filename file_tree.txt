@@ -5,7 +5,6 @@
 │   └── mail
 │       └── main.go
 ├── cover.html
-├── cover.out
 ├── docker-compose.yml
 ├── docs
 │   ├── docs.go
@@ -14,19 +13,23 @@
 ├── file_tree.txt
 ├── go.mod
 ├── go.sum
+├── migrations
+│   └── init.sql
 └── pkg
     ├── delivery
     │   ├── converters
     │   │   ├── email_converter.go
+    │   │   ├── session_converter.go
     │   │   └── user_converter.go
     │   ├── email
     │   │   ├── email_handler.go
     │   │   └── handlersEmail_test.go
     │   ├── middleware
-    │   │   ├── auth.go
-    │   │   └── auth_test.go
+    │   │   ├── Middleware.go
+    │   │   └── authForEmailHandler_test.go
     │   ├── models
     │   │   ├── email.go
+    │   │   ├── session.go
     │   │   └── user.go
     │   ├── response.go
     │   ├── session
@@ -38,8 +41,13 @@
     │       ├── handlersUser_test.go
     │       └── user_handler.go
     ├── domain
+    │   ├── mock
+    │   │   └── user_repository_mock.go
     │   ├── models
     │   │   ├── email.go
+    │   │   ├── file.go
+    │   │   ├── gender.go
+    │   │   ├── session.go
     │   │   └── user.go
     │   ├── repository
     │   │   ├── iemail_repo.go
@@ -50,18 +58,26 @@
     ├── repository
     │   ├── converters
     │   │   ├── email_converter.go
+    │   │   ├── session_converter.go
     │   │   └── user_converter.go
-    │   ├── email
-    │   │   ├── email_repo.go
-    │   │   ├── email_test.go
-    │   │   └── fake_emails.go
+    │   ├── maps
+    │   │   ├── email
+    │   │   │   ├── email_repo.go
+    │   │   │   ├── email_test.go
+    │   │   │   └── fake_emails.go
+    │   │   └── user
+    │   │       ├── fake_users.go
+    │   │       ├── user_repo.go
+    │   │       └── user_test.go
     │   ├── models
     │   │   ├── email.go
+    │   │   ├── session.go
     │   │   └── user.go
-    │   └── user
-    │       ├── fake_users.go
-    │       ├── user_repo.go
-    │       └── user_test.go
+    │   └── postgres
+    │       ├── email
+    │       │   └── email_repo.go
+    │       └── user
+    │           └── user_repo.go
     └── usecase
         ├── email
         │   ├── email_service.go
@@ -70,4 +86,4 @@
             ├── user_service.go
             └── user_test.go
 
-24 directories, 47 files
+30 directories, 57 files

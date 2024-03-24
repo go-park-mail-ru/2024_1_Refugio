@@ -4,7 +4,9 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/jackc/pgx/stdlib"
+	"github.com/jmoiron/sqlx"
 	"github.com/rs/cors"
+	migrate "github.com/rubenv/sql-migrate"
 	"log"
 	"mail/pkg/delivery/middleware"
 	"mail/pkg/delivery/session"
@@ -14,7 +16,7 @@ import (
 	emailHand "mail/pkg/delivery/email"
 	userHand "mail/pkg/delivery/user"
 	emailRepo "mail/pkg/repository/maps/email"
-	userRepo "mail/pkg/repository/maps/user"
+	userRepo "mail/pkg/repository/postgres/user"
 	emailUc "mail/pkg/usecase/email"
 	userUc "mail/pkg/usecase/user"
 
@@ -29,31 +31,39 @@ import (
 // @host localhost:8080
 // @BasePath /
 func main() {
-	dsn := "user=postgres dbname=Mail password=postgres host=localhost port=5432 sslmode=disable"
+	dsn := "user=postgres dbname=MailHub password=postgres host=localhost port=5432 sslmode=disable"
 	db, errDb := sql.Open("pgx", dsn)
 	if errDb != nil {
 		log.Fatalln("Can't parse config", errDb)
 	}
+	defer db.Close()
 	errDb = db.Ping()
 	if errDb != nil {
 		log.Fatalln(errDb)
 	}
 	db.SetMaxOpenConns(10)
 
+	migrations := &migrate.FileMigrationSource{
+		Dir: "migrations",
+	}
+	_, errMigration := migrate.Exec(db, "postgres", migrations, migrate.Up)
+	if errMigration != nil {
+		log.Fatalf("Failed to apply migrations: %v", errMigration)
+	}
+	dbx := sqlx.NewDb(db, "pgx")
+
 	sessionsManager := session.NewSessionsManager()
 	session.InitializationGlobalSeaaionManager(sessionsManager)
 
 	emailRepository := emailRepo.NewEmailMemoryRepository()
 	emailUseCase := emailUc.NewEmailUseCase(emailRepository)
-
-	userRepository := userRepo.NewInMemoryUserRepository()
-	userUseCase := userUc.NewUserUseCase(userRepository)
-
 	emailHandler := &emailHand.EmailHandler{
 		EmailUseCase: emailUseCase,
 		Sessions:     sessionsManager,
 	}
 
+	userRepository := userRepo.NewUserRepository(dbx)
+	userUseCase := userUc.NewUserUseCase(userRepository)
 	userHandler := &userHand.UserHandler{
 		UserUseCase: userUseCase,
 		Sessions:    sessionsManager,
@@ -77,7 +87,7 @@ func main() {
 	auth.HandleFunc("/email/delete/{id}", emailHandler.Delete).Methods("DELETE", "OPTIONS")
 
 	logRouter := mux.NewRouter().PathPrefix("/api/v1").Subrouter()
-	logRouter.Use(Logrus.AccessLogMiddleware, middleware.PanicMiddleware, middleware.AuthMiddleware)
+	logRouter.Use(Logrus.AccessLogMiddleware, middleware.PanicMiddleware)
 	router.PathPrefix("/api/v1").Handler(logRouter)
 
 	logRouter.HandleFunc("/login", userHandler.Login).Methods("POST", "OPTIONS")
@@ -103,19 +113,3 @@ func main() {
 	}
 	// 89.208.223.140
 }
-
-/*func runMigrations(db *sql.DB) error {
-	// Создание мигратора
-	m, err := migrate.New("file://path/to/migrations", "user=postgres dbname=Mail password=postgres host=localhost port=5432 sslmode=disable")
-	if err != nil {
-		return err
-	}
-
-	// Применение миграций
-	err = m.Up()
-	if err != nil && err != migrate.ErrNoChange {
-		return err
-	}
-
-	return nil
-}*/

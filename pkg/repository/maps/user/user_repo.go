@@ -56,7 +56,7 @@ func ComparingUserObjects(object1, object2 userCore.User) bool {
 	userDb2 := converters.UserConvertCoreInDb(object2)
 
 	if userDb1.ID == userDb2.ID &&
-		userDb1.Name == userDb2.Name &&
+		userDb1.FirstName == userDb2.FirstName &&
 		userDb1.Surname == userDb2.Surname &&
 		userDb1.Login == userDb2.Login &&
 		CheckPasswordHash(userDb2.Password, userDb1.Password) {
@@ -67,7 +67,7 @@ func ComparingUserObjects(object1, object2 userCore.User) bool {
 }
 
 // GetAll returns all users from the storage.
-func (repo *UserMemoryRepository) GetAll() ([]*userCore.User, error) {
+func (repo *UserMemoryRepository) GetAll(offset, limit int) ([]*userCore.User, error) {
 	repo.mutex.RLock()
 	defer repo.mutex.RUnlock()
 

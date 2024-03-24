@@ -96,7 +96,7 @@ func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if isEmpty(newUser.Name) || isEmpty(newUser.Surname) || isEmpty(newUser.Login) || isEmpty(newUser.Password) {
+	if isEmpty(newUser.FirstName) || isEmpty(newUser.Surname) || isEmpty(newUser.Login) || isEmpty(newUser.Password) {
 		delivery.HandleError(w, http.StatusBadRequest, "All fields must be filled in")
 	}
 
