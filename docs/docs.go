@@ -476,7 +476,7 @@ const docTemplate = `{
                     "description": "Login is the username used for authentication.",
                     "type": "string"
                 },
-                "middle-name": {
+                "middlename": {
                     "description": "Patronymic stores the middle name of the user, if available.",
                     "type": "string"
                 },
@@ -484,7 +484,7 @@ const docTemplate = `{
                     "description": "Password is the hashed password of the user.",
                     "type": "string"
                 },
-                "phone-number": {
+                "phonenumber": {
                     "description": "PhoneNumber stores the phone number of the user.",
                     "type": "string"
                 },

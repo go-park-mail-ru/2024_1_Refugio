@@ -62,17 +62,18 @@ func (sm *SessionsManager) Check(r *http.Request) (*models.Session, error) {
 }
 
 func (sm *SessionsManager) Create(w http.ResponseWriter, userID uint32) (*models.Session, error) {
-	sessionID, _ := sm.sessionUseCase.CreateNewSession(GenerateRandomID(userID), userID, "", 60*60*24*7)
+	sessionID, _ := sm.sessionUseCase.CreateNewSession(GenerateRandomID(), userID, "", 60*60*24*7)
 
 	if sessionID == 0 {
 		return nil, fmt.Errorf("session already exist")
 	}
 
 	cookie := &http.Cookie{
-		Name:    "session_id",
-		Value:   strconv.FormatUint(uint64(sessionID), 10),
-		Expires: time.Now().Add(90 * 24 * time.Hour),
-		Path:    "/",
+		Name:     "session_id",
+		Value:    strconv.FormatUint(uint64(sessionID), 10),
+		Expires:  time.Now().Add(90 * 24 * time.Hour),
+		Path:     "/",
+		HttpOnly: true,
 	}
 
 	http.SetCookie(w, cookie)
@@ -109,7 +110,7 @@ func (sm *SessionsManager) DestroyCurrent(w http.ResponseWriter, r *http.Request
 	return nil
 }
 
-func GenerateRandomID(userID uint32) uint32 {
+func GenerateRandomID() uint32 {
 	rand.Seed(time.Now().UnixNano())
 
 	randBytes := make([]byte, 4)
@@ -117,5 +118,5 @@ func GenerateRandomID(userID uint32) uint32 {
 
 	randID := binary.BigEndian.Uint32(randBytes)
 
-	return randID
+	return randID / 10
 }

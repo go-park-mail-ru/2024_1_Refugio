@@ -24,7 +24,7 @@ func NewSessionRepository(db *sqlx.DB) *SessionRepository {
 // CreateSession creates a new session and returns its ID.
 func (repo *SessionRepository) CreateSession(ID uint32, userID uint32, device string, lifeTime int) (uint32, error) {
 	query := `
-		INSERT INTO sessions (id, user_id, device, creation_date, lifetime)
+		INSERT INTO sessions (id, user_id, device, creation_date, life_time)
 		VALUES ($1, $2, $3, $4, $5)
 	`
 
@@ -65,7 +65,7 @@ func (repo *SessionRepository) DeleteSessionByID(sessionID uint32) error {
 
 // DeleteExpiredSessions removes all expired sessions.
 func (repo *SessionRepository) DeleteExpiredSessions() error {
-	query := "DELETE FROM sessions WHERE creation_date + lifetime * interval '1 second' < now()"
+	query := "DELETE FROM sessions WHERE creation_date + life_time * interval '1 second' < now()"
 
 	_, err := repo.DB.Exec(query)
 	if err != nil {

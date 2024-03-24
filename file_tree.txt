@@ -4,7 +4,7 @@
 ├── cmd
 │   └── mail
 │       └── main.go
-├── cover.html
+├── cover.out
 ├── docker-compose.yml
 ├── docs
 │   ├── docs.go
@@ -34,14 +34,13 @@
     │   ├── response.go
     │   ├── session
     │   │   ├── manager.go
-    │   │   ├── manager_test.go
-    │   │   ├── session.go
-    │   │   └── session_test.go
+    │   │   └── manager_test.go
     │   └── user
     │       ├── handlersUser_test.go
     │       └── user_handler.go
     ├── domain
     │   ├── mock
+    │   │   ├── session_repository_mock.go
     │   │   └── user_repository_mock.go
     │   ├── models
     │   │   ├── email.go
@@ -51,9 +50,11 @@
     │   │   └── user.go
     │   ├── repository
     │   │   ├── iemail_repo.go
+    │   │   ├── isession_repo.go
     │   │   └── iuser_repo.go
     │   └── usecase
     │       ├── iemail_service.go
+    │       ├── isession_service.go
     │       └── iuser_service.go
     ├── repository
     │   ├── converters
@@ -76,14 +77,21 @@
     │   └── postgres
     │       ├── email
     │       │   └── email_repo.go
+    │       ├── session
+    │       │   ├── session_repo.go
+    │       │   └── session_repo_test.go
     │       └── user
-    │           └── user_repo.go
+    │           ├── user_repo.go
+    │           └── user_repo_test.go
     └── usecase
         ├── email
         │   ├── email_service.go
         │   └── email_test.go
+        ├── session
+        │   ├── session_service.go
+        │   └── session_service_test.go
         └── user
             ├── user_service.go
-            └── user_test.go
+            └── user_service_test.go
 
-30 directories, 57 files
+32 directories, 63 files

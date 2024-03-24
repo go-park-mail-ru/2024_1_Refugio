@@ -2,10 +2,12 @@ package user
 
 import (
 	"database/sql"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	"golang.org/x/crypto/bcrypt"
+	"math/rand"
 	"time"
 
 	"mail/pkg/repository/converters"
@@ -35,16 +37,6 @@ var HashPassword PasswordHasher = func(password string) (string, bool) {
 	return string(bytes), true
 }
 
-/* // HashPassword takes a plaintext password as input and returns its bcrypt hash.
-func HashPassword(password string) (string, bool) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return "", false
-	}
-
-	return string(bytes), true
-}*/
-
 // CheckPasswordHash compares a password with a hash and returns true if they match, otherwise false.
 func CheckPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
@@ -70,6 +62,17 @@ func ComparingUserObjects(object1, object2 domain.User) bool {
 	}
 
 	return false
+}
+
+func GenerateRandomID() uint32 {
+	rand.Seed(time.Now().UnixNano())
+
+	randBytes := make([]byte, 4)
+	rand.Read(randBytes)
+
+	randID := binary.BigEndian.Uint32(randBytes)
+
+	return randID / 10
 }
 
 // GetAll returns all users from the storage.
@@ -136,9 +139,8 @@ func (r *UserRepository) GetUserByLogin(login string, password string) (*domain.
 // Add adds a new user to the storage and returns its assigned unique identifier.
 func (r *UserRepository) Add(userModelCore *domain.User) (uint32, error) {
 	query := `
-		INSERT INTO users (login, password, firstname, surname, patronymic, gender, birthday, registration_date, avatar_id, phone_number, description)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-		RETURNING id
+		INSERT INTO users (id, login, password, firstname, surname, patronymic, gender, birthday, registration_date, avatar_id, phone_number, description)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 	`
 
 	userModelDb := converters.UserConvertCoreInDb(*userModelCore)
@@ -147,10 +149,10 @@ func (r *UserRepository) Add(userModelCore *domain.User) (uint32, error) {
 		return 0, fmt.Errorf("user with login %s fail", userModelDb.Login)
 	}
 	userModelDb.Password = password
-	var userID uint32
-	err := r.DB.QueryRow(query, userModelDb.Login, userModelDb.Password, userModelDb.FirstName, userModelDb.Surname, userModelDb.Patronymic, userModelDb.Gender, userModelDb.Birthday, time.Now(), userModelDb.AvatarID, userModelDb.PhoneNumber, userModelDb.Description).Scan(&userID)
+	userID := GenerateRandomID()
+	_, err := r.DB.Exec(query, userID, userModelDb.Login, userModelDb.Password, userModelDb.FirstName, userModelDb.Surname, userModelDb.Patronymic, userModelDb.Gender, userModelDb.Birthday, time.Now(), userModelDb.AvatarID, userModelDb.PhoneNumber, userModelDb.Description)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("user with login %s fail", userModelDb.Login)
 	}
 
 	return userID, nil
@@ -168,8 +170,8 @@ func (r *UserRepository) Update(newUserCore *domain.User) (bool, error) {
             patronymic = $3,
             gender = $4,
             birthday = $5,
-            avatarid = $6,
-            phonenumber = $7,
+            avatar_id = $6,
+            phone_number = $7,
             description = $8
         WHERE
             id = $9

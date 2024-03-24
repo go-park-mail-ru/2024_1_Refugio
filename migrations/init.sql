@@ -9,9 +9,9 @@ CREATE TABLE IF NOT EXISTS users (
     patronymic TEXT CHECK (LENGTH(patronymic) <= 50),
     gender TEXT CHECK (LENGTH(gender) <= 10),
     birthday DATE,
-    registrationdate DATE,
-    avatarid TEXT CHECK (LENGTH(avatarid) <= 200),
-    phonenumber TEXT CHECK (LENGTH(phonenumber) <= 20),
+    registration_date DATE,
+    avatar_id TEXT CHECK (LENGTH(avatar_id) <= 200),
+    phone_number TEXT CHECK (LENGTH(phone_number) <= 20),
     description TEXT CHECK (LENGTH(description) <= 300)
 );
 
@@ -21,12 +21,12 @@ CREATE TABLE IF NOT EXISTS sessions (
     user_id INTEGER REFERENCES users(id),
     creation_date TIMESTAMP,
     device TEXT CHECK (LENGTH(device) <= 100),
-    lifetime INTEGER
+    life_time INTEGER
 );
 
 -- Вставка начальных данных в таблицу users
 INSERT INTO users
-    (id, login, password, firstname, surname, patronymic, gender, birthday, registrationdate, avatarid, phonenumber, description)
+    (id, login, password, firstname, surname, patronymic, gender, birthday, registration_date, avatar_id, phone_number, description)
 VALUES
     (1, 'sergey@mailhub.ru', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Sergey', 'Fedasov', 'Aleksandrovich', 'Male', '2003-08-20', NOW(), '', '+77777777777', 'Description'),
     (2, 'ivan@mailhub.ru', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Ivan', 'Karpov', 'Aleksandrovich', 'Male', '2003-10-17', NOW(), '', '+79697045539', 'Description'),
