@@ -13,8 +13,8 @@ type User struct {
 	Patronymic  string            `json:"middle-name,omitempty"`  // Patronymic stores the middle name of the user, if available.
 	Gender      models.UserGender `json:"gender,omitempty"`       // Gender stores the gender of the user.
 	Birthday    time.Time         `json:"birthday,omitempty"`     // Birthday stores the birthdate of the user.
-	Login       string            `json:"login,omitempty"`        // Login is the username used for authentication.
-	Password    string            `json:"password,omitempty"`     // Password is the hashed password of the user.
+	Login       string            `json:"login"`                  // Login is the username used for authentication.
+	Password    string            `json:"password"`               // Password is the hashed password of the user.
 	AvatarID    string            `json:"avatar,omitempty"`       // AvatarID stores the identifier of the user's avatar image.
 	PhoneNumber string            `json:"phone-number,omitempty"` // PhoneNumber stores the phone number of the user.
 	Description string            `json:"description,omitempty"`  // Description stores additional information about the user.

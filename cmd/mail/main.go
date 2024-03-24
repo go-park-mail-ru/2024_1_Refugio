@@ -16,8 +16,10 @@ import (
 	emailHand "mail/pkg/delivery/email"
 	userHand "mail/pkg/delivery/user"
 	emailRepo "mail/pkg/repository/maps/email"
+	sessionRepo "mail/pkg/repository/postgres/session"
 	userRepo "mail/pkg/repository/postgres/user"
 	emailUc "mail/pkg/usecase/email"
+	sessionUc "mail/pkg/usecase/session"
 	userUc "mail/pkg/usecase/user"
 
 	"github.com/gorilla/mux"
@@ -52,7 +54,9 @@ func main() {
 	}
 	dbx := sqlx.NewDb(db, "pgx")
 
-	sessionsManager := session.NewSessionsManager()
+	sessionRepository := sessionRepo.NewSessionRepository(dbx)
+	sessionUsaCase := sessionUc.NewSessionUseCase(sessionRepository)
+	sessionsManager := session.NewSessionsManager(sessionUsaCase)
 	session.InitializationGlobalSeaaionManager(sessionsManager)
 
 	emailRepository := emailRepo.NewEmailMemoryRepository()

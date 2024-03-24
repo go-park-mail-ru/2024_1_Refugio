@@ -1,8 +1,14 @@
 package session
 
 import (
+	"encoding/binary"
+	"fmt"
+	"mail/pkg/delivery/converters"
+	"mail/pkg/delivery/models"
+	domain "mail/pkg/domain/usecase"
+	"math/rand"
 	"net/http"
-	"sync"
+	"strconv"
 	"time"
 )
 
@@ -11,81 +17,105 @@ var (
 )
 
 type SessionsManager struct {
-	mu   *sync.RWMutex
-	data map[string]*Session
+	sessionUseCase domain.SessionUseCase
 }
 
 func InitializationGlobalSeaaionManager(sessionManager *SessionsManager) {
 	GlobalSeaaionManager = sessionManager
 }
 
-func NewSessionsManager() *SessionsManager {
+func NewSessionsManager(sessionUc domain.SessionUseCase) *SessionsManager {
 	return &SessionsManager{
-		data: make(map[string]*Session, 10),
-		mu:   &sync.RWMutex{},
+		sessionUseCase: sessionUc,
 	}
 }
 
-func (sm *SessionsManager) GetSession(r *http.Request) *Session {
+func (sm *SessionsManager) GetSession(r *http.Request) *models.Session {
 	sessionCookie, _ := r.Cookie("session_id")
 
-	sm.mu.RLock()
-	sess, _ := sm.data[sessionCookie.Value]
-	sm.mu.RUnlock()
+	sessionID, err := strconv.Atoi(sessionCookie.Value)
+	if err != nil {
+		return nil
+	}
+	sess, _ := sm.sessionUseCase.GetSession(uint32(sessionID))
 
-	return sess
+	return converters.SessionConvertCoreInApi(*sess)
 }
 
-func (sm *SessionsManager) Check(r *http.Request) (*Session, error) {
+func (sm *SessionsManager) Check(r *http.Request) (*models.Session, error) {
 	sessionCookie, err := r.Cookie("session_id")
 	if err == http.ErrNoCookie {
-		return nil, ErrNoAuth
+		return nil, fmt.Errorf("no session found")
 	}
 
-	sm.mu.RLock()
-	sess, ok := sm.data[sessionCookie.Value]
-	sm.mu.RUnlock()
-
-	if !ok {
-		return nil, ErrNoAuth
+	sessionID, err := strconv.ParseUint(sessionCookie.Value, 10, 32)
+	if err != nil {
+		return nil, fmt.Errorf("no session found")
 	}
 
-	return sess, nil
+	sess, ok := sm.sessionUseCase.GetSession(uint32(sessionID))
+	if ok != nil {
+		return nil, fmt.Errorf("no session found")
+	}
+
+	return converters.SessionConvertCoreInApi(*sess), nil
 }
 
-func (sm *SessionsManager) Create(w http.ResponseWriter, userID uint32) (*Session, error) {
-	sess := NewSession(userID)
+func (sm *SessionsManager) Create(w http.ResponseWriter, userID uint32) (*models.Session, error) {
+	sessionID, _ := sm.sessionUseCase.CreateNewSession(GenerateRandomID(userID), userID, "", 60*60*24*7)
 
-	sm.mu.RLock()
-	sm.data[sess.ID] = sess
-	sm.mu.RUnlock()
+	if sessionID == 0 {
+		return nil, fmt.Errorf("session already exist")
+	}
 
 	cookie := &http.Cookie{
 		Name:    "session_id",
-		Value:   sess.ID,
+		Value:   strconv.FormatUint(uint64(sessionID), 10),
 		Expires: time.Now().Add(90 * 24 * time.Hour),
 		Path:    "/",
 	}
+
 	http.SetCookie(w, cookie)
 
-	return sess, nil
+	sess, _ := sm.sessionUseCase.GetSession(sessionID)
+
+	return converters.SessionConvertCoreInApi(*sess), nil
 }
 
 func (sm *SessionsManager) DestroyCurrent(w http.ResponseWriter, r *http.Request) error {
-	c, err := r.Cookie("session_id")
+	sessionCookie, err := r.Cookie("session_id")
 	if err != nil {
 		return err
 	}
-	sm.mu.RLock()
-	delete(sm.data, c.Value)
-	sm.mu.RUnlock()
+
+	sessionID, err := strconv.ParseUint(sessionCookie.Value, 10, 32)
+	if err != nil {
+		return fmt.Errorf("no session found")
+	}
+
+	ok := sm.sessionUseCase.DeleteSession(uint32(sessionID))
+	if ok != nil {
+		return fmt.Errorf("no session found")
+	}
 
 	cookie := http.Cookie{
 		Name:    "session_id",
 		Expires: time.Now().AddDate(0, 0, -1),
 		Path:    "/",
 	}
+
 	http.SetCookie(w, &cookie)
 
 	return nil
+}
+
+func GenerateRandomID(userID uint32) uint32 {
+	rand.Seed(time.Now().UnixNano())
+
+	randBytes := make([]byte, 4)
+	rand.Read(randBytes)
+
+	randID := binary.BigEndian.Uint32(randBytes)
+
+	return randID
 }

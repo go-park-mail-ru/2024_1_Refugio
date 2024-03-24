@@ -32,7 +32,7 @@ func InitializationEmailHandler(userHandler *UserHandler) {
 // @Produce json
 // @Success 200 {object} delivery.Response "OK"
 // @Failure 401 {object} delivery.Response "Not Authorized"
-// @Router /api/v1/verify-auth [get]
+// @Router /api/v1/auth/verify-auth [get]
 func (uh *UserHandler) VerifyAuth(w http.ResponseWriter, r *http.Request) {
 	delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "OK"})
 }
@@ -43,7 +43,7 @@ func (uh *UserHandler) VerifyAuth(w http.ResponseWriter, r *http.Request) {
 // @Tags users
 // @Accept json
 // @Produce json
-// @Param credentials body delivery.User true "User credentials for login"
+// @Param credentials body delivery.UserSwag true "User credentials for login"
 // @Success 200 {object} delivery.Response "Login successful"
 // @Failure 400 {object} delivery.ErrorResponse "Invalid request body"
 // @Failure 401 {object} delivery.ErrorResponse "Invalid credentials"
@@ -83,7 +83,7 @@ func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 // @Tags users
 // @Accept json
 // @Produce json
-// @Param newUser body delivery.User true "New user details for signup"
+// @Param newUser body delivery.UserSwag true "New user details for signup"
 // @Success 200 {object} delivery.Response "Signup successful"
 // @Failure 400 {object} delivery.ErrorResponse "Invalid request body"
 // @Failure 500 {object} delivery.ErrorResponse "Failed to add user"
@@ -141,7 +141,7 @@ func (uh *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} delivery.Response "User details"
 // @Failure 401 {object} delivery.Response "Not Authorized"
 // @Failure 500 {object} delivery.ErrorResponse "Internal Server Error"
-// @Router /api/v1/get-user [get]
+// @Router /api/v1/auth/get-user [get]
 func (uh *UserHandler) GetUserBySession(w http.ResponseWriter, r *http.Request) {
 	sessionUser := uh.Sessions.GetSession(r)
 	userData, err := uh.UserUseCase.GetUserByID(sessionUser.UserID)
