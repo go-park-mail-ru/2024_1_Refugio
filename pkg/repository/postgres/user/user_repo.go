@@ -64,15 +64,20 @@ func ComparingUserObjects(object1, object2 domain.User) bool {
 	return false
 }
 
-func GenerateRandomID() uint32 {
-	rand.Seed(time.Now().UnixNano())
+// RandomIDGenerator represents a function that generates random uint32 identifiers.
+type RandomIDGenerator func() uint32
 
+// GenerateRandomID generates a random uint32 identifier.
+var GenerateRandomID RandomIDGenerator = func() uint32 {
 	randBytes := make([]byte, 4)
-	rand.Read(randBytes)
+	_, err := rand.Read(randBytes)
+	if err != nil {
+		// В случае ошибки вернуть ноль, но это можно обработать в вашем приложении по-разному.
+		return 0
+	}
 
 	randID := binary.BigEndian.Uint32(randBytes)
-
-	return randID / 10
+	return randID / 100
 }
 
 // GetAll returns all users from the storage.

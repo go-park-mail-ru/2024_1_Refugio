@@ -19,4 +19,7 @@ type UserUseCase interface {
 
 	// CreateUser creates a new user.
 	CreateUser(user *userCore.User) (uint32, error)
+
+	// IsLoginUnique checks if the provided login is unique among all users.
+	IsLoginUnique(login string) (bool, error)
 }

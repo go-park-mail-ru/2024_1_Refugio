@@ -36,10 +36,10 @@ func (sm *SessionsManager) GetSession(r *http.Request) *models.Session {
 }
 
 func (sm *SessionsManager) Check(r *http.Request) (*models.Session, error) {
-	/*csrfToken := r.Header.Get("X-CSRF-Token")
-	if csrfToken != "" {
+	csrfToken := r.Header.Get("X-CSRF-Token")
+	if csrfToken == "" {
 		return nil, fmt.Errorf("CSRF token not found in request headers")
-	}*/
+	}
 
 	sessionCookie, err := r.Cookie("session_id")
 	if err == http.ErrNoCookie {

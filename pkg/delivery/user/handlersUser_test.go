@@ -3,7 +3,6 @@ package user
 import (
 	"bytes"
 	"fmt"
-	"mail/pkg/delivery/session"
 	userRepo "mail/pkg/repository/maps/user"
 	"net/http"
 	"net/http/httptest"

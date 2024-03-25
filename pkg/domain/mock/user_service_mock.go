@@ -93,3 +93,18 @@ func (mr *MockUserUseCaseMockRecorder) GetUserByLogin(login, password interface{
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByLogin", reflect.TypeOf((*MockUserUseCase)(nil).GetUserByLogin), login, password)
 }
+
+// IsLoginUnique mocks base method.
+func (m *MockUserUseCase) IsLoginUnique(login string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsLoginUnique", login)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsLoginUnique indicates an expected call of IsLoginUnique.
+func (mr *MockUserUseCaseMockRecorder) IsLoginUnique(login interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsLoginUnique", reflect.TypeOf((*MockUserUseCase)(nil).IsLoginUnique), login)
+}

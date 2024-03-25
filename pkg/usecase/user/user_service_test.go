@@ -139,3 +139,56 @@ func TestCreateUser_ErrorFromRepository(t *testing.T) {
 	assert.Error(t, err)
 	assert.Zero(t, userID)
 }
+
+func TestIsLoginUnique_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockUserRepository(ctrl)
+	useCase := NewUserUseCase(mockRepo)
+
+	login := "testUser"
+	mockUsers := []*domain.User{
+		{ID: 1, Login: "user1"},
+		{ID: 2, Login: "user2"},
+		{ID: 3, Login: "user3"},
+	}
+
+	mockRepo.EXPECT().GetAll(0, 0).Return(mockUsers, nil)
+	unique, err := useCase.IsLoginUnique(login)
+	assert.NoError(t, err)
+	assert.True(t, unique)
+}
+
+func TestIsLoginUnique_NonUnique(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockUserRepository(ctrl)
+	useCase := NewUserUseCase(mockRepo)
+
+	nonUniqueLogin := "user2"
+	mockUsers := []*domain.User{
+		{ID: 1, Login: "user1"},
+		{ID: 2, Login: nonUniqueLogin},
+		{ID: 3, Login: "user3"},
+	}
+
+	mockRepo.EXPECT().GetAll(0, 0).Return(mockUsers, nil)
+	unique, err := useCase.IsLoginUnique(nonUniqueLogin)
+	assert.NoError(t, err)
+	assert.False(t, unique)
+}
+
+func TestIsLoginUnique_ErrorFromRepository(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockUserRepository(ctrl)
+	useCase := NewUserUseCase(mockRepo)
+
+	mockRepo.EXPECT().GetAll(0, 0).Return(nil, errors.New("repository error"))
+	unique, err := useCase.IsLoginUnique("testUser")
+	assert.Error(t, err)
+	assert.False(t, unique)
+}

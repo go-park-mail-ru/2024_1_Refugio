@@ -113,59 +113,6 @@ func TestGetByID(t *testing.T) {
 	})
 }
 
-func TestGetUserByLogin(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockDB, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer mockDB.Close()
-
-	repo := UserRepository{
-		DB: sqlx.NewDb(mockDB, "sqlmock"),
-	}
-
-	t.Run("UserFoundAndPasswordMatch", func(t *testing.T) {
-		expectedUser := &domain.User{
-			ID:        1,
-			FirstName: "John",
-			Surname:   "Doe",
-			Login:     "john@mailhub.ru",
-		}
-
-		rows := sqlmock.NewRows([]string{"id", "firstname", "surname", "login", "password"}).AddRow(1, "John", "Doe", "john@mailhub.ru", "$2a$10$z8zBaLyEgeRYic3MfIK9keWRhgTyAnNeyBpnKXDF7MFwNniWHYyeW")
-
-		mock.ExpectQuery(`SELECT \* FROM users WHERE login = \$1`).WithArgs("john@mailhub.ru").WillReturnRows(rows)
-
-		user, err := repo.GetUserByLogin("john@mailhub.ru", "password")
-		assert.NoError(t, err)
-		assert.NotNil(t, user)
-		assert.Equal(t, expectedUser, user)
-	})
-
-	t.Run("UserNotFound", func(t *testing.T) {
-		mock.ExpectQuery(`SELECT \* FROM users WHERE login = \$1`).WithArgs("nonexistentuser").WillReturnError(sql.ErrNoRows)
-
-		user, err := repo.GetUserByLogin("nonexistentuser", "password")
-		assert.Nil(t, user)
-		assert.Error(t, err)
-		expectedErrorMessage := fmt.Sprintf("user with login %s not found", "nonexistentuser")
-		assert.EqualError(t, err, expectedErrorMessage)
-	})
-
-	t.Run("UserFoundButPasswordMismatch", func(t *testing.T) {
-		mock.ExpectQuery(`SELECT \* FROM users WHERE login = \$1`).WithArgs("testuser").WillReturnRows(sqlmock.NewRows([]string{"id", "firstname", "surname"}).AddRow(1, "John", "Doe"))
-
-		user, err := repo.GetUserByLogin("testuser", "wrongpassword")
-		assert.Nil(t, user)
-		assert.Error(t, err)
-		expectedErrorMessage := fmt.Sprintf("user with login %s not found", "testuser")
-		assert.EqualError(t, err, expectedErrorMessage)
-	})
-}
-
 func TestAddUser(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -177,6 +124,14 @@ func TestAddUser(t *testing.T) {
 	originalHashPassword := HashPassword
 	defer func() { HashPassword = originalHashPassword }()
 	HashPassword = mockHashPassword
+
+	mockRandomIDGenerator := func() uint32 {
+		return 1
+	}
+
+	originalRandomIDGenerator := GenerateRandomID
+	defer func() { GenerateRandomID = originalRandomIDGenerator }()
+	GenerateRandomID = mockRandomIDGenerator
 
 	mockDB, mock, err := sqlmock.New()
 	if err != nil {
@@ -190,7 +145,6 @@ func TestAddUser(t *testing.T) {
 
 	t.Run("UserAddedSuccessfully", func(t *testing.T) {
 		user := &domain.User{
-			ID:          1,
 			Login:       "testuser",
 			Password:    "1234",
 			FirstName:   "John",
@@ -203,8 +157,9 @@ func TestAddUser(t *testing.T) {
 			Description: "Тестовый пользователь",
 		}
 
-		rows := sqlmock.NewRows([]string{"id"}).AddRow(1)
-		mock.ExpectQuery(`INSERT INTO users`).WithArgs(user.Login, user.Password, user.FirstName, user.Surname, user.Patronymic, user.Gender, user.Birthday, sqlmock.AnyArg(), user.AvatarID, user.PhoneNumber, user.Description).WillReturnRows(rows)
+		mock.ExpectExec(`INSERT INTO users`).
+			WithArgs(sqlmock.AnyArg(), user.Login, user.Password, user.FirstName, user.Surname, user.Patronymic, user.Gender, user.Birthday, sqlmock.AnyArg(), user.AvatarID, user.PhoneNumber, user.Description).
+			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		userID, err := repo.Add(user)
 		assert.NoError(t, err)

@@ -99,19 +99,19 @@ func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 
 	if isEmpty(newUser.FirstName) || isEmpty(newUser.Surname) || isEmpty(newUser.Login) || isEmpty(newUser.Password) {
 		delivery.HandleError(w, http.StatusBadRequest, "All fields must be filled in")
+		return
 	}
 
-	users, _ := uh.UserUseCase.GetAllUsers()
-	for _, u := range users {
-		if u.Login == newUser.Login {
-			delivery.HandleError(w, http.StatusBadRequest, "Such a login already exists")
-			return
-		}
+	loginUnique, _ := uh.UserUseCase.IsLoginUnique(newUser.Login)
+	if !loginUnique {
+		delivery.HandleError(w, http.StatusBadRequest, "Such a login already exists")
+		return
 	}
 
 	_, er := uh.UserUseCase.CreateUser(converters.UserConvertApiInCore(newUser))
 	if er != nil {
 		delivery.HandleError(w, http.StatusInternalServerError, "Failed to add user")
+		return
 	}
 
 	delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "Signup successful"})
@@ -139,6 +139,7 @@ func (uh *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
 // @Description Retrieve the user associated with the current session
 // @Tags users
 // @Produce json
+// @Param X-CSRF-Token header string true "CSRF Token"
 // @Success 200 {object} delivery.Response "User details"
 // @Failure 401 {object} delivery.Response "Not Authorized"
 // @Failure 500 {object} delivery.ErrorResponse "Internal Server Error"

@@ -24,6 +24,7 @@ func UserConvertApiInCore(userModelApi api.User) *domain.User {
 	return &domain.User{
 		ID:          userModelApi.ID,
 		Login:       userModelApi.Login,
+		Password:    userModelApi.Password,
 		FirstName:   userModelApi.FirstName,
 		Surname:     userModelApi.Surname,
 		Patronymic:  userModelApi.Patronymic,

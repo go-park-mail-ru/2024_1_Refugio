@@ -36,3 +36,19 @@ func (uc *UserUseCase) GetUserByLogin(login string, password string) (*domain.Us
 func (uc *UserUseCase) CreateUser(user *domain.User) (uint32, error) {
 	return uc.repo.Add(user)
 }
+
+// IsLoginUnique checks if the provided login is unique among all users.
+func (uh *UserUseCase) IsLoginUnique(login string) (bool, error) {
+	users, err := uh.repo.GetAll(0, 0)
+	if err != nil {
+		return false, err
+	}
+
+	for _, u := range users {
+		if u.Login == login {
+			return false, nil
+		}
+	}
+
+	return true, nil
+}
