@@ -12,6 +12,7 @@ func SessionConvertCoreInApi(sessionModelCore sessionCore.Session) *sessionApi.S
 		CreationDate: sessionModelCore.CreationDate,
 		Device:       sessionModelCore.Device,
 		LifeTime:     sessionModelCore.LifeTime,
+		CsrfToken:    sessionModelCore.CsrfToken,
 	}
 }
 
@@ -22,5 +23,6 @@ func SessionConvertApiInCore(sessionModelApi sessionApi.Session) *sessionCore.Se
 		CreationDate: sessionModelApi.CreationDate,
 		Device:       sessionModelApi.Device,
 		LifeTime:     sessionModelApi.LifeTime,
+		CsrfToken:    sessionModelApi.CsrfToken,
 	}
 }

@@ -12,6 +12,7 @@ func SessionConvertDbInCore(sessionModelDb sessionDb.Session) *sessionCore.Sessi
 		CreationDate: sessionModelDb.CreationDate,
 		Device:       sessionModelDb.Device,
 		LifeTime:     sessionModelDb.LifeTime,
+		CsrfToken:    sessionModelDb.CsrfToken,
 	}
 }
 
@@ -22,5 +23,6 @@ func SessionConvertCoreInDb(sessionModelCore sessionCore.Session) *sessionDb.Ses
 		CreationDate: sessionModelCore.CreationDate,
 		Device:       sessionModelCore.Device,
 		LifeTime:     sessionModelCore.LifeTime,
+		CsrfToken:    sessionModelCore.CsrfToken,
 	}
 }

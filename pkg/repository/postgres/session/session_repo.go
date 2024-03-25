@@ -34,14 +34,15 @@ var GenerateRandomID SessionGenerate = func() string {
 // CreateSession creates a new session and returns its ID.
 func (repo *SessionRepository) CreateSession(userID uint32, device string, lifeTime int) (string, error) {
 	query := `
-		INSERT INTO sessions (id, user_id, device, creation_date, life_time)
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO sessions (id, user_id, device, creation_date, life_time, csrf_token)
+		VALUES ($1, $2, $3, $4, $5, $6)
 	`
 
 	creationDate := time.Now()
 	ID := GenerateRandomID()
+	csrfToken := GenerateRandomID()
 
-	_, err := repo.DB.Exec(query, ID, userID, device, creationDate, lifeTime)
+	_, err := repo.DB.Exec(query, ID, userID, device, creationDate, lifeTime, csrfToken)
 	if err != nil {
 		return "", fmt.Errorf("failed to create session: %v", err)
 	}

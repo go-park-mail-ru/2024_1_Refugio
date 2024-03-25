@@ -21,7 +21,8 @@ CREATE TABLE IF NOT EXISTS sessions (
     user_id INTEGER REFERENCES users(id),
     creation_date TIMESTAMP,
     device TEXT CHECK (LENGTH(device) <= 100),
-    life_time INTEGER
+    life_time INTEGER,
+    csrf_token TEXT CHECK (char_length(csrf_token) <= 50)
 );
 
 -- Вставка начальных данных в таблицу users

@@ -9,4 +9,5 @@ type Session struct {
 	CreationDate time.Time `db:"creation_date"` // CreationDate is the timestamp when the session was created.
 	Device       string    `db:"device"`        // Device describes the device used to initiate the session, e.g., 'web', 'mobile'.
 	LifeTime     int       `db:"life_time"`     // LifeTime indicates the duration (in seconds) for which the session is valid.
+	CsrfToken    string    `db:"csrf_token"`    // CsrfToken represents the Cross-Site Request Forgery (CSRF) token associated with the session.
 }

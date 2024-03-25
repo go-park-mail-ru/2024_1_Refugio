@@ -30,6 +30,7 @@ func InitializationEmailHandler(userHandler *UserHandler) {
 // @Description Verify user authentication using sessions
 // @Tags users
 // @Produce json
+// @Param X-CSRF-Token header string true "CSRF Token"
 // @Success 200 {object} delivery.Response "OK"
 // @Failure 401 {object} delivery.Response "Not Authorized"
 // @Router /api/v1/auth/verify-auth [get]

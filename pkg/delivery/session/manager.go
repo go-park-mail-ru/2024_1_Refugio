@@ -36,6 +36,11 @@ func (sm *SessionsManager) GetSession(r *http.Request) *models.Session {
 }
 
 func (sm *SessionsManager) Check(r *http.Request) (*models.Session, error) {
+	/*csrfToken := r.Header.Get("X-CSRF-Token")
+	if csrfToken != "" {
+		return nil, fmt.Errorf("CSRF token not found in request headers")
+	}*/
+
 	sessionCookie, err := r.Cookie("session_id")
 	if err == http.ErrNoCookie {
 		return nil, fmt.Errorf("no session found")
@@ -45,28 +50,39 @@ func (sm *SessionsManager) Check(r *http.Request) (*models.Session, error) {
 	if ok != nil {
 		return nil, fmt.Errorf("no session found")
 	}
+	if sess.CsrfToken != csrfToken {
+		return nil, fmt.Errorf("CSRF token mismatch")
+	}
 
 	return converters.SessionConvertCoreInApi(*sess), nil
 }
 
 func (sm *SessionsManager) Create(w http.ResponseWriter, userID uint32) (*models.Session, error) {
-	sessionID, _ := sm.sessionUseCase.CreateNewSession(userID, "", 60*60*24*7)
+	sessionID, err := sm.sessionUseCase.CreateNewSession(userID, "", 60*60*24*7)
 
-	if sessionID == "" {
+	if err != nil {
 		return nil, fmt.Errorf("session already exist")
 	}
 
-	cookie := &http.Cookie{
-		Name:     "session_id",
-		Value:    sessionID,
+	sess, _ := sm.sessionUseCase.GetSession(sessionID)
+
+	csrfCookie := &http.Cookie{
+		Name:     "csrf_token",
+		Value:    sess.CsrfToken,
 		Expires:  time.Now().Add(90 * 24 * time.Hour),
 		Path:     "/",
 		HttpOnly: true,
 	}
+	http.SetCookie(w, csrfCookie)
 
-	http.SetCookie(w, cookie)
-
-	sess, _ := sm.sessionUseCase.GetSession(sessionID)
+	sessionCookie := &http.Cookie{
+		Name:     "session_id",
+		Value:    sess.ID,
+		Expires:  time.Now().Add(90 * 24 * time.Hour),
+		Path:     "/",
+		HttpOnly: true,
+	}
+	http.SetCookie(w, sessionCookie)
 
 	return converters.SessionConvertCoreInApi(*sess), nil
 }
@@ -82,13 +98,19 @@ func (sm *SessionsManager) DestroyCurrent(w http.ResponseWriter, r *http.Request
 		return fmt.Errorf("no session found")
 	}
 
-	cookie := http.Cookie{
+	sessionCookieToDelete := http.Cookie{
 		Name:    "session_id",
 		Expires: time.Now().AddDate(0, 0, -1),
 		Path:    "/",
 	}
+	http.SetCookie(w, &sessionCookieToDelete)
 
-	http.SetCookie(w, &cookie)
+	csrfCookieToDelete := http.Cookie{
+		Name:    "csrf_token",
+		Expires: time.Now().AddDate(0, 0, -1),
+		Path:    "/",
+	}
+	http.SetCookie(w, &csrfCookieToDelete)
 
 	return nil
 }

@@ -9,4 +9,5 @@ type Session struct {
 	CreationDate time.Time `json:"creation-date,omitempty"` // CreationDate is the timestamp when the session was created.
 	Device       string    `json:"device,omitempty"`        // Device describes the device used to initiate the session, e.g., 'web', 'mobile'.
 	LifeTime     int       `json:"life-time,omitempty"`     // LifeTime indicates the duration (in seconds) for which the session is valid.
+	CsrfToken    string    `json:"csrf_token,omitempty"`    // CsrfToken represents the Cross-Site Request Forgery (CSRF) token associated with the session.
 }

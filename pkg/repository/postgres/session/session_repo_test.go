@@ -40,8 +40,9 @@ func TestCreateSession(t *testing.T) {
 		userID := uint32(100)
 		device := "mobile"
 		lifeTime := 3600
+		csrfToken := "10101010"
 
-		mock.ExpectExec(`INSERT INTO sessions`).WithArgs(ID, userID, device, sqlmock.AnyArg(), lifeTime).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`INSERT INTO sessions`).WithArgs(ID, userID, device, sqlmock.AnyArg(), lifeTime, csrfToken).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		sessionID, err := repo.CreateSession(userID, device, lifeTime)
 
@@ -54,8 +55,9 @@ func TestCreateSession(t *testing.T) {
 		userID := uint32(101)
 		device := "web"
 		lifeTime := 7200
+		csrfToken := "10101010"
 
-		mock.ExpectExec(`INSERT INTO sessions`).WithArgs(ID, userID, device, sqlmock.AnyArg(), lifeTime).WillReturnError(fmt.Errorf("failed to insert"))
+		mock.ExpectExec(`INSERT INTO sessions`).WithArgs(ID, userID, device, sqlmock.AnyArg(), lifeTime, csrfToken).WillReturnError(fmt.Errorf("failed to insert"))
 
 		sessionID, err := repo.CreateSession(userID, device, lifeTime)
 
@@ -90,10 +92,11 @@ func TestGetSessionByID(t *testing.T) {
 			Device:       "mobile",
 			LifeTime:     3600,
 			CreationDate: time.Now(),
+			CsrfToken:    "10101010",
 		}
 
-		rows := sqlmock.NewRows([]string{"id", "user_id", "device", "creation_date", "life_time"}).
-			AddRow(sessionID, 100, "mobile", time.Now(), 3600)
+		rows := sqlmock.NewRows([]string{"id", "user_id", "device", "creation_date", "life_time", "csrf_token"}).
+			AddRow(sessionID, 100, "mobile", time.Now(), 3600, "10101010")
 
 		query := `SELECT \* FROM sessions WHERE id = \$1`
 		mock.ExpectQuery(query).WithArgs(sessionID).WillReturnRows(rows)
@@ -103,7 +106,6 @@ func TestGetSessionByID(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, session)
 		assert.Equal(t, expectedSession.ID, session.ID)
-		// Добавьте дополнительные проверки по мере необходимости
 	})
 
 	t.Run("SessionNotFound", func(t *testing.T) {
