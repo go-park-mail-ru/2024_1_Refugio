@@ -6,6 +6,7 @@ import (
 	domain "mail/pkg/domain/models"
 	"mail/pkg/repository/converters"
 	database "mail/pkg/repository/models"
+	"math/rand"
 	"time"
 )
 
@@ -21,25 +22,35 @@ func NewSessionRepository(db *sqlx.DB) *SessionRepository {
 	}
 }
 
+type SessionGenerate func() string
+
+var GenerateRandomID SessionGenerate = func() string {
+	randID := make([]byte, 16)
+	rand.Read(randID)
+
+	return fmt.Sprintf("%x", randID)
+}
+
 // CreateSession creates a new session and returns its ID.
-func (repo *SessionRepository) CreateSession(ID uint32, userID uint32, device string, lifeTime int) (uint32, error) {
+func (repo *SessionRepository) CreateSession(userID uint32, device string, lifeTime int) (string, error) {
 	query := `
 		INSERT INTO sessions (id, user_id, device, creation_date, life_time)
 		VALUES ($1, $2, $3, $4, $5)
 	`
 
 	creationDate := time.Now()
+	ID := GenerateRandomID()
 
 	_, err := repo.DB.Exec(query, ID, userID, device, creationDate, lifeTime)
 	if err != nil {
-		return 0, fmt.Errorf("failed to create session: %v", err)
+		return "", fmt.Errorf("failed to create session: %v", err)
 	}
 
 	return ID, nil
 }
 
 // GetSessionByID retrieves a session by its ID.
-func (repo *SessionRepository) GetSessionByID(sessionID uint32) (*domain.Session, error) {
+func (repo *SessionRepository) GetSessionByID(sessionID string) (*domain.Session, error) {
 	query := `SELECT * FROM sessions WHERE id = $1`
 
 	var session database.Session
@@ -52,7 +63,7 @@ func (repo *SessionRepository) GetSessionByID(sessionID uint32) (*domain.Session
 }
 
 // DeleteSessionByID deletes a session by its ID.
-func (repo *SessionRepository) DeleteSessionByID(sessionID uint32) error {
+func (repo *SessionRepository) DeleteSessionByID(sessionID string) error {
 	query := "DELETE FROM sessions WHERE id = $1"
 
 	_, err := repo.DB.Exec(query, sessionID)

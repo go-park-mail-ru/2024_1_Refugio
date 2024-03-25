@@ -18,17 +18,17 @@ func NewSessionUseCase(repo repository.SessionRepository) *SessionUseCase {
 }
 
 // CreateNewSession initiates a new session for a user.
-func (uc *SessionUseCase) CreateNewSession(ID uint32, userID uint32, device string, lifeTime int) (uint32, error) {
-	return uc.sessionRepo.CreateSession(ID, userID, device, lifeTime)
+func (uc *SessionUseCase) CreateNewSession(userID uint32, device string, lifeTime int) (string, error) {
+	return uc.sessionRepo.CreateSession(userID, device, lifeTime)
 }
 
 // GetSession fetches a session by its unique identifier.
-func (uc *SessionUseCase) GetSession(sessionID uint32) (*domain.Session, error) {
+func (uc *SessionUseCase) GetSession(sessionID string) (*domain.Session, error) {
 	return uc.sessionRepo.GetSessionByID(sessionID)
 }
 
 // DeleteSession terminates a session identified by its ID.
-func (uc *SessionUseCase) DeleteSession(sessionID uint32) error {
+func (uc *SessionUseCase) DeleteSession(sessionID string) error {
 	return uc.sessionRepo.DeleteSessionByID(sessionID)
 }
 

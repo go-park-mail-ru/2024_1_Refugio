@@ -16,16 +16,16 @@ func TestCreateNewSession(t *testing.T) {
 	mockRepo := mock.NewMockSessionRepository(ctrl)
 	usecase := NewSessionUseCase(mockRepo)
 
-	ID := uint32(1)
+	ID := "10101010"
 	userID := uint32(1)
 	device := "testDevice"
 	lifetime := 3600
 
-	mockRepo.EXPECT().CreateSession(ID, userID, device, lifetime).Return(ID, nil)
+	mockRepo.EXPECT().CreateSession(userID, device, lifetime).Return(ID, nil)
 
-	sessionID, err := usecase.CreateNewSession(ID, userID, device, lifetime)
+	sessionID, err := usecase.CreateNewSession(userID, device, lifetime)
 	assert.NoError(t, err)
-	assert.Equal(t, userID, sessionID)
+	assert.Equal(t, ID, sessionID)
 }
 
 func TestGetSession(t *testing.T) {
@@ -36,7 +36,7 @@ func TestGetSession(t *testing.T) {
 	usecase := NewSessionUseCase(mockRepo)
 
 	expectedSession := &domain.Session{
-		ID:       uint32(1),
+		ID:       "10101010",
 		UserID:   uint32(100),
 		Device:   "testDevice",
 		LifeTime: 3600,
@@ -56,7 +56,7 @@ func TestDeleteSession(t *testing.T) {
 	mockRepo := mock.NewMockSessionRepository(ctrl)
 	usecase := NewSessionUseCase(mockRepo)
 
-	sessionID := uint32(1)
+	sessionID := "10101010"
 
 	mockRepo.EXPECT().DeleteSessionByID(sessionID).Return(nil)
 

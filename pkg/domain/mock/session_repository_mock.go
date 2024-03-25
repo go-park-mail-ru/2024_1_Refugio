@@ -35,18 +35,18 @@ func (m *MockSessionRepository) EXPECT() *MockSessionRepositoryMockRecorder {
 }
 
 // CreateSession mocks base method.
-func (m *MockSessionRepository) CreateSession(ID, userID uint32, device string, lifeTime int) (uint32, error) {
+func (m *MockSessionRepository) CreateSession(userID uint32, device string, lifeTime int) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateSession", ID, userID, device, lifeTime)
-	ret0, _ := ret[0].(uint32)
+	ret := m.ctrl.Call(m, "CreateSession", userID, device, lifeTime)
+	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateSession indicates an expected call of CreateSession.
-func (mr *MockSessionRepositoryMockRecorder) CreateSession(ID, userID, device, lifeTime interface{}) *gomock.Call {
+func (mr *MockSessionRepositoryMockRecorder) CreateSession(userID, device, lifeTime interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSession", reflect.TypeOf((*MockSessionRepository)(nil).CreateSession), ID, userID, device, lifeTime)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSession", reflect.TypeOf((*MockSessionRepository)(nil).CreateSession), userID, device, lifeTime)
 }
 
 // DeleteExpiredSessions mocks base method.
@@ -64,7 +64,7 @@ func (mr *MockSessionRepositoryMockRecorder) DeleteExpiredSessions() *gomock.Cal
 }
 
 // DeleteSessionByID mocks base method.
-func (m *MockSessionRepository) DeleteSessionByID(sessionID uint32) error {
+func (m *MockSessionRepository) DeleteSessionByID(sessionID string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteSessionByID", sessionID)
 	ret0, _ := ret[0].(error)
@@ -78,7 +78,7 @@ func (mr *MockSessionRepositoryMockRecorder) DeleteSessionByID(sessionID interfa
 }
 
 // GetSessionByID mocks base method.
-func (m *MockSessionRepository) GetSessionByID(sessionID uint32) (*models.Session, error) {
+func (m *MockSessionRepository) GetSessionByID(sessionID string) (*models.Session, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetSessionByID", sessionID)
 	ret0, _ := ret[0].(*models.Session)

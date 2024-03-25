@@ -11,12 +11,19 @@ import (
 	"regexp"
 	"testing"
 	"time"
-	// domain "mail/pkg/domain/models"
 )
 
 func TestCreateSession(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
+
+	mockGenerateRandomID := func() string {
+		return "10101010"
+	}
+
+	originalGenerateRandomID := GenerateRandomID
+	defer func() { GenerateRandomID = originalGenerateRandomID }()
+	GenerateRandomID = mockGenerateRandomID
 
 	mockDB, mock, err := sqlmock.New()
 	if err != nil {
@@ -29,28 +36,28 @@ func TestCreateSession(t *testing.T) {
 	}
 
 	t.Run("Success", func(t *testing.T) {
-		ID := uint32(1)
+		ID := "10101010"
 		userID := uint32(100)
 		device := "mobile"
 		lifeTime := 3600
 
 		mock.ExpectExec(`INSERT INTO sessions`).WithArgs(ID, userID, device, sqlmock.AnyArg(), lifeTime).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		sessionID, err := repo.CreateSession(ID, userID, device, lifeTime)
+		sessionID, err := repo.CreateSession(userID, device, lifeTime)
 
 		assert.NoError(t, err)
 		assert.Equal(t, ID, sessionID)
 	})
 
 	t.Run("Error", func(t *testing.T) {
-		ID := uint32(2)
+		ID := "10101010"
 		userID := uint32(101)
 		device := "web"
 		lifeTime := 7200
 
 		mock.ExpectExec(`INSERT INTO sessions`).WithArgs(ID, userID, device, sqlmock.AnyArg(), lifeTime).WillReturnError(fmt.Errorf("failed to insert"))
 
-		sessionID, err := repo.CreateSession(ID, userID, device, lifeTime)
+		sessionID, err := repo.CreateSession(userID, device, lifeTime)
 
 		assert.Error(t, err)
 		assert.Zero(t, sessionID)
@@ -76,7 +83,7 @@ func TestGetSessionByID(t *testing.T) {
 	}
 
 	t.Run("Success", func(t *testing.T) {
-		sessionID := uint32(1)
+		sessionID := "10101010"
 		expectedSession := &domain.Session{
 			ID:           sessionID,
 			UserID:       100,
@@ -100,7 +107,7 @@ func TestGetSessionByID(t *testing.T) {
 	})
 
 	t.Run("SessionNotFound", func(t *testing.T) {
-		sessionID := uint32(2)
+		sessionID := "10101010"
 
 		query := `SELECT \* FROM sessions WHERE id = \$1`
 		mock.ExpectQuery(query).WithArgs(sessionID).WillReturnError(sql.ErrNoRows)
@@ -131,7 +138,7 @@ func TestDeleteSessionByID(t *testing.T) {
 	}
 
 	t.Run("Success", func(t *testing.T) {
-		sessionID := uint32(1)
+		sessionID := "10101010"
 
 		query := `DELETE FROM sessions WHERE id = \$1`
 		mock.ExpectExec(query).WithArgs(sessionID).WillReturnResult(sqlmock.NewResult(0, 1))
@@ -142,7 +149,7 @@ func TestDeleteSessionByID(t *testing.T) {
 	})
 
 	t.Run("Error", func(t *testing.T) {
-		sessionID := uint32(2)
+		sessionID := "10101010"
 
 		query := `DELETE FROM sessions WHERE id = \$1`
 		mock.ExpectExec(query).WithArgs(sessionID).WillReturnError(fmt.Errorf("failed to delete session"))

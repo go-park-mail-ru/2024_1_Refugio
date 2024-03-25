@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- Создание таблицы сессий (sessions)
 CREATE TABLE IF NOT EXISTS sessions (
-    id SERIAL PRIMARY KEY,
+    id TEXT PRIMARY KEY CHECK (char_length(id) <= 50),
     user_id INTEGER REFERENCES users(id),
     creation_date TIMESTAMP,
     device TEXT CHECK (LENGTH(device) <= 100),
