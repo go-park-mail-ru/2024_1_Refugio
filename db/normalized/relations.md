@@ -66,6 +66,7 @@
 - **LifeTime**: Время действия сессии.
 - **CsrfToken**: Токен CSRF, используемый для защиты от атак межсайтовой подделки запросов.
 
+```mermaid
 erDiagram
     USER ||--o{ EMAIL : "Sent"
     USER ||--o{ USEREMAIL : "Received"
@@ -74,6 +75,25 @@ erDiagram
     USER ||--o{ FOLDER : "Owns"
     EMAIL ||--o{ FOLDEREMAIL : "Located"
     EMAIL ||--|{ FILE : "Contains"
+```
+
+```
+flowchart LR
+
+A[Hard] -->|Text| B(Round)
+B --> C{Decision}
+C -->|One| D[Result 1]
+C -->|Two| E[Result 2]
+```
+
+```mermaid
+flowchart LR
+
+A[Hard] -->|Text| B(Round)
+B --> C{Decision}
+C -->|One| D[Result 1]
+C -->|Two| E[Result 2]
+```
 
 erDiagram
     USER ||--o{ EMAIL : "Sent"
