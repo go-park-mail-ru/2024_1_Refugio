@@ -6,7 +6,7 @@
 - **Password**: Пароль пользователя.
 - **Name**: Имя пользователя.
 - **Surname**: Фамилия пользователя.
-- **Middlename**: Отчество пользователя.
+- **Patronymic**: Отчество пользователя.
 - **Gender**: Пол пользователя.
 - **Birthday**: Дата рождения пользователя.
 - **RegistrationDate**: Дата регистрации пользователя.
@@ -89,153 +89,70 @@ ER-diagram
 ```mermaid
 erDiagram
     USER {
-        string Id
-        string Login
-        string Password
-        string Name
-        string Surname
-        string Middlename
-        string Gender
-        date Birthday
-        datetime RegistrationDate
-        string AvatarId
-        string PhoneNumber
-        string Description
+        _ Id
+        _ Login
+        _ Password
+        _ Name
+        _ Surname
+        _ Patronymic
+        _ Gender
+        _ Birthday
+        _ RegistrationDate
+        _ AvatarId
+        _ PhoneNumber
+        _ Description
     }
     EMAIL {
-        string Id
-        string Topic
-        string Text
-        datetime DateOfDispatch
-        string PhotoId
-        string SenderId
-        string RecipientId
-        boolean ReadStatus
-        boolean DeletedStatus
-        boolean DraftStatus
-        string ReplyToEmailId
-        string Flag
+        _ Id
+        _ Topic
+        _ Text
+        _ DateOfDispatch
+        _ PhotoId
+        _ SenderId
+        _ RecipientId
+        _ ReadStatus
+        _ DeletedStatus
+        _ DraftStatus
+        _ ReplyToEmailId
+        _ Flag
     }
     FILE {
-        string Id
-        string EmailId
-        string DocumentId
-        string VideoId
-        string GifId
-        string MusicId
-        string ArchiveId
+        _ Id
+        _ EmailId
+        _ DocumentId
+        _ VideoId
+        _ GifId
+        _ MusicId
+        _ ArchiveId
     }
     USEREMAIL {
-        string Id
-        string UserId
-        string EmailId
+        _ Id
+        _ UserId
+        _ EmailId
     }
     FOLDER {
-        string Id
-        string UserId
-        string Name
+        _ Id
+        _ UserId
+        _ Name
     }
     FOLDEREMAIL {
-        string Id
-        string FolderId
-        string EmailId
+        _ Id
+        _ FolderId
+        _ EmailId
     }
     SETTINGS {
-        string Id
-        string UserId
-        boolean NotificationTolerance
-        string Language
+        _ Id
+        _ UserId
+        _ NotificationTolerance
+        _ Language
     }
     SESSION {
-        string Id
-        string UserId
-        datetime CreationDate
-        string Device
-        duration LifeTime
-        string CsrfToken
-    }
-
-    USER ||--o{ SESSION : "Owns"
-    USER ||--o{ SETTINGS : "Has"
-    USER ||--o{ FOLDER : "Owns"
-    FOLDER ||--o{ FOLDEREMAIL : "Contains"
-    EMAIL ||--o{ FOLDEREMAIL : "Located"
-    EMAIL ||--o{ USEREMAIL : "Related"
-    USER ||--o{ USEREMAIL : "Received"
-    EMAIL ||--|{ FILE : "Contains"
-```
-
-```mermaid
-erDiagram
-    USER {
-        Id
-        Login
-        Password
-        Name
-        Surname
-        Middlename
-        Gender
-        Birthday
-        RegistrationDate
-        AvatarId
-        PhoneNumber
-        Description
-    }
-    EMAIL {
-        Id
-        Topic
-        Text
-        DateOfDispatch
-        PhotoId
-        SenderId
-        RecipientId
-        ReadStatus
-        DeletedStatus
-        DraftStatus
-        ReplyToEmailId
-        Flag
-    }
-    FILE {
-        Id
-        EmailId
-        DocumentId
-        VideoId
-        GifId
-        MusicId
-        ArchiveId
-        _
-    }
-    USEREMAIL {
-        Id
-        UserId
-        EmailId
-        _
-    }
-    FOLDER {
-        Id
-        UserId
-        Name
-        _
-    }
-    FOLDEREMAIL {
-        Id
-        FolderId
-        EmailId
-        _
-    }
-    SETTINGS {
-        Id
-        UserId
-        NotificationTolerance
-        Language
-    }
-    SESSION {
-        Id
-        UserId
-        CreationDate
-        Device
-        LifeTime
-        CsrfToken
+        _ Id
+        _ UserId
+        _ CreationDate
+        _ Device
+        _ LifeTime
+        _ CsrfToken
     }
 
     USER ||--o{ SESSION : "Owns"
