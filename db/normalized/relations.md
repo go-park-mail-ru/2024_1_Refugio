@@ -164,3 +164,86 @@ erDiagram
     USER ||--o{ USEREMAIL : "Received"
     EMAIL ||--|{ FILE : "Contains"
 ```
+
+```mermaid
+erDiagram
+    USER {
+        Id
+        Login
+        Password
+        Name
+        Surname
+        Middlename
+        Gender
+        Birthday
+        RegistrationDate
+        AvatarId
+        PhoneNumber
+        Description
+    }
+    EMAIL {
+        Id
+        Topic
+        Text
+        DateOfDispatch
+        PhotoId
+        SenderId
+        RecipientId
+        ReadStatus
+        DeletedStatus
+        DraftStatus
+        ReplyToEmailId
+        Flag
+    }
+    FILE {
+        Id
+        EmailId
+        DocumentId
+        VideoId
+        GifId
+        MusicId
+        ArchiveId
+        _
+    }
+    USEREMAIL {
+        Id
+        UserId
+        EmailId
+        _
+    }
+    FOLDER {
+        Id
+        UserId
+        Name
+        _
+    }
+    FOLDEREMAIL {
+        Id
+        FolderId
+        EmailId
+        _
+    }
+    SETTINGS {
+        Id
+        UserId
+        NotificationTolerance
+        Language
+    }
+    SESSION {
+        Id
+        UserId
+        CreationDate
+        Device
+        LifeTime
+        CsrfToken
+    }
+
+    USER ||--o{ SESSION : "Owns"
+    USER ||--o{ SETTINGS : "Has"
+    USER ||--o{ FOLDER : "Owns"
+    FOLDER ||--o{ FOLDEREMAIL : "Contains"
+    EMAIL ||--o{ FOLDEREMAIL : "Located"
+    EMAIL ||--o{ USEREMAIL : "Related"
+    USER ||--o{ USEREMAIL : "Received"
+    EMAIL ||--|{ FILE : "Contains"
+```
