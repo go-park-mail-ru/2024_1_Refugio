@@ -66,102 +66,101 @@
 - **LifeTime**: Время действия сессии.
 - **CsrfToken**: Токен CSRF, используемый для защиты от атак межсайтовой подделки запросов.
 
+---
+Simple ER-diagram
+---
+
 ```mermaid
 erDiagram
-    USER ||--o{ EMAIL : "Sent"
-    USER ||--o{ USEREMAIL : "Received"
     USER ||--o{ SESSION : "Owns"
     USER ||--o{ SETTINGS : "Has"
     USER ||--o{ FOLDER : "Owns"
+    FOLDER ||--o{ FOLDEREMAIL : "Contains"
     EMAIL ||--o{ FOLDEREMAIL : "Located"
+    EMAIL ||--o{ USEREMAIL : "Related"
+    USER ||--o{ USEREMAIL : "Received"
     EMAIL ||--|{ FILE : "Contains"
 ```
 
-```
-flowchart LR
-
-A[Hard] -->|Text| B(Round)
-B --> C{Decision}
-C -->|One| D[Result 1]
-C -->|Two| E[Result 2]
-```
+---
+ER-diagram
+---
 
 ```mermaid
-flowchart LR
-
-A[Hard] -->|Text| B(Round)
-B --> C{Decision}
-C -->|One| D[Result 1]
-C -->|Two| E[Result 2]
-```
-
 erDiagram
-    USER ||--o{ EMAIL : "Sent"
-    USER ||--o{ USEREMAIL : "Received"
     USER {
-        Id
-        Login
-        Password
-        Name
-        Surname
-        Middlename
-        Gender
-        Birthday
-        RegistrationDate
-        AvatarId
-        PhoneNumber
-        Description
+        string Id
+        string Login
+        string Password
+        string Name
+        string Surname
+        string Middlename
+        string Gender
+        date Birthday
+        datetime RegistrationDate
+        string AvatarId
+        string PhoneNumber
+        string Description
     }
-    EMAIL ||--o{ FILE : "Contains"
     EMAIL {
-        Id
-        Topic
-        Text
-        DateOfDispatch
-        PhotoId
-        SenderId
-        RecipientId
-        ReadStatus
-        DeletedStatus
-        DraftStatus
-        ReplyToEmailId
-        Flag
+        string Id
+        string Topic
+        string Text
+        datetime DateOfDispatch
+        string PhotoId
+        string SenderId
+        string RecipientId
+        boolean ReadStatus
+        boolean DeletedStatus
+        boolean DraftStatus
+        string ReplyToEmailId
+        string Flag
     }
     FILE {
-        Id
-        EmailId
-        DocumentId
-        VideoId
-        GifId
-        MusicId
-        ArchiveId
+        string Id
+        string EmailId
+        string DocumentId
+        string VideoId
+        string GifId
+        string MusicId
+        string ArchiveId
     }
     USEREMAIL {
-        Id
-        UserId
-        EmailId
+        string Id
+        string UserId
+        string EmailId
     }
     FOLDER {
-        Id
-        UserId
-        Name
+        string Id
+        string UserId
+        string Name
     }
     FOLDEREMAIL {
-        Id
-        FolderId
-        EmailId
+        string Id
+        string FolderId
+        string EmailId
     }
     SETTINGS {
-        Id
-        UserId
-        NotificationTolerance
-        Language
+        string Id
+        string UserId
+        boolean NotificationTolerance
+        string Language
     }
     SESSION {
-        Id
-        UserId
-        CreationDate
-        Device
-        LifeTime
-        CsrfToken
+        string Id
+        string UserId
+        datetime CreationDate
+        string Device
+        duration LifeTime
+        string CsrfToken
     }
+
+    USER ||--o{ SESSION : "Owns"
+    USER ||--o{ SETTINGS : "Has"
+    USER ||--o{ FOLDER : "Owns"
+    FOLDER ||--o{ FOLDEREMAIL : "Contains"
+    EMAIL ||--o{ FOLDEREMAIL : "Located"
+    EMAIL ||--o{ USEREMAIL : "Related"
+    USER ||--o{ USEREMAIL : "Received"
+    EMAIL ||--|{ FILE : "Contains"
+```
