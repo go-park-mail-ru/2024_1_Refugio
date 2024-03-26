@@ -1,6 +1,6 @@
 ### Relations
 
-#### User
+#### Profile
 - **Id**: Уникальный идентификатор пользователя в базе данных.
 - **Login**: Электронная почта пользователя, используемая для входа.
 - **Password**: Пароль пользователя.
@@ -37,14 +37,14 @@
 - **MusicId**: Ссылка на музыку.
 - **ArchiveId**: Ссылка на архив.
 
-#### UserEmail
+#### ProfileEmail
 - **Id**: Уникальный идентификатор связи пользователя с письмом в базе данных.
-- **UserId**: Уникальный идентификатор пользователя, участвующего в переписке.
+- **ProfileId**: Уникальный идентификатор пользователя, участвующего в переписке.
 - **EmailId**: Уникальный идентификатор письма, полученного или отправленного пользователем.
 
 #### Folder
 - **Id**: Уникальный идентификатор папки в базе данных.
-- **UserId**: Уникальный идентификатор пользователя, которому принадлежит папка.
+- **ProfileId**: Уникальный идентификатор пользователя, которому принадлежит папка.
 - **Name**: Название папки.
 
 #### FolderEmail
@@ -54,13 +54,13 @@
 
 #### Settings
 - **Id**: Уникальный идентификатор настроек пользователя в базе данных.
-- **UserId**: Уникальный идентификатор пользователя, которому принадлежат настройки.
+- **ProfileId**: Уникальный идентификатор пользователя, которому принадлежат настройки.
 - **NotificationTolerance**: Статус уведомлений пользователя (включены/выключены).
 - **Language**: Язык интерфейса пользователя.
 
 #### Session
 - **Id**: Уникальный идентификатор сессии пользователя в базе данных.
-- **UserId**: Уникальный идентификатор пользователя, которому принадлежит сессия.
+- **ProfileId**: Уникальный идентификатор пользователя, которому принадлежит сессия.
 - **CreationDate**: Дата и время создания сессии.
 - **Device**: Устройство, с которого была инициирована сессия.
 - **LifeTime**: Время действия сессии.
@@ -72,13 +72,13 @@ Simple ER-diagram
 
 ```mermaid
 erDiagram
-    USER ||--o{ SESSION : "Owns"
-    USER ||--o{ SETTINGS : "Has"
-    USER ||--o{ FOLDER : "Owns"
+    PROFILE ||--o{ SESSION : "Owns"
+    PROFILE ||--o{ SETTINGS : "Has"
+    PROFILE ||--o{ FOLDER : "Owns"
     FOLDER ||--o{ FOLDEREMAIL : "Contains"
     EMAIL ||--o{ FOLDEREMAIL : "Located"
-    EMAIL ||--o{ USEREMAIL : "Related"
-    USER ||--o{ USEREMAIL : "Received"
+    EMAIL ||--o{ PROFILEEMAIL : "Related"
+    PROFILE ||--o{ PROFILEEMAIL : "Received"
     EMAIL ||--|{ FILE : "Contains"
 ```
 
@@ -88,7 +88,7 @@ ER-diagram
 
 ```mermaid
 erDiagram
-    USER {
+    PROFILE {
         _ Id
         _ Login
         _ Password
@@ -125,14 +125,14 @@ erDiagram
         _ MusicId
         _ ArchiveId
     }
-    USEREMAIL {
+    PROFILEEMAIL {
         _ Id
-        _ UserId
+        _ ProfileId
         _ EmailId
     }
     FOLDER {
         _ Id
-        _ UserId
+        _ ProfileId
         _ Name
     }
     FOLDEREMAIL {
@@ -142,25 +142,61 @@ erDiagram
     }
     SETTINGS {
         _ Id
-        _ UserId
+        _ ProfileId
         _ NotificationTolerance
         _ Language
     }
     SESSION {
         _ Id
-        _ UserId
+        _ ProfileId
         _ CreationDate
         _ Device
         _ LifeTime
         _ CsrfToken
     }
 
-    USER ||--o{ SESSION : "Owns"
-    USER ||--o{ SETTINGS : "Has"
-    USER ||--o{ FOLDER : "Owns"
+    PROFILE ||--o{ SESSION : "Owns"
+    PROFILE ||--o{ SETTINGS : "Has"
+    PROFILE ||--o{ FOLDER : "Owns"
     FOLDER ||--o{ FOLDEREMAIL : "Contains"
     EMAIL ||--o{ FOLDEREMAIL : "Located"
-    EMAIL ||--o{ USEREMAIL : "Related"
-    USER ||--o{ USEREMAIL : "Received"
+    EMAIL ||--o{ PROFILEEMAIL : "Related"
+    PROFILE ||--o{ PROFILEEMAIL : "Received"
     EMAIL ||--|{ FILE : "Contains"
 ```
+
+### Functional Dependencies
+
+#### Profile:
+- {Id} -> Login, Password, Name, Surname, Middlename, Gender, Birthday, RegistrationDate, AvatarId, PhoneNumber, Description
+
+#### Email:
+- {Id} -> Topic, Text, DateOfDispatch, PhotoId, SenderId, RecipientId, ReadStatus, DeletedStatus, DraftStatus, ReplyToEmailId, Flag
+
+#### File:
+- {Id} -> EmailId, DocumentId, VideoId, GifId, MusicId, ArchiveId
+
+#### ProfileEmail:
+- {Id} -> ProfileId, EmailId
+
+#### Folder:
+- {Id} -> Name, UserId
+
+#### FolderEmail:
+- {Id} -> FolderId, EmailId
+
+#### Settings:
+- {Id} -> ProfileId, NotificationTolerance, Language
+
+#### Session:
+- {Id} -> ProfileId, CreationDate, Device, LifeTime, CsrfToken
+
+### Functional Dependencies Explanation:
+
+- 1NF: Все отношения имеют простые атрибуты и уникальные идентификаторы (ключи).
+
+- 2NF: Нет частичных функциональных зависимостей, каждый атрибут полностью функционально зависит от первичного ключа.
+
+- 3NF: Нет транзитивных функциональных зависимостей, каждый неключевой атрибут функционально зависит только от первичного ключа.
+
+- BCNF: Все отношения не имеют неключевых атрибутов, функционально зависящих от других неключевых атрибутов.

@@ -42,7 +42,7 @@ func TestCreateSession(t *testing.T) {
 		lifeTime := 3600
 		csrfToken := "10101010"
 
-		mock.ExpectExec(`INSERT INTO sessions`).WithArgs(ID, userID, device, sqlmock.AnyArg(), lifeTime, csrfToken).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`INSERT INTO session`).WithArgs(ID, userID, device, sqlmock.AnyArg(), lifeTime, csrfToken).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		sessionID, err := repo.CreateSession(userID, device, lifeTime)
 
@@ -57,7 +57,7 @@ func TestCreateSession(t *testing.T) {
 		lifeTime := 7200
 		csrfToken := "10101010"
 
-		mock.ExpectExec(`INSERT INTO sessions`).WithArgs(ID, userID, device, sqlmock.AnyArg(), lifeTime, csrfToken).WillReturnError(fmt.Errorf("failed to insert"))
+		mock.ExpectExec(`INSERT INTO session`).WithArgs(ID, userID, device, sqlmock.AnyArg(), lifeTime, csrfToken).WillReturnError(fmt.Errorf("failed to insert"))
 
 		sessionID, err := repo.CreateSession(userID, device, lifeTime)
 
@@ -95,10 +95,10 @@ func TestGetSessionByID(t *testing.T) {
 			CsrfToken:    "10101010",
 		}
 
-		rows := sqlmock.NewRows([]string{"id", "user_id", "device", "creation_date", "life_time", "csrf_token"}).
+		rows := sqlmock.NewRows([]string{"id", "profile_id", "device", "creation_date", "life_time", "csrf_token"}).
 			AddRow(sessionID, 100, "mobile", time.Now(), 3600, "10101010")
 
-		query := `SELECT \* FROM sessions WHERE id = \$1`
+		query := `SELECT \* FROM session WHERE id = \$1`
 		mock.ExpectQuery(query).WithArgs(sessionID).WillReturnRows(rows)
 
 		session, err := repo.GetSessionByID(sessionID)
@@ -111,7 +111,7 @@ func TestGetSessionByID(t *testing.T) {
 	t.Run("SessionNotFound", func(t *testing.T) {
 		sessionID := "10101010"
 
-		query := `SELECT \* FROM sessions WHERE id = \$1`
+		query := `SELECT \* FROM session WHERE id = \$1`
 		mock.ExpectQuery(query).WithArgs(sessionID).WillReturnError(sql.ErrNoRows)
 
 		session, err := repo.GetSessionByID(sessionID)
@@ -142,7 +142,7 @@ func TestDeleteSessionByID(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		sessionID := "10101010"
 
-		query := `DELETE FROM sessions WHERE id = \$1`
+		query := `DELETE FROM session WHERE id = \$1`
 		mock.ExpectExec(query).WithArgs(sessionID).WillReturnResult(sqlmock.NewResult(0, 1))
 
 		err := repo.DeleteSessionByID(sessionID)
@@ -153,7 +153,7 @@ func TestDeleteSessionByID(t *testing.T) {
 	t.Run("Error", func(t *testing.T) {
 		sessionID := "10101010"
 
-		query := `DELETE FROM sessions WHERE id = \$1`
+		query := `DELETE FROM session WHERE id = \$1`
 		mock.ExpectExec(query).WithArgs(sessionID).WillReturnError(fmt.Errorf("failed to delete session"))
 
 		err := repo.DeleteSessionByID(sessionID)
@@ -181,7 +181,7 @@ func TestDeleteExpiredSessions(t *testing.T) {
 	}
 
 	t.Run("Success", func(t *testing.T) {
-		queryPattern := regexp.QuoteMeta(`DELETE FROM sessions WHERE creation_date + life_time * interval '1 second' < now()`)
+		queryPattern := regexp.QuoteMeta(`DELETE FROM session WHERE creation_date + life_time * interval '1 second' < now()`)
 		mock.ExpectExec(queryPattern).WillReturnResult(sqlmock.NewResult(0, 3)) // Assuming 3 expired sessions were deleted
 
 		err := repo.DeleteExpiredSessions()
@@ -190,7 +190,7 @@ func TestDeleteExpiredSessions(t *testing.T) {
 	})
 
 	t.Run("Error", func(t *testing.T) {
-		queryPattern := regexp.QuoteMeta(`DELETE FROM sessions WHERE creation_date + life_time * interval '1 second' < now()`)
+		queryPattern := regexp.QuoteMeta(`DELETE FROM session WHERE creation_date + life_time * interval '1 second' < now()`)
 		mock.ExpectExec(queryPattern).WillReturnError(fmt.Errorf("failed to delete expired sessions"))
 
 		err := repo.DeleteExpiredSessions()

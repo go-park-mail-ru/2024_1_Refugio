@@ -46,7 +46,7 @@ func main() {
 	db.SetMaxOpenConns(10)
 
 	migrations := &migrate.FileMigrationSource{
-		Dir: "migrations",
+		Dir: "db/migrations",
 	}
 	_, errMigration := migrate.Exec(db, "postgres", migrations, migrate.Up)
 	if errMigration != nil {
