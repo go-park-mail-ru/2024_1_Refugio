@@ -1,36 +1,49 @@
 package converters
 
 import (
-	emailCore "mail/pkg/domain/models"
+	domain "mail/pkg/domain/models"
 	emailDb "mail/pkg/repository/models"
 )
 
-func EmailConvertDbInCore(emailModelDb emailDb.Email) *emailCore.Email {
-	return &emailCore.Email{
-		ID:             emailModelDb.ID,
+func EmailConvertDbInCore(emailModelDb emailDb.Email) *domain.Email {
+	var ReplyToEmailID uint64
+	if emailModelDb.ReplyToEmailID == nil {
+		ReplyToEmailID = 0
+	} else {
+		ReplyToEmailID = emailModelDb.ReplyToEmailID.(uint64)
+	}
+	return &domain.Email{
 		Topic:          emailModelDb.Topic,
 		Text:           emailModelDb.Text,
 		PhotoID:        emailModelDb.PhotoID,
 		ReadStatus:     emailModelDb.ReadStatus,
-		Mark:           emailModelDb.Mark,
+		Flag:           emailModelDb.Flag,
 		Deleted:        emailModelDb.Deleted,
 		DateOfDispatch: emailModelDb.DateOfDispatch,
-		ReplyToEmailID: emailModelDb.ReplyToEmailID,
+		ReplyToEmailID: ReplyToEmailID,
 		DraftStatus:    emailModelDb.DraftStatus,
+		SenderID:       emailModelDb.SenderID,
+		RecipientID:    emailModelDb.RecipientID,
 	}
 }
 
-func EmailConvertCoreInDb(emailModelCore emailCore.Email) *emailDb.Email {
-	return &emailDb.Email{
-		ID:             emailModelCore.ID,
+func EmailConvertCoreInDb(emailModelCore domain.Email, id uint64) *emailDb.Email {
+	emailDB := &emailDb.Email{
+		ID:             id,
 		Topic:          emailModelCore.Topic,
 		Text:           emailModelCore.Text,
 		PhotoID:        emailModelCore.PhotoID,
 		ReadStatus:     emailModelCore.ReadStatus,
-		Mark:           emailModelCore.Mark,
+		Flag:           emailModelCore.Flag,
 		Deleted:        emailModelCore.Deleted,
 		DateOfDispatch: emailModelCore.DateOfDispatch,
-		ReplyToEmailID: emailModelCore.ReplyToEmailID,
+		ReplyToEmailID: nil,
 		DraftStatus:    emailModelCore.DraftStatus,
+		SenderID:       emailModelCore.SenderID,
+		RecipientID:    emailModelCore.RecipientID,
 	}
+	if emailModelCore.ReplyToEmailID != 0 {
+		emailDB.ReplyToEmailID = emailModelCore.ReplyToEmailID //interface{emailModelCore.ReplyToEmailID}
+	}
+	return emailDB
 }

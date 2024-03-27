@@ -15,7 +15,7 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 	emailHand "mail/pkg/delivery/email"
 	userHand "mail/pkg/delivery/user"
-	emailRepo "mail/pkg/repository/maps/email"
+	emailRepo "mail/pkg/repository/postgres/email"
 	sessionRepo "mail/pkg/repository/postgres/session"
 	userRepo "mail/pkg/repository/postgres/user"
 	emailUc "mail/pkg/usecase/email"
@@ -59,7 +59,7 @@ func main() {
 	sessionsManager := session.NewSessionsManager(sessionUsaCase)
 	session.InitializationGlobalSeaaionManager(sessionsManager)
 
-	emailRepository := emailRepo.NewEmailMemoryRepository()
+	emailRepository := emailRepo.NewEmailRepository(dbx)
 	emailUseCase := emailUc.NewEmailUseCase(emailRepository)
 	emailHandler := &emailHand.EmailHandler{
 		EmailUseCase: emailUseCase,

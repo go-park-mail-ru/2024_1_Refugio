@@ -33,3 +33,31 @@ VALUES
     (2, 'ivan@mailhub.ru', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Ivan', 'Karpov', 'Aleksandrovich', 'Male', '2003-10-17', NOW(), '', '+79697045539', 'Description'),
     (3, 'max@mailhub.ru', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Maxim', 'Frelich', 'Aleksandrovich', 'Male', '2003-08-20', NOW(), '', '+79099099090', 'Description')
 ON CONFLICT (login) DO NOTHING;
+
+-- Создание таблицы писем (emails)
+CREATE TABLE IF NOT EXISTS emails (
+    id SERIAL PRIMARY KEY,
+    topic TEXT,
+    text TEXT,
+    date_of_dispatch DATE,      /*TIMESTAMPTZ NOT NULL DEFAULT '2022-08-10 10:10:00',*/
+    photoid TEXT CHECK (LENGTH(photoid) <= 200),
+    sender_id INTEGER REFERENCES users(id),
+    recipient_id INTEGER REFERENCES users(id),
+    read_status BOOLEAN NOT NULL,
+    deleted_status BOOLEAN NOT NULL,
+    draft_status BOOLEAN NOT NULL,
+    reply_to_email_id INTEGER REFERENCES emails(id) ON DELETE NO ACTION DEFAULT NULL,
+    flag BOOLEAN NOT NULL
+);
+
+-- Вставка начальных данных в таблицу emails
+INSERT INTO emails
+    (id, topic, text, date_of_dispatch, photoid, sender_id, recipient_id, read_status, deleted_status, draft_status, reply_to_email_id, flag)
+VALUES
+    (1, 'Topic1 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', 1, 2, False, False, False, Null, False),
+    (2, 'Topic2 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', 1, 3, False, False, False, Null, False),
+    (3, 'Topic3 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', 2, 3, False, False, False, Null, False),
+    (4, 'Topic4 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', 3, 1, False, False, False, Null, False),
+    (5, 'Topic5 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', 3, 2, False, False, False, Null, False),
+    (6, 'Topic6 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', 1, 2, False, False, False, Null, False)
+;

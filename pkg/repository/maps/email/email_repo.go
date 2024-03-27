@@ -73,10 +73,9 @@ func (repository *EmailMemoryRepository) GetByID(id uint64) (*emailCore.Email, e
 func (repository *EmailMemoryRepository) Add(email *emailCore.Email) (*emailCore.Email, error) {
 	repository.mu.Lock()
 	defer repository.mu.Unlock()
-
-	emailDb := converters.EmailConvertCoreInDb(*email)
-
 	id := uint64(len(repository.emails) + 1)
+	emailDb := converters.EmailConvertCoreInDb(*email, id)
+
 	emailDb.ID = id
 	repository.emails[id] = emailDb
 
@@ -88,7 +87,7 @@ func (repository *EmailMemoryRepository) Update(newEmail *emailCore.Email) (bool
 	repository.mu.Lock()
 	defer repository.mu.Unlock()
 
-	emailDb := converters.EmailConvertCoreInDb(*newEmail)
+	emailDb := converters.EmailConvertCoreInDb(*newEmail, newEmail.ID)
 
 	existingEmail, found := repository.emails[emailDb.ID]
 	if !found {
@@ -99,7 +98,7 @@ func (repository *EmailMemoryRepository) Update(newEmail *emailCore.Email) (bool
 	existingEmail.Text = emailDb.Text
 	existingEmail.PhotoID = emailDb.PhotoID
 	existingEmail.ReadStatus = emailDb.ReadStatus
-	existingEmail.Mark = emailDb.Mark
+	existingEmail.Flag = emailDb.Flag
 	existingEmail.Deleted = emailDb.Deleted
 	existingEmail.DateOfDispatch = emailDb.DateOfDispatch
 	existingEmail.ReplyToEmailID = emailDb.ReplyToEmailID
