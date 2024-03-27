@@ -34,7 +34,7 @@ var GenerateRandomID SessionGenerate = func() string {
 // CreateSession creates a new session and returns its ID.
 func (repo *SessionRepository) CreateSession(userID uint32, device string, lifeTime int) (string, error) {
 	query := `
-		INSERT INTO sessions (id, user_id, device, creation_date, life_time, csrf_token)
+		INSERT INTO session (id, profile_id, device, creation_date, life_time, csrf_token)
 		VALUES ($1, $2, $3, $4, $5, $6)
 	`
 
@@ -52,7 +52,7 @@ func (repo *SessionRepository) CreateSession(userID uint32, device string, lifeT
 
 // GetSessionByID retrieves a session by its ID.
 func (repo *SessionRepository) GetSessionByID(sessionID string) (*domain.Session, error) {
-	query := `SELECT * FROM sessions WHERE id = $1`
+	query := `SELECT * FROM session WHERE id = $1`
 
 	var session database.Session
 	err := repo.DB.Get(&session, query, sessionID)
@@ -65,7 +65,7 @@ func (repo *SessionRepository) GetSessionByID(sessionID string) (*domain.Session
 
 // DeleteSessionByID deletes a session by its ID.
 func (repo *SessionRepository) DeleteSessionByID(sessionID string) error {
-	query := "DELETE FROM sessions WHERE id = $1"
+	query := "DELETE FROM session WHERE id = $1"
 
 	_, err := repo.DB.Exec(query, sessionID)
 	if err != nil {
@@ -77,7 +77,7 @@ func (repo *SessionRepository) DeleteSessionByID(sessionID string) error {
 
 // DeleteExpiredSessions removes all expired sessions.
 func (repo *SessionRepository) DeleteExpiredSessions() error {
-	query := "DELETE FROM sessions WHERE creation_date + life_time * interval '1 second' < now()"
+	query := "DELETE FROM session WHERE creation_date + life_time * interval '1 second' < now()"
 
 	_, err := repo.DB.Exec(query)
 	if err != nil {

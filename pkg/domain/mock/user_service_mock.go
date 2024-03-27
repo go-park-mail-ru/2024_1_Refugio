@@ -49,6 +49,21 @@ func (mr *MockUserUseCaseMockRecorder) CreateUser(user interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockUserUseCase)(nil).CreateUser), user)
 }
 
+// DeleteUserByID mocks base method.
+func (m *MockUserUseCase) DeleteUserByID(id uint32) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteUserByID", id)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteUserByID indicates an expected call of DeleteUserByID.
+func (mr *MockUserUseCaseMockRecorder) DeleteUserByID(id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUserByID", reflect.TypeOf((*MockUserUseCase)(nil).DeleteUserByID), id)
+}
+
 // GetAllUsers mocks base method.
 func (m *MockUserUseCase) GetAllUsers() ([]*models.User, error) {
 	m.ctrl.T.Helper()
@@ -107,4 +122,19 @@ func (m *MockUserUseCase) IsLoginUnique(login string) (bool, error) {
 func (mr *MockUserUseCaseMockRecorder) IsLoginUnique(login interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsLoginUnique", reflect.TypeOf((*MockUserUseCase)(nil).IsLoginUnique), login)
+}
+
+// UpdateUser mocks base method.
+func (m *MockUserUseCase) UpdateUser(userNew *models.User) (*models.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateUser", userNew)
+	ret0, _ := ret[0].(*models.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateUser indicates an expected call of UpdateUser.
+func (mr *MockUserUseCaseMockRecorder) UpdateUser(userNew interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUser", reflect.TypeOf((*MockUserUseCase)(nil).UpdateUser), userNew)
 }

@@ -31,6 +31,9 @@ func (sm *SessionsManager) GetSession(r *http.Request) *models.Session {
 	sessionCookie, _ := r.Cookie("session_id")
 
 	sess, _ := sm.sessionUseCase.GetSession(sessionCookie.Value)
+	if sess == nil {
+		return nil
+	}
 
 	return converters.SessionConvertCoreInApi(*sess)
 }

@@ -1,6 +1,6 @@
 -- +migrate Up
--- Создание таблицы пользователей (users)
-CREATE TABLE IF NOT EXISTS users (
+-- Создание таблицы пользователей (profile)
+CREATE TABLE IF NOT EXISTS profile (
     id SERIAL PRIMARY KEY,
     login TEXT UNIQUE CHECK (LENGTH(login) <= 50),
     password TEXT CHECK (LENGTH(password) <= 200),
@@ -15,10 +15,10 @@ CREATE TABLE IF NOT EXISTS users (
     description TEXT CHECK (LENGTH(description) <= 300)
 );
 
--- Создание таблицы сессий (sessions)
-CREATE TABLE IF NOT EXISTS sessions (
+-- Создание таблицы сессий (session)
+CREATE TABLE IF NOT EXISTS session (
     id TEXT PRIMARY KEY CHECK (char_length(id) <= 50),
-    user_id INTEGER REFERENCES users(id),
+    profile_id INTEGER REFERENCES profile(id) ON DELETE CASCADE,
     creation_date TIMESTAMP,
     device TEXT CHECK (LENGTH(device) <= 100),
     life_time INTEGER,
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS sessions (
 );
 
 -- Вставка начальных данных в таблицу users
-INSERT INTO users
+INSERT INTO profile
     (id, login, password, firstname, surname, patronymic, gender, birthday, registration_date, avatar_id, phone_number, description)
 VALUES
     (1, 'sergey@mailhub.ru', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Sergey', 'Fedasov', 'Aleksandrovich', 'Male', '2003-08-20', NOW(), '', '+77777777777', 'Description'),

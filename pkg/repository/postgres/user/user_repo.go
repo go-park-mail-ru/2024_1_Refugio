@@ -82,7 +82,7 @@ var GenerateRandomID RandomIDGenerator = func() uint32 {
 
 // GetAll returns all users from the storage.
 func (r *UserRepository) GetAll(offset, limit int) ([]*domain.User, error) {
-	query := "SELECT * FROM users"
+	query := "SELECT * FROM profile"
 
 	var userModelsDb []database.User
 	var err error
@@ -107,7 +107,7 @@ func (r *UserRepository) GetAll(offset, limit int) ([]*domain.User, error) {
 
 // GetByID returns the user by its unique identifier.
 func (r *UserRepository) GetByID(id uint32) (*domain.User, error) {
-	query := "SELECT * FROM users WHERE id = $1"
+	query := "SELECT * FROM profile WHERE id = $1"
 
 	var userModelDb database.User
 	err := r.DB.Get(&userModelDb, query, id)
@@ -123,7 +123,7 @@ func (r *UserRepository) GetByID(id uint32) (*domain.User, error) {
 
 // GetUserByLogin returns the user by login.
 func (r *UserRepository) GetUserByLogin(login string, password string) (*domain.User, error) {
-	query := "SELECT * FROM users WHERE login = $1"
+	query := "SELECT * FROM profile WHERE login = $1"
 
 	var userModelDb database.User
 	err := r.DB.Get(&userModelDb, query, login)
@@ -144,7 +144,7 @@ func (r *UserRepository) GetUserByLogin(login string, password string) (*domain.
 // Add adds a new user to the storage and returns its assigned unique identifier.
 func (r *UserRepository) Add(userModelCore *domain.User) (uint32, error) {
 	query := `
-		INSERT INTO users (id, login, password, firstname, surname, patronymic, gender, birthday, registration_date, avatar_id, phone_number, description)
+		INSERT INTO profile (id, login, password, firstname, surname, patronymic, gender, birthday, registration_date, avatar_id, phone_number, description)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 	`
 
@@ -168,7 +168,7 @@ func (r *UserRepository) Update(newUserCore *domain.User) (bool, error) {
 	newUserDb := converters.UserConvertCoreInDb(*newUserCore)
 
 	query := `
-        UPDATE users
+        UPDATE profile
         SET
             firstname = $1,
             surname = $2,
@@ -212,7 +212,7 @@ func (r *UserRepository) Update(newUserCore *domain.User) (bool, error) {
 
 // Delete removes the user from the storage by its unique identifier.
 func (r *UserRepository) Delete(id uint32) (bool, error) {
-	query := "DELETE FROM users WHERE id = $1"
+	query := "DELETE FROM profile WHERE id = $1"
 
 	result, err := r.DB.Exec(query, id)
 	if err != nil {

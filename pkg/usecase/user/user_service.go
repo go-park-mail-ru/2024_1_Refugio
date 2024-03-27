@@ -1,8 +1,10 @@
 package user
 
 import (
+	"fmt"
 	domain "mail/pkg/domain/models"
 	"mail/pkg/domain/repository"
+	"strings"
 )
 
 // UserUseCase represents the use case for working with users.
@@ -38,8 +40,8 @@ func (uc *UserUseCase) CreateUser(user *domain.User) (uint32, error) {
 }
 
 // IsLoginUnique checks if the provided login is unique among all users.
-func (uh *UserUseCase) IsLoginUnique(login string) (bool, error) {
-	users, err := uh.repo.GetAll(0, 0)
+func (uc *UserUseCase) IsLoginUnique(login string) (bool, error) {
+	users, err := uc.repo.GetAll(0, 0)
 	if err != nil {
 		return false, err
 	}
@@ -51,4 +53,49 @@ func (uh *UserUseCase) IsLoginUnique(login string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+// UpdateUserById updates user data based on the provided ID.
+func (uc *UserUseCase) UpdateUser(userNew *domain.User) (*domain.User, error) {
+	userOld, err := uc.repo.GetByID(userNew.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	if strings.TrimSpace(userNew.FirstName) != "" && userNew.FirstName != userOld.FirstName {
+		userOld.FirstName = userNew.FirstName
+	}
+	if strings.TrimSpace(userNew.Surname) != "" && userNew.Surname != userOld.Surname {
+		userOld.Surname = userNew.Surname
+	}
+	if strings.TrimSpace(userNew.Patronymic) != "" && userNew.Patronymic != userOld.Patronymic {
+		userOld.Patronymic = userNew.Patronymic
+	}
+	if domain.IsValidGender(userNew.Gender) && userNew.Gender != userOld.Gender {
+		userOld.Gender = userNew.Gender
+	}
+	if !userNew.Birthday.Equal(userOld.Birthday) {
+		userOld.Birthday = userNew.Birthday
+	}
+	if strings.TrimSpace(userNew.Description) != "" && userNew.Description != userOld.Description {
+		userOld.Description = userNew.Description
+	}
+	if strings.TrimSpace(userNew.PhoneNumber) != "" && userNew.PhoneNumber != userOld.PhoneNumber {
+		userOld.PhoneNumber = userNew.PhoneNumber
+	}
+
+	status, err := uc.repo.Update(userOld)
+	if err != nil {
+		return nil, err
+	}
+	if !status {
+		return nil, fmt.Errorf("failed to update user")
+	}
+
+	return userOld, nil
+}
+
+// DeleteUserByID deletes the user with the given ID.
+func (uc *UserUseCase) DeleteUserByID(id uint32) (bool, error) {
+	return uc.repo.Delete(id)
 }

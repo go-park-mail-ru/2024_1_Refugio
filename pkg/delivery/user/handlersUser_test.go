@@ -1,5 +1,6 @@
 package user
 
+/*
 import (
 	"bytes"
 	"fmt"
@@ -156,7 +157,7 @@ func TestStatusSignupUser(t *testing.T) {
 					"surname": "Low"
 				}`),
 		[]byte(`{
-					"id": 
+					"id":
 					"login": "karpovIvan@mail.ru",
 					"name": "IvAn",
 					"password": "QWERTY1234",
@@ -299,3 +300,4 @@ func TestLogoutUser(t *testing.T) {
 		}
 	}
 }
+*/

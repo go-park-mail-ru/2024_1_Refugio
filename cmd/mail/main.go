@@ -83,7 +83,9 @@ func main() {
 	router.PathPrefix("/api/v1/auth").Handler(auth)
 
 	auth.HandleFunc("/verify-auth", userHandler.VerifyAuth).Methods("GET", "OPTIONS")
-	auth.HandleFunc("/get-user", userHandler.GetUserBySession).Methods("GET", "OPTIONS") //??
+	auth.HandleFunc("/user/get", userHandler.GetUserBySession).Methods("GET", "OPTIONS")
+	auth.HandleFunc("/user/update", userHandler.UpdateUserData).Methods("PUT", "OPTIONS")
+	auth.HandleFunc("/user/delete/{id}", userHandler.DeleteUserData).Methods("DELETE", "OPTIONS")
 	auth.HandleFunc("/emails", emailHandler.List).Methods("GET", "OPTIONS")
 	auth.HandleFunc("/email/{id}", emailHandler.GetByID).Methods("GET", "OPTIONS")
 	auth.HandleFunc("/email/add", emailHandler.Add).Methods("POST", "OPTIONS")
