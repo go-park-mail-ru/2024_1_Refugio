@@ -61,7 +61,7 @@ func (sm *SessionsManager) Check(r *http.Request) (*models.Session, error) {
 }
 
 func (sm *SessionsManager) Create(w http.ResponseWriter, userID uint32) (*models.Session, error) {
-	sessionID, err := sm.sessionUseCase.CreateNewSession(userID, "", 60*60*24*7)
+	sessionID, err := sm.sessionUseCase.CreateNewSession(userID, "", 60*60*24)
 
 	if err != nil {
 		return nil, fmt.Errorf("session already exist")

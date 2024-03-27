@@ -11,6 +11,7 @@ import (
 	"mail/pkg/delivery/middleware"
 	"mail/pkg/delivery/session"
 	"net/http"
+	"time"
 
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 	emailHand "mail/pkg/delivery/email"
@@ -58,6 +59,8 @@ func main() {
 	sessionUsaCase := sessionUc.NewSessionUseCase(sessionRepository)
 	sessionsManager := session.NewSessionsManager(sessionUsaCase)
 	session.InitializationGlobalSeaaionManager(sessionsManager)
+
+	StartSessionCleaner(sessionUsaCase, 24*time.Hour)
 
 	emailRepository := emailRepo.NewEmailMemoryRepository()
 	emailUseCase := emailUc.NewEmailUseCase(emailRepository)
@@ -118,4 +121,19 @@ func main() {
 		fmt.Println("Error when starting the server:", err)
 	}
 	// 89.208.223.140
+}
+
+func StartSessionCleaner(sessionCleaner *sessionUc.SessionUseCase, interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				err := sessionCleaner.CleanupExpiredSessions()
+				if err != nil {
+					fmt.Printf("Error cleaning expired sessions: %v\n", err)
+				}
+			}
+		}
+	}()
 }
