@@ -1,5 +1,6 @@
 package email
 
+/*
 import (
 	"bytes"
 	"encoding/json"
@@ -654,3 +655,4 @@ func SortEmailsByID(emails []*emailCore.Email) {
 		return emails[i].ID < (emails[j].ID)
 	})
 }
+*/
