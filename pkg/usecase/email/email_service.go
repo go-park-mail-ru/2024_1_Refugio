@@ -19,7 +19,7 @@ func NewEmailUseCase(repo repository.EmailRepository) *EmailUseCase {
 
 // GetAllEmails returns all emails.
 func (uc *EmailUseCase) GetAllEmails() ([]*domain.Email, error) {
-	return uc.repo.GetAll()
+	return uc.repo.GetAll(0, 0)
 }
 
 // GetEmailByID returns the email by its ID.

@@ -33,7 +33,7 @@ func (uc *UserUseCase) GetUserByLogin(login string, password string) (*domain.Us
 }
 
 // CreateUser creates a new user.
-func (uc *UserUseCase) CreateUser(user *domain.User) (uint32, error) {
+func (uc *UserUseCase) CreateUser(user *domain.User) (*domain.User, error) {
 	return uc.repo.Add(user)
 }
 

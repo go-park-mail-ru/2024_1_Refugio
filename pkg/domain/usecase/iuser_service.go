@@ -18,7 +18,7 @@ type UserUseCase interface {
 	GetUserByLogin(login string, password string) (*userCore.User, error)
 
 	// CreateUser creates a new user.
-	CreateUser(user *userCore.User) (uint32, error)
+	CreateUser(user *userCore.User) (*userCore.User, error)
 
 	// IsLoginUnique checks if the provided login is unique among all users.
 	IsLoginUnique(login string) (bool, error)

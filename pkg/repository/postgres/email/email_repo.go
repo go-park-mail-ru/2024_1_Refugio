@@ -11,6 +11,7 @@ import (
 	"time"
 )
 
+//go:generate mockgen -source=office_grpc.pb.go -destination=mocks/customer_mock.go
 type EmailRepository struct {
 	DB *sqlx.DB
 }
@@ -20,32 +21,30 @@ func NewEmailRepository(db *sqlx.DB) *EmailRepository {
 }
 
 func (r *EmailRepository) Add(emailModelCore *domain.Email) (*domain.Email, error) {
-	queryMaxID := `SELECT MAX(id) FROM emails`
-
-	var maxID uint64
-	err := r.DB.Get(&maxID, queryMaxID)
-	if err != nil {
-		return &domain.Email{}, fmt.Errorf("Email MaxId fail", maxID+1)
-	}
-	fmt.Println("ID = ", maxID)
-
 	query := `
-		INSERT INTO emails (id, topic, text, date_of_dispatch, photoid, sender_id, recipient_id, read_status, deleted_status, draft_status, flag)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		INSERT INTO emails (topic, text, date_of_dispatch, photoid, sender_id, recipient_id, read_status, deleted_status, draft_status, flag)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 	`
-	emailModelDb := converters.EmailConvertCoreInDb(*emailModelCore, maxID+1)
-	_, err = r.DB.Exec(query, emailModelDb.ID, emailModelDb.Topic, emailModelDb.Text, time.Now(), emailModelDb.PhotoID, emailModelDb.SenderID, emailModelDb.RecipientID, emailModelDb.ReadStatus, emailModelDb.Deleted, emailModelDb.DraftStatus, emailModelDb.Flag)
+	emailModelDb := converters.EmailConvertCoreInDb(*emailModelCore)
+	_, err := r.DB.Exec(query, emailModelDb.Topic, emailModelDb.Text, time.Now(), emailModelDb.PhotoID, emailModelDb.SenderID, emailModelDb.RecipientID, emailModelDb.ReadStatus, emailModelDb.Deleted, emailModelDb.DraftStatus, emailModelDb.Flag)
 	if err != nil {
-		return &domain.Email{}, fmt.Errorf("Email with id %s fail", emailModelDb.ID)
+		return &domain.Email{}, fmt.Errorf("Email with id %d fail", emailModelDb.ID)
 	}
 
 	return emailModelCore, nil
 }
 
-func (r *EmailRepository) GetAll() ([]*domain.Email, error) {
+func (r *EmailRepository) GetAll(offset, limit int) ([]*domain.Email, error) {
 	query := `SELECT * FROM emails`
 	emailsModelDb := []database.Email{}
-	err := r.DB.Select(&emailsModelDb, query)
+	var err error
+	if offset >= 0 && limit > 0 {
+		query += " OFFSET $1 LIMIT $2"
+		err = r.DB.Select(&emailsModelDb, query, offset, limit)
+	} else {
+		err = r.DB.Select(&emailsModelDb, query)
+	}
+	//err := r.DB.Select(&emailsModelDb, query)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("DB no have emails")
@@ -75,7 +74,7 @@ func (r *EmailRepository) GetByID(id uint64) (*domain.Email, error) {
 }
 
 func (r *EmailRepository) Update(newEmail *domain.Email) (bool, error) {
-	newEmailDb := converters.EmailConvertCoreInDb(*newEmail, newEmail.ID)
+	newEmailDb := converters.EmailConvertCoreInDb(*newEmail)
 
 	query := `
         UPDATE emails

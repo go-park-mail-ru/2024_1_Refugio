@@ -142,25 +142,24 @@ func (r *UserRepository) GetUserByLogin(login string, password string) (*domain.
 }
 
 // Add adds a new user to the storage and returns its assigned unique identifier.
-func (r *UserRepository) Add(userModelCore *domain.User) (uint32, error) {
+func (r *UserRepository) Add(userModelCore *domain.User) (*domain.User, error) {
 	query := `
-		INSERT INTO users (id, login, password, firstname, surname, patronymic, gender, birthday, registration_date, avatar_id, phone_number, description)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		INSERT INTO users (login, password, firstname, surname, patronymic, gender, birthday, registration_date, avatar_id, phone_number, description)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 	`
 
 	userModelDb := converters.UserConvertCoreInDb(*userModelCore)
 	password, status := HashPassword(userModelDb.Password)
 	if !status {
-		return 0, fmt.Errorf("user with login %s fail", userModelDb.Login)
+		return &domain.User{}, fmt.Errorf("user with login %s fail", userModelDb.Login)
 	}
 	userModelDb.Password = password
-	userID := GenerateRandomID()
-	_, err := r.DB.Exec(query, userID, userModelDb.Login, userModelDb.Password, userModelDb.FirstName, userModelDb.Surname, userModelDb.Patronymic, userModelDb.Gender, userModelDb.Birthday, time.Now(), userModelDb.AvatarID, userModelDb.PhoneNumber, userModelDb.Description)
+	_, err := r.DB.Exec(query, userModelDb.Login, userModelDb.Password, userModelDb.FirstName, userModelDb.Surname, userModelDb.Patronymic, userModelDb.Gender, userModelDb.Birthday, time.Now(), userModelDb.AvatarID, userModelDb.PhoneNumber, userModelDb.Description)
 	if err != nil {
-		return 0, fmt.Errorf("user with login %s fail", userModelDb.Login)
+		return &domain.User{}, fmt.Errorf("user with login %s fail", userModelDb.Login)
 	}
 
-	return userID, nil
+	return userModelCore, nil
 }
 
 // Update updates the information of a user in the storage based on the provided new user.

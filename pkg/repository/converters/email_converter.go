@@ -13,6 +13,7 @@ func EmailConvertDbInCore(emailModelDb emailDb.Email) *domain.Email {
 		ReplyToEmailID = emailModelDb.ReplyToEmailID.(uint64)
 	}
 	return &domain.Email{
+		ID:             emailModelDb.ID,
 		Topic:          emailModelDb.Topic,
 		Text:           emailModelDb.Text,
 		PhotoID:        emailModelDb.PhotoID,
@@ -27,9 +28,9 @@ func EmailConvertDbInCore(emailModelDb emailDb.Email) *domain.Email {
 	}
 }
 
-func EmailConvertCoreInDb(emailModelCore domain.Email, id uint64) *emailDb.Email {
+func EmailConvertCoreInDb(emailModelCore domain.Email) *emailDb.Email {
 	emailDB := &emailDb.Email{
-		ID:             id,
+		ID:             emailModelCore.ID,
 		Topic:          emailModelCore.Topic,
 		Text:           emailModelCore.Text,
 		PhotoID:        emailModelCore.PhotoID,

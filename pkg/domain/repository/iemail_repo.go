@@ -7,7 +7,7 @@ import (
 // EmailRepository represents the interface for working with emails.
 type EmailRepository interface {
 	// GetAll returns all emails from the storage.
-	GetAll() ([]*domain.Email, error)
+	GetAll(offset, limit int) ([]*domain.Email, error)
 
 	// GetByID returns the email by its unique identifier.
 	GetByID(id uint64) (*domain.Email, error)

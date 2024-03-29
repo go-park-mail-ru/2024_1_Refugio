@@ -18,7 +18,7 @@ type UserRepository interface {
 	GetUserByLogin(login string, password string) (*domain.User, error)
 
 	// Add adds a new user to the storage and returns its assigned unique identifier.
-	Add(user *domain.User) (uint32, error)
+	Add(user *domain.User) (*domain.User, error)
 
 	// Update updates the information of a user in the storage based on the provided new user.
 	Update(newUser *domain.User) (bool, error)
