@@ -72,7 +72,7 @@ func (sm *SessionsManager) Create(w http.ResponseWriter, userID uint32) (*models
 	csrfCookie := &http.Cookie{
 		Name:     "csrf_token",
 		Value:    sess.CsrfToken,
-		Expires:  time.Now().Add(90 * 24 * time.Hour),
+		Expires:  time.Now().Add(24 * time.Hour),
 		Path:     "/",
 		HttpOnly: true,
 	}
@@ -81,7 +81,7 @@ func (sm *SessionsManager) Create(w http.ResponseWriter, userID uint32) (*models
 	sessionCookie := &http.Cookie{
 		Name:     "session_id",
 		Value:    sess.ID,
-		Expires:  time.Now().Add(90 * 24 * time.Hour),
+		Expires:  time.Now().Add(24 * time.Hour),
 		Path:     "/",
 		HttpOnly: true,
 	}

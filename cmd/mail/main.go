@@ -89,6 +89,7 @@ func main() {
 	auth.HandleFunc("/user/get", userHandler.GetUserBySession).Methods("GET", "OPTIONS")
 	auth.HandleFunc("/user/update", userHandler.UpdateUserData).Methods("PUT", "OPTIONS")
 	auth.HandleFunc("/user/delete/{id}", userHandler.DeleteUserData).Methods("DELETE", "OPTIONS")
+	auth.HandleFunc("/user/avatar/upload", userHandler.UploadUserAvatar).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/emails", emailHandler.List).Methods("GET", "OPTIONS")
 	auth.HandleFunc("/email/{id}", emailHandler.GetByID).Methods("GET", "OPTIONS")
 	auth.HandleFunc("/email/add", emailHandler.Add).Methods("POST", "OPTIONS")
@@ -102,6 +103,10 @@ func main() {
 	logRouter.HandleFunc("/login", userHandler.Login).Methods("POST", "OPTIONS")
 	logRouter.HandleFunc("/signup", userHandler.Signup).Methods("POST", "OPTIONS")
 	logRouter.HandleFunc("/logout", userHandler.Logout).Methods("POST", "OPTIONS")
+
+	staticDir := "/media/"
+	staticFileServer := http.StripPrefix(staticDir, http.FileServer(http.Dir("./avatars")))
+	router.PathPrefix(staticDir).Handler(staticFileServer)
 
 	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 

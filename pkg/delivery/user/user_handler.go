@@ -2,17 +2,23 @@ package user
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/mux"
+	"io"
 	"mail/pkg/delivery"
 	"mail/pkg/delivery/converters"
 	api "mail/pkg/delivery/models"
 	"mail/pkg/delivery/session"
 	domain "mail/pkg/domain/models"
 	"mail/pkg/domain/usecase"
+	"math/rand"
 	"net/http"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var (
@@ -243,6 +249,91 @@ func (uh *UserHandler) DeleteUserData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"message": "User data deleted successfully"})
+}
+
+// UploadUserAvatar handles requests to upload user avatar.
+// @Summary Upload user avatar
+// @Description Handles requests to upload user avatar.
+// @Tags users
+// @Accept multipart/form-data
+// @Produce json
+// @Param X-CSRF-Token header string true "CSRF Token"
+// @Param file formData file true "Avatar file to upload"
+// @Security ApiKeyAuth
+// @Success 200 {object} delivery.Response "File uploaded and saved successfully"
+// @Failure 400 {object} delivery.ErrorResponse "Error processing file or failed to get file"
+// @Failure 500 {object} delivery.ErrorResponse "Internal Server Error"
+// @Router /api/v1/auth/user/avatar/upload [post]
+func (uh *UserHandler) UploadUserAvatar(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseMultipartForm(5 * 1024 * 1024)
+	if err != nil {
+		delivery.HandleError(w, http.StatusBadRequest, "Error processing file")
+		return
+	}
+
+	file, handler, err := r.FormFile("file")
+	if err != nil {
+		delivery.HandleError(w, http.StatusBadRequest, "Failed to get file")
+		return
+	}
+	defer file.Close()
+
+	if handler.Size > (5 * 1024 * 1024) {
+		delivery.HandleError(w, http.StatusInternalServerError, "Failed to get file")
+		return
+	}
+
+	fileExt := filepath.Ext(handler.Filename)
+	uniqueFileName := generateUniqueFileName(fileExt)
+	outFile, err := os.Create("./avatars/" + uniqueFileName)
+	if err != nil {
+		delivery.HandleError(w, http.StatusInternalServerError, "Error creating file")
+		return
+	}
+	defer outFile.Close()
+
+	_, err = io.Copy(outFile, file)
+	if err != nil {
+		delivery.HandleError(w, http.StatusInternalServerError, "Error saving file")
+		return
+	}
+
+	sessionUser := uh.Sessions.GetSession(r)
+	userData, err := uh.UserUseCase.GetUserByID(sessionUser.UserID)
+	if err != nil {
+		delivery.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+
+	if userData.AvatarID != "" {
+		oldFilePath := "./avatars/" + userData.AvatarID
+		err := os.Remove(oldFilePath)
+		if err != nil {
+			delivery.HandleError(w, http.StatusInternalServerError, "Failed to delete old file")
+			return
+		}
+	}
+
+	userData.AvatarID = uniqueFileName
+	userUpdated, err := uh.UserUseCase.UpdateUser(userData)
+	if err != nil {
+		delivery.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+	fmt.Println(userUpdated)
+
+	delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "File is uploaded and saved"})
+}
+
+// generateUniqueFileName generates a unique file name based on the current time, random number, and specified format.
+func generateUniqueFileName(format string) string {
+	rand.Seed(time.Now().UnixNano())
+	randomNum := rand.Intn(1000)
+
+	currentTime := time.Now().Format("20060102_150405")
+	uniqueFileName := fmt.Sprintf("%s_%d%s", currentTime, randomNum, format)
+
+	return uniqueFileName
 }
 
 // isEmpty checks if the given string is empty after trimming leading and trailing whitespace.

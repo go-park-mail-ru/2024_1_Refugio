@@ -83,6 +83,9 @@ func (uc *UserUseCase) UpdateUser(userNew *domain.User) (*domain.User, error) {
 	if strings.TrimSpace(userNew.PhoneNumber) != "" && userNew.PhoneNumber != userOld.PhoneNumber {
 		userOld.PhoneNumber = userNew.PhoneNumber
 	}
+	if strings.TrimSpace(userNew.AvatarID) != "" && userNew.AvatarID != userOld.AvatarID {
+		userOld.AvatarID = userNew.AvatarID
+	}
 
 	status, err := uc.repo.Update(userOld)
 	if err != nil {
