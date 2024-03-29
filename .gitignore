@@ -1,6 +1,6 @@
 .idea
-.idea
-./avatars
+avatars/*
+!avatars/.gitkeep
 .DS_Store
 
 # Created by https://www.toptal.com/developers/gitignore/api/go
