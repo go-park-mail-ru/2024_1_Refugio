@@ -42,7 +42,7 @@ func InitializationEmailHandler(emailHandler *EmailHandler) {
 // @Failure 500 {object} delivery.Response "JSON encoding error"
 // @Router /api/v1/auth/emails [get]
 func (h *EmailHandler) List(w http.ResponseWriter, r *http.Request) {
-	emails, err := h.EmailUseCase.GetAllEmails()
+	emails, err := h.EmailUseCase.GetAllEmails(0, 0)
 	if err != nil {
 		delivery.HandleError(w, http.StatusNotFound, fmt.Sprintf("DB error: %s", err.Error()))
 		return

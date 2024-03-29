@@ -112,15 +112,13 @@ func TestCreateUser_Success(t *testing.T) {
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
 
-	expectedUserID := uint32(1)
-	mockRepo.EXPECT().Add(gomock.Any()).Return(expectedUserID, nil)
-
 	newUser := &domain.User{FirstName: "New User"}
+	mockRepo.EXPECT().Add(gomock.Any()).Return(newUser, nil)
 
-	userID, err := useCase.CreateUser(newUser)
+	userRes, err := useCase.CreateUser(newUser)
 
 	assert.NoError(t, err)
-	assert.Equal(t, expectedUserID, userID)
+	assert.Equal(t, newUser, userRes)
 }
 
 func TestCreateUser_ErrorFromRepository(t *testing.T) {
@@ -129,15 +127,13 @@ func TestCreateUser_ErrorFromRepository(t *testing.T) {
 
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
-
-	mockRepo.EXPECT().Add(gomock.Any()).Return(uint32(0), errors.New("repository error"))
-
 	newUser := &domain.User{FirstName: "New User"}
+	mockRepo.EXPECT().Add(gomock.Any()).Return(newUser, errors.New("repository error"))
 
-	userID, err := useCase.CreateUser(newUser)
+	userRes, err := useCase.CreateUser(newUser)
 
 	assert.Error(t, err)
-	assert.Zero(t, userID)
+	assert.Equal(t, newUser, userRes)
 }
 
 func TestIsLoginUnique_Success(t *testing.T) {

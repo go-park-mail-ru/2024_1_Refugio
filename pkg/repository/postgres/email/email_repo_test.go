@@ -158,7 +158,7 @@ func TestAddEmail(t *testing.T) {
 			RecipientID:    2,
 		}
 
-		mock.ExpectQuery(`INSERT INTO users`).
+		mock.ExpectQuery(`INSERT INTO emails`).
 			WithArgs(email.Topic, email.Text, sqlmock.AnyArg(), email.PhotoID, email.SenderID, email.RecipientID, email.ReadStatus, email.Deleted, email.DraftStatus, email.Flag).
 			WillReturnError(fmt.Errorf("failed to insert email"))
 

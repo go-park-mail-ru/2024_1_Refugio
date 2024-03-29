@@ -44,13 +44,15 @@ func CreateFakeEmails() *EmailMemoryRepository {
 }
 
 // GetAll returns all emails from the storage.
-func (repository *EmailMemoryRepository) GetAll() ([]*emailCore.Email, error) {
+func (repository *EmailMemoryRepository) GetAll(offset, limit int) ([]*emailCore.Email, error) {
 	repository.mu.RLock()
 	defer repository.mu.RUnlock()
 
 	emails := make([]*emailCore.Email, 0, len(repository.emails))
-	for _, email := range repository.emails {
-		emails = append(emails, converters.EmailConvertDbInCore(*email))
+	for i, email := range repository.emails {
+		if i >= uint64(offset) && i < uint64(offset+limit) {
+			emails = append(emails, converters.EmailConvertDbInCore(*email))
+		}
 	}
 
 	return emails, nil
@@ -74,7 +76,7 @@ func (repository *EmailMemoryRepository) Add(email *emailCore.Email) (*emailCore
 	repository.mu.Lock()
 	defer repository.mu.Unlock()
 	id := uint64(len(repository.emails) + 1)
-	emailDb := converters.EmailConvertCoreInDb(*email, id)
+	emailDb := converters.EmailConvertCoreInDb(*email)
 
 	emailDb.ID = id
 	repository.emails[id] = emailDb
@@ -87,7 +89,7 @@ func (repository *EmailMemoryRepository) Update(newEmail *emailCore.Email) (bool
 	repository.mu.Lock()
 	defer repository.mu.Unlock()
 
-	emailDb := converters.EmailConvertCoreInDb(*newEmail, newEmail.ID)
+	emailDb := converters.EmailConvertCoreInDb(*newEmail)
 
 	existingEmail, found := repository.emails[emailDb.ID]
 	if !found {

@@ -11,7 +11,6 @@ import (
 	"time"
 )
 
-//go:generate mockgen -source=office_grpc.pb.go -destination=mocks/customer_mock.go
 type EmailRepository struct {
 	DB *sqlx.DB
 }
