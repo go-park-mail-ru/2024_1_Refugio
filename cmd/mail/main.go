@@ -16,7 +16,7 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 	emailHand "mail/pkg/delivery/email"
 	userHand "mail/pkg/delivery/user"
-	emailRepo "mail/pkg/repository/maps/email"
+	emailRepo "mail/pkg/repository/postgres/email"
 	sessionRepo "mail/pkg/repository/postgres/session"
 	userRepo "mail/pkg/repository/postgres/user"
 	emailUc "mail/pkg/usecase/email"
@@ -62,7 +62,7 @@ func main() {
 
 	StartSessionCleaner(sessionUsaCase, 24*time.Hour)
 
-	emailRepository := emailRepo.NewEmailMemoryRepository()
+	emailRepository := emailRepo.NewEmailRepository(dbx)
 	emailUseCase := emailUc.NewEmailUseCase(emailRepository)
 	emailHandler := &emailHand.EmailHandler{
 		EmailUseCase: emailUseCase,
@@ -76,8 +76,7 @@ func main() {
 		Sessions:    sessionsManager,
 	}
 
-	port := 8080
-	Logrus := middleware.InitializationAcceslog(port)
+	Logrus := middleware.InitializationAcceslog()
 
 	router := mux.NewRouter()
 
@@ -118,6 +117,7 @@ func main() {
 
 	corsHandler := c.Handler(router)
 
+	port := 8080
 	fmt.Printf("The server is running on http://localhost:%d\n", port)
 	fmt.Printf("Swagger is running on http://localhost:%d/swagger/index.html\n", port)
 

@@ -77,7 +77,7 @@ func (sm *SessionsManager) Create(w http.ResponseWriter, userID uint32) (*models
 		HttpOnly: true,
 	}
 	http.SetCookie(w, csrfCookie)
-
+	fmt.Println("CSRFTOKEN: ", csrfCookie.Value)
 	sessionCookie := &http.Cookie{
 		Name:     "session_id",
 		Value:    sess.ID,

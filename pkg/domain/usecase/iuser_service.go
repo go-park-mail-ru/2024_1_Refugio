@@ -18,12 +18,12 @@ type UserUseCase interface {
 	GetUserByLogin(login string, password string) (*domain.User, error)
 
 	// CreateUser creates a new user.
-	CreateUser(user *domain.User) (uint32, error)
+	CreateUser(user *domain.User) (*domain.User, error)
 
 	// IsLoginUnique checks if the provided login is unique among all users.
 	IsLoginUnique(login string) (bool, error)
 
-	// UpdateUserById updates user data based on the provided ID.
+	// UpdateUser updates user data based on the provided ID.
 	UpdateUser(userNew *domain.User) (*domain.User, error)
 
 	// DeleteUserByID deletes the user with the given ID.

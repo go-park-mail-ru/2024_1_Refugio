@@ -35,7 +35,7 @@ func (uc *UserUseCase) GetUserByLogin(login string, password string) (*domain.Us
 }
 
 // CreateUser creates a new user.
-func (uc *UserUseCase) CreateUser(user *domain.User) (uint32, error) {
+func (uc *UserUseCase) CreateUser(user *domain.User) (*domain.User, error) {
 	return uc.repo.Add(user)
 }
 
@@ -55,7 +55,7 @@ func (uc *UserUseCase) IsLoginUnique(login string) (bool, error) {
 	return true, nil
 }
 
-// UpdateUserById updates user data based on the provided ID.
+// UpdateUser updates user data based on the provided ID.
 func (uc *UserUseCase) UpdateUser(userNew *domain.User) (*domain.User, error) {
 	userOld, err := uc.repo.GetByID(userNew.ID)
 	if err != nil {

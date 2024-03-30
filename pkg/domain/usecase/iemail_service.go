@@ -7,7 +7,7 @@ import (
 // EmailUseCase represents the use case for working with emails.
 type EmailUseCase interface {
 	// GetAllEmails returns all emails.
-	GetAllEmails() ([]*emailCore.Email, error)
+	GetAllEmails(offset, limit int) ([]*emailCore.Email, error)
 
 	// GetEmailByID returns the email by its ID.
 	GetEmailByID(id uint64) (*emailCore.Email, error)
