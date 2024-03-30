@@ -2,13 +2,23 @@ package user
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/gorilla/mux"
+	"io"
 	"mail/pkg/delivery"
 	"mail/pkg/delivery/converters"
-	"mail/pkg/delivery/models"
+	api "mail/pkg/delivery/models"
 	"mail/pkg/delivery/session"
+	domain "mail/pkg/domain/models"
 	"mail/pkg/domain/usecase"
+	"math/rand"
 	"net/http"
+	"os"
+	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
+	"time"
 )
 
 var (
@@ -51,7 +61,7 @@ func (uh *UserHandler) VerifyAuth(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} delivery.ErrorResponse "Failed to create session"
 // @Router /api/v1/login [post]
 func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
-	var credentials models.User
+	var credentials api.User
 	err := json.NewDecoder(r.Body).Decode(&credentials)
 	if err != nil {
 		delivery.HandleError(w, http.StatusBadRequest, "Invalid request body")
@@ -60,6 +70,11 @@ func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	if isEmpty(credentials.Login) || isEmpty(credentials.Password) {
 		delivery.HandleError(w, http.StatusInternalServerError, "All fields must be filled in")
+		return
+	}
+
+	if !isValidEmailFormat(credentials.Login) {
+		delivery.HandleError(w, http.StatusBadRequest, "Domain in the login is not suitable")
 		return
 	}
 
@@ -90,15 +105,20 @@ func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} delivery.ErrorResponse "Failed to add user"
 // @Router /api/v1/signup [post]
 func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
-	var newUser models.User
+	var newUser api.User
 	err := json.NewDecoder(r.Body).Decode(&newUser)
 	if err != nil {
 		delivery.HandleError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
-	if isEmpty(newUser.FirstName) || isEmpty(newUser.Surname) || isEmpty(newUser.Login) || isEmpty(newUser.Password) {
+	if isEmpty(newUser.Login) || isEmpty(newUser.Password) || isEmpty(newUser.FirstName) || isEmpty(newUser.Surname) || !domain.IsValidGender(newUser.Gender) {
 		delivery.HandleError(w, http.StatusBadRequest, "All fields must be filled in")
+		return
+	}
+
+	if !isValidEmailFormat(newUser.Login) {
+		delivery.HandleError(w, http.StatusBadRequest, "Domain in the login is not suitable")
 		return
 	}
 
@@ -141,9 +161,9 @@ func (uh *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param X-CSRF-Token header string true "CSRF Token"
 // @Success 200 {object} delivery.Response "User details"
-// @Failure 401 {object} delivery.Response "Not Authorized"
+// @Failure 401 {object} delivery.ErrorResponse "Not Authorized"
 // @Failure 500 {object} delivery.ErrorResponse "Internal Server Error"
-// @Router /api/v1/auth/get-user [get]
+// @Router /api/v1/auth/user/get [get]
 func (uh *UserHandler) GetUserBySession(w http.ResponseWriter, r *http.Request) {
 	sessionUser := uh.Sessions.GetSession(r)
 	userData, err := uh.UserUseCase.GetUserByID(sessionUser.UserID)
@@ -155,8 +175,176 @@ func (uh *UserHandler) GetUserBySession(w http.ResponseWriter, r *http.Request) 
 	delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"user": converters.UserConvertCoreInApi(*userData)})
 }
 
+// UpdateUserData handles requests to update user data.
+// @Summary Update user data
+// @Description Handles requests to update user data.
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param X-CSRF-Token header string true "CSRF Token"
+// @Param updatedUser body delivery.UserSwag true "Updated user data"
+// @Success 200 {object} delivery.Response "User data updated successfully"
+// @Failure 400 {object} delivery.ErrorResponse "Invalid request body"
+// @Failure 401 {object} delivery.ErrorResponse "Not authorized"
+// @Failure 500 {object} delivery.ErrorResponse "Internal Server Error"
+// @Router /api/v1/auth/user/update [put]
+func (uh *UserHandler) UpdateUserData(w http.ResponseWriter, r *http.Request) {
+	var updatedUser api.User
+	err := json.NewDecoder(r.Body).Decode(&updatedUser)
+	if err != nil {
+		delivery.HandleError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	sessionUser := uh.Sessions.GetSession(r)
+	if sessionUser.UserID != updatedUser.ID {
+		delivery.HandleError(w, http.StatusUnauthorized, "Not authorized")
+		return
+	}
+
+	userUpdated, err := uh.UserUseCase.UpdateUser(converters.UserConvertApiInCore(updatedUser))
+	if err != nil {
+		delivery.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+
+	delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"user": converters.UserConvertCoreInApi(*userUpdated)})
+}
+
+// DeleteUserData handles requests to delete user data.
+// @Summary Delete user data
+// @Description Handles requests to delete user data.
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param X-CSRF-Token header string true "CSRF Token"
+// @Param id path uint32 true "User ID to delete"
+// @Success 200 {object} delivery.Response "User data deleted successfully"
+// @Failure 400 {object} delivery.ErrorResponse "Invalid user ID"
+// @Failure 401 {object} delivery.ErrorResponse "Not authorized"
+// @Failure 500 {object} delivery.ErrorResponse "Internal Server Error"
+// @Router /api/v1/auth/user/delete/{id} [delete]
+func (uh *UserHandler) DeleteUserData(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	userID, err := strconv.ParseUint(vars["id"], 10, 32)
+	if err != nil {
+		delivery.HandleError(w, http.StatusBadRequest, "Bad id in request")
+		return
+	}
+
+	sessionUser := uh.Sessions.GetSession(r)
+	if sessionUser.UserID != uint32(userID) {
+		delivery.HandleError(w, http.StatusUnauthorized, "Not authorized")
+		return
+	}
+
+	deleted, err := uh.UserUseCase.DeleteUserByID(uint32(userID))
+	if err != nil {
+		delivery.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+	if !deleted {
+		delivery.HandleError(w, http.StatusInternalServerError, "Failed to delete user data")
+		return
+	}
+
+	delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"message": "User data deleted successfully"})
+}
+
+// UploadUserAvatar handles requests to upload user avatar.
+// @Summary Upload user avatar
+// @Description Handles requests to upload user avatar.
+// @Tags users
+// @Accept multipart/form-data
+// @Produce json
+// @Param X-CSRF-Token header string true "CSRF Token"
+// @Param file formData file true "Avatar file to upload"
+// @Security ApiKeyAuth
+// @Success 200 {object} delivery.Response "File uploaded and saved successfully"
+// @Failure 400 {object} delivery.ErrorResponse "Error processing file or failed to get file"
+// @Failure 500 {object} delivery.ErrorResponse "Internal Server Error"
+// @Router /api/v1/auth/user/avatar/upload [post]
+func (uh *UserHandler) UploadUserAvatar(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseMultipartForm(5 * 1024 * 1024)
+	if err != nil {
+		delivery.HandleError(w, http.StatusBadRequest, "Error processing file")
+		return
+	}
+
+	file, handler, err := r.FormFile("file")
+	if err != nil {
+		delivery.HandleError(w, http.StatusBadRequest, "Failed to get file")
+		return
+	}
+	defer file.Close()
+
+	if handler.Size > (5 * 1024 * 1024) {
+		delivery.HandleError(w, http.StatusInternalServerError, "Failed to get file")
+		return
+	}
+
+	fileExt := filepath.Ext(handler.Filename)
+	uniqueFileName := generateUniqueFileName(fileExt)
+	outFile, err := os.Create("./avatars/" + uniqueFileName)
+	if err != nil {
+		delivery.HandleError(w, http.StatusInternalServerError, "Error creating file")
+		return
+	}
+	defer outFile.Close()
+
+	_, err = io.Copy(outFile, file)
+	if err != nil {
+		delivery.HandleError(w, http.StatusInternalServerError, "Error saving file")
+		return
+	}
+
+	sessionUser := uh.Sessions.GetSession(r)
+	userData, err := uh.UserUseCase.GetUserByID(sessionUser.UserID)
+	if err != nil {
+		delivery.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+
+	if userData.AvatarID != "" {
+		oldFilePath := "./avatars/" + userData.AvatarID
+		err := os.Remove(oldFilePath)
+		if err != nil {
+			delivery.HandleError(w, http.StatusInternalServerError, "Failed to delete old file")
+			return
+		}
+	}
+
+	userData.AvatarID = uniqueFileName
+	userUpdated, err := uh.UserUseCase.UpdateUser(userData)
+	if err != nil {
+		delivery.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+	fmt.Println(userUpdated)
+
+	delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "File is uploaded and saved"})
+}
+
+// generateUniqueFileName generates a unique file name based on the current time, random number, and specified format.
+func generateUniqueFileName(format string) string {
+	rand.Seed(time.Now().UnixNano())
+	randomNum := rand.Intn(1000)
+
+	currentTime := time.Now().Format("20060102_150405")
+	uniqueFileName := fmt.Sprintf("%s_%d%s", currentTime, randomNum, format)
+
+	return uniqueFileName
+}
+
 // isEmpty checks if the given string is empty after trimming leading and trailing whitespace.
 // Returns true if the string is empty, and false otherwise.
 func isEmpty(str string) bool {
 	return strings.TrimSpace(str) == ""
+}
+
+// isValidEmailFormat checks if the provided email string matches the specific format for emails ending with "@mailhub.ru".
+func isValidEmailFormat(email string) bool {
+	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@mailhub\.ru$`)
+
+	return emailRegex.MatchString(email)
 }

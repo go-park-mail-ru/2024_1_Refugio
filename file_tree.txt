@@ -1,10 +1,11 @@
 .
 ├── Dockerfile
 ├── README.md
+├── avatars
+│   └── 20240329_171734_161.jpeg
 ├── cmd
 │   └── mail
 │       └── main.go
-├── cover.out
 ├── docker-compose.yml
 ├── docs
 │   ├── docs.go
@@ -20,13 +21,15 @@
     │   ├── converters
     │   │   ├── email_converter.go
     │   │   ├── session_converter.go
-    │   │   └── user_converter.go
+    │   │   ├── session_converter_test.go
+    │   │   ├── user_converter.go
+    │   │   └── user_converter_test.go
     │   ├── email
     │   │   ├── email_handler.go
     │   │   └── handlersEmail_test.go
     │   ├── middleware
-    │   │   ├── Middleware.go
-    │   │   └── authForEmailHandler_test.go
+    │   │   ├── middleware.go
+    │   │   └── middleware_test.go
     │   ├── models
     │   │   ├── email.go
     │   │   ├── session.go
@@ -41,7 +44,9 @@
     ├── domain
     │   ├── mock
     │   │   ├── session_repository_mock.go
-    │   │   └── user_repository_mock.go
+    │   │   ├── session_service_mock.go
+    │   │   ├── user_repository_mock.go
+    │   │   └── user_service_mock.go
     │   ├── models
     │   │   ├── email.go
     │   │   ├── file.go
@@ -60,16 +65,13 @@
     │   ├── converters
     │   │   ├── email_converter.go
     │   │   ├── session_converter.go
-    │   │   └── user_converter.go
+    │   │   ├── session_converter_test.go
+    │   │   ├── user_converter.go
+    │   │   └── user_converter_test.go
     │   ├── maps
-    │   │   ├── email
-    │   │   │   ├── email_repo.go
-    │   │   │   ├── email_test.go
-    │   │   │   └── fake_emails.go
-    │   │   └── user
-    │   │       ├── fake_users.go
-    │   │       ├── user_repo.go
-    │   │       └── user_test.go
+    │   │   └── email
+    │   │       ├── email_repo.go
+    │   │       └── fake_emails.go
     │   ├── models
     │   │   ├── email.go
     │   │   ├── session.go
@@ -94,4 +96,4 @@
             ├── user_service.go
             └── user_service_test.go
 
-32 directories, 63 files
+32 directories, 65 files

@@ -7,6 +7,7 @@ import (
 	mock_repository "mail/pkg/domain/mock"
 	domain "mail/pkg/domain/models"
 	"testing"
+	"time"
 )
 
 func TestGetAllUsers_Success(t *testing.T) {
@@ -187,4 +188,155 @@ func TestIsLoginUnique_ErrorFromRepository(t *testing.T) {
 	unique, err := useCase.IsLoginUnique("testUser")
 	assert.Error(t, err)
 	assert.False(t, unique)
+}
+
+func TestUpdateUserById_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockUserRepository(ctrl)
+	useCase := NewUserUseCase(mockRepo)
+
+	userNew := &domain.User{
+		ID:          1,
+		FirstName:   "John",
+		Surname:     "Smith",
+		Patronymic:  "William",
+		Gender:      "Male",
+		Birthday:    time.Date(1985, time.October, 20, 0, 0, 0, 0, time.UTC),
+		Description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+		PhoneNumber: "+1234567890",
+	}
+
+	userOld := &domain.User{
+		ID:          1,
+		FirstName:   "Doe",
+		Surname:     "Johnson",
+		Patronymic:  "Michael",
+		Gender:      "Male",
+		Birthday:    time.Date(1980, time.January, 15, 0, 0, 0, 0, time.UTC),
+		Description: "Suspendisse potenti. Nulla facilisi.",
+		PhoneNumber: "+9876543210",
+	}
+
+	mockRepo.EXPECT().GetByID(userNew.ID).Return(userOld, nil)
+
+	mockRepo.EXPECT().Update(gomock.Any()).Return(true, nil)
+
+	updatedUser, err := useCase.UpdateUser(userNew)
+
+	assert.NoError(t, err)
+
+	assert.Equal(t, userNew, updatedUser)
+}
+
+func TestUpdateUserById_FailureToUpdate(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockUserRepository(ctrl)
+	useCase := NewUserUseCase(mockRepo)
+
+	userNew := &domain.User{
+		ID:          1,
+		FirstName:   "John",
+		Surname:     "Smith",
+		Patronymic:  "William",
+		Gender:      "Male",
+		Birthday:    time.Date(1985, time.October, 20, 0, 0, 0, 0, time.UTC),
+		Description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+		PhoneNumber: "+1234567890",
+	}
+
+	userOld := &domain.User{
+		ID:          1,
+		FirstName:   "Doe",
+		Surname:     "Johnson",
+		Patronymic:  "Michael",
+		Gender:      "Male",
+		Birthday:    time.Date(1980, time.January, 15, 0, 0, 0, 0, time.UTC),
+		Description: "Suspendisse potenti. Nulla facilisi.",
+		PhoneNumber: "+9876543210",
+	}
+
+	mockRepo.EXPECT().GetByID(userNew.ID).Return(userOld, nil)
+
+	mockRepo.EXPECT().Update(gomock.Any()).Return(false, errors.New("update failed"))
+
+	_, err := useCase.UpdateUser(userNew)
+
+	assert.Error(t, err)
+}
+
+func TestUpdateUserById_RepositoryError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockUserRepository(ctrl)
+	useCase := NewUserUseCase(mockRepo)
+
+	userNew := &domain.User{
+		ID:          1,
+		FirstName:   "John",
+		Surname:     "Smith",
+		Patronymic:  "William",
+		Gender:      "Male",
+		Birthday:    time.Date(1985, time.October, 20, 0, 0, 0, 0, time.UTC),
+		Description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+		PhoneNumber: "+1234567890",
+	}
+
+	mockRepo.EXPECT().GetByID(userNew.ID).Return(&domain.User{}, errors.New("repository error"))
+
+	_, err := useCase.UpdateUser(userNew)
+
+	assert.Error(t, err)
+}
+
+func TestDeleteUserByID_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockUserRepository(ctrl)
+	useCase := NewUserUseCase(mockRepo)
+
+	userID := uint32(1)
+	mockRepo.EXPECT().Delete(userID).Return(true, nil)
+
+	deleted, err := useCase.DeleteUserByID(userID)
+
+	assert.NoError(t, err)
+	assert.True(t, deleted)
+}
+
+func TestDeleteUserByID_Failure(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockUserRepository(ctrl)
+	useCase := NewUserUseCase(mockRepo)
+
+	userID := uint32(1)
+	mockRepo.EXPECT().Delete(userID).Return(false, nil)
+
+	deleted, err := useCase.DeleteUserByID(userID)
+
+	assert.NoError(t, err)
+	assert.False(t, deleted)
+}
+
+func TestDeleteUserByID_ErrorFromRepository(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockUserRepository(ctrl)
+	useCase := NewUserUseCase(mockRepo)
+
+	userID := uint32(1)
+	mockRepo.EXPECT().Delete(userID).Return(false, errors.New("repository error"))
+
+	deleted, err := useCase.DeleteUserByID(userID)
+
+	assert.Error(t, err)
+	assert.False(t, deleted)
 }

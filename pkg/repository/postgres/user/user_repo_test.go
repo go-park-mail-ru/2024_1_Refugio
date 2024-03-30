@@ -38,7 +38,7 @@ func TestGetAll(t *testing.T) {
 			AddRow(2, "User 2").
 			AddRow(3, "User 3")
 
-		mock.ExpectQuery(`SELECT \* FROM users`).WillReturnRows(rows)
+		mock.ExpectQuery(`SELECT \* FROM profile`).WillReturnRows(rows)
 
 		users, err := repo.GetAll(-1, -1)
 		assert.NoError(t, err)
@@ -55,7 +55,7 @@ func TestGetAll(t *testing.T) {
 			AddRow(2, "User 2").
 			AddRow(3, "User 3")
 
-		mock.ExpectQuery(`SELECT \* FROM users OFFSET \$1 LIMIT \$2`).WithArgs(1, 2).WillReturnRows(rows)
+		mock.ExpectQuery(`SELECT \* FROM profile OFFSET \$1 LIMIT \$2`).WithArgs(1, 2).WillReturnRows(rows)
 
 		users, err := repo.GetAll(1, 2)
 		assert.NoError(t, err)
@@ -63,7 +63,7 @@ func TestGetAll(t *testing.T) {
 	})
 
 	t.Run("Error", func(t *testing.T) {
-		mock.ExpectQuery("SELECT * FROM users").WillReturnError(sql.ErrNoRows)
+		mock.ExpectQuery("SELECT * FROM profile").WillReturnError(sql.ErrNoRows)
 
 		users, err := repo.GetAll(-1, -1)
 		assert.Error(t, err)
@@ -95,7 +95,7 @@ func TestGetByID(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"id", "firstname", "surname"}).
 			AddRow(expectedUser.ID, expectedUser.FirstName, expectedUser.Surname)
 
-		mock.ExpectQuery(`SELECT \* FROM users WHERE id = \$1`).WithArgs(expectedUser.ID).WillReturnRows(rows)
+		mock.ExpectQuery(`SELECT \* FROM profile WHERE id = \$1`).WithArgs(expectedUser.ID).WillReturnRows(rows)
 
 		user, err := repo.GetByID(expectedUser.ID)
 		assert.NoError(t, err)
@@ -103,7 +103,7 @@ func TestGetByID(t *testing.T) {
 	})
 
 	t.Run("UserNotFound", func(t *testing.T) {
-		mock.ExpectQuery(`SELECT \* FROM users WHERE id = \$1`).WithArgs(1).WillReturnError(sql.ErrNoRows)
+		mock.ExpectQuery(`SELECT \* FROM profile WHERE id = \$1`).WithArgs(1).WillReturnError(sql.ErrNoRows)
 
 		user, err := repo.GetByID(1)
 		assert.Nil(t, user)
@@ -157,7 +157,7 @@ func TestAddUser(t *testing.T) {
 			Description: "Тестовый пользователь",
 		}
 
-		mock.ExpectExec(`INSERT INTO users`).
+		mock.ExpectExec(`INSERT INTO profile`).
 			WithArgs(user.Login, user.Password, user.FirstName, user.Surname, user.Patronymic, user.Gender, user.Birthday, sqlmock.AnyArg(), user.AvatarID, user.PhoneNumber, user.Description).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -180,7 +180,7 @@ func TestAddUser(t *testing.T) {
 			Description: "Test user",
 		}
 
-		mock.ExpectQuery(`INSERT INTO users`).
+		mock.ExpectQuery(`INSERT INTO profile`).
 			WithArgs(user.Login, user.Password, user.FirstName, user.Surname, user.Patronymic, user.Gender, user.Birthday, sqlmock.AnyArg(), user.AvatarID, user.PhoneNumber, user.Description).
 			WillReturnError(fmt.Errorf("failed to insert user"))
 
@@ -217,7 +217,7 @@ func TestUpdateUser(t *testing.T) {
 			Description: "Updated user",
 		}
 
-		mock.ExpectExec(`UPDATE users`).
+		mock.ExpectExec(`UPDATE profile`).
 			WithArgs(newUser.FirstName, newUser.Surname, newUser.Patronymic, newUser.Gender, newUser.Birthday, newUser.AvatarID, newUser.PhoneNumber, newUser.Description, newUser.ID).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
@@ -240,7 +240,7 @@ func TestUpdateUser(t *testing.T) {
 			Description: "Updated user",
 		}
 
-		mock.ExpectExec(`UPDATE users`).
+		mock.ExpectExec(`UPDATE profile`).
 			WithArgs(newUser.FirstName, newUser.Surname, newUser.Patronymic, newUser.Gender, newUser.Birthday, newUser.AvatarID, newUser.PhoneNumber, newUser.Description, newUser.ID).
 			WillReturnResult(sqlmock.NewResult(0, 0))
 
@@ -263,7 +263,7 @@ func TestUpdateUser(t *testing.T) {
 			Description: "Updated user",
 		}
 
-		mock.ExpectExec(`UPDATE users`).
+		mock.ExpectExec(`UPDATE profile`).
 			WithArgs(newUser.FirstName, newUser.Surname, newUser.Patronymic, newUser.Gender, newUser.Birthday, newUser.AvatarID, newUser.PhoneNumber, newUser.Description, newUser.ID).
 			WillReturnError(fmt.Errorf("database error"))
 
@@ -291,7 +291,7 @@ func TestDeleteUser(t *testing.T) {
 	t.Run("UserDeletedSuccessfully", func(t *testing.T) {
 		userID := uint32(1)
 
-		mock.ExpectExec(`DELETE FROM users`).WithArgs(userID).WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectExec(`DELETE FROM profile`).WithArgs(userID).WillReturnResult(sqlmock.NewResult(0, 1))
 
 		deleted, err := repo.Delete(userID)
 
@@ -302,7 +302,7 @@ func TestDeleteUser(t *testing.T) {
 	t.Run("UserDeleteFailedNoRowsAffected", func(t *testing.T) {
 		userID := uint32(2)
 
-		mock.ExpectExec(`DELETE FROM users`).WithArgs(userID).WillReturnResult(sqlmock.NewResult(0, 0))
+		mock.ExpectExec(`DELETE FROM profile`).WithArgs(userID).WillReturnResult(sqlmock.NewResult(0, 0))
 
 		deleted, err := repo.Delete(userID)
 
@@ -313,7 +313,7 @@ func TestDeleteUser(t *testing.T) {
 	t.Run("UserDeleteFailedDBError", func(t *testing.T) {
 		userID := uint32(3)
 
-		mock.ExpectExec(`DELETE FROM users`).WithArgs(userID).WillReturnError(fmt.Errorf("database error"))
+		mock.ExpectExec(`DELETE FROM profile`).WithArgs(userID).WillReturnError(fmt.Errorf("database error"))
 
 		deleted, err := repo.Delete(userID)
 

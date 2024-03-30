@@ -114,7 +114,6 @@ func TestPanicMiddleware(t *testing.T) {
 	fakeHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
-
 	t.Run("WithoutCookie", func(t *testing.T) {
 		reqWithoutCookie := httptest.NewRequest("GET", "/api/v1/auth/verify-auth", nil)
 		recWithoutCookie := httptest.NewRecorder()

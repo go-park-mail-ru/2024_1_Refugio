@@ -11,6 +11,7 @@ import (
 	"mail/pkg/delivery/middleware"
 	"mail/pkg/delivery/session"
 	"net/http"
+	"time"
 
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 	emailHand "mail/pkg/delivery/email"
@@ -59,6 +60,8 @@ func main() {
 	sessionsManager := session.NewSessionsManager(sessionUsaCase)
 	session.InitializationGlobalSeaaionManager(sessionsManager)
 
+	StartSessionCleaner(sessionUsaCase, 24*time.Hour)
+
 	emailRepository := emailRepo.NewEmailRepository(dbx)
 	emailUseCase := emailUc.NewEmailUseCase(emailRepository)
 	emailHandler := &emailHand.EmailHandler{
@@ -82,7 +85,10 @@ func main() {
 	router.PathPrefix("/api/v1/auth").Handler(auth)
 
 	auth.HandleFunc("/verify-auth", userHandler.VerifyAuth).Methods("GET", "OPTIONS")
-	auth.HandleFunc("/get-user", userHandler.GetUserBySession).Methods("GET", "OPTIONS") //??
+	auth.HandleFunc("/user/get", userHandler.GetUserBySession).Methods("GET", "OPTIONS")
+	auth.HandleFunc("/user/update", userHandler.UpdateUserData).Methods("PUT", "OPTIONS")
+	auth.HandleFunc("/user/delete/{id}", userHandler.DeleteUserData).Methods("DELETE", "OPTIONS")
+	auth.HandleFunc("/user/avatar/upload", userHandler.UploadUserAvatar).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/emails", emailHandler.List).Methods("GET", "OPTIONS")
 	auth.HandleFunc("/email/{id}", emailHandler.GetByID).Methods("GET", "OPTIONS")
 	auth.HandleFunc("/email/add", emailHandler.Add).Methods("POST", "OPTIONS")
@@ -96,6 +102,10 @@ func main() {
 	logRouter.HandleFunc("/login", userHandler.Login).Methods("POST", "OPTIONS")
 	logRouter.HandleFunc("/signup", userHandler.Signup).Methods("POST", "OPTIONS")
 	logRouter.HandleFunc("/logout", userHandler.Logout).Methods("POST", "OPTIONS")
+
+	staticDir := "/media/"
+	staticFileServer := http.StripPrefix(staticDir, http.FileServer(http.Dir("./avatars")))
+	router.PathPrefix(staticDir).Handler(staticFileServer)
 
 	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
@@ -116,4 +126,19 @@ func main() {
 		fmt.Println("Error when starting the server:", err)
 	}
 	// 89.208.223.140
+}
+
+func StartSessionCleaner(sessionCleaner *sessionUc.SessionUseCase, interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				err := sessionCleaner.CleanupExpiredSessions()
+				if err != nil {
+					fmt.Printf("Error cleaning expired sessions: %v\n", err)
+				}
+			}
+		}
+	}()
 }

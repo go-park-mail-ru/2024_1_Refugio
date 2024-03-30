@@ -15,8 +15,6 @@ type LogrusLogger struct {
 	LogrusLogger *logrus.Logger
 }
 
-//type Logger *logrus.Logger
-
 type Formatter struct {
 	LogFormat string
 }
@@ -73,10 +71,10 @@ func (log *LogrusLogger) AccessLogMiddleware(next http.Handler) http.Handler {
 			"mode":      "[access_log]",
 		})
 		/*en := logrus.WithFields(logrus.Fields{
-			"method":    r.Method,
-			"work_time": time.Since(start),
-			"URL":       r.URL.Path,
-			"mode":      "[access_log]",
+		  "method":    r.Method,
+		  "work_time": time.Since(start),
+		  "URL":       r.URL.Path,
+		  "mode":      "[access_log]",
 		})*/
 		en.Info("AccessLogMiddleware")
 	})
