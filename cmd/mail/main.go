@@ -73,8 +73,7 @@ func main() {
 		Sessions:    sessionsManager,
 	}
 
-	port := 8080
-	Logrus := middleware.InitializationAcceslog(port)
+	Logrus := middleware.InitializationAcceslog()
 
 	router := mux.NewRouter()
 
@@ -108,6 +107,7 @@ func main() {
 
 	corsHandler := c.Handler(router)
 
+	port := 8080
 	fmt.Printf("The server is running on http://localhost:%d\n", port)
 	fmt.Printf("Swagger is running on http://localhost:%d/swagger/index.html\n", port)
 
