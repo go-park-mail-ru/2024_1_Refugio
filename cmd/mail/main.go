@@ -4,18 +4,23 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/jackc/pgx/stdlib"
+	"github.com/jmoiron/sqlx"
 	"github.com/rs/cors"
+	migrate "github.com/rubenv/sql-migrate"
 	"log"
 	"mail/pkg/delivery/middleware"
 	"mail/pkg/delivery/session"
 	"net/http"
+	"time"
 
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 	emailHand "mail/pkg/delivery/email"
 	userHand "mail/pkg/delivery/user"
-	emailRepo "mail/pkg/repository/maps/email"
-	userRepo "mail/pkg/repository/maps/user"
+	emailRepo "mail/pkg/repository/postgres/email"
+	sessionRepo "mail/pkg/repository/postgres/session"
+	userRepo "mail/pkg/repository/postgres/user"
 	emailUc "mail/pkg/usecase/email"
+	sessionUc "mail/pkg/usecase/session"
 	userUc "mail/pkg/usecase/user"
 
 	"github.com/gorilla/mux"
@@ -34,33 +39,44 @@ func main() {
 	if errDb != nil {
 		log.Fatalln("Can't parse config", errDb)
 	}
+	defer db.Close()
 	errDb = db.Ping()
 	if errDb != nil {
 		log.Fatalln(errDb)
 	}
 	db.SetMaxOpenConns(10)
 
-	sessionsManager := session.NewSessionsManager()
+	migrations := &migrate.FileMigrationSource{
+		Dir: "migrations",
+	}
+	_, errMigration := migrate.Exec(db, "postgres", migrations, migrate.Up)
+	if errMigration != nil {
+		log.Fatalf("Failed to apply migrations: %v", errMigration)
+	}
+	dbx := sqlx.NewDb(db, "pgx")
+
+	sessionRepository := sessionRepo.NewSessionRepository(dbx)
+	sessionUsaCase := sessionUc.NewSessionUseCase(sessionRepository)
+	sessionsManager := session.NewSessionsManager(sessionUsaCase)
 	session.InitializationGlobalSeaaionManager(sessionsManager)
 
-	emailRepository := emailRepo.NewEmailMemoryRepository()
+	StartSessionCleaner(sessionUsaCase, 24*time.Hour)
+
+	emailRepository := emailRepo.NewEmailRepository(dbx)
 	emailUseCase := emailUc.NewEmailUseCase(emailRepository)
-
-	userRepository := userRepo.NewInMemoryUserRepository()
-	userUseCase := userUc.NewUserUseCase(userRepository)
-
 	emailHandler := &emailHand.EmailHandler{
 		EmailUseCase: emailUseCase,
 		Sessions:     sessionsManager,
 	}
 
+	userRepository := userRepo.NewUserRepository(dbx)
+	userUseCase := userUc.NewUserUseCase(userRepository)
 	userHandler := &userHand.UserHandler{
 		UserUseCase: userUseCase,
 		Sessions:    sessionsManager,
 	}
 
-	port := 8080
-	Logrus := middleware.InitializationAcceslog(port)
+	Logrus := middleware.InitializationAcceslog()
 
 	router := mux.NewRouter()
 
@@ -69,7 +85,10 @@ func main() {
 	router.PathPrefix("/api/v1/auth").Handler(auth)
 
 	auth.HandleFunc("/verify-auth", userHandler.VerifyAuth).Methods("GET", "OPTIONS")
-	auth.HandleFunc("/get-user", userHandler.GetUserBySession).Methods("GET", "OPTIONS") //??
+	auth.HandleFunc("/user/get", userHandler.GetUserBySession).Methods("GET", "OPTIONS")
+	auth.HandleFunc("/user/update", userHandler.UpdateUserData).Methods("PUT", "OPTIONS")
+	auth.HandleFunc("/user/delete/{id}", userHandler.DeleteUserData).Methods("DELETE", "OPTIONS")
+	auth.HandleFunc("/user/avatar/upload", userHandler.UploadUserAvatar).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/emails", emailHandler.List).Methods("GET", "OPTIONS")
 	auth.HandleFunc("/email/{id}", emailHandler.GetByID).Methods("GET", "OPTIONS")
 	auth.HandleFunc("/email/add", emailHandler.Add).Methods("POST", "OPTIONS")
@@ -77,12 +96,16 @@ func main() {
 	auth.HandleFunc("/email/delete/{id}", emailHandler.Delete).Methods("DELETE", "OPTIONS")
 
 	logRouter := mux.NewRouter().PathPrefix("/api/v1").Subrouter()
-	logRouter.Use(Logrus.AccessLogMiddleware, middleware.PanicMiddleware, middleware.AuthMiddleware)
+	logRouter.Use(Logrus.AccessLogMiddleware, middleware.PanicMiddleware)
 	router.PathPrefix("/api/v1").Handler(logRouter)
 
 	logRouter.HandleFunc("/login", userHandler.Login).Methods("POST", "OPTIONS")
 	logRouter.HandleFunc("/signup", userHandler.Signup).Methods("POST", "OPTIONS")
 	logRouter.HandleFunc("/logout", userHandler.Logout).Methods("POST", "OPTIONS")
+
+	staticDir := "/media/"
+	staticFileServer := http.StripPrefix(staticDir, http.FileServer(http.Dir("./avatars")))
+	router.PathPrefix(staticDir).Handler(staticFileServer)
 
 	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
@@ -94,6 +117,7 @@ func main() {
 
 	corsHandler := c.Handler(router)
 
+	port := 8080
 	fmt.Printf("The server is running on http://localhost:%d\n", port)
 	fmt.Printf("Swagger is running on http://localhost:%d/swagger/index.html\n", port)
 
@@ -104,18 +128,17 @@ func main() {
 	// 89.208.223.140
 }
 
-/*func runMigrations(db *sql.DB) error {
-	// Создание мигратора
-	m, err := migrate.New("file://path/to/migrations", "user=postgres dbname=Mail password=postgres host=localhost port=5432 sslmode=disable")
-	if err != nil {
-		return err
-	}
-
-	// Применение миграций
-	err = m.Up()
-	if err != nil && err != migrate.ErrNoChange {
-		return err
-	}
-
-	return nil
-}*/
+func StartSessionCleaner(sessionCleaner *sessionUc.SessionUseCase, interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				err := sessionCleaner.CleanupExpiredSessions()
+				if err != nil {
+					fmt.Printf("Error cleaning expired sessions: %v\n", err)
+				}
+			}
+		}
+	}()
+}

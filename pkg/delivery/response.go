@@ -2,7 +2,9 @@ package delivery
 
 import (
 	"encoding/json"
+	"mail/pkg/domain/models"
 	"net/http"
+	"time"
 
 	api "mail/pkg/delivery/models"
 )
@@ -41,4 +43,33 @@ func HandleError(w http.ResponseWriter, status int, message string) {
 }
 
 type Email = api.Email
-type User = api.User
+
+// UserSwag represents information about a user.
+type UserSwag struct {
+	ID          uint32            `json:"id,omitempty"`          // ID uniquely identifies the user.
+	FirstName   string            `json:"firstname,omitempty"`   // FirstName stores the first name of the user.
+	Surname     string            `json:"surname,omitempty"`     // Surname stores the last name of the user.
+	Patronymic  string            `json:"middlename,omitempty"`  // Patronymic stores the middle name of the user, if available.
+	Gender      models.UserGender `json:"gender,omitempty"`      // Gender stores the gender of the user.
+	Birthday    time.Time         `json:"birthday,omitempty"`    // Birthday stores the birthdate of the user.
+	Login       string            `json:"login"`                 // Login is the username used for authentication.
+	Password    string            `json:"password"`              // Password is the hashed password of the user.
+	AvatarID    string            `json:"avatar,omitempty"`      // AvatarID stores the identifier of the user's avatar image.
+	PhoneNumber string            `json:"phonenumber,omitempty"` // PhoneNumber stores the phone number of the user.
+	Description string            `json:"description,omitempty"` // Description stores additional information about the user.
+}
+
+type EmailSwag struct {
+	ID             uint64    `json:"id,omitempty"`             // ID is the unique identifier of the email in the database.
+	Topic          string    `json:"topic"`                    // Topic is the subject of the email.
+	Text           string    `json:"text"`                     // Text is the body of the email.
+	PhotoID        string    `json:"photoId,omitempty"`        // PhotoID is the link to the photo attached to the email, if any.
+	ReadStatus     bool      `json:"readStatus"`               // ReadStatus indicates whether the email has been read.
+	Flag           bool      `json:"mark,omitempty"`           // Mark is a flag, such as marking the email as a favorite.
+	Deleted        bool      `json:"deleted"`                  // Deleted indicates whether the email has been deleted.
+	DateOfDispatch time.Time `json:"dateOfDispatch,omitempty"` // DateOfDispatch is the date when the email was sent.
+	ReplyToEmailID uint64    `json:"replyToEmailId,omitempty"` // ReplyToEmailID is the ID of the email to which a reply can be sent.
+	DraftStatus    bool      `json:"draftStatus"`              // DraftStatus indicates whether the email is a draft.
+	SenderID       uint64    // SenderID is the ID of the sender user
+	RecipientID    uint64    // RecipientID is the ID of the recipient user
+}

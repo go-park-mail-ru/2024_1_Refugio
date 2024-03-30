@@ -1,7 +1,7 @@
 package email
 
 import (
-	emailCore "mail/pkg/domain/models"
+	domain "mail/pkg/domain/models"
 	"mail/pkg/domain/repository"
 )
 
@@ -18,22 +18,22 @@ func NewEmailUseCase(repo repository.EmailRepository) *EmailUseCase {
 }
 
 // GetAllEmails returns all emails.
-func (uc *EmailUseCase) GetAllEmails() ([]*emailCore.Email, error) {
-	return uc.repo.GetAll()
+func (uc *EmailUseCase) GetAllEmails(offset, limit int) ([]*domain.Email, error) {
+	return uc.repo.GetAll(offset, limit)
 }
 
 // GetEmailByID returns the email by its ID.
-func (uc *EmailUseCase) GetEmailByID(id uint64) (*emailCore.Email, error) {
+func (uc *EmailUseCase) GetEmailByID(id uint64) (*domain.Email, error) {
 	return uc.repo.GetByID(id)
 }
 
 // CreateEmail creates a new email.
-func (uc *EmailUseCase) CreateEmail(newEmail *emailCore.Email) (*emailCore.Email, error) {
+func (uc *EmailUseCase) CreateEmail(newEmail *domain.Email) (*domain.Email, error) {
 	return uc.repo.Add(newEmail)
 }
 
 // UpdateEmail updates the information of an email.
-func (uc *EmailUseCase) UpdateEmail(updatedEmail *emailCore.Email) (bool, error) {
+func (uc *EmailUseCase) UpdateEmail(updatedEmail *domain.Email) (bool, error) {
 	return uc.repo.Update(updatedEmail)
 }
 

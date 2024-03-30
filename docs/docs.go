@@ -32,33 +32,40 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/email.Email"
+                            "$ref": "#/definitions/delivery.EmailSwag"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-CSRF-Token",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "ID of the added email message",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "400": {
                         "description": "Bad JSON in request",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "401": {
                         "description": "Not Authorized",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "500": {
                         "description": "Failed to add email message",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     }
                 }
@@ -78,31 +85,38 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-CSRF-Token",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "Deletion success status",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "400": {
                         "description": "Bad id",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "401": {
                         "description": "Not Authorized",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "500": {
                         "description": "Failed to delete email message",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     }
                 }
@@ -132,33 +146,40 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/email.Email"
+                            "$ref": "#/definitions/delivery.EmailSwag"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-CSRF-Token",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "Update success status",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "400": {
                         "description": "Bad id or Bad JSON",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "401": {
                         "description": "Not Authorized",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "500": {
                         "description": "Failed to update email message",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     }
                 }
@@ -178,31 +199,38 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-CSRF-Token",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "Email message data",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "400": {
                         "description": "Bad id in request",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "401": {
                         "description": "Not Authorized",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "404": {
                         "description": "Email not found",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     }
                 }
@@ -215,35 +243,157 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "summary": "Display the list of email messages",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-CSRF-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of all email messages",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "401": {
                         "description": "Not Authorized",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "404": {
                         "description": "DB error",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "500": {
                         "description": "JSON encoding error",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     }
                 }
             }
         },
-        "/api/v1/auth/get-user": {
+        "/api/v1/auth/user/avatar/upload": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Handles requests to upload user avatar.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Upload user avatar",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-CSRF-Token",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Avatar file to upload",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "File uploaded and saved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/delivery.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Error processing file or failed to get file",
+                        "schema": {
+                            "$ref": "#/definitions/delivery.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/delivery.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/user/delete/{id}": {
+            "delete": {
+                "description": "Handles requests to delete user data.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Delete user data",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-CSRF-Token",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "User ID to delete",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User data deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/delivery.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID",
+                        "schema": {
+                            "$ref": "#/definitions/delivery.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Not authorized",
+                        "schema": {
+                            "$ref": "#/definitions/delivery.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/delivery.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/user/get": {
             "get": {
                 "description": "Retrieve the user associated with the current session",
                 "produces": [
@@ -253,23 +403,126 @@ const docTemplate = `{
                     "users"
                 ],
                 "summary": "Get user by session",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-CSRF-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "User details",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "401": {
                         "description": "Not Authorized",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/delivery.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/user/update": {
+            "put": {
+                "description": "Handles requests to update user data.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Update user data",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-CSRF-Token",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Updated user data",
+                        "name": "updatedUser",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/delivery.UserSwag"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User data updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/delivery.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/delivery.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Not authorized",
+                        "schema": {
+                            "$ref": "#/definitions/delivery.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/delivery.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/verify-auth": {
+            "get": {
+                "description": "Verify user authentication using sessions",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Verify user authentication",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-CSRF-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/delivery.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized",
+                        "schema": {
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     }
                 }
@@ -295,7 +548,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user.User"
+                            "$ref": "#/definitions/delivery.UserSwag"
                         }
                     }
                 ],
@@ -303,25 +556,25 @@ const docTemplate = `{
                     "200": {
                         "description": "Login successful",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "400": {
                         "description": "Invalid request body",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/delivery.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Invalid credentials",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/delivery.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Failed to create session",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/delivery.ErrorResponse"
                         }
                     }
                 }
@@ -341,7 +594,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Logout successful",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     }
                 }
@@ -367,7 +620,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user.User"
+                            "$ref": "#/definitions/delivery.UserSwag"
                         }
                     }
                 ],
@@ -375,45 +628,19 @@ const docTemplate = `{
                     "200": {
                         "description": "Signup successful",
                         "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "400": {
                         "description": "Invalid request body",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/delivery.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Failed to add user",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/auth/verify-auth": {
-            "get": {
-                "description": "Verify user authentication using sessions",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Verify user authentication",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.Response"
-                        }
-                    },
-                    "401": {
-                        "description": "Not Authorized",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.Response"
+                            "$ref": "#/definitions/delivery.ErrorResponse"
                         }
                     }
                 }
@@ -421,52 +648,60 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "email.Email": {
+        "delivery.EmailSwag": {
             "type": "object",
             "properties": {
                 "dateOfDispatch": {
-                    "description": "Date when the email was sent.",
+                    "description": "DateOfDispatch is the date when the email was sent.",
                     "type": "string"
                 },
                 "deleted": {
-                    "description": "Status indicating whether the email has been deleted.",
+                    "description": "Deleted indicates whether the email has been deleted.",
                     "type": "boolean"
                 },
                 "draftStatus": {
-                    "description": "Status indicating that the email is a draft.",
+                    "description": "DraftStatus indicates whether the email is a draft.",
                     "type": "boolean"
                 },
                 "id": {
-                    "description": "Unique identifier of the email in the database.",
+                    "description": "ID is the unique identifier of the email in the database.",
                     "type": "integer"
                 },
                 "mark": {
-                    "description": "A flag, for example, marking the email as a favorite.",
-                    "type": "string"
+                    "description": "Mark is a flag, such as marking the email as a favorite.",
+                    "type": "boolean"
                 },
                 "photoId": {
-                    "description": "Link to the photo attached to the email, if any.",
+                    "description": "PhotoID is the link to the photo attached to the email, if any.",
                     "type": "string"
                 },
                 "readStatus": {
-                    "description": "Status indicating whether the email has been read.",
+                    "description": "ReadStatus indicates whether the email has been read.",
                     "type": "boolean"
                 },
+                "recipientID": {
+                    "description": "RecipientID is the ID of the recipient user",
+                    "type": "integer"
+                },
                 "replyToEmailId": {
-                    "description": "ID of the email to which a reply can be sent.",
+                    "description": "ReplyToEmailID is the ID of the email to which a reply can be sent.",
+                    "type": "integer"
+                },
+                "senderID": {
+                    "description": "SenderID is the ID of the sender user",
                     "type": "integer"
                 },
                 "text": {
-                    "description": "Text body of the email.",
+                    "description": "Text is the body of the email.",
                     "type": "string"
                 },
                 "topic": {
-                    "description": "Subject of the email.",
+                    "description": "Topic is the subject of the email.",
                     "type": "string"
                 }
             }
         },
-        "handlers.ErrorResponse": {
+        "delivery.ErrorResponse": {
             "type": "object",
             "properties": {
                 "error": {
@@ -474,7 +709,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.Response": {
+        "delivery.Response": {
             "type": "object",
             "properties": {
                 "body": {},
@@ -483,34 +718,71 @@ const docTemplate = `{
                 }
             }
         },
-        "user.User": {
+        "delivery.UserSwag": {
             "type": "object",
             "properties": {
                 "avatar": {
-                    "description": "User's avatar.",
+                    "description": "AvatarID stores the identifier of the user's avatar image.",
                     "type": "string"
                 },
+                "birthday": {
+                    "description": "Birthday stores the birthdate of the user.",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description stores additional information about the user.",
+                    "type": "string"
+                },
+                "firstname": {
+                    "description": "FirstName stores the first name of the user.",
+                    "type": "string"
+                },
+                "gender": {
+                    "description": "Gender stores the gender of the user.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.UserGender"
+                        }
+                    ]
+                },
                 "id": {
-                    "description": "Unique identifier of the user.",
+                    "description": "ID uniquely identifies the user.",
                     "type": "integer"
                 },
                 "login": {
-                    "description": "User's login.",
+                    "description": "Login is the username used for authentication.",
                     "type": "string"
                 },
-                "name": {
-                    "description": "User's first name.",
+                "middlename": {
+                    "description": "Patronymic stores the middle name of the user, if available.",
                     "type": "string"
                 },
                 "password": {
-                    "description": "User's password.",
+                    "description": "Password is the hashed password of the user.",
+                    "type": "string"
+                },
+                "phonenumber": {
+                    "description": "PhoneNumber stores the phone number of the user.",
                     "type": "string"
                 },
                 "surname": {
-                    "description": "User's last name.",
+                    "description": "Surname stores the last name of the user.",
                     "type": "string"
                 }
             }
+        },
+        "models.UserGender": {
+            "type": "string",
+            "enum": [
+                "Male",
+                "Female",
+                "Other"
+            ],
+            "x-enum-varnames": [
+                "Male",
+                "Female",
+                "Other"
+            ]
         }
     }
 }`
