@@ -23,8 +23,8 @@ func EmailConvertDbInCore(emailModelDb emailDb.Email) *domain.Email {
 		DateOfDispatch: emailModelDb.DateOfDispatch,
 		ReplyToEmailID: ReplyToEmailID,
 		DraftStatus:    emailModelDb.DraftStatus,
-		SenderID:       emailModelDb.SenderID,
-		RecipientID:    emailModelDb.RecipientID,
+		SenderEmail:    emailModelDb.SenderEmail,
+		RecipientEmail: emailModelDb.RecipientEmail,
 	}
 }
 
@@ -40,8 +40,8 @@ func EmailConvertCoreInDb(emailModelCore domain.Email) *emailDb.Email {
 		DateOfDispatch: emailModelCore.DateOfDispatch,
 		ReplyToEmailID: nil,
 		DraftStatus:    emailModelCore.DraftStatus,
-		SenderID:       emailModelCore.SenderID,
-		RecipientID:    emailModelCore.RecipientID,
+		SenderEmail:    emailModelCore.SenderEmail,
+		RecipientEmail: emailModelCore.RecipientEmail,
 	}
 	if emailModelCore.ReplyToEmailID != 0 {
 		emailDB.ReplyToEmailID = emailModelCore.ReplyToEmailID //interface{emailModelCore.ReplyToEmailID}

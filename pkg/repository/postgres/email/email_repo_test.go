@@ -38,7 +38,7 @@ func TestGetAll(t *testing.T) {
 			AddRow(2, "Topic 2", "Text 2").
 			AddRow(3, "Topic 3", "Text 3")
 
-		mock.ExpectQuery(`SELECT \* FROM emails`).WillReturnRows(rows)
+		mock.ExpectQuery(`SELECT \* FROM email`).WillReturnRows(rows)
 
 		emails, err := repo.GetAll(-1, -1)
 		assert.NoError(t, err)
@@ -55,7 +55,7 @@ func TestGetAll(t *testing.T) {
 			AddRow(2, "Topic 2", "Text 2").
 			AddRow(3, "Topic 3", "Text 3")
 
-		mock.ExpectQuery(`SELECT \* FROM emails`).WillReturnRows(rows)
+		mock.ExpectQuery(`SELECT \* FROM email`).WillReturnRows(rows)
 
 		emails, err := repo.GetAll(-1, -1)
 		assert.NoError(t, err)
@@ -63,7 +63,7 @@ func TestGetAll(t *testing.T) {
 	})
 
 	t.Run("Error", func(t *testing.T) {
-		mock.ExpectQuery(`SELECT \* FROM emails`).WillReturnError(sql.ErrNoRows)
+		mock.ExpectQuery(`SELECT \* FROM email`).WillReturnError(sql.ErrNoRows)
 
 		emails, err := repo.GetAll(-1, -1)
 		assert.Error(t, err)
@@ -88,7 +88,7 @@ func TestGetByID(t *testing.T) {
 	t.Run("EmailExists", func(t *testing.T) {
 		expectedEmail := &domain.Email{ID: 1, Topic: "Topic 1", Text: "Text 1"}
 		rows := sqlmock.NewRows([]string{"id", "topic", "text"}).AddRow(expectedEmail.ID, expectedEmail.Topic, expectedEmail.Text)
-		mock.ExpectQuery(`SELECT \* FROM emails WHERE id = \$1`).WithArgs(1).WillReturnRows(rows)
+		mock.ExpectQuery(`SELECT \* FROM email WHERE id = \$1`).WithArgs(1).WillReturnRows(rows)
 
 		email, err := repo.GetByID(expectedEmail.ID)
 		assert.NoError(t, err)
@@ -96,7 +96,7 @@ func TestGetByID(t *testing.T) {
 	})
 
 	t.Run("EmailNotFound", func(t *testing.T) {
-		mock.ExpectQuery(`SELECT \* FROM emails WHERE id = \$1`).WithArgs(1).WillReturnError(sql.ErrNoRows)
+		mock.ExpectQuery(`SELECT \* FROM email WHERE id = \$1`).WithArgs(1).WillReturnError(sql.ErrNoRows)
 
 		email, err := repo.GetByID(1)
 		assert.Nil(t, email)
@@ -131,12 +131,12 @@ func TestAddEmail(t *testing.T) {
 			Deleted:        false,
 			DateOfDispatch: time.Now(),
 			DraftStatus:    false,
-			SenderID:       1,
-			RecipientID:    2,
+			SenderEmail:    "ivan@mailhub.su",
+			RecipientEmail: "sergey@mailhub.su",
 		}
-		//mock.ExpectQuery(`SELECT MAX(id) FROM emails`)
-		mock.ExpectExec(`INSERT INTO emails`).
-			WithArgs(email.Topic, email.Text, sqlmock.AnyArg(), email.PhotoID, email.SenderID, email.RecipientID, email.ReadStatus, email.Deleted, email.DraftStatus, email.Flag).
+		//mock.ExpectQuery(`SELECT MAX(id) FROM email`)
+		mock.ExpectExec(`INSERT INTO email`).
+			WithArgs(email.Topic, email.Text, sqlmock.AnyArg(), email.PhotoID, email.SenderEmail, email.RecipientEmail, email.ReadStatus, email.Deleted, email.DraftStatus, email.Flag).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		emailRes, err := repo.Add(email)
@@ -154,12 +154,12 @@ func TestAddEmail(t *testing.T) {
 			Deleted:        false,
 			DateOfDispatch: time.Now(),
 			DraftStatus:    false,
-			SenderID:       1,
-			RecipientID:    2,
+			SenderEmail:    "ivan@mailhub.su",
+			RecipientEmail: "sergey@mailhub.su",
 		}
 
-		mock.ExpectQuery(`INSERT INTO emails`).
-			WithArgs(email.Topic, email.Text, sqlmock.AnyArg(), email.PhotoID, email.SenderID, email.RecipientID, email.ReadStatus, email.Deleted, email.DraftStatus, email.Flag).
+		mock.ExpectQuery(`INSERT INTO email`).
+			WithArgs(email.Topic, email.Text, sqlmock.AnyArg(), email.PhotoID, email.SenderEmail, email.RecipientEmail, email.ReadStatus, email.Deleted, email.DraftStatus, email.Flag).
 			WillReturnError(fmt.Errorf("failed to insert email"))
 
 		emailRes, err := repo.Add(email)
@@ -193,11 +193,11 @@ func TestUpdateEmail(t *testing.T) {
 			Deleted:        false,
 			DateOfDispatch: time.Now(),
 			DraftStatus:    false,
-			SenderID:       1,
-			RecipientID:    2,
+			SenderEmail:    "ivan@mailhub.su",
+			RecipientEmail: "sergey@mailhub.su",
 		}
 
-		mock.ExpectExec(`UPDATE emails`).
+		mock.ExpectExec(`UPDATE email`).
 			WithArgs(newEmail.Topic, newEmail.Text, newEmail.PhotoID, newEmail.ReadStatus, newEmail.Deleted, newEmail.DraftStatus, sqlmock.AnyArg(), newEmail.Flag, newEmail.ID).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
@@ -218,11 +218,11 @@ func TestUpdateEmail(t *testing.T) {
 			Deleted:        false,
 			DateOfDispatch: time.Now(),
 			DraftStatus:    false,
-			SenderID:       1,
-			RecipientID:    2,
+			SenderEmail:    "ivan@mailhub.su",
+			RecipientEmail: "sergey@mailhub.su",
 		}
 
-		mock.ExpectExec(`UPDATE emails`).
+		mock.ExpectExec(`UPDATE email`).
 			WithArgs(newEmail.Topic, newEmail.Text, newEmail.PhotoID, newEmail.ReadStatus, newEmail.Deleted, newEmail.DraftStatus, sqlmock.AnyArg(), newEmail.Flag, newEmail.ID).
 			WillReturnResult(sqlmock.NewResult(0, 0))
 
@@ -243,11 +243,11 @@ func TestUpdateEmail(t *testing.T) {
 			Deleted:        false,
 			DateOfDispatch: time.Now(),
 			DraftStatus:    false,
-			SenderID:       1,
-			RecipientID:    2,
+			SenderEmail:    "ivan@mailhub.su",
+			RecipientEmail: "sergey@mailhub.su",
 		}
 
-		mock.ExpectExec(`UPDATE emails`).
+		mock.ExpectExec(`UPDATE email`).
 			WithArgs(newEmail.Topic, newEmail.Text, newEmail.PhotoID, newEmail.ReadStatus, newEmail.Deleted, newEmail.DraftStatus, sqlmock.AnyArg(), newEmail.Flag, newEmail.ID).
 			WillReturnError(fmt.Errorf("database error"))
 
@@ -275,7 +275,7 @@ func TestDeleteEmail(t *testing.T) {
 	t.Run("EmailDeletedSuccessfully", func(t *testing.T) {
 		emailID := uint64(1)
 
-		mock.ExpectExec(`DELETE FROM emails`).WithArgs(emailID).WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectExec(`DELETE FROM email`).WithArgs(emailID).WillReturnResult(sqlmock.NewResult(0, 1))
 
 		deleted, err := repo.Delete(emailID)
 
@@ -297,7 +297,7 @@ func TestDeleteEmail(t *testing.T) {
 	t.Run("EmailDeleteFailedDBError", func(t *testing.T) {
 		emailID := uint64(3)
 
-		mock.ExpectExec(`DELETE FROM emails`).WithArgs(emailID).WillReturnError(fmt.Errorf("database error"))
+		mock.ExpectExec(`DELETE FROM email`).WithArgs(emailID).WillReturnError(fmt.Errorf("database error"))
 
 		deleted, err := repo.Delete(emailID)
 

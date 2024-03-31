@@ -24,6 +24,9 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "emails"
+                ],
                 "summary": "Add a new email message",
                 "parameters": [
                     {
@@ -76,6 +79,9 @@ const docTemplate = `{
                 "description": "Delete an email message based on its identifier",
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "emails"
                 ],
                 "summary": "Delete an email message",
                 "parameters": [
@@ -130,6 +136,9 @@ const docTemplate = `{
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "emails"
                 ],
                 "summary": "Update an email message",
                 "parameters": [
@@ -191,6 +200,9 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "emails"
+                ],
                 "summary": "Get an email message by ID",
                 "parameters": [
                     {
@@ -241,6 +253,9 @@ const docTemplate = `{
                 "description": "Get a list of all email messages",
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "emails"
                 ],
                 "summary": "Display the list of email messages",
                 "parameters": [

@@ -7,7 +7,7 @@ import (
 
 func EmailConvertCoreInApi(emailModelDb emailCore.Email) *emailApi.Email {
 	return &emailApi.Email{
-		//ID:             emailModelDb.ID,
+		ID:             emailModelDb.ID,
 		Topic:          emailModelDb.Topic,
 		Text:           emailModelDb.Text,
 		PhotoID:        emailModelDb.PhotoID,
@@ -17,8 +17,8 @@ func EmailConvertCoreInApi(emailModelDb emailCore.Email) *emailApi.Email {
 		DateOfDispatch: emailModelDb.DateOfDispatch,
 		ReplyToEmailID: emailModelDb.ReplyToEmailID,
 		DraftStatus:    emailModelDb.DraftStatus,
-		SenderID:       emailModelDb.SenderID,
-		RecipientID:    emailModelDb.RecipientID,
+		SenderEmail:    emailModelDb.SenderEmail,
+		RecipientEmail: emailModelDb.RecipientEmail,
 	}
 }
 
@@ -34,7 +34,7 @@ func EmailConvertApiInCore(emailModelApi emailApi.Email) *emailCore.Email {
 		DateOfDispatch: emailModelApi.DateOfDispatch,
 		ReplyToEmailID: emailModelApi.ReplyToEmailID,
 		DraftStatus:    emailModelApi.DraftStatus,
-		SenderID:       emailModelApi.SenderID,
-		RecipientID:    emailModelApi.RecipientID,
+		SenderEmail:    emailModelApi.SenderEmail,
+		RecipientEmail: emailModelApi.RecipientEmail,
 	}
 }
