@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 
 	"mail/pkg/delivery"
@@ -116,6 +117,75 @@ func (h *EmailHandler) Add(w http.ResponseWriter, r *http.Request) {
 	}
 
 	delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*email)})
+}
+
+// Send adds a new email message.
+// @Summary Send a new email message
+// @Description Send a new email message to the system
+// @Tags emails
+// @Accept json
+// @Produce json
+// @Param email body delivery.EmailSwag true "Email message in JSON format"
+// @Param X-CSRF-Token header string true "CSRF Token"
+// @Success 200 {object} delivery.Response "ID of the send email message"
+// @Failure 400 {object} delivery.Response "Bad JSON in request"
+// @Failure 401 {object} delivery.Response "Not Authorized"
+// @Failure 500 {object} delivery.Response "Failed to add email message"
+// @Router /api/v1/auth/email/send [post]
+func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
+	var newEmail emailApi.Email
+	decoder := schema.NewDecoder()
+	decoder.IgnoreUnknownKeys(true)
+	err := json.NewDecoder(r.Body).Decode(&newEmail)
+	if err != nil {
+		delivery.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
+		return
+	}
+
+	sender := newEmail.SenderEmail
+	recipient := newEmail.RecipientEmail
+
+	switch {
+	case isValidMailhubFormat(sender) && isValidMailhubFormat(recipient):
+		email, err := h.EmailUseCase.CreateEmail(converters.EmailConvertApiInCore(newEmail))
+		if err != nil {
+			delivery.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
+			return
+		}
+		delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*email)})
+		return
+	case isValidMailhubFormat(sender) == true && isValidMailhubFormat(recipient) == false:
+		email, err := h.EmailUseCase.CreateEmail(converters.EmailConvertApiInCore(newEmail))
+		if err != nil {
+			delivery.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
+			return
+		}
+
+		delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*email)})
+		return
+	case isValidMailhubFormat(sender) == false && isValidMailhubFormat(recipient) == true:
+		email, err := h.EmailUseCase.CreateEmail(converters.EmailConvertApiInCore(newEmail))
+		if err != nil {
+			delivery.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
+			return
+		}
+
+		delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*email)})
+		return
+	}
+
+	/*email, err := h.EmailUseCase.CreateEmail(converters.EmailConvertApiInCore(newEmail))
+	if err != nil {
+		delivery.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
+		return
+	}
+
+	delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*email)})*/
+}
+
+func isValidMailhubFormat(email string) bool {
+	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@mailhub\.su$`)
+	return emailRegex.MatchString(email)
 }
 
 // Update updates an existing email message.

@@ -122,6 +122,65 @@
                 }
             }
         },
+        "/api/v1/auth/email/send": {
+            "post": {
+                "description": "Send a new email message to the system",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "emails"
+                ],
+                "summary": "Send a new email message",
+                "parameters": [
+                    {
+                        "description": "Email message in JSON format",
+                        "name": "email",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/delivery.EmailSwag"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-CSRF-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ID of the send email message",
+                        "schema": {
+                            "$ref": "#/definitions/delivery.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad JSON in request",
+                        "schema": {
+                            "$ref": "#/definitions/delivery.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized",
+                        "schema": {
+                            "$ref": "#/definitions/delivery.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to add email message",
+                        "schema": {
+                            "$ref": "#/definitions/delivery.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/auth/email/update/{id}": {
             "put": {
                 "description": "Update an existing email message based on its identifier",
@@ -688,17 +747,17 @@
                     "description": "ReadStatus indicates whether the email has been read.",
                     "type": "boolean"
                 },
-                "recipientID": {
-                    "description": "RecipientID is the ID of the recipient user",
-                    "type": "integer"
+                "recipientEmail": {
+                    "description": "RecipientEmail is the Email of the recipient user",
+                    "type": "string"
                 },
                 "replyToEmailId": {
                     "description": "ReplyToEmailID is the ID of the email to which a reply can be sent.",
                     "type": "integer"
                 },
-                "senderID": {
-                    "description": "SenderID is the ID of the sender user",
-                    "type": "integer"
+                "senderEmail": {
+                    "description": "SenderEmail is the Email of the sender user",
+                    "type": "string"
                 },
                 "text": {
                     "description": "Text is the body of the email.",

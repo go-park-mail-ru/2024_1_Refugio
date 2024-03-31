@@ -94,6 +94,7 @@ func main() {
 	auth.HandleFunc("/email/add", emailHandler.Add).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/email/update/{id}", emailHandler.Update).Methods("PUT", "OPTIONS")
 	auth.HandleFunc("/email/delete/{id}", emailHandler.Delete).Methods("DELETE", "OPTIONS")
+	auth.HandleFunc("/email/send", emailHandler.Send).Methods("POST", "OPTIONS")
 
 	logRouter := mux.NewRouter().PathPrefix("/api/v1").Subrouter()
 	logRouter.Use(Logrus.AccessLogMiddleware, middleware.PanicMiddleware)

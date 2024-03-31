@@ -344,7 +344,7 @@ func isEmpty(str string) bool {
 
 // isValidEmailFormat checks if the provided email string matches the specific format for emails ending with "@mailhub.ru".
 func isValidEmailFormat(email string) bool {
-	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@mailhub\.ru$`)
+	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@mailhub\.su$`)
 
 	return emailRegex.MatchString(email)
 }
