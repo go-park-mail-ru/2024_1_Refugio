@@ -6,6 +6,6 @@ COPY . .
 
 RUN go build -o main .
 
-EXPOSE 2025
+EXPOSE 2525
 
 CMD ["./main"]
