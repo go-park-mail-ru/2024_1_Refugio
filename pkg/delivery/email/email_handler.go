@@ -34,6 +34,7 @@ func InitializationEmailHandler(emailHandler *EmailHandler) {
 // List displays the list of email messages.
 // @Summary Display the list of email messages
 // @Description Get a list of all email messages
+// @Tags emails
 // @Produce json
 // @Param X-CSRF-Token header string true "CSRF Token"
 // @Success 200 {object} delivery.Response "List of all email messages"
@@ -59,6 +60,7 @@ func (h *EmailHandler) List(w http.ResponseWriter, r *http.Request) {
 // GetByID returns an email message by its ID.
 // @Summary Get an email message by ID
 // @Description Get an email message by its unique identifier
+// @Tags emails
 // @Produce json
 // @Param id path integer true "ID of the email message"
 // @Param X-CSRF-Token header string true "CSRF Token"
@@ -87,6 +89,7 @@ func (h *EmailHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 // Add adds a new email message.
 // @Summary Add a new email message
 // @Description Add a new email message to the system
+// @Tags emails
 // @Accept json
 // @Produce json
 // @Param email body delivery.EmailSwag true "Email message in JSON format"
@@ -118,6 +121,7 @@ func (h *EmailHandler) Add(w http.ResponseWriter, r *http.Request) {
 // Update updates an existing email message.
 // @Summary Update an email message
 // @Description Update an existing email message based on its identifier
+// @Tags emails
 // @Accept json
 // @Produce json
 // @Param id path integer true "ID of the email message"
@@ -158,6 +162,7 @@ func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) {
 // Delete deletes an email message.
 // @Summary Delete an email message
 // @Description Delete an email message based on its identifier
+// @Tags emails
 // @Produce json
 // @Param id path integer true "ID of the email message"
 // @Param X-CSRF-Token header string true "CSRF Token"
@@ -182,3 +187,21 @@ func (h *EmailHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 	delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": ok})
 }
+
+/* func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
+	// ivan@mailhub.ru -> sergey@mailhub.ru
+	if (email1 == @mailhub.ru && email2 == @mailhub.ru) {
+		h.EmailUseCase.CreateEmail()
+	}
+
+	// ivan@mailhub.ru -> sergey@yandex.ru
+	if (email1 == @mailhub.ru && email2 == @yandex.ru) {
+		// smtp
+		h.EmailUseCase.CreateEmail()
+	}
+
+	// ivan@yandex.ru -> sergey@mailhub.ru
+	if (email1 == @yandex.ru && email2 == @mailhub.ru) {
+		h.EmailUseCase.CreateEmail()
+	}
+} */

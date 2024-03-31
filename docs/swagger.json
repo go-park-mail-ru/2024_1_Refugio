@@ -18,6 +18,9 @@
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "emails"
+                ],
                 "summary": "Add a new email message",
                 "parameters": [
                     {
@@ -70,6 +73,9 @@
                 "description": "Delete an email message based on its identifier",
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "emails"
                 ],
                 "summary": "Delete an email message",
                 "parameters": [
@@ -124,6 +130,9 @@
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "emails"
                 ],
                 "summary": "Update an email message",
                 "parameters": [
@@ -185,6 +194,9 @@
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "emails"
+                ],
                 "summary": "Get an email message by ID",
                 "parameters": [
                     {
@@ -235,6 +247,9 @@
                 "description": "Get a list of all email messages",
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "emails"
                 ],
                 "summary": "Display the list of email messages",
                 "parameters": [
