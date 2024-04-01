@@ -15,6 +15,8 @@ func (s *Server) handleConnection(conn net.Conn) {
 	reader := bufio.NewReader(conn)
 	writer := bufio.NewWriter(conn)
 
+	fmt.Println("CONNECT")
+
 	for {
 		command, err := reader.ReadString('\n')
 		if err != nil {
@@ -37,14 +39,21 @@ func (s *Server) handleCommand(conn net.Conn, writer *bufio.Writer, command stri
 	fmt.Println("COMMAND")
 	fmt.Println(command)
 
-	if strings.HasPrefix(command, "HELO") || strings.HasPrefix(command, "EHLO") {
+	switch {
+	case strings.HasPrefix(command, "EHLO") || strings.HasPrefix(command, "HELO"):
 		s.handleHELO(conn, writer, command)
-	} else if strings.HasPrefix(command, "RCPT TO") {
+	case strings.HasPrefix(command, "MAIL FROM"):
+		s.handleMAILFROM(conn, writer, command)
+	case strings.HasPrefix(command, "RCPT TO"):
 		fmt.Println(">--------------------------------------------------------------------------------<")
 		fmt.Println("START SEND")
 		s.handleRCPTTO(conn, writer, command)
 		fmt.Println(">--------------------------------------------------------------------------------<")
-	} else {
+	case strings.HasPrefix(command, "DATA"):
+		s.handleDATA(conn, writer)
+	case strings.HasPrefix(command, "QUIT"):
+		s.handleQUIT(conn, writer)
+	default:
 		fmt.Println(">--------------------------------------------------------------------------------<")
 		fmt.Println("I DID NOT FIND THE METHOD")
 		fmt.Println(">--------------------------------------------------------------------------------<")
@@ -55,6 +64,24 @@ func (s *Server) handleCommand(conn net.Conn, writer *bufio.Writer, command stri
 	fmt.Println("--------------------------------------------------------------------------------")
 
 	writer.Flush()
+}
+
+func (s *Server) handleMAILFROM(conn net.Conn, writer *bufio.Writer, command string) {
+	// Process the MAIL FROM command
+	from := strings.TrimPrefix(command, "MAIL FROM:")
+	fmt.Println(from)
+	s.sendResponse(writer, 250, "OK")
+}
+
+func (s *Server) handleDATA(conn net.Conn, writer *bufio.Writer) {
+	// Process the DATA command
+	s.sendResponse(writer, 354, "Start mail input; end with <CRLF>.<CRLF>")
+	// Implement logic to receive email data
+}
+
+func (s *Server) handleQUIT(conn net.Conn, writer *bufio.Writer) {
+	// Process the QUIT command
+	s.sendResponse(writer, 221, "Goodbye")
 }
 
 func (s *Server) handleHELO(conn net.Conn, writer *bufio.Writer, command string) {
