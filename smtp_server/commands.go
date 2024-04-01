@@ -32,27 +32,49 @@ func (s *Server) handleConnection(conn net.Conn) {
 func (s *Server) handleCommand(conn net.Conn, writer *bufio.Writer, command string) {
 	log.Printf("Received command: %s\n", command)
 
-	fmt.Println("handleCommand")
+	fmt.Println("--------------------------------------------------------------------------------")
+	fmt.Println("START")
+	fmt.Println("COMMAND")
+	fmt.Println(command)
 
-	// Implement your logic for each command
-	// Example:
 	if strings.HasPrefix(command, "HELO") || strings.HasPrefix(command, "EHLO") {
 		s.handleHELO(conn, writer, command)
+	} else if strings.HasPrefix(command, "RCPT TO") {
+		fmt.Println(">--------------------------------------------------------------------------------<")
+		fmt.Println("START SEND")
+		s.handleRCPTTO(conn, writer, command)
+		fmt.Println(">--------------------------------------------------------------------------------<")
 	} else {
-		fmt.Println("OK")
+		fmt.Println(">--------------------------------------------------------------------------------<")
+		fmt.Println("I DID NOT FIND THE METHOD")
+		fmt.Println(">--------------------------------------------------------------------------------<")
 		s.sendResponse(writer, 500, "Command not recognized")
 	}
 
-	writer.Flush()
 	fmt.Println("END")
+	fmt.Println("--------------------------------------------------------------------------------")
+
+	writer.Flush()
 }
 
 func (s *Server) handleHELO(conn net.Conn, writer *bufio.Writer, command string) {
 	s.sendResponse(writer, 250, "Hello "+s.Address)
 }
 
-func (s *Server) handleQUIT(conn net.Conn, writer *bufio.Writer) {
-	// Implement QUIT command logic
+func (s *Server) handleRCPTTO(conn net.Conn, writer *bufio.Writer, command string) {
+	// Разбор команды RCPT TO для получения адреса получателя
+	parts := strings.Split(command, " ")
+	if len(parts) < 2 {
+		s.sendResponse(writer, 501, "Syntax error in parameters or arguments")
+		return
+	}
+	recipient := parts[2]
+	fmt.Println(recipient)
+
+	// Обработка логики для команды RCPT TO
+	// Например, проверка допустимости адреса получателя и сохранение его для дальнейшей обработки
+	// Отправка ответа
+	s.sendResponse(writer, 250, "Recipient OK: "+recipient)
 }
 
 func (s *Server) sendResponse(writer *bufio.Writer, code int, message string) {
