@@ -5,12 +5,17 @@ import (
 	"fmt"
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jmoiron/sqlx"
+	"github.com/kataras/requestid"
 	"github.com/rs/cors"
+	"github.com/rs/zerolog"
 	migrate "github.com/rubenv/sql-migrate"
+	sqldblogger "github.com/simukti/sqldb-logger"
+	"github.com/simukti/sqldb-logger/logadapter/zerologadapter"
 	"log"
 	"mail/pkg/delivery/middleware"
 	"mail/pkg/delivery/session"
 	"net/http"
+	"os"
 	"time"
 
 	httpSwagger "github.com/swaggo/http-swagger/v2"
@@ -40,6 +45,10 @@ func main() {
 		log.Fatalln("Can't parse config", errDb)
 	}
 	defer db.Close()
+
+	loggerAdapter := zerologadapter.New(zerolog.New(os.Stdout))
+	db = sqldblogger.OpenDriver(dsn, db.Driver(), loggerAdapter /*, using_default_options*/) // db is STILL *sql.DB
+
 	errDb = db.Ping()
 	if errDb != nil {
 		log.Fatalln(errDb)
@@ -76,7 +85,14 @@ func main() {
 		Sessions:    sessionsManager,
 	}
 
-	Logrus := middleware.InitializationAcceslog()
+	logFile := "log.txt"
+	f, err := os.OpenFile(logFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		fmt.Println("Error OpenFile InitializationAcceslog")
+		return
+	}
+	defer f.Close()
+	Logrus := middleware.InitializationAcceslog(f)
 
 	router := mux.NewRouter()
 
@@ -122,7 +138,7 @@ func main() {
 	fmt.Printf("The server is running on http://localhost:%d\n", port)
 	fmt.Printf("Swagger is running on http://localhost:%d/swagger/index.html\n", port)
 
-	err := http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", port), corsHandler)
+	err = http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", port), requestid.Handler(corsHandler))
 	if err != nil {
 		fmt.Println("Error when starting the server:", err)
 	}

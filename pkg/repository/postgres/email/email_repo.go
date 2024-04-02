@@ -31,6 +31,17 @@ func (r *EmailRepository) Add(emailModelCore *domain.Email) (*domain.Email, erro
 		return &domain.Email{}, fmt.Errorf("Email with id %d fail", emailModelDb.ID)
 	}
 
+	/*queryProfileEmail := `
+		INSERT INTO profile_email (profile_id, email_id)
+		VALUES ($1, $2)
+	`
+
+	emailModelDb := converters.EmailConvertCoreInDb(*emailModelCore)
+	_, err := r.DB.Exec(query, emailModelDb.Topic, emailModelDb.Text, time.Now(), emailModelDb.PhotoID, emailModelDb.SenderEmail, emailModelDb.RecipientEmail, emailModelDb.ReadStatus, emailModelDb.Deleted, emailModelDb.DraftStatus, emailModelDb.Flag)
+	if err != nil {
+		return &domain.Email{}, fmt.Errorf("Email with id %d fail", emailModelDb.ID)
+	}*/
+
 	return emailModelCore, nil
 }
 
