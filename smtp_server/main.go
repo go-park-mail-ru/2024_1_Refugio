@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	smtpPort = "587"
+	smtpPort = "25"
 )
 
 type Server struct {

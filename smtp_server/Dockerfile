@@ -6,6 +6,6 @@ COPY . .
 
 RUN go build -o main .
 
-EXPOSE 587
+EXPOSE 25
 
 CMD ["sudo", "./main"]
