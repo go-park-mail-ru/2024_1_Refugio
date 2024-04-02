@@ -4,8 +4,8 @@ WORKDIR /go/src/app
 
 COPY . .
 
-RUN go build -o main .
+RUN sudo go build -o main .
 
 EXPOSE 587
 
-CMD ["./main"]
+CMD ["sudo", "./main"]
