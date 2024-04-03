@@ -39,6 +39,6 @@ func (s *Server) Listen() {
 		}
 		fmt.Println("Listen conn: ", conn)
 
-		go s.handleConnection(conn) //go s.handleConnection(conn)
+		go s.handleConnection(conn)
 	}
 }

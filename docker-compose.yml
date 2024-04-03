@@ -43,7 +43,7 @@ services:
       context: ./smtp_server
       dockerfile: Dockerfile
     ports:
-      - "25:25"
+      - "587:587"
     networks:
       - deploy-guide-dev
 
