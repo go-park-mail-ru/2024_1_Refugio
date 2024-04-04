@@ -26,6 +26,8 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 		return err
 	}
 
+	fmt.Println(">-------------------------------------------------<")
+
 	// Проверяем, что письмо отправлено с домена gmail.com и адресовано нашему домену mailhub.su
 	for _, recipient := range to {
 		// Печатаем содержимое письма в консоль
