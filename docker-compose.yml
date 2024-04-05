@@ -36,6 +36,7 @@ services:
       - DATABASE_PASSWORD=postgres
       - DATABASE_NAME=Mail
       - DATABASE_PORT=5432
+    restart: always
 
   smtp:
     container_name: smtp
@@ -43,7 +44,7 @@ services:
       context: ./smtp_server
       dockerfile: Dockerfile
     ports:
-      - "587:587"
+      - "25:587"
     networks:
       - deploy-guide-dev
 
