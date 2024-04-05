@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS email (
     id SERIAL PRIMARY KEY,
     topic TEXT,
     text TEXT,
-    date_of_dispatch DATE,      /*TIMESTAMPTZ NOT NULL DEFAULT '2022-08-10 10:10:00',*/
+    date_of_dispatch TIMESTAMP NOT NULL DEFAULT '2022-08-10 10:10:00',     /*date_of_dispatch DATE, */
     photoid TEXT CHECK (LENGTH(photoid) <= 200),
     sender_email TEXT CHECK (LENGTH(sender_email) <= 50),
     recipient_email TEXT CHECK (LENGTH(recipient_email) <= 50),

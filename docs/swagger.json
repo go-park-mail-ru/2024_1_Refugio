@@ -88,6 +88,13 @@
                     },
                     {
                         "type": "string",
+                        "description": "Login master",
+                        "name": "login",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "CSRF Token",
                         "name": "X-CSRF-Token",
                         "in": "header",
@@ -267,6 +274,13 @@
                     },
                     {
                         "type": "string",
+                        "description": "Login master",
+                        "name": "login",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "CSRF Token",
                         "name": "X-CSRF-Token",
                         "in": "header",
@@ -312,6 +326,13 @@
                 ],
                 "summary": "Display the list of email messages",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Login master",
+                        "name": "login",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "CSRF Token",

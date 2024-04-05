@@ -12,6 +12,8 @@ type SessionUseCase interface {
 	// GetSession fetches a session by its unique identifier.
 	GetSession(sessionID string) (*domain.Session, error)
 
+	GetLogin(sessionID string) (string, error)
+
 	// DeleteSession terminates a session identified by its ID.
 	DeleteSession(sessionID string) error
 

@@ -114,6 +114,11 @@ paths:
         name: id
         required: true
         type: integer
+      - description: Login master
+        in: header
+        name: login
+        required: true
+        type: string
       - description: CSRF Token
         in: header
         name: X-CSRF-Token
@@ -189,6 +194,11 @@ paths:
         name: id
         required: true
         type: integer
+      - description: Login master
+        in: header
+        name: login
+        required: true
+        type: string
       - description: CSRF Token
         in: header
         name: X-CSRF-Token
@@ -303,6 +313,11 @@ paths:
     get:
       description: Get a list of all email messages
       parameters:
+      - description: Login master
+        in: header
+        name: login
+        required: true
+        type: string
       - description: CSRF Token
         in: header
         name: X-CSRF-Token

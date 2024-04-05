@@ -27,6 +27,10 @@ func (uc *SessionUseCase) GetSession(sessionID string) (*domain.Session, error) 
 	return uc.sessionRepo.GetSessionByID(sessionID)
 }
 
+func (uc *SessionUseCase) GetLogin(sessionID string) (string, error) {
+	return uc.sessionRepo.GetLoginBySessionID(sessionID)
+}
+
 // DeleteSession terminates a session identified by its ID.
 func (uc *SessionUseCase) DeleteSession(sessionID string) error {
 	return uc.sessionRepo.DeleteSessionByID(sessionID)

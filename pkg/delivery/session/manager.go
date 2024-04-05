@@ -60,6 +60,16 @@ func (sm *SessionsManager) Check(r *http.Request) (*models.Session, error) {
 	return converters.SessionConvertCoreInApi(*sess), nil
 }
 
+func (sm *SessionsManager) ChekLogin(login string, r *http.Request) error {
+	sessionCookie, _ := r.Cookie("session_id")
+	LoginBd, _ := sm.sessionUseCase.GetLogin(sessionCookie.Value)
+	if LoginBd != login {
+		return fmt.Errorf("No right sender email")
+	}
+
+	return nil
+}
+
 func (sm *SessionsManager) Create(w http.ResponseWriter, userID uint32) (*models.Session, error) {
 	sessionID, err := sm.sessionUseCase.CreateNewSession(userID, "", 60*60*24)
 
@@ -76,7 +86,6 @@ func (sm *SessionsManager) Create(w http.ResponseWriter, userID uint32) (*models
 		Path:     "/",
 		HttpOnly: true,
 	}
-	fmt.Println(csrfCookie.Value)
 	http.SetCookie(w, csrfCookie)
 	fmt.Println("CSRFTOKEN: ", csrfCookie.Value)
 	sessionCookie := &http.Cookie{

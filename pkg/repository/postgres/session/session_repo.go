@@ -63,6 +63,22 @@ func (repo *SessionRepository) GetSessionByID(sessionID string) (*domain.Session
 	return converters.SessionConvertDbInCore(session), nil
 }
 
+func (repo *SessionRepository) GetLoginBySessionID(sessionID string) (string, error) {
+	query := `
+		SELECT login FROM profile
+		JOIN session ON session.profile_id = profile.id 
+		WHERE session.id = $1
+	`
+
+	var login string
+	err := repo.DB.Get(&login, query, sessionID)
+	if err != nil {
+		return "", fmt.Errorf("failed to get session: %v", err)
+	}
+
+	return login, nil
+}
+
 // DeleteSessionByID deletes a session by its ID.
 func (repo *SessionRepository) DeleteSessionByID(sessionID string) error {
 	query := "DELETE FROM session WHERE id = $1"
