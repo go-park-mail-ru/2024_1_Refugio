@@ -20,8 +20,8 @@
 - **Text**: Текст письма.
 - **DateOfDispatch**: Дата отправки письма.
 - **PhotoId**: Ссылка на фотографию отправителя письма.
-- **SenderId**: Уникальный идентификатор пользователя, отправившего письмо.
-- **RecipientId**: Уникальный идентификатор пользователя, получившего письмо.
+- **SenderEmail**: Электронная почта пользователя, отправившего письмо.
+- **RecipientEmail**: Электронная почта пользователя, получившего письмо.
 - **ReadStatus**: Статус прочтения письма (прочтено/непрочтено).
 - **DeletedStatus**: Статус удаления письма (в корзине/не в корзине).
 - **DraftStatus**: Статус черновика письма (черновик/не черновик).
@@ -108,8 +108,8 @@ erDiagram
         _ Text
         _ DateOfDispatch
         _ PhotoId
-        _ SenderId
-        _ RecipientId
+        _ SenderEmail
+        _ RecipientEmail
         _ ReadStatus
         _ DeletedStatus
         _ DraftStatus
@@ -171,7 +171,7 @@ erDiagram
 - {Id} -> Login, Password, Name, Surname, Middlename, Gender, Birthday, RegistrationDate, AvatarId, PhoneNumber, Description
 
 #### Email:
-- {Id} -> Topic, Text, DateOfDispatch, PhotoId, SenderId, RecipientId, ReadStatus, DeletedStatus, DraftStatus, ReplyToEmailId, Flag
+- {Id} -> Topic, Text, DateOfDispatch, PhotoId, SenderEmail, RecipientEmail, ReadStatus, DeletedStatus, DraftStatus, ReplyToEmailId, Flag
 
 #### File:
 - {Id} -> EmailId, DocumentId, VideoId, GifId, MusicId, ArchiveId
