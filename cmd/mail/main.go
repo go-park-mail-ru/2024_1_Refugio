@@ -33,7 +33,7 @@ import (
 // @version 1.0
 // @description API server for mail
 
-// @host localhost:8080
+// @host 89.208.223.140:8080
 // @BasePath /
 func main() {
 	// dsn := "user=postgres dbname=Mail password=postgres host=localhost port=5432 sslmode=disable"
@@ -118,7 +118,7 @@ func main() {
 	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://127.0.0.1:8081", "http://89.208.223.140:8081", "http://localhost:8080", "http://localhost:8081", "http://89.208.223.140:8080"},
+		AllowedOrigins:   []string{"http://127.0.0.1:8081", "http://89.208.223.140:8081", "http://mailhub.su:8081", "http://mailhub.su:8080", "http://localhost:8080", "http://localhost:8081", "http://89.208.223.140:8080"},
 		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodDelete, http.MethodPut, http.MethodOptions},
 		AllowCredentials: true,
 	})
