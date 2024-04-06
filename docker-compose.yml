@@ -1,9 +1,52 @@
 version: '3'
 
+networks:
+  deploy-guide-dev:
+    driver: bridge
+
 services:
+  db:
+    container_name: db
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: Mail
+    networks:
+      - deploy-guide-dev
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   backend:
+    container_name: backend
     build:
       context: .
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
+    networks:
+      - deploy-guide-dev
+    depends_on:
+      - db
+    environment:
+      - DATABASE_HOST=db
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=postgres
+      - DATABASE_NAME=Mail
+      - DATABASE_PORT=5432
+    restart: always
+
+  smtp:
+    container_name: smtp
+    build:
+      context: ./smtp_server
+      dockerfile: Dockerfile
+    ports:
+      - "25:587"
+    networks:
+      - deploy-guide-dev
+
+volumes:
+  postgres_data:

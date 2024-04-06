@@ -12,25 +12,29 @@ func EmailConvertCoreInApi(emailModelDb emailCore.Email) *emailApi.Email {
 		Text:           emailModelDb.Text,
 		PhotoID:        emailModelDb.PhotoID,
 		ReadStatus:     emailModelDb.ReadStatus,
-		Mark:           emailModelDb.Mark,
+		Flag:           emailModelDb.Flag,
 		Deleted:        emailModelDb.Deleted,
 		DateOfDispatch: emailModelDb.DateOfDispatch,
 		ReplyToEmailID: emailModelDb.ReplyToEmailID,
 		DraftStatus:    emailModelDb.DraftStatus,
+		SenderEmail:    emailModelDb.SenderEmail,
+		RecipientEmail: emailModelDb.RecipientEmail,
 	}
 }
 
-func EmailConvertApiInCore(emailModelCore emailApi.Email) *emailCore.Email {
+func EmailConvertApiInCore(emailModelApi emailApi.Email) *emailCore.Email {
 	return &emailCore.Email{
-		ID:             emailModelCore.ID,
-		Topic:          emailModelCore.Topic,
-		Text:           emailModelCore.Text,
-		PhotoID:        emailModelCore.PhotoID,
-		ReadStatus:     emailModelCore.ReadStatus,
-		Mark:           emailModelCore.Mark,
-		Deleted:        emailModelCore.Deleted,
-		DateOfDispatch: emailModelCore.DateOfDispatch,
-		ReplyToEmailID: emailModelCore.ReplyToEmailID,
-		DraftStatus:    emailModelCore.DraftStatus,
+		ID:             emailModelApi.ID,
+		Topic:          emailModelApi.Topic,
+		Text:           emailModelApi.Text,
+		PhotoID:        emailModelApi.PhotoID,
+		ReadStatus:     emailModelApi.ReadStatus,
+		Flag:           emailModelApi.Flag,
+		Deleted:        emailModelApi.Deleted,
+		DateOfDispatch: emailModelApi.DateOfDispatch,
+		ReplyToEmailID: emailModelApi.ReplyToEmailID,
+		DraftStatus:    emailModelApi.DraftStatus,
+		SenderEmail:    emailModelApi.SenderEmail,
+		RecipientEmail: emailModelApi.RecipientEmail,
 	}
 }

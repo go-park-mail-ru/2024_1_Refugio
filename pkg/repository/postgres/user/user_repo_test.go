@@ -125,13 +125,13 @@ func TestAddUser(t *testing.T) {
 	defer func() { HashPassword = originalHashPassword }()
 	HashPassword = mockHashPassword
 
-	mockRandomIDGenerator := func() uint32 {
+	/*mockRandomIDGenerator := func() uint32 {
 		return 1
 	}
 
 	originalRandomIDGenerator := GenerateRandomID
 	defer func() { GenerateRandomID = originalRandomIDGenerator }()
-	GenerateRandomID = mockRandomIDGenerator
+	GenerateRandomID = mockRandomIDGenerator*/
 
 	mockDB, mock, err := sqlmock.New()
 	if err != nil {
@@ -158,12 +158,12 @@ func TestAddUser(t *testing.T) {
 		}
 
 		mock.ExpectExec(`INSERT INTO profile`).
-			WithArgs(sqlmock.AnyArg(), user.Login, user.Password, user.FirstName, user.Surname, user.Patronymic, user.Gender, user.Birthday, sqlmock.AnyArg(), user.AvatarID, user.PhoneNumber, user.Description).
+			WithArgs(user.Login, user.Password, user.FirstName, user.Surname, user.Patronymic, user.Gender, user.Birthday, sqlmock.AnyArg(), user.AvatarID, user.PhoneNumber, user.Description).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		userID, err := repo.Add(user)
+		createUser, err := repo.Add(user)
 		assert.NoError(t, err)
-		assert.Equal(t, uint32(1), userID)
+		assert.Equal(t, user, createUser)
 	})
 
 	t.Run("UserAddFailed", func(t *testing.T) {
@@ -180,11 +180,13 @@ func TestAddUser(t *testing.T) {
 			Description: "Test user",
 		}
 
-		mock.ExpectQuery(`INSERT INTO profile`).WithArgs(user.Login, user.Password, user.FirstName, user.Surname, user.Patronymic, user.Gender, user.Birthday, sqlmock.AnyArg(), user.AvatarID, user.PhoneNumber, user.Description).WillReturnError(fmt.Errorf("failed to insert user"))
+		mock.ExpectQuery(`INSERT INTO profile`).
+			WithArgs(user.Login, user.Password, user.FirstName, user.Surname, user.Patronymic, user.Gender, user.Birthday, sqlmock.AnyArg(), user.AvatarID, user.PhoneNumber, user.Description).
+			WillReturnError(fmt.Errorf("failed to insert user"))
 
-		userID, err := repo.Add(user)
+		userRes, err := repo.Add(user)
 		assert.Error(t, err)
-		assert.Equal(t, uint32(0), userID)
+		assert.Equal(t, &domain.User{}, userRes)
 	})
 }
 
@@ -215,7 +217,9 @@ func TestUpdateUser(t *testing.T) {
 			Description: "Updated user",
 		}
 
-		mock.ExpectExec(`UPDATE profile`).WithArgs(newUser.FirstName, newUser.Surname, newUser.Patronymic, newUser.Gender, newUser.Birthday, newUser.AvatarID, newUser.PhoneNumber, newUser.Description, newUser.ID).WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectExec(`UPDATE profile`).
+			WithArgs(newUser.FirstName, newUser.Surname, newUser.Patronymic, newUser.Gender, newUser.Birthday, newUser.AvatarID, newUser.PhoneNumber, newUser.Description, newUser.ID).
+			WillReturnResult(sqlmock.NewResult(0, 1))
 
 		updated, err := repo.Update(newUser)
 
@@ -236,7 +240,9 @@ func TestUpdateUser(t *testing.T) {
 			Description: "Updated user",
 		}
 
-		mock.ExpectExec(`UPDATE profile`).WithArgs(newUser.FirstName, newUser.Surname, newUser.Patronymic, newUser.Gender, newUser.Birthday, newUser.AvatarID, newUser.PhoneNumber, newUser.Description, newUser.ID).WillReturnResult(sqlmock.NewResult(0, 0))
+		mock.ExpectExec(`UPDATE profile`).
+			WithArgs(newUser.FirstName, newUser.Surname, newUser.Patronymic, newUser.Gender, newUser.Birthday, newUser.AvatarID, newUser.PhoneNumber, newUser.Description, newUser.ID).
+			WillReturnResult(sqlmock.NewResult(0, 0))
 
 		updated, err := repo.Update(newUser)
 
@@ -257,7 +263,9 @@ func TestUpdateUser(t *testing.T) {
 			Description: "Updated user",
 		}
 
-		mock.ExpectExec(`UPDATE profile`).WithArgs(newUser.FirstName, newUser.Surname, newUser.Patronymic, newUser.Gender, newUser.Birthday, newUser.AvatarID, newUser.PhoneNumber, newUser.Description, newUser.ID).WillReturnError(fmt.Errorf("database error"))
+		mock.ExpectExec(`UPDATE profile`).
+			WithArgs(newUser.FirstName, newUser.Surname, newUser.Patronymic, newUser.Gender, newUser.Birthday, newUser.AvatarID, newUser.PhoneNumber, newUser.Description, newUser.ID).
+			WillReturnError(fmt.Errorf("database error"))
 
 		updated, err := repo.Update(newUser)
 
