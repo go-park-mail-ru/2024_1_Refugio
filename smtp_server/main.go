@@ -19,6 +19,15 @@ type Server struct {
 	Address string
 }
 
+func main() {
+	serverAddr := "0.0.0.0:587"
+
+	err := smtpd.ListenAndServe(serverAddr, mailHandler, "MailHubSMTP", "")
+	if err != nil {
+		log.Fatal("Error starting SMTP server:", err)
+	}
+}
+
 func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 	msg, err := mail.ReadMessage(bytes.NewReader(data))
 	if err != nil {
@@ -28,14 +37,11 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 
 	fmt.Println(">-------------------------------------------------<")
 
-	// Проверяем, что письмо отправлено с домена gmail.com и адресовано нашему домену mailhub.su
 	for _, recipient := range to {
-		// Печатаем содержимое письма в консоль
 		fmt.Println("Received mail from:", from)
 		fmt.Println("To:", recipient)
 		fmt.Println("Subject:", msg.Header.Get("Subject"))
 
-		// Чтобы вывести содержимое письма, используем msg.Body
 		body, err := ioutil.ReadAll(msg.Body)
 		if err != nil {
 			log.Println("Error reading message body:", err)
@@ -49,18 +55,7 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 	return nil
 }
 
-func main() {
-	serverAddr := "0.0.0.0:587" // Слушаем все интерфейсы на порту 587
-
-	// Запускаем SMTP сервер
-	err := smtpd.ListenAndServe(serverAddr, mailHandler, "MailHubSMTP", "")
-	if err != nil {
-		log.Fatal("Error starting SMTP server:", err)
-	}
-}
-
-/*
-func main() {
+/* func main() {
 	server := Server{
 		Address: "0.0.0.0",
 	}
@@ -87,5 +82,4 @@ func (s *Server) Listen() {
 
 		go s.handleConnection(conn)
 	}
-}
-*/
+} */

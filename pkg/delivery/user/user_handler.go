@@ -44,7 +44,7 @@ func InitializationEmailHandler(userHandler *UserHandler) {
 // @Param X-CSRF-Token header string true "CSRF Token"
 // @Success 200 {object} delivery.Response "OK"
 // @Failure 401 {object} delivery.Response "Not Authorized"
-// @Router /api/v1/auth/verify-auth [get]
+// @Router /api/v1/verify-auth [get]
 func (uh *UserHandler) VerifyAuth(w http.ResponseWriter, r *http.Request) {
 	delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "OK"})
 }
@@ -60,7 +60,7 @@ func (uh *UserHandler) VerifyAuth(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} delivery.ErrorResponse "Invalid request body"
 // @Failure 401 {object} delivery.ErrorResponse "Invalid credentials"
 // @Failure 500 {object} delivery.ErrorResponse "Failed to create session"
-// @Router /api/v1/login [post]
+// @Router /api/v1/auth/login [post]
 func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var credentials api.User
 	err := json.NewDecoder(r.Body).Decode(&credentials)
@@ -109,7 +109,7 @@ func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} delivery.Response "Signup successful"
 // @Failure 400 {object} delivery.ErrorResponse "Invalid request body"
 // @Failure 500 {object} delivery.ErrorResponse "Failed to add user"
-// @Router /api/v1/signup [post]
+// @Router /api/v1/auth/signup [post]
 func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 	var newUser api.User
 	err := json.NewDecoder(r.Body).Decode(&newUser)
@@ -154,7 +154,7 @@ func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 // @Tags users
 // @Produce json
 // @Success 200 {object} delivery.Response "Logout successful"
-// @Router /api/v1/logout [post]
+// @Router /api/v1/auth/logout [post]
 func (uh *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	requestID, ok := r.Context().Value(requestIDContextKey).(string)
 	if !ok {
@@ -178,7 +178,7 @@ func (uh *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} delivery.Response "User details"
 // @Failure 401 {object} delivery.ErrorResponse "Not Authorized"
 // @Failure 500 {object} delivery.ErrorResponse "Internal Server Error"
-// @Router /api/v1/auth/user/get [get]
+// @Router /api/v1/user/get [get]
 func (uh *UserHandler) GetUserBySession(w http.ResponseWriter, r *http.Request) {
 	requestID, ok := r.Context().Value(requestIDContextKey).(string)
 	if !ok {
@@ -206,7 +206,7 @@ func (uh *UserHandler) GetUserBySession(w http.ResponseWriter, r *http.Request) 
 // @Failure 400 {object} delivery.ErrorResponse "Invalid request body"
 // @Failure 401 {object} delivery.ErrorResponse "Not authorized"
 // @Failure 500 {object} delivery.ErrorResponse "Internal Server Error"
-// @Router /api/v1/auth/user/update [put]
+// @Router /api/v1/user/update [put]
 func (uh *UserHandler) UpdateUserData(w http.ResponseWriter, r *http.Request) {
 	var updatedUser api.User
 	err := json.NewDecoder(r.Body).Decode(&updatedUser)
@@ -247,7 +247,7 @@ func (uh *UserHandler) UpdateUserData(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} delivery.ErrorResponse "Invalid user ID"
 // @Failure 401 {object} delivery.ErrorResponse "Not authorized"
 // @Failure 500 {object} delivery.ErrorResponse "Internal Server Error"
-// @Router /api/v1/auth/user/delete/{id} [delete]
+// @Router /api/v1/user/delete/{id} [delete]
 func (uh *UserHandler) DeleteUserData(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userID, err := strconv.ParseUint(vars["id"], 10, 32)
@@ -292,7 +292,7 @@ func (uh *UserHandler) DeleteUserData(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} delivery.Response "File uploaded and saved successfully"
 // @Failure 400 {object} delivery.ErrorResponse "Error processing file or failed to get file"
 // @Failure 500 {object} delivery.ErrorResponse "Internal Server Error"
-// @Router /api/v1/auth/user/avatar/upload [post]
+// @Router /api/v1/user/avatar/upload [post]
 func (uh *UserHandler) UploadUserAvatar(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseMultipartForm(5 * 1024 * 1024)
 	if err != nil {
@@ -348,7 +348,7 @@ func (uh *UserHandler) UploadUserAvatar(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
-	userData.AvatarID = uniqueFileName
+	userData.AvatarID = "http://mailhub.su:8080/media/" + uniqueFileName
 	userUpdated, err := uh.UserUseCase.UpdateUser(userData, requestID)
 	if err != nil {
 		delivery.HandleError(w, http.StatusInternalServerError, "Internal Server Error")

@@ -36,8 +36,8 @@ import (
 // @host localhost:8080
 // @BasePath /
 func main() {
-	// dsn := "user=postgres dbname=Mail password=postgres host=localhost port=5432 sslmode=disable"
-	dsn := "user=postgres dbname=Mail password=postgres host=db port=5432 sslmode=disable"
+	dsn := "user=postgres dbname=Mail password=postgres host=localhost port=5432 sslmode=disable"
+	// dsn := "user=postgres dbname=Mail password=postgres host=db port=5432 sslmode=disable"
 	db, errDb := sql.Open("pgx", dsn)
 	if errDb != nil {
 		log.Fatalln("Can't parse config", errDb)
@@ -51,7 +51,7 @@ func main() {
 	db.SetMaxOpenConns(10)
 
 	migrations := &migrate.FileMigrationSource{
-		Dir: "migrations",
+		Dir: "db/migrations",
 	}
 	_, errMigration := migrate.Exec(db, "postgres", migrations, migrate.Up)
 	if errMigration != nil {
@@ -86,30 +86,29 @@ func main() {
 
 	router := mux.NewRouter()
 
-	auth := mux.NewRouter().PathPrefix("/api/v1/auth").Subrouter()
-	auth.Use(Logger.AccessLogMiddleware, middleware.PanicMiddleware, middleware.AuthMiddleware)
-	router.PathPrefix("/api/v1/auth").Handler(auth)
-
-	auth.HandleFunc("/verify-auth", userHandler.VerifyAuth).Methods("GET", "OPTIONS")
-	auth.HandleFunc("/user/get", userHandler.GetUserBySession).Methods("GET", "OPTIONS")
-	auth.HandleFunc("/user/update", userHandler.UpdateUserData).Methods("PUT", "OPTIONS")
-	auth.HandleFunc("/user/delete/{id}", userHandler.DeleteUserData).Methods("DELETE", "OPTIONS")
-	auth.HandleFunc("/user/avatar/upload", userHandler.UploadUserAvatar).Methods("POST", "OPTIONS")
-	auth.HandleFunc("/emails/incoming", emailHandler.Incoming).Methods("GET", "OPTIONS")
-	auth.HandleFunc("/emails/sent", emailHandler.Sent).Methods("GET", "OPTIONS")
-	auth.HandleFunc("/email/{id}", emailHandler.GetByID).Methods("GET", "OPTIONS")
-	auth.HandleFunc("/email/add", emailHandler.Add).Methods("POST", "OPTIONS")
-	auth.HandleFunc("/email/update/{id}", emailHandler.Update).Methods("PUT", "OPTIONS")
-	auth.HandleFunc("/email/delete/{id}", emailHandler.Delete).Methods("DELETE", "OPTIONS")
-	auth.HandleFunc("/email/send", emailHandler.Send).Methods("POST", "OPTIONS")
-
 	logRouter := mux.NewRouter().PathPrefix("/api/v1").Subrouter()
-	logRouter.Use(Logger.AccessLogMiddleware, middleware.PanicMiddleware)
+	logRouter.Use(Logger.AccessLogMiddleware, middleware.PanicMiddleware, middleware.AuthMiddleware)
 	router.PathPrefix("/api/v1").Handler(logRouter)
 
-	logRouter.HandleFunc("/login", userHandler.Login).Methods("POST", "OPTIONS")
-	logRouter.HandleFunc("/signup", userHandler.Signup).Methods("POST", "OPTIONS")
-	logRouter.HandleFunc("/logout", userHandler.Logout).Methods("POST", "OPTIONS")
+	logRouter.HandleFunc("/verify-auth", userHandler.VerifyAuth).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/user/get", userHandler.GetUserBySession).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/user/update", userHandler.UpdateUserData).Methods("PUT", "OPTIONS")
+	logRouter.HandleFunc("/user/delete/{id}", userHandler.DeleteUserData).Methods("DELETE", "OPTIONS")
+	logRouter.HandleFunc("/user/avatar/upload", userHandler.UploadUserAvatar).Methods("POST", "OPTIONS")
+	logRouter.HandleFunc("/emails/incoming", emailHandler.Incoming).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/emails/sent", emailHandler.Sent).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/email/{id}", emailHandler.GetByID).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/email/update/{id}", emailHandler.Update).Methods("PUT", "OPTIONS")
+	logRouter.HandleFunc("/email/delete/{id}", emailHandler.Delete).Methods("DELETE", "OPTIONS")
+	logRouter.HandleFunc("/email/send", emailHandler.Send).Methods("POST", "OPTIONS")
+
+	auth := mux.NewRouter().PathPrefix("/api/v1/auth").Subrouter()
+	auth.Use(Logger.AccessLogMiddleware, middleware.PanicMiddleware)
+	router.PathPrefix("/api/v1/auth").Handler(auth)
+
+	auth.HandleFunc("/login", userHandler.Login).Methods("POST", "OPTIONS")
+	auth.HandleFunc("/signup", userHandler.Signup).Methods("POST", "OPTIONS")
+	auth.HandleFunc("/logout", userHandler.Logout).Methods("POST", "OPTIONS")
 
 	staticDir := "/media/"
 	staticFileServer := http.StripPrefix(staticDir, http.FileServer(http.Dir("./avatars")))
