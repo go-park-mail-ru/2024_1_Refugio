@@ -1,28 +1,37 @@
 package converters
 
 import (
-	userCore "mail/pkg/domain/models"
-	userDb "mail/pkg/repository/models"
+	domain "mail/pkg/domain/models"
+	database "mail/pkg/repository/models"
 )
 
-func UserConvertDbInCore(userModelDb userDb.User) *userCore.User {
-	return &userCore.User{
-		ID:       userModelDb.ID,
-		Login:    userModelDb.Login,
-		Password: userModelDb.Password,
-		Name:     userModelDb.Name,
-		Surname:  userModelDb.Surname,
-		AvatarID: userModelDb.AvatarID,
+func UserConvertDbInCore(userModelDb database.User) *domain.User {
+	return &domain.User{
+		ID:          userModelDb.ID,
+		Login:       userModelDb.Login,
+		FirstName:   userModelDb.FirstName,
+		Surname:     userModelDb.Surname,
+		Patronymic:  userModelDb.Patronymic,
+		Gender:      userModelDb.Gender,
+		Birthday:    userModelDb.Birthday,
+		AvatarID:    userModelDb.AvatarID,
+		PhoneNumber: userModelDb.PhoneNumber,
+		Description: userModelDb.Description,
 	}
 }
 
-func UserConvertCoreInDb(userModelCore userCore.User) *userDb.User {
-	return &userDb.User{
-		ID:       userModelCore.ID,
-		Login:    userModelCore.Login,
-		Password: userModelCore.Password,
-		Name:     userModelCore.Name,
-		Surname:  userModelCore.Surname,
-		AvatarID: userModelCore.AvatarID,
+func UserConvertCoreInDb(userModelCore domain.User) *database.User {
+	return &database.User{
+		ID:          userModelCore.ID,
+		Login:       userModelCore.Login,
+		Password:    userModelCore.Password,
+		FirstName:   userModelCore.FirstName,
+		Surname:     userModelCore.Surname,
+		Patronymic:  userModelCore.Patronymic,
+		Gender:      userModelCore.Gender,
+		Birthday:    userModelCore.Birthday,
+		AvatarID:    userModelCore.AvatarID,
+		PhoneNumber: userModelCore.PhoneNumber,
+		Description: userModelCore.Description,
 	}
 }

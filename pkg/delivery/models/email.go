@@ -9,9 +9,11 @@ type Email struct {
 	Text           string    `json:"text"`                     // Text is the body of the email.
 	PhotoID        string    `json:"photoId,omitempty"`        // PhotoID is the link to the photo attached to the email, if any.
 	ReadStatus     bool      `json:"readStatus"`               // ReadStatus indicates whether the email has been read.
-	Mark           string    `json:"mark,omitempty"`           // Mark is a flag, such as marking the email as a favorite.
+	Flag           bool      `json:"mark,omitempty"`           // Flag is a flag, such as marking the email as a favorite.
 	Deleted        bool      `json:"deleted"`                  // Deleted indicates whether the email has been deleted.
 	DateOfDispatch time.Time `json:"dateOfDispatch,omitempty"` // DateOfDispatch is the date when the email was sent.
 	ReplyToEmailID uint64    `json:"replyToEmailId,omitempty"` // ReplyToEmailID is the ID of the email to which a reply can be sent.
 	DraftStatus    bool      `json:"draftStatus"`              // DraftStatus indicates whether the email is a draft.
+	SenderEmail    string    `json:"senderEmail"`              // SenderEmail is the email of the sender user
+	RecipientEmail string    `json:"recipientEmail"`           // RecipientEmail is the email of the recipient user
 }
