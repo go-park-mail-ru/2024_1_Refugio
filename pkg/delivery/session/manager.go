@@ -27,10 +27,10 @@ func NewSessionsManager(sessionUc domain.SessionUseCase) *SessionsManager {
 	}
 }
 
-func (sm *SessionsManager) GetSession(r *http.Request) *models.Session {
+func (sm *SessionsManager) GetSession(r *http.Request, requestID string) *models.Session {
 	sessionCookie, _ := r.Cookie("session_id")
 
-	sess, _ := sm.sessionUseCase.GetSession(sessionCookie.Value)
+	sess, _ := sm.sessionUseCase.GetSession(sessionCookie.Value, requestID)
 	if sess == nil {
 		return nil
 	}
@@ -38,7 +38,7 @@ func (sm *SessionsManager) GetSession(r *http.Request) *models.Session {
 	return converters.SessionConvertCoreInApi(*sess)
 }
 
-func (sm *SessionsManager) Check(r *http.Request) (*models.Session, error) {
+func (sm *SessionsManager) Check(r *http.Request, requestID string) (*models.Session, error) {
 	csrfToken := r.Header.Get("X-CSRF-Token")
 	if csrfToken == "" {
 		return nil, fmt.Errorf("CSRF token not found in request headers")
@@ -49,7 +49,7 @@ func (sm *SessionsManager) Check(r *http.Request) (*models.Session, error) {
 		return nil, fmt.Errorf("no session found")
 	}
 
-	sess, ok := sm.sessionUseCase.GetSession(sessionCookie.Value)
+	sess, ok := sm.sessionUseCase.GetSession(sessionCookie.Value, requestID)
 	if ok != nil {
 		return nil, fmt.Errorf("no session found")
 	}
@@ -60,9 +60,9 @@ func (sm *SessionsManager) Check(r *http.Request) (*models.Session, error) {
 	return converters.SessionConvertCoreInApi(*sess), nil
 }
 
-func (sm *SessionsManager) ChekLogin(login string, r *http.Request) error {
+func (sm *SessionsManager) ChekLogin(login, requestID string, r *http.Request) error {
 	sessionCookie, _ := r.Cookie("session_id")
-	LoginBd, _ := sm.sessionUseCase.GetLogin(sessionCookie.Value)
+	LoginBd, _ := sm.sessionUseCase.GetLogin(sessionCookie.Value, requestID)
 	if LoginBd != login {
 		return fmt.Errorf("No right sender email")
 	}
@@ -70,14 +70,14 @@ func (sm *SessionsManager) ChekLogin(login string, r *http.Request) error {
 	return nil
 }
 
-func (sm *SessionsManager) Create(w http.ResponseWriter, userID uint32) (*models.Session, error) {
-	sessionID, err := sm.sessionUseCase.CreateNewSession(userID, "", 60*60*24)
+func (sm *SessionsManager) Create(w http.ResponseWriter, userID uint32, requestID string) (*models.Session, error) {
+	sessionID, err := sm.sessionUseCase.CreateNewSession(userID, "", requestID, 60*60*24)
 
 	if err != nil {
 		return nil, fmt.Errorf("session already exist")
 	}
 
-	sess, _ := sm.sessionUseCase.GetSession(sessionID)
+	sess, _ := sm.sessionUseCase.GetSession(sessionID, requestID)
 
 	csrfCookie := &http.Cookie{
 		Name:     "csrf_token",
@@ -100,13 +100,13 @@ func (sm *SessionsManager) Create(w http.ResponseWriter, userID uint32) (*models
 	return converters.SessionConvertCoreInApi(*sess), nil
 }
 
-func (sm *SessionsManager) DestroyCurrent(w http.ResponseWriter, r *http.Request) error {
+func (sm *SessionsManager) DestroyCurrent(w http.ResponseWriter, r *http.Request, requestID string) error {
 	sessionCookie, err := r.Cookie("session_id")
 	if err != nil {
 		return err
 	}
 
-	ok := sm.sessionUseCase.DeleteSession(sessionCookie.Value)
+	ok := sm.sessionUseCase.DeleteSession(sessionCookie.Value, requestID)
 	if ok != nil {
 		return fmt.Errorf("no session found")
 	}

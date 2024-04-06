@@ -1,6 +1,7 @@
 -- +migrate Up
 -- Создание таблицы пользователей (profile)
 CREATE TABLE IF NOT EXISTS profile (
+    /*CREATE SEQUENCE id AS SMALLINT MAXVALUE 20 START 10,*/
     id SERIAL PRIMARY KEY,
     login TEXT UNIQUE CHECK (LENGTH(login) <= 50),
     password TEXT CHECK (LENGTH(password) <= 200),

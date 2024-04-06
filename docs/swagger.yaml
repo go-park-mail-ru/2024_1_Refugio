@@ -309,7 +309,43 @@ paths:
       summary: Update an email message
       tags:
       - emails
-  /api/v1/auth/emails:
+  /api/v1/auth/emails/incoming:
+    get:
+      description: Get a list of all email messages
+      parameters:
+      - description: Login master
+        in: header
+        name: login
+        required: true
+        type: string
+      - description: CSRF Token
+        in: header
+        name: X-CSRF-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of all email messages
+          schema:
+            $ref: '#/definitions/delivery.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/delivery.Response'
+        "404":
+          description: DB error
+          schema:
+            $ref: '#/definitions/delivery.Response'
+        "500":
+          description: JSON encoding error
+          schema:
+            $ref: '#/definitions/delivery.Response'
+      summary: Display the list of email messages
+      tags:
+      - emails
+  /api/v1/auth/emails/sent:
     get:
       description: Get a list of all email messages
       parameters:

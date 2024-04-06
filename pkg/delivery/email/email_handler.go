@@ -22,6 +22,8 @@ var (
 	EHandler = &EmailHandler{}
 )
 
+var requestIDContextKey interface{} = "requestid"
+
 // EmailHandler represents the handler for email operations.
 type EmailHandler struct {
 	EmailUseCase emailUsecase.EmailUseCase
@@ -32,7 +34,7 @@ func InitializationEmailHandler(emailHandler *EmailHandler) {
 	EHandler = emailHandler
 }
 
-// List displays the list of email messages.
+// Incoming displays the list of email messages.
 // @Summary Display the list of email messages
 // @Description Get a list of all email messages
 // @Tags emails
@@ -43,16 +45,62 @@ func InitializationEmailHandler(emailHandler *EmailHandler) {
 // @Failure 401 {object} delivery.Response "Not Authorized"
 // @Failure 404 {object} delivery.Response "DB error"
 // @Failure 500 {object} delivery.Response "JSON encoding error"
-// @Router /api/v1/auth/emails [get]
-func (h *EmailHandler) List(w http.ResponseWriter, r *http.Request) {
+// @Router /api/v1/auth/emails/incoming [get]
+func (h *EmailHandler) Incoming(w http.ResponseWriter, r *http.Request) {
 	login := r.Header.Get("login")
-	err := h.Sessions.ChekLogin(login, r)
+
+	requestID, ok := r.Context().Value(requestIDContextKey).(string)
+	if !ok {
+		requestID = "none"
+	}
+
+	err := h.Sessions.ChekLogin(login, requestID, r)
 	if err != nil {
 		delivery.HandleError(w, http.StatusBadRequest, "Bad sender login")
 		return
 	}
 
-	emails, err := h.EmailUseCase.GetAllEmails(login, 0, 0)
+	emails, err := h.EmailUseCase.GetAllEmailsIncoming(login, requestID, 0, 0)
+	if err != nil {
+		delivery.HandleError(w, http.StatusNotFound, fmt.Sprintf("DB error: %s", err.Error()))
+		return
+	}
+
+	emailsApi := make([]*emailApi.Email, 0, len(emails))
+	for _, email := range emails {
+		emailsApi = append(emailsApi, converters.EmailConvertCoreInApi(*email))
+	}
+
+	delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"emails": emailsApi})
+}
+
+// Sent displays the list of email messages.
+// @Summary Display the list of email messages
+// @Description Get a list of all email messages
+// @Tags emails
+// @Produce json
+// @Param login header string true "Login master"
+// @Param X-CSRF-Token header string true "CSRF Token"
+// @Success 200 {object} delivery.Response "List of all email messages"
+// @Failure 401 {object} delivery.Response "Not Authorized"
+// @Failure 404 {object} delivery.Response "DB error"
+// @Failure 500 {object} delivery.Response "JSON encoding error"
+// @Router /api/v1/auth/emails/sent [get]
+func (h *EmailHandler) Sent(w http.ResponseWriter, r *http.Request) {
+	login := r.Header.Get("login")
+
+	requestID, ok := r.Context().Value(requestIDContextKey).(string)
+	if !ok {
+		requestID = "none"
+	}
+
+	err := h.Sessions.ChekLogin(login, requestID, r)
+	if err != nil {
+		delivery.HandleError(w, http.StatusBadRequest, "Bad sender login")
+		return
+	}
+
+	emails, err := h.EmailUseCase.GetAllEmailsSent(login, requestID, 0, 0)
 	if err != nil {
 		delivery.HandleError(w, http.StatusNotFound, fmt.Sprintf("DB error: %s", err.Error()))
 		return
@@ -88,14 +136,18 @@ func (h *EmailHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	login := r.Header.Get("login")
+	requestID, ok := r.Context().Value(requestIDContextKey).(string)
+	if !ok {
+		requestID = "none"
+	}
 
-	err = h.Sessions.ChekLogin(login, r)
+	err = h.Sessions.ChekLogin(login, requestID, r)
 	if err != nil {
 		delivery.HandleError(w, http.StatusBadRequest, "Bad sender login")
 		return
 	}
 
-	email, err := h.EmailUseCase.GetEmailByID(id, login)
+	email, err := h.EmailUseCase.GetEmailByID(id, login, requestID)
 	if err != nil {
 		delivery.HandleError(w, http.StatusNotFound, "Email not found")
 		return
@@ -127,13 +179,18 @@ func (h *EmailHandler) Add(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.Sessions.ChekLogin(newEmail.SenderEmail, r)
+	requestID, ok := r.Context().Value(requestIDContextKey).(string)
+	if !ok {
+		requestID = "none"
+	}
+
+	err = h.Sessions.ChekLogin(newEmail.SenderEmail, requestID, r)
 	if err != nil {
 		delivery.HandleError(w, http.StatusBadRequest, "Bad sender login")
 		return
 	}
 
-	_, email, err := h.EmailUseCase.CreateEmail(converters.EmailConvertApiInCore(newEmail))
+	_, email, err := h.EmailUseCase.CreateEmail(converters.EmailConvertApiInCore(newEmail), requestID)
 	if err != nil {
 		delivery.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
 		return
@@ -167,8 +224,12 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 
 	sender := newEmail.SenderEmail
 	recipient := newEmail.RecipientEmail
+	requestID, ok := r.Context().Value(requestIDContextKey).(string)
+	if !ok {
+		requestID = "none"
+	}
 
-	err = h.Sessions.ChekLogin(sender, r)
+	err = h.Sessions.ChekLogin(sender, requestID, r)
 	if err != nil {
 		delivery.HandleError(w, http.StatusBadRequest, "Bad sender login")
 		return
@@ -176,19 +237,19 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 
 	switch {
 	case isValidMailhubFormat(sender) && isValidMailhubFormat(recipient):
-		err = h.EmailUseCase.CheckRecipientEmail(recipient)
+		err = h.EmailUseCase.CheckRecipientEmail(recipient, requestID)
 		if err != nil {
 			delivery.HandleError(w, http.StatusBadRequest, "Bad login")
 			return
 		}
 
-		email_id, email, err := h.EmailUseCase.CreateEmail(converters.EmailConvertApiInCore(newEmail))
+		email_id, email, err := h.EmailUseCase.CreateEmail(converters.EmailConvertApiInCore(newEmail), requestID)
 		if err != nil {
 			delivery.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
 			return
 		}
 
-		err = h.EmailUseCase.CreateProfileEmail(email_id, sender, recipient)
+		err = h.EmailUseCase.CreateProfileEmail(email_id, sender, recipient, requestID)
 		if err != nil {
 			delivery.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
 			return
@@ -255,15 +316,20 @@ func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) {
 		delivery.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
 		return
 	}
-	updatedEmail.ID = id
 
-	err = h.Sessions.ChekLogin(updatedEmail.SenderEmail, r)
+	updatedEmail.ID = id
+	requestID, ok := r.Context().Value(requestIDContextKey).(string)
+	if !ok {
+		requestID = "none"
+	}
+
+	err = h.Sessions.ChekLogin(updatedEmail.SenderEmail, requestID, r)
 	if err != nil {
 		delivery.HandleError(w, http.StatusBadRequest, "Bad sender login")
 		return
 	}
 
-	ok, err := h.EmailUseCase.UpdateEmail(converters.EmailConvertApiInCore(updatedEmail))
+	ok, err = h.EmailUseCase.UpdateEmail(converters.EmailConvertApiInCore(updatedEmail), requestID)
 	if err != nil {
 		delivery.HandleError(w, http.StatusInternalServerError, "Failed to update email message")
 		return
@@ -294,14 +360,18 @@ func (h *EmailHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	login := r.Header.Get("login")
+	requestID, ok := r.Context().Value(requestIDContextKey).(string)
+	if !ok {
+		requestID = "none"
+	}
 
-	err = h.Sessions.ChekLogin(login, r)
+	err = h.Sessions.ChekLogin(login, requestID, r)
 	if err != nil {
 		delivery.HandleError(w, http.StatusBadRequest, "Bad sender login")
 		return
 	}
 
-	ok, err := h.EmailUseCase.DeleteEmail(id, login)
+	ok, err = h.EmailUseCase.DeleteEmail(id, login, requestID)
 	if err != nil {
 		delivery.HandleError(w, http.StatusInternalServerError, "Failed to delete email message")
 		return

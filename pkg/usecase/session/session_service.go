@@ -18,22 +18,22 @@ func NewSessionUseCase(repo repository.SessionRepository) *SessionUseCase {
 }
 
 // CreateNewSession initiates a new session for a user.
-func (uc *SessionUseCase) CreateNewSession(userID uint32, device string, lifeTime int) (string, error) {
-	return uc.sessionRepo.CreateSession(userID, device, lifeTime)
+func (uc *SessionUseCase) CreateNewSession(userID uint32, device, requestID string, lifeTime int) (string, error) {
+	return uc.sessionRepo.CreateSession(userID, device, requestID, lifeTime)
 }
 
 // GetSession fetches a session by its unique identifier.
-func (uc *SessionUseCase) GetSession(sessionID string) (*domain.Session, error) {
-	return uc.sessionRepo.GetSessionByID(sessionID)
+func (uc *SessionUseCase) GetSession(sessionID, requestID string) (*domain.Session, error) {
+	return uc.sessionRepo.GetSessionByID(sessionID, requestID)
 }
 
-func (uc *SessionUseCase) GetLogin(sessionID string) (string, error) {
-	return uc.sessionRepo.GetLoginBySessionID(sessionID)
+func (uc *SessionUseCase) GetLogin(sessionID, requestID string) (string, error) {
+	return uc.sessionRepo.GetLoginBySessionID(sessionID, requestID)
 }
 
 // DeleteSession terminates a session identified by its ID.
-func (uc *SessionUseCase) DeleteSession(sessionID string) error {
-	return uc.sessionRepo.DeleteSessionByID(sessionID)
+func (uc *SessionUseCase) DeleteSession(sessionID, requestID string) error {
+	return uc.sessionRepo.DeleteSessionByID(sessionID, requestID)
 }
 
 // CleanupExpiredSessions removes sessions that have exceeded their lifetime.

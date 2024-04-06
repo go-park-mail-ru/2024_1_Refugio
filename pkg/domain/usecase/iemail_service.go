@@ -6,22 +6,25 @@ import (
 
 // EmailUseCase represents the use case for working with emails.
 type EmailUseCase interface {
-	// GetAllEmails returns all emails.
-	GetAllEmails(login string, offset, limit int) ([]*emailCore.Email, error)
+	// GetAllEmailsIncoming returns all emails incoming.
+	GetAllEmailsIncoming(login, requestID string, offset, limit int) ([]*emailCore.Email, error)
+
+	// GetAllEmailsSent returns all emails sent.
+	GetAllEmailsSent(login, requestID string, offset, limit int) ([]*emailCore.Email, error)
 
 	// GetEmailByID returns the email by its ID.
-	GetEmailByID(id uint64, login string) (*emailCore.Email, error)
+	GetEmailByID(id uint64, login, requestID string) (*emailCore.Email, error)
 
 	// CreateEmail creates a new email.
-	CreateEmail(newEmail *emailCore.Email) (int64, *emailCore.Email, error)
+	CreateEmail(newEmail *emailCore.Email, requestID string) (int64, *emailCore.Email, error)
 
-	CreateProfileEmail(email_id int64, sender, recipient string) error
+	CreateProfileEmail(email_id int64, sender, recipient, requestID string) error
 
 	// UpdateEmail updates the information of an email.
-	UpdateEmail(updatedEmail *emailCore.Email) (bool, error)
+	UpdateEmail(updatedEmail *emailCore.Email, requestID string) (bool, error)
 
 	// DeleteEmail deletes the email.
-	DeleteEmail(id uint64, login string) (bool, error)
+	DeleteEmail(id uint64, login, requestID string) (bool, error)
 
-	CheckRecipientEmail(recipient string) error
+	CheckRecipientEmail(recipient, requestID string) error
 }

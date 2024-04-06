@@ -7,15 +7,12 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/kataras/requestid"
 	"github.com/rs/cors"
-	"github.com/rs/zerolog"
 	migrate "github.com/rubenv/sql-migrate"
-	sqldblogger "github.com/simukti/sqldb-logger"
-	"github.com/simukti/sqldb-logger/logadapter/zerologadapter"
 	"log"
 	"mail/pkg/delivery/middleware"
 	"mail/pkg/delivery/session"
+	"mail/pkg/domain/logger"
 	"net/http"
-	"os"
 	"time"
 
 	httpSwagger "github.com/swaggo/http-swagger/v2"
@@ -45,9 +42,6 @@ func main() {
 		log.Fatalln("Can't parse config", errDb)
 	}
 	defer db.Close()
-
-	loggerAdapter := zerologadapter.New(zerolog.New(os.Stdout))
-	db = sqldblogger.OpenDriver(dsn, db.Driver(), loggerAdapter /*, using_default_options*/) // db is STILL *sql.DB
 
 	errDb = db.Ping()
 	if errDb != nil {
@@ -85,19 +79,14 @@ func main() {
 		Sessions:    sessionsManager,
 	}
 
-	logFile := "log.txt"
-	f, err := os.OpenFile(logFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		fmt.Println("Error OpenFile InitializationAcceslog")
-		return
-	}
-	defer f.Close()
-	Logrus := middleware.InitializationAcceslog(f)
+	Logrus := logger.InitializationAccesLog()
+	Logger := new(middleware.Logger)
+	Logger.Logger = Logrus
 
 	router := mux.NewRouter()
 
 	auth := mux.NewRouter().PathPrefix("/api/v1/auth").Subrouter()
-	auth.Use(Logrus.AccessLogMiddleware, middleware.PanicMiddleware, middleware.AuthMiddleware)
+	auth.Use(Logger.AccessLogMiddleware, middleware.PanicMiddleware, middleware.AuthMiddleware)
 	router.PathPrefix("/api/v1/auth").Handler(auth)
 
 	auth.HandleFunc("/verify-auth", userHandler.VerifyAuth).Methods("GET", "OPTIONS")
@@ -105,7 +94,8 @@ func main() {
 	auth.HandleFunc("/user/update", userHandler.UpdateUserData).Methods("PUT", "OPTIONS")
 	auth.HandleFunc("/user/delete/{id}", userHandler.DeleteUserData).Methods("DELETE", "OPTIONS")
 	auth.HandleFunc("/user/avatar/upload", userHandler.UploadUserAvatar).Methods("POST", "OPTIONS")
-	auth.HandleFunc("/emails", emailHandler.List).Methods("GET", "OPTIONS")
+	auth.HandleFunc("/emails/incoming", emailHandler.Incoming).Methods("GET", "OPTIONS")
+	auth.HandleFunc("/emails/sent", emailHandler.Sent).Methods("GET", "OPTIONS")
 	auth.HandleFunc("/email/{id}", emailHandler.GetByID).Methods("GET", "OPTIONS")
 	auth.HandleFunc("/email/add", emailHandler.Add).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/email/update/{id}", emailHandler.Update).Methods("PUT", "OPTIONS")
@@ -113,7 +103,7 @@ func main() {
 	auth.HandleFunc("/email/send", emailHandler.Send).Methods("POST", "OPTIONS")
 
 	logRouter := mux.NewRouter().PathPrefix("/api/v1").Subrouter()
-	logRouter.Use(Logrus.AccessLogMiddleware, middleware.PanicMiddleware)
+	logRouter.Use(Logger.AccessLogMiddleware, middleware.PanicMiddleware)
 	router.PathPrefix("/api/v1").Handler(logRouter)
 
 	logRouter.HandleFunc("/login", userHandler.Login).Methods("POST", "OPTIONS")
@@ -138,7 +128,7 @@ func main() {
 	fmt.Printf("The server is running on http://localhost:%d\n", port)
 	fmt.Printf("Swagger is running on http://localhost:%d/swagger/index.html\n", port)
 
-	err = http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", port), requestid.Handler(corsHandler))
+	err := http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", port), requestid.Handler(corsHandler))
 	if err != nil {
 		fmt.Println("Error when starting the server:", err)
 	}

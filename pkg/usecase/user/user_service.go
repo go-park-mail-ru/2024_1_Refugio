@@ -20,28 +20,28 @@ func NewUserUseCase(repo repository.UserRepository) *UserUseCase {
 }
 
 // GetAllUsers returns all users.
-func (uc *UserUseCase) GetAllUsers() ([]*domain.User, error) {
-	return uc.repo.GetAll(0, 0)
+func (uc *UserUseCase) GetAllUsers(requestID string) ([]*domain.User, error) {
+	return uc.repo.GetAll(0, 0, requestID)
 }
 
 // GetUserByID returns the user by its ID.
-func (uc *UserUseCase) GetUserByID(id uint32) (*domain.User, error) {
-	return uc.repo.GetByID(id)
+func (uc *UserUseCase) GetUserByID(id uint32, requestID string) (*domain.User, error) {
+	return uc.repo.GetByID(id, requestID)
 }
 
 // GetUserByLogin returns the user by login.
-func (uc *UserUseCase) GetUserByLogin(login string, password string) (*domain.User, error) {
-	return uc.repo.GetUserByLogin(login, password)
+func (uc *UserUseCase) GetUserByLogin(login, password, requestID string) (*domain.User, error) {
+	return uc.repo.GetUserByLogin(login, password, requestID)
 }
 
 // CreateUser creates a new user.
-func (uc *UserUseCase) CreateUser(user *domain.User) (*domain.User, error) {
-	return uc.repo.Add(user)
+func (uc *UserUseCase) CreateUser(user *domain.User, requestID string) (*domain.User, error) {
+	return uc.repo.Add(user, requestID)
 }
 
 // IsLoginUnique checks if the provided login is unique among all users.
-func (uc *UserUseCase) IsLoginUnique(login string) (bool, error) {
-	users, err := uc.repo.GetAll(0, 0)
+func (uc *UserUseCase) IsLoginUnique(login, requestID string) (bool, error) {
+	users, err := uc.repo.GetAll(0, 0, requestID)
 	if err != nil {
 		return false, err
 	}
@@ -56,8 +56,8 @@ func (uc *UserUseCase) IsLoginUnique(login string) (bool, error) {
 }
 
 // UpdateUser updates user data based on the provided ID.
-func (uc *UserUseCase) UpdateUser(userNew *domain.User) (*domain.User, error) {
-	userOld, err := uc.repo.GetByID(userNew.ID)
+func (uc *UserUseCase) UpdateUser(userNew *domain.User, requestID string) (*domain.User, error) {
+	userOld, err := uc.repo.GetByID(userNew.ID, requestID)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +87,7 @@ func (uc *UserUseCase) UpdateUser(userNew *domain.User) (*domain.User, error) {
 		userOld.AvatarID = userNew.AvatarID
 	}
 
-	status, err := uc.repo.Update(userOld)
+	status, err := uc.repo.Update(userOld, requestID)
 	if err != nil {
 		return nil, err
 	}
@@ -99,6 +99,6 @@ func (uc *UserUseCase) UpdateUser(userNew *domain.User) (*domain.User, error) {
 }
 
 // DeleteUserByID deletes the user with the given ID.
-func (uc *UserUseCase) DeleteUserByID(id uint32) (bool, error) {
-	return uc.repo.Delete(id)
+func (uc *UserUseCase) DeleteUserByID(id uint32, requestID string) (bool, error) {
+	return uc.repo.Delete(id, requestID)
 }
