@@ -45,7 +45,7 @@ func InitializationEmailHandler(emailHandler *EmailHandler) {
 // @Failure 401 {object} delivery.Response "Not Authorized"
 // @Failure 404 {object} delivery.Response "DB error"
 // @Failure 500 {object} delivery.Response "JSON encoding error"
-// @Router /api/v1/auth/emails/incoming [get]
+// @Router /api/v1/emails/incoming [get]
 func (h *EmailHandler) Incoming(w http.ResponseWriter, r *http.Request) {
 	login := r.Header.Get("login")
 
@@ -85,7 +85,7 @@ func (h *EmailHandler) Incoming(w http.ResponseWriter, r *http.Request) {
 // @Failure 401 {object} delivery.Response "Not Authorized"
 // @Failure 404 {object} delivery.Response "DB error"
 // @Failure 500 {object} delivery.Response "JSON encoding error"
-// @Router /api/v1/auth/emails/sent [get]
+// @Router /api/v1/emails/sent [get]
 func (h *EmailHandler) Sent(w http.ResponseWriter, r *http.Request) {
 	login := r.Header.Get("login")
 
@@ -126,7 +126,7 @@ func (h *EmailHandler) Sent(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} delivery.Response "Bad id in request"
 // @Failure 401 {object} delivery.Response "Not Authorized"
 // @Failure 404 {object} delivery.Response "Email not found"
-// @Router /api/v1/auth/email/{id} [get]
+// @Router /api/v1/email/{id} [get]
 func (h *EmailHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.ParseUint(vars["id"], 10, 64)
@@ -156,49 +156,6 @@ func (h *EmailHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*email)})
 }
 
-// Add adds a new email message.
-// @Summary Add a new email message
-// @Description Add a new email message to the system
-// @Tags emails
-// @Accept json
-// @Produce json
-// @Param email body delivery.EmailSwag true "Email message in JSON format"
-// @Param X-CSRF-Token header string true "CSRF Token"
-// @Success 200 {object} delivery.Response "ID of the added email message"
-// @Failure 400 {object} delivery.Response "Bad JSON in request"
-// @Failure 401 {object} delivery.Response "Not Authorized"
-// @Failure 500 {object} delivery.Response "Failed to add email message"
-// @Router /api/v1/auth/email/add [post]
-func (h *EmailHandler) Add(w http.ResponseWriter, r *http.Request) {
-	var newEmail emailApi.Email
-	decoder := schema.NewDecoder()
-	decoder.IgnoreUnknownKeys(true)
-	err := json.NewDecoder(r.Body).Decode(&newEmail)
-	if err != nil {
-		delivery.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
-		return
-	}
-
-	requestID, ok := r.Context().Value(requestIDContextKey).(string)
-	if !ok {
-		requestID = "none"
-	}
-
-	err = h.Sessions.ChekLogin(newEmail.SenderEmail, requestID, r)
-	if err != nil {
-		delivery.HandleError(w, http.StatusBadRequest, "Bad sender login")
-		return
-	}
-
-	_, email, err := h.EmailUseCase.CreateEmail(converters.EmailConvertApiInCore(newEmail), requestID)
-	if err != nil {
-		delivery.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
-		return
-	}
-
-	delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*email)})
-}
-
 // Send adds a new email message.
 // @Summary Send a new email message
 // @Description Send a new email message to the system
@@ -211,7 +168,7 @@ func (h *EmailHandler) Add(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} delivery.Response "Bad JSON in request"
 // @Failure 401 {object} delivery.Response "Not Authorized"
 // @Failure 500 {object} delivery.Response "Failed to add email message"
-// @Router /api/v1/auth/email/send [post]
+// @Router /api/v1/email/send [post]
 func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 	var newEmail emailApi.Email
 	decoder := schema.NewDecoder()
@@ -229,14 +186,14 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 		requestID = "none"
 	}
 
-	err = h.Sessions.ChekLogin(sender, requestID, r)
-	if err != nil {
-		delivery.HandleError(w, http.StatusBadRequest, "Bad sender login")
-		return
-	}
-
 	switch {
 	case isValidMailhubFormat(sender) && isValidMailhubFormat(recipient):
+		err = h.Sessions.ChekLogin(sender, requestID, r)
+		if err != nil {
+			delivery.HandleError(w, http.StatusBadRequest, "Bad sender login")
+			return
+		}
+
 		err = h.EmailUseCase.CheckRecipientEmail(recipient, requestID)
 		if err != nil {
 			delivery.HandleError(w, http.StatusBadRequest, "Bad login")
@@ -267,13 +224,25 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 		delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*email)})*/
 		return
 	case isValidMailhubFormat(sender) == false && isValidMailhubFormat(recipient) == true:
-		/*email_id, email, err := h.EmailUseCase.CreateEmail(converters.EmailConvertApiInCore(newEmail))
+		err = h.EmailUseCase.CheckRecipientEmail(recipient, requestID)
+		if err != nil {
+			delivery.HandleError(w, http.StatusBadRequest, "Bad login")
+			return
+		}
+
+		email_id, email, err := h.EmailUseCase.CreateEmail(converters.EmailConvertApiInCore(newEmail), requestID)
 		if err != nil {
 			delivery.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
 			return
 		}
 
-		delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*email)})*/
+		err = h.EmailUseCase.CreateProfileEmail(email_id, sender, recipient, requestID)
+		if err != nil {
+			delivery.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
+			return
+		}
+
+		delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*email)})
 		return
 	}
 
@@ -299,7 +268,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} delivery.Response "Bad id or Bad JSON"
 // @Failure 401 {object} delivery.Response "Not Authorized"
 // @Failure 500 {object} delivery.Response "Failed to update email message"
-// @Router /api/v1/auth/email/update/{id} [put]
+// @Router /api/v1/email/update/{id} [put]
 func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.ParseUint(vars["id"], 10, 64)
@@ -350,7 +319,7 @@ func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} delivery.Response "Bad id"
 // @Failure 401 {object} delivery.Response "Not Authorized"
 // @Failure 500 {object} delivery.Response "Failed to delete email message"
-// @Router /api/v1/auth/email/delete/{id} [delete]
+// @Router /api/v1/email/delete/{id} [delete]
 func (h *EmailHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.ParseUint(vars["id"], 10, 64)

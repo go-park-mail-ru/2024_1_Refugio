@@ -1,13 +1,18 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
+	"net/mail"
+
+	"github.com/mhale/smtpd"
 )
 
 const (
-	smtpPort = "2525"
+	smtpPort = "587"
 )
 
 type Server struct {
@@ -15,6 +20,42 @@ type Server struct {
 }
 
 func main() {
+	serverAddr := "0.0.0.0:587"
+
+	err := smtpd.ListenAndServe(serverAddr, mailHandler, "MailHubSMTP", "")
+	if err != nil {
+		log.Fatal("Error starting SMTP server:", err)
+	}
+}
+
+func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
+	msg, err := mail.ReadMessage(bytes.NewReader(data))
+	if err != nil {
+		log.Println("Error reading message:", err)
+		return err
+	}
+
+	fmt.Println(">-------------------------------------------------<")
+
+	for _, recipient := range to {
+		fmt.Println("Received mail from:", from)
+		fmt.Println("To:", recipient)
+		fmt.Println("Subject:", msg.Header.Get("Subject"))
+
+		body, err := ioutil.ReadAll(msg.Body)
+		if err != nil {
+			log.Println("Error reading message body:", err)
+			return err
+		}
+		fmt.Println("Body:", string(body))
+
+		return nil
+	}
+
+	return nil
+}
+
+/* func main() {
 	server := Server{
 		Address: "0.0.0.0",
 	}
@@ -39,6 +80,6 @@ func (s *Server) Listen() {
 		}
 		fmt.Println("Listen conn: ", conn)
 
-		s.handleConnection(conn) //go s.handleConnection(conn)
+		go s.handleConnection(conn)
 	}
-}
+} */

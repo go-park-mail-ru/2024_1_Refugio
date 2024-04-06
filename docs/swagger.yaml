@@ -105,7 +105,84 @@ info:
   title: API Mail
   version: "1.0"
 paths:
-  /api/v1/auth/email/{id}:
+  /api/v1/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Handles user login.
+      parameters:
+      - description: User credentials for login
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/delivery.UserSwag'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login successful
+          schema:
+            $ref: '#/definitions/delivery.Response'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/delivery.ErrorResponse'
+        "401":
+          description: Invalid credentials
+          schema:
+            $ref: '#/definitions/delivery.ErrorResponse'
+        "500":
+          description: Failed to create session
+          schema:
+            $ref: '#/definitions/delivery.ErrorResponse'
+      summary: User login
+      tags:
+      - users
+  /api/v1/auth/logout:
+    post:
+      description: Handles user logout.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Logout successful
+          schema:
+            $ref: '#/definitions/delivery.Response'
+      summary: User logout
+      tags:
+      - users
+  /api/v1/auth/signup:
+    post:
+      consumes:
+      - application/json
+      description: Handles user signup.
+      parameters:
+      - description: New user details for signup
+        in: body
+        name: newUser
+        required: true
+        schema:
+          $ref: '#/definitions/delivery.UserSwag'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Signup successful
+          schema:
+            $ref: '#/definitions/delivery.Response'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/delivery.ErrorResponse'
+        "500":
+          description: Failed to add user
+          schema:
+            $ref: '#/definitions/delivery.ErrorResponse'
+      summary: User signup
+      tags:
+      - users
+  /api/v1/email/{id}:
     get:
       description: Get an email message by its unique identifier
       parameters:
@@ -146,46 +223,7 @@ paths:
       summary: Get an email message by ID
       tags:
       - emails
-  /api/v1/auth/email/add:
-    post:
-      consumes:
-      - application/json
-      description: Add a new email message to the system
-      parameters:
-      - description: Email message in JSON format
-        in: body
-        name: email
-        required: true
-        schema:
-          $ref: '#/definitions/delivery.EmailSwag'
-      - description: CSRF Token
-        in: header
-        name: X-CSRF-Token
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: ID of the added email message
-          schema:
-            $ref: '#/definitions/delivery.Response'
-        "400":
-          description: Bad JSON in request
-          schema:
-            $ref: '#/definitions/delivery.Response'
-        "401":
-          description: Not Authorized
-          schema:
-            $ref: '#/definitions/delivery.Response'
-        "500":
-          description: Failed to add email message
-          schema:
-            $ref: '#/definitions/delivery.Response'
-      summary: Add a new email message
-      tags:
-      - emails
-  /api/v1/auth/email/delete/{id}:
+  /api/v1/email/delete/{id}:
     delete:
       description: Delete an email message based on its identifier
       parameters:
@@ -226,7 +264,7 @@ paths:
       summary: Delete an email message
       tags:
       - emails
-  /api/v1/auth/email/send:
+  /api/v1/email/send:
     post:
       consumes:
       - application/json
@@ -265,7 +303,7 @@ paths:
       summary: Send a new email message
       tags:
       - emails
-  /api/v1/auth/email/update/{id}:
+  /api/v1/email/update/{id}:
     put:
       consumes:
       - application/json
@@ -309,7 +347,7 @@ paths:
       summary: Update an email message
       tags:
       - emails
-  /api/v1/auth/emails/incoming:
+  /api/v1/emails/incoming:
     get:
       description: Get a list of all email messages
       parameters:
@@ -345,7 +383,7 @@ paths:
       summary: Display the list of email messages
       tags:
       - emails
-  /api/v1/auth/emails/sent:
+  /api/v1/emails/sent:
     get:
       description: Get a list of all email messages
       parameters:
@@ -381,7 +419,7 @@ paths:
       summary: Display the list of email messages
       tags:
       - emails
-  /api/v1/auth/user/avatar/upload:
+  /api/v1/user/avatar/upload:
     post:
       consumes:
       - multipart/form-data
@@ -417,7 +455,7 @@ paths:
       summary: Upload user avatar
       tags:
       - users
-  /api/v1/auth/user/delete/{id}:
+  /api/v1/user/delete/{id}:
     delete:
       consumes:
       - application/json
@@ -455,7 +493,7 @@ paths:
       summary: Delete user data
       tags:
       - users
-  /api/v1/auth/user/get:
+  /api/v1/user/get:
     get:
       description: Retrieve the user associated with the current session
       parameters:
@@ -482,7 +520,7 @@ paths:
       summary: Get user by session
       tags:
       - users
-  /api/v1/auth/user/update:
+  /api/v1/user/update:
     put:
       consumes:
       - application/json
@@ -521,7 +559,7 @@ paths:
       summary: Update user data
       tags:
       - users
-  /api/v1/auth/verify-auth:
+  /api/v1/verify-auth:
     get:
       description: Verify user authentication using sessions
       parameters:
@@ -542,83 +580,6 @@ paths:
           schema:
             $ref: '#/definitions/delivery.Response'
       summary: Verify user authentication
-      tags:
-      - users
-  /api/v1/login:
-    post:
-      consumes:
-      - application/json
-      description: Handles user login.
-      parameters:
-      - description: User credentials for login
-        in: body
-        name: credentials
-        required: true
-        schema:
-          $ref: '#/definitions/delivery.UserSwag'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Login successful
-          schema:
-            $ref: '#/definitions/delivery.Response'
-        "400":
-          description: Invalid request body
-          schema:
-            $ref: '#/definitions/delivery.ErrorResponse'
-        "401":
-          description: Invalid credentials
-          schema:
-            $ref: '#/definitions/delivery.ErrorResponse'
-        "500":
-          description: Failed to create session
-          schema:
-            $ref: '#/definitions/delivery.ErrorResponse'
-      summary: User login
-      tags:
-      - users
-  /api/v1/logout:
-    post:
-      description: Handles user logout.
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Logout successful
-          schema:
-            $ref: '#/definitions/delivery.Response'
-      summary: User logout
-      tags:
-      - users
-  /api/v1/signup:
-    post:
-      consumes:
-      - application/json
-      description: Handles user signup.
-      parameters:
-      - description: New user details for signup
-        in: body
-        name: newUser
-        required: true
-        schema:
-          $ref: '#/definitions/delivery.UserSwag'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Signup successful
-          schema:
-            $ref: '#/definitions/delivery.Response'
-        "400":
-          description: Invalid request body
-          schema:
-            $ref: '#/definitions/delivery.ErrorResponse'
-        "500":
-          description: Failed to add user
-          schema:
-            $ref: '#/definitions/delivery.ErrorResponse'
-      summary: User signup
       tags:
       - users
 swagger: "2.0"

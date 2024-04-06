@@ -1,0 +1,9 @@
+version: '3'
+
+services:
+  smtp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "25:587"

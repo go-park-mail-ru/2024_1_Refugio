@@ -15,9 +15,9 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/v1/auth/email/add": {
+        "/api/v1/auth/login": {
             "post": {
-                "description": "Add a new email message to the system",
+                "description": "Handles user login.",
                 "consumes": [
                     "application/json"
                 ],
@@ -25,48 +25,61 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "emails"
+                    "users"
                 ],
-                "summary": "Add a new email message",
+                "summary": "User login",
                 "parameters": [
                     {
-                        "description": "Email message in JSON format",
-                        "name": "email",
+                        "description": "User credentials for login",
+                        "name": "credentials",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/delivery.EmailSwag"
+                            "$ref": "#/definitions/delivery.UserSwag"
                         }
-                    },
-                    {
-                        "type": "string",
-                        "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
-                        "in": "header",
-                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "ID of the added email message",
+                        "description": "Login successful",
                         "schema": {
                             "$ref": "#/definitions/delivery.Response"
                         }
                     },
                     "400": {
-                        "description": "Bad JSON in request",
+                        "description": "Invalid request body",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/delivery.ErrorResponse"
                         }
                     },
                     "401": {
-                        "description": "Not Authorized",
+                        "description": "Invalid credentials",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/delivery.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Failed to add email message",
+                        "description": "Failed to create session",
+                        "schema": {
+                            "$ref": "#/definitions/delivery.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/logout": {
+            "post": {
+                "description": "Handles user logout.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "User logout",
+                "responses": {
+                    "200": {
+                        "description": "Logout successful",
                         "schema": {
                             "$ref": "#/definitions/delivery.Response"
                         }
@@ -74,7 +87,53 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/auth/email/delete/{id}": {
+        "/api/v1/auth/signup": {
+            "post": {
+                "description": "Handles user signup.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "User signup",
+                "parameters": [
+                    {
+                        "description": "New user details for signup",
+                        "name": "newUser",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/delivery.UserSwag"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Signup successful",
+                        "schema": {
+                            "$ref": "#/definitions/delivery.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/delivery.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to add user",
+                        "schema": {
+                            "$ref": "#/definitions/delivery.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/email/delete/{id}": {
             "delete": {
                 "description": "Delete an email message based on its identifier",
                 "produces": [
@@ -135,7 +194,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/auth/email/send": {
+        "/api/v1/email/send": {
             "post": {
                 "description": "Send a new email message to the system",
                 "consumes": [
@@ -194,7 +253,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/auth/email/update/{id}": {
+        "/api/v1/email/update/{id}": {
             "put": {
                 "description": "Update an existing email message based on its identifier",
                 "consumes": [
@@ -260,7 +319,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/auth/email/{id}": {
+        "/api/v1/email/{id}": {
             "get": {
                 "description": "Get an email message by its unique identifier",
                 "produces": [
@@ -321,7 +380,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/auth/emails/incoming": {
+        "/api/v1/emails/incoming": {
             "get": {
                 "description": "Get a list of all email messages",
                 "produces": [
@@ -375,7 +434,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/auth/emails/sent": {
+        "/api/v1/emails/sent": {
             "get": {
                 "description": "Get a list of all email messages",
                 "produces": [
@@ -429,7 +488,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/auth/user/avatar/upload": {
+        "/api/v1/user/avatar/upload": {
             "post": {
                 "security": [
                     {
@@ -485,7 +544,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/auth/user/delete/{id}": {
+        "/api/v1/user/delete/{id}": {
             "delete": {
                 "description": "Handles requests to delete user data.",
                 "consumes": [
@@ -542,7 +601,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/auth/user/get": {
+        "/api/v1/user/get": {
             "get": {
                 "description": "Retrieve the user associated with the current session",
                 "produces": [
@@ -583,7 +642,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/auth/user/update": {
+        "/api/v1/user/update": {
             "put": {
                 "description": "Handles requests to update user data.",
                 "consumes": [
@@ -642,7 +701,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/auth/verify-auth": {
+        "/api/v1/verify-auth": {
             "get": {
                 "description": "Verify user authentication using sessions",
                 "produces": [
@@ -672,124 +731,6 @@ const docTemplate = `{
                         "description": "Not Authorized",
                         "schema": {
                             "$ref": "#/definitions/delivery.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/login": {
-            "post": {
-                "description": "Handles user login.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "User login",
-                "parameters": [
-                    {
-                        "description": "User credentials for login",
-                        "name": "credentials",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/delivery.UserSwag"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Login successful",
-                        "schema": {
-                            "$ref": "#/definitions/delivery.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request body",
-                        "schema": {
-                            "$ref": "#/definitions/delivery.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Invalid credentials",
-                        "schema": {
-                            "$ref": "#/definitions/delivery.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Failed to create session",
-                        "schema": {
-                            "$ref": "#/definitions/delivery.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/logout": {
-            "post": {
-                "description": "Handles user logout.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "User logout",
-                "responses": {
-                    "200": {
-                        "description": "Logout successful",
-                        "schema": {
-                            "$ref": "#/definitions/delivery.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/signup": {
-            "post": {
-                "description": "Handles user signup.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "User signup",
-                "parameters": [
-                    {
-                        "description": "New user details for signup",
-                        "name": "newUser",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/delivery.UserSwag"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Signup successful",
-                        "schema": {
-                            "$ref": "#/definitions/delivery.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request body",
-                        "schema": {
-                            "$ref": "#/definitions/delivery.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Failed to add user",
-                        "schema": {
-                            "$ref": "#/definitions/delivery.ErrorResponse"
                         }
                     }
                 }
