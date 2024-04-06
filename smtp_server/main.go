@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"net/mail"
+	"regexp"
 
 	"github.com/mhale/smtpd"
 )
@@ -48,6 +49,11 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 		return err
 	}
 
+	if !isValidEmailFormat(recipientAddr.Address) {
+		log.Println("domain in the login is not suitable:", err)
+		return fmt.Errorf("domain in the login is not suitable")
+	}
+
 	topic := msg.Header.Get("Subject")
 	body, err := ioutil.ReadAll(msg.Body)
 	if err != nil {
@@ -83,6 +89,13 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 	}
 
 	return nil
+}
+
+// isValidEmailFormat checks if the provided email string matches the specific format for emails ending with "@mailhub.ru".
+func isValidEmailFormat(email string) bool {
+	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@mailhub\.su$`)
+
+	return emailRegex.MatchString(email)
 }
 
 /* func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
