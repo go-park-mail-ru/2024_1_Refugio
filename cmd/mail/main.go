@@ -5,11 +5,13 @@ import (
 	"fmt"
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jmoiron/sqlx"
+	"github.com/kataras/requestid"
 	"github.com/rs/cors"
 	migrate "github.com/rubenv/sql-migrate"
 	"log"
 	"mail/pkg/delivery/middleware"
 	"mail/pkg/delivery/session"
+	"mail/pkg/domain/logger"
 	"net/http"
 	"time"
 
@@ -41,6 +43,7 @@ func main() {
 		log.Fatalln("Can't parse config", errDb)
 	}
 	defer db.Close()
+
 	errDb = db.Ping()
 	if errDb != nil {
 		log.Fatalln(errDb)
@@ -77,12 +80,14 @@ func main() {
 		Sessions:    sessionsManager,
 	}
 
-	Logrus := middleware.InitializationAcceslog()
+	Logrus := logger.InitializationAccesLog()
+	Logger := new(middleware.Logger)
+	Logger.Logger = Logrus
 
 	router := mux.NewRouter()
 
 	auth := mux.NewRouter().PathPrefix("/api/v1/auth").Subrouter()
-	auth.Use(Logrus.AccessLogMiddleware, middleware.PanicMiddleware, middleware.AuthMiddleware)
+	auth.Use(Logger.AccessLogMiddleware, middleware.PanicMiddleware, middleware.AuthMiddleware)
 	router.PathPrefix("/api/v1/auth").Handler(auth)
 
 	auth.HandleFunc("/verify-auth", userHandler.VerifyAuth).Methods("GET", "OPTIONS")
@@ -90,7 +95,8 @@ func main() {
 	auth.HandleFunc("/user/update", userHandler.UpdateUserData).Methods("PUT", "OPTIONS")
 	auth.HandleFunc("/user/delete/{id}", userHandler.DeleteUserData).Methods("DELETE", "OPTIONS")
 	auth.HandleFunc("/user/avatar/upload", userHandler.UploadUserAvatar).Methods("POST", "OPTIONS")
-	auth.HandleFunc("/emails", emailHandler.List).Methods("GET", "OPTIONS")
+	auth.HandleFunc("/emails/incoming", emailHandler.Incoming).Methods("GET", "OPTIONS")
+	auth.HandleFunc("/emails/sent", emailHandler.Sent).Methods("GET", "OPTIONS")
 	auth.HandleFunc("/email/{id}", emailHandler.GetByID).Methods("GET", "OPTIONS")
 	auth.HandleFunc("/email/add", emailHandler.Add).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/email/update/{id}", emailHandler.Update).Methods("PUT", "OPTIONS")
@@ -98,7 +104,7 @@ func main() {
 	auth.HandleFunc("/email/send", emailHandler.Send).Methods("POST", "OPTIONS")
 
 	logRouter := mux.NewRouter().PathPrefix("/api/v1").Subrouter()
-	logRouter.Use(Logrus.AccessLogMiddleware, middleware.PanicMiddleware)
+	logRouter.Use(Logger.AccessLogMiddleware, middleware.PanicMiddleware)
 	router.PathPrefix("/api/v1").Handler(logRouter)
 
 	logRouter.HandleFunc("/login", userHandler.Login).Methods("POST", "OPTIONS")
@@ -123,7 +129,7 @@ func main() {
 	fmt.Printf("The server is running on http://localhost:%d\n", port)
 	fmt.Printf("Swagger is running on http://localhost:%d/swagger/index.html\n", port)
 
-	err := http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", port), corsHandler)
+	err := http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", port), requestid.Handler(corsHandler))
 	if err != nil {
 		fmt.Println("Error when starting the server:", err)
 	}

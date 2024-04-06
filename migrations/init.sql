@@ -1,6 +1,7 @@
 -- +migrate Up
 -- Создание таблицы пользователей (profile)
 CREATE TABLE IF NOT EXISTS profile (
+    /*CREATE SEQUENCE id AS SMALLINT MAXVALUE 20 START 10,*/
     id SERIAL PRIMARY KEY,
     login TEXT UNIQUE CHECK (LENGTH(login) <= 50),
     password TEXT CHECK (LENGTH(password) <= 200),
@@ -39,7 +40,7 @@ CREATE TABLE IF NOT EXISTS email (
     id SERIAL PRIMARY KEY,
     topic TEXT,
     text TEXT,
-    date_of_dispatch DATE,      /*TIMESTAMPTZ NOT NULL DEFAULT '2022-08-10 10:10:00',*/
+    date_of_dispatch TIMESTAMP NOT NULL DEFAULT '2022-08-10 10:10:00',     /*date_of_dispatch DATE, */
     photoid TEXT CHECK (LENGTH(photoid) <= 200),
     sender_email TEXT CHECK (LENGTH(sender_email) <= 50),
     recipient_email TEXT CHECK (LENGTH(recipient_email) <= 50),
@@ -59,5 +60,29 @@ VALUES
     ('Topic3 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', 'ivan@mailhub.su', 'max@mailhub.su', False, False, False, Null, False),
     ('Topic4 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', 'max@mailhub.su', 'sergey@mailhub.su', False, False, False, Null, False),
     ('Topic5 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', 'max@mailhub.su', 'ivan@mailhub.su', False, False, False, Null, False),
-    ('Topic6 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', 'sergey@mailhub.su', 'ivan@mailhub.su', False, False, False, Null, False)
-;
+    ('Topic6 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', 'sergey@mailhub.su', 'ivan@mailhub.su', False, False, False, Null, False);
+
+CREATE TABLE IF NOT EXISTS profile_email (
+    id SERIAL PRIMARY KEY,
+    profile_id INT,
+    email_id INT,
+    /*PRIMARY KEY ( profile_id , email_id ),*/
+    CONSTRAINT fk_profile FOREIGN KEY (profile_id) REFERENCES profile(id),
+    CONSTRAINT fk_email FOREIGN KEY (email_id)  REFERENCES email(id)
+);
+
+INSERT INTO profile_email
+    (profile_id, email_id)
+VALUES
+    (1, 1),
+    (2, 1),
+    (1, 2),
+    (3, 2),
+    (2, 3),
+    (3, 3),
+    (3, 4),
+    (1, 4),
+    (3, 5),
+    (2, 5),
+    (1, 6),
+    (2, 6);
