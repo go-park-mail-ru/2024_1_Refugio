@@ -23,16 +23,16 @@ definitions:
       readStatus:
         description: ReadStatus indicates whether the email has been read.
         type: boolean
-      recipientID:
-        description: RecipientID is the ID of the recipient user
-        type: integer
+      recipientEmail:
+        description: RecipientEmail is the Email of the recipient user
+        type: string
       replyToEmailId:
         description: ReplyToEmailID is the ID of the email to which a reply can be
           sent.
         type: integer
-      senderID:
-        description: SenderID is the ID of the sender user
-        type: integer
+      senderEmail:
+        description: SenderEmail is the Email of the sender user
+        type: string
       text:
         description: Text is the body of the email.
         type: string
@@ -114,6 +114,11 @@ paths:
         name: id
         required: true
         type: integer
+      - description: Login master
+        in: header
+        name: login
+        required: true
+        type: string
       - description: CSRF Token
         in: header
         name: X-CSRF-Token
@@ -189,6 +194,11 @@ paths:
         name: id
         required: true
         type: integer
+      - description: Login master
+        in: header
+        name: login
+        required: true
+        type: string
       - description: CSRF Token
         in: header
         name: X-CSRF-Token
@@ -214,6 +224,45 @@ paths:
           schema:
             $ref: '#/definitions/delivery.Response'
       summary: Delete an email message
+      tags:
+      - emails
+  /api/v1/auth/email/send:
+    post:
+      consumes:
+      - application/json
+      description: Send a new email message to the system
+      parameters:
+      - description: Email message in JSON format
+        in: body
+        name: email
+        required: true
+        schema:
+          $ref: '#/definitions/delivery.EmailSwag'
+      - description: CSRF Token
+        in: header
+        name: X-CSRF-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ID of the send email message
+          schema:
+            $ref: '#/definitions/delivery.Response'
+        "400":
+          description: Bad JSON in request
+          schema:
+            $ref: '#/definitions/delivery.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/delivery.Response'
+        "500":
+          description: Failed to add email message
+          schema:
+            $ref: '#/definitions/delivery.Response'
+      summary: Send a new email message
       tags:
       - emails
   /api/v1/auth/email/update/{id}:
@@ -260,10 +309,51 @@ paths:
       summary: Update an email message
       tags:
       - emails
-  /api/v1/auth/emails:
+  /api/v1/auth/emails/incoming:
     get:
       description: Get a list of all email messages
       parameters:
+      - description: Login master
+        in: header
+        name: login
+        required: true
+        type: string
+      - description: CSRF Token
+        in: header
+        name: X-CSRF-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of all email messages
+          schema:
+            $ref: '#/definitions/delivery.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/delivery.Response'
+        "404":
+          description: DB error
+          schema:
+            $ref: '#/definitions/delivery.Response'
+        "500":
+          description: JSON encoding error
+          schema:
+            $ref: '#/definitions/delivery.Response'
+      summary: Display the list of email messages
+      tags:
+      - emails
+  /api/v1/auth/emails/sent:
+    get:
+      description: Get a list of all email messages
+      parameters:
+      - description: Login master
+        in: header
+        name: login
+        required: true
+        type: string
       - description: CSRF Token
         in: header
         name: X-CSRF-Token

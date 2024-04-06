@@ -22,7 +22,8 @@ import (
 )
 
 var (
-	UHandler = &UserHandler{}
+	UHandler                        = &UserHandler{}
+	requestIDContextKey interface{} = "requestid"
 )
 
 // UserHandler handles user-related HTTP requests.
@@ -78,13 +79,18 @@ func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ourUser, err := uh.UserUseCase.GetUserByLogin(credentials.Login, credentials.Password)
+	requestID, ok := r.Context().Value(requestIDContextKey).(string)
+	if !ok {
+		requestID = "none"
+	}
+
+	ourUser, err := uh.UserUseCase.GetUserByLogin(credentials.Login, credentials.Password, requestID)
 	if err != nil {
 		delivery.HandleError(w, http.StatusUnauthorized, "Login failed")
 		return
 	}
 
-	_, er := uh.Sessions.Create(w, ourUser.ID)
+	_, er := uh.Sessions.Create(w, ourUser.ID, requestID)
 	if er != nil {
 		delivery.HandleError(w, http.StatusInternalServerError, "Failed to create session")
 		return
@@ -122,13 +128,18 @@ func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	loginUnique, _ := uh.UserUseCase.IsLoginUnique(newUser.Login)
+	requestID, ok := r.Context().Value(requestIDContextKey).(string)
+	if !ok {
+		requestID = "none"
+	}
+
+	loginUnique, _ := uh.UserUseCase.IsLoginUnique(newUser.Login, requestID)
 	if !loginUnique {
 		delivery.HandleError(w, http.StatusBadRequest, "Such a login already exists")
 		return
 	}
 
-	_, er := uh.UserUseCase.CreateUser(converters.UserConvertApiInCore(newUser))
+	_, er := uh.UserUseCase.CreateUser(converters.UserConvertApiInCore(newUser), requestID)
 	if er != nil {
 		delivery.HandleError(w, http.StatusInternalServerError, "Failed to add user")
 		return
@@ -145,7 +156,11 @@ func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} delivery.Response "Logout successful"
 // @Router /api/v1/logout [post]
 func (uh *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	err := uh.Sessions.DestroyCurrent(w, r)
+	requestID, ok := r.Context().Value(requestIDContextKey).(string)
+	if !ok {
+		requestID = "none"
+	}
+	err := uh.Sessions.DestroyCurrent(w, r, requestID)
 	if err != nil {
 		delivery.HandleError(w, http.StatusUnauthorized, "Not Authorized")
 		return
@@ -165,8 +180,12 @@ func (uh *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} delivery.ErrorResponse "Internal Server Error"
 // @Router /api/v1/auth/user/get [get]
 func (uh *UserHandler) GetUserBySession(w http.ResponseWriter, r *http.Request) {
-	sessionUser := uh.Sessions.GetSession(r)
-	userData, err := uh.UserUseCase.GetUserByID(sessionUser.UserID)
+	requestID, ok := r.Context().Value(requestIDContextKey).(string)
+	if !ok {
+		requestID = "none"
+	}
+	sessionUser := uh.Sessions.GetSession(r, requestID)
+	userData, err := uh.UserUseCase.GetUserByID(sessionUser.UserID, requestID)
 	if err != nil {
 		delivery.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -196,13 +215,18 @@ func (uh *UserHandler) UpdateUserData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sessionUser := uh.Sessions.GetSession(r)
+	requestID, ok := r.Context().Value(requestIDContextKey).(string)
+	if !ok {
+		requestID = "none"
+	}
+
+	sessionUser := uh.Sessions.GetSession(r, requestID)
 	if sessionUser.UserID != updatedUser.ID {
 		delivery.HandleError(w, http.StatusUnauthorized, "Not authorized")
 		return
 	}
 
-	userUpdated, err := uh.UserUseCase.UpdateUser(converters.UserConvertApiInCore(updatedUser))
+	userUpdated, err := uh.UserUseCase.UpdateUser(converters.UserConvertApiInCore(updatedUser), requestID)
 	if err != nil {
 		delivery.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -232,13 +256,18 @@ func (uh *UserHandler) DeleteUserData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sessionUser := uh.Sessions.GetSession(r)
+	requestID, ok := r.Context().Value(requestIDContextKey).(string)
+	if !ok {
+		requestID = "none"
+	}
+
+	sessionUser := uh.Sessions.GetSession(r, requestID)
 	if sessionUser.UserID != uint32(userID) {
 		delivery.HandleError(w, http.StatusUnauthorized, "Not authorized")
 		return
 	}
 
-	deleted, err := uh.UserUseCase.DeleteUserByID(uint32(userID))
+	deleted, err := uh.UserUseCase.DeleteUserByID(uint32(userID), requestID)
 	if err != nil {
 		delivery.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -298,8 +327,13 @@ func (uh *UserHandler) UploadUserAvatar(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	sessionUser := uh.Sessions.GetSession(r)
-	userData, err := uh.UserUseCase.GetUserByID(sessionUser.UserID)
+	requestID, ok := r.Context().Value(requestIDContextKey).(string)
+	if !ok {
+		requestID = "none"
+	}
+
+	sessionUser := uh.Sessions.GetSession(r, requestID)
+	userData, err := uh.UserUseCase.GetUserByID(sessionUser.UserID, requestID)
 	if err != nil {
 		delivery.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -315,7 +349,7 @@ func (uh *UserHandler) UploadUserAvatar(w http.ResponseWriter, r *http.Request) 
 	}
 
 	userData.AvatarID = uniqueFileName
-	userUpdated, err := uh.UserUseCase.UpdateUser(userData)
+	userUpdated, err := uh.UserUseCase.UpdateUser(userData, requestID)
 	if err != nil {
 		delivery.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -344,7 +378,7 @@ func isEmpty(str string) bool {
 
 // isValidEmailFormat checks if the provided email string matches the specific format for emails ending with "@mailhub.ru".
 func isValidEmailFormat(email string) bool {
-	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@mailhub\.ru$`)
+	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@mailhub\.su$`)
 
 	return emailRegex.MatchString(email)
 }

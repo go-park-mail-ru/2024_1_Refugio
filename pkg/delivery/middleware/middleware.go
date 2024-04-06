@@ -1,56 +1,43 @@
 package middleware
 
 import (
-	"fmt"
 	"github.com/sirupsen/logrus"
 	"mail/pkg/delivery"
 	"mail/pkg/delivery/session"
+	"mail/pkg/domain/logger"
 	"net/http"
-	"os"
-	"strings"
 	"time"
 )
 
-type LogrusLogger struct {
-	LogrusLogger *logrus.Logger
+type Logger struct {
+	Logger *logger.LogrusLogger
 }
 
-type Formatter struct {
-	LogFormat string
+var Log = Logger{}
+var requestIDContextKey interface{} = "requestid"
+
+type loggingResponseWriter struct {
+	http.ResponseWriter
+	statusCode int
 }
 
-// Format building log message.
-func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
-	output := f.LogFormat
-	output = strings.Replace(output, "%time%", entry.Time.Format("2006-01-02 15:04:05"), 1)
-	output = strings.Replace(output, "%msg%", entry.Message, 1)
-	output = strings.Replace(output, "%lvl%", strings.ToUpper(entry.Level.String()), 1)
-	output = strings.Replace(output, "%logger%", "Logrus", 1)
-	output = strings.Replace(output, "%host%", "localhost", 1)
-	output = strings.Replace(output, "%port%", "8080", 1)
-	output = strings.Replace(output, "%URL%", entry.Data["URL"].(string), 1)
-	output = strings.Replace(output, "%method%", entry.Data["method"].(string), 1)
-	output = strings.Replace(output, "%work_time%", entry.Data["work_time"].(time.Duration).String(), 1)
-	//output = strings.Replace(output, "%remote_addr%", entry.Data["remote_addr"].(string), 1)
-	output = strings.Replace(output, "%access_log%", entry.Data["mode"].(string), 1)
-	return []byte(output), nil
+func NewLoggingResponseWriter(w http.ResponseWriter) *loggingResponseWriter {
+	return &loggingResponseWriter{w, http.StatusOK}
 }
 
-func InitializationAcceslog() *LogrusLogger {
-	f := &Formatter{LogFormat: "[%lvl%]: %time% - %msg% (%logger%) host=%host% port=%port% URL=%URL% method=%method% work_time=%work_time% remote_addr=%remote_addr% access_log=%access_log%\n"}
-	log := new(LogrusLogger)
-	log.LogrusLogger = &logrus.Logger{}
-	log.LogrusLogger.SetFormatter(f)
-	log.LogrusLogger.SetLevel(logrus.InfoLevel)
-	log.LogrusLogger.Out = os.Stdout
-	return log
+func (lrw *loggingResponseWriter) WriteHeader(code int) {
+	lrw.statusCode = code
+	lrw.ResponseWriter.WriteHeader(code)
 }
 
 // AuthMiddleware is a middleware to check user authentication using cookies.
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("AuthMiddleware", r.URL.Path)
-		_, err := session.GlobalSeaaionManager.Check(r)
+		requestID, ok := r.Context().Value(requestIDContextKey).(string)
+		if !ok {
+			requestID = "none"
+		}
+		_, err := session.GlobalSeaaionManager.Check(r, requestID)
 		if err != nil {
 			delivery.HandleError(w, http.StatusUnauthorized, "Not Authorized")
 			return
@@ -60,33 +47,43 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (log *LogrusLogger) AccessLogMiddleware(next http.Handler) http.Handler {
+func (log *Logger) AccessLogMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		next.ServeHTTP(w, r)
-		en := log.LogrusLogger.WithFields(logrus.Fields{
-			"method":    r.Method,
-			"work_time": time.Since(start),
-			"URL":       r.URL.Path,
-			"mode":      "[access_log]",
+		lrw := NewLoggingResponseWriter(w)
+		next.ServeHTTP(lrw, r)
+
+		id, ok := r.Context().Value(requestIDContextKey).(string)
+		if !ok {
+			id = "none"
+		}
+
+		statusCode := lrw.statusCode
+		en := log.Logger.LogrusLogger.WithFields(logrus.Fields{
+			"method":     r.Method,
+			"work_time":  time.Since(start),
+			"URL":        r.URL.Path,
+			"mode":       "[access_log]",
+			"StatusCode": statusCode,
+			"requestID":  id,
 		})
-		/*en := logrus.WithFields(logrus.Fields{
-		  "method":    r.Method,
-		  "work_time": time.Since(start),
-		  "URL":       r.URL.Path,
-		  "mode":      "[access_log]",
-		})*/
-		en.Info("AccessLogMiddleware")
+		switch {
+		case statusCode >= 200 && statusCode <= 207:
+			en.Info("StatusOK")
+		case statusCode >= 400 && statusCode <= 451:
+			en.Warning("Client-side HTTP error")
+		case statusCode >= 500 && statusCode <= 510:
+			en.Error("StatusServerError")
+		}
+
 	})
 }
 
 func PanicMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("PanicMiddleware", r.URL.Path)
 		defer func() {
 			if err := recover(); err != nil {
-				fmt.Println("recovered", err)
-				http.Error(w, "Internal server error", 500)
+				delivery.HandleError(w, http.StatusInternalServerError, "StatusServerError")
 			}
 		}()
 		next.ServeHTTP(w, r)
