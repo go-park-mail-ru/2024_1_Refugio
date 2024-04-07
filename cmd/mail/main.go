@@ -33,7 +33,7 @@ import (
 // @version 1.0
 // @description API server for mail
 
-// @host 89.208.223.140:8080
+// @host mailhub.su:8080
 // @BasePath /
 func main() {
 	// dsn := "user=postgres dbname=Mail password=postgres host=localhost port=5432 sslmode=disable"
