@@ -36,8 +36,8 @@ import (
 // @host 89.208.223.140:8080
 // @BasePath /
 func main() {
-	// dsn := "user=postgres dbname=Mail password=postgres host=localhost port=5432 sslmode=disable"
-	dsn := "user=postgres dbname=Mail password=postgres host=89.208.223.140 port=5432 sslmode=disable"
+	dsn := "user=postgres dbname=Mail password=postgres host=localhost port=5432 sslmode=disable"
+	// dsn := "user=postgres dbname=Mail password=postgres host=89.208.223.140 port=5432 sslmode=disable"
 	db, errDb := sql.Open("pgx", dsn)
 	if errDb != nil {
 		log.Fatalln("Can't parse config", errDb)
@@ -93,6 +93,7 @@ func main() {
 	auth.HandleFunc("/login", userHandler.Login).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/signup", userHandler.Signup).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/logout", userHandler.Logout).Methods("POST", "OPTIONS")
+	auth.HandleFunc("/sendOther", emailHandler.SendFromAnotherDomain).Methods("POST", "OPTIONS")
 
 	logRouter := mux.NewRouter().PathPrefix("/api/v1").Subrouter()
 	logRouter.Use(Logger.AccessLogMiddleware, middleware.PanicMiddleware, middleware.AuthMiddleware)

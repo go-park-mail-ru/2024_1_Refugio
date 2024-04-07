@@ -349,6 +349,10 @@ func (h *EmailHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": ok})
 }
 
+func (h *EmailHandler) SendFromAnotherDomain(w http.ResponseWriter, r *http.Request) {
+	h.Send(w, r)
+}
+
 func isValidMailhubFormat(email string) bool {
 	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@mailhub\.su$`)
 	return emailRegex.MatchString(email)
