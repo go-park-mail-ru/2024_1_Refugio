@@ -4,13 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/mhale/smtpd"
 	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
 	"net/mail"
-
-	"github.com/mhale/smtpd"
 )
 
 const sendEmailEndpoint = "http://89.208.223.140:8080/email/send"
@@ -18,10 +17,31 @@ const sendEmailEndpoint = "http://89.208.223.140:8080/email/send"
 func main() {
 	serverAddr := "0.0.0.0:587"
 
-	err := smtpd.ListenAndServe(serverAddr, mailHandler, "MailHubSMTP", "")
+	err := ListenAndServe(serverAddr, mailHandler, authHandler)
 	if err != nil {
 		log.Fatal("Error starting SMTP server:", err)
 	}
+
+	/*err := smtpd.ListenAndServe(serverAddr, mailHandler, "MailHubSMTP", "")
+	if err != nil {
+		log.Fatal("Error starting SMTP server:", err)
+	}*/
+}
+
+func ListenAndServe(addr string, handler smtpd.Handler, authHandler smtpd.AuthHandler) error {
+	srv := &smtpd.Server{
+		Addr:         addr,
+		Handler:      handler,
+		Appname:      "MailHubSMTP",
+		Hostname:     "",
+		AuthHandler:  authHandler,
+		AuthRequired: true,
+	}
+	return srv.ListenAndServe()
+}
+
+func authHandler(remoteAddr net.Addr, mechanism string, username []byte, password []byte, shared []byte) (bool, error) {
+	return string(username) == "valid" && string(password) == "password", nil
 }
 
 func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
