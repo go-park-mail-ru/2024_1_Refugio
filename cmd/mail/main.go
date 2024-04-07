@@ -40,68 +40,123 @@ import (
 // @host localhost:8080
 // @BasePath /
 func main() {
-	dsn := "user=postgres dbname=Mail password=postgres host=localhost port=5432 sslmode=disable"
-	// dsn := "user=postgres dbname=Mail password=postgres host=89.208.223.140 port=5432 sslmode=disable"
-	db, errDb := sql.Open("pgx", dsn)
-	if errDb != nil {
-		log.Fatalln("Can't parse config", errDb)
-	}
+	db := initializeDatabase()
 	defer db.Close()
 
-	errDb = db.Ping()
-	if errDb != nil {
-		log.Fatalln(errDb)
+	migrateDatabase(db)
+
+	sessionsManager := initializeSessionsManager(db)
+	emailHandler := initializeEmailHandler(db, sessionsManager)
+	userHandler := initializeUserHandler(db, sessionsManager)
+
+	Logger := initializeLogger()
+
+	router := setupRouter(emailHandler, userHandler, Logger)
+
+	startServer(router)
+}
+
+func initializeDatabase() *sql.DB {
+	dsn := "user=postgres dbname=Mail password=postgres host=localhost port=5432 sslmode=disable"
+	// dsn := "user=postgres dbname=Mail password=postgres host=89.208.223.140 port=5432 sslmode=disable"
+	db, err := sql.Open("pgx", dsn)
+	if err != nil {
+		log.Fatalln("Can't parse config", err)
 	}
+
+	err = db.Ping()
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	db.SetMaxOpenConns(10)
 
+	return db
+}
+
+func migrateDatabase(db *sql.DB) {
 	migrations := &migrate.FileMigrationSource{
 		Dir: "db/migrations",
 	}
+
 	_, errMigration := migrate.Exec(db, "postgres", migrations, migrate.Up)
 	if errMigration != nil {
 		log.Fatalf("Failed to apply migrations: %v", errMigration)
 	}
-	dbx := sqlx.NewDb(db, "pgx")
+}
 
-	sessionRepository := sessionRepo.NewSessionRepository(dbx)
+func initializeSessionsManager(db *sql.DB) *session.SessionsManager {
+	sessionRepository := sessionRepo.NewSessionRepository(sqlx.NewDb(db, "pgx"))
 	sessionUsaCase := sessionUc.NewSessionUseCase(sessionRepository)
 	sessionsManager := session.NewSessionsManager(sessionUsaCase)
 	session.InitializationGlobalSeaaionManager(sessionsManager)
 
 	StartSessionCleaner(sessionUsaCase, 24*time.Hour)
 
-	emailRepository := emailRepo.NewEmailRepository(dbx)
+	return sessionsManager
+}
+
+func initializeEmailHandler(db *sql.DB, sessionsManager *session.SessionsManager) *emailHand.EmailHandler {
+	emailRepository := emailRepo.NewEmailRepository(sqlx.NewDb(db, "pgx"))
 	emailUseCase := emailUc.NewEmailUseCase(emailRepository)
-	emailHandler := &emailHand.EmailHandler{
+
+	return &emailHand.EmailHandler{
 		EmailUseCase: emailUseCase,
 		Sessions:     sessionsManager,
 	}
+}
 
-	userRepository := userRepo.NewUserRepository(dbx)
+func initializeUserHandler(db *sql.DB, sessionsManager *session.SessionsManager) *userHand.UserHandler {
+	userRepository := userRepo.NewUserRepository(sqlx.NewDb(db, "pgx"))
 	userUseCase := userUc.NewUserUseCase(userRepository)
-	userHandler := &userHand.UserHandler{
+
+	return &userHand.UserHandler{
 		UserUseCase: userUseCase,
 		Sessions:    sessionsManager,
 	}
+}
 
+func initializeLogger() *middleware.Logger {
 	Logrus := logger.InitializationAccesLog()
 	Logger := new(middleware.Logger)
 	Logger.Logger = Logrus
 
+	return Logger
+}
+
+func setupRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.UserHandler, logger *middleware.Logger) http.Handler {
 	router := mux.NewRouter()
 
-	auth := mux.NewRouter().PathPrefix("/api/v1/auth").Subrouter()
-	auth.Use(Logger.AccessLogMiddleware, middleware.PanicMiddleware)
+	auth := setupAuthRouter(userHandler, emailHandler, logger)
 	router.PathPrefix("/api/v1/auth").Handler(auth)
+
+	logRouter := setupLogRouter(emailHandler, userHandler, logger)
+	router.PathPrefix("/api/v1").Handler(logRouter)
+
+	staticDir := "/media/"
+	staticFileServer := http.StripPrefix(staticDir, http.FileServer(http.Dir("./avatars")))
+	router.PathPrefix(staticDir).Handler(staticFileServer)
+
+	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
+
+	return logger.AccessLogMiddleware(router)
+}
+
+func setupAuthRouter(userHandler *userHand.UserHandler, emailHandler *emailHand.EmailHandler, logger *middleware.Logger) http.Handler {
+	auth := mux.NewRouter().PathPrefix("/api/v1/auth").Subrouter()
+	auth.Use(logger.AccessLogMiddleware, middleware.PanicMiddleware)
 
 	auth.HandleFunc("/login", userHandler.Login).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/signup", userHandler.Signup).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/logout", userHandler.Logout).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/sendOther", emailHandler.SendFromAnotherDomain).Methods("POST", "OPTIONS")
 
+	return auth
+}
+
+func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.UserHandler, logger *middleware.Logger) http.Handler {
 	logRouter := mux.NewRouter().PathPrefix("/api/v1").Subrouter()
-	logRouter.Use(Logger.AccessLogMiddleware, middleware.PanicMiddleware, middleware.AuthMiddleware)
-	router.PathPrefix("/api/v1").Handler(logRouter)
+	logRouter.Use(logger.AccessLogMiddleware, middleware.PanicMiddleware, middleware.AuthMiddleware)
 
 	logRouter.HandleFunc("/verify-auth", userHandler.VerifyAuth).Methods("GET", "OPTIONS")
 	logRouter.HandleFunc("/user/get", userHandler.GetUserBySession).Methods("GET", "OPTIONS")
@@ -115,12 +170,10 @@ func main() {
 	logRouter.HandleFunc("/email/delete/{id}", emailHandler.Delete).Methods("DELETE", "OPTIONS")
 	logRouter.HandleFunc("/email/send", emailHandler.Send).Methods("POST", "OPTIONS")
 
-	staticDir := "/media/"
-	staticFileServer := http.StripPrefix(staticDir, http.FileServer(http.Dir("./avatars")))
-	router.PathPrefix(staticDir).Handler(staticFileServer)
+	return logRouter
+}
 
-	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
-
+func startServer(router http.Handler) {
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://127.0.0.1:8081", "http://89.208.223.140:8081", "http://mailhub.su:8081", "http://mailhub.su:8080", "http://localhost:8080", "http://localhost:8081", "http://89.208.223.140:8080"},
 		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodDelete, http.MethodPut, http.MethodOptions},
