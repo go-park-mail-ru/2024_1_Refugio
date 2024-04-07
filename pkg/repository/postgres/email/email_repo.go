@@ -143,6 +143,7 @@ func (r *EmailRepository) GetAllSent(login, requestID string, offset, limit int)
 
 	var emailsModelCore []*domain.Email
 	for _, e := range emailsModelDb {
+		e.ReadStatus = true
 		emailsModelCore = append(emailsModelCore, converters.EmailConvertDbInCore(e))
 	}
 
@@ -152,13 +153,13 @@ func (r *EmailRepository) GetAllSent(login, requestID string, offset, limit int)
 
 func (r *EmailRepository) GetByID(id uint64, login, requestID string) (*domain.Email, error) {
 	query := `
-		SELECT * FROM email WHERE id = $1 AND (recipient_email = $2 OR sender_email = &2)
+		SELECT * FROM email WHERE id = $1 AND (recipient_email = $2 OR sender_email = $2)
 	`
 	args := []interface{}{id, login}
 
 	var emailModelDb database.Email
 	start := time.Now()
-	err := r.DB.Get(&emailModelDb, query, id, login)
+	err := r.DB.Get(&emailModelDb, query, int(id), login)
 	if err != nil {
 		Logger.DbLog(query, requestID, 500, start, err, args)
 		if errors.Is(err, sql.ErrNoRows) {
@@ -191,7 +192,7 @@ func (r *EmailRepository) Update(newEmail *domain.Email, requestID string) (bool
 	args := []interface{}{newEmailDb.Topic, newEmailDb.Text, newEmailDb.PhotoID, newEmailDb.ReadStatus, newEmailDb.Deleted, newEmailDb.DraftStatus, newEmailDb.ReplyToEmailID, newEmailDb.Flag, newEmailDb.ID, newEmailDb.RecipientEmail}
 
 	start := time.Now()
-	result, err := r.DB.Exec(query, newEmailDb.Topic, newEmailDb.Text, newEmailDb.PhotoID, newEmailDb.ReadStatus, newEmailDb.Deleted, newEmailDb.DraftStatus, newEmailDb.ReplyToEmailID, newEmailDb.Flag, newEmailDb.ID, newEmailDb.RecipientEmail)
+	result, err := r.DB.Exec(query, newEmailDb.Topic, newEmailDb.Text, newEmailDb.PhotoID, newEmailDb.ReadStatus, newEmailDb.Deleted, newEmailDb.DraftStatus, newEmailDb.ReplyToEmailID, newEmailDb.Flag, newEmailDb.ID, newEmailDb.SenderEmail)
 	if err != nil {
 		return false, fmt.Errorf("failed to update email: %v", err)
 	}

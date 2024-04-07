@@ -191,11 +191,6 @@ paths:
         name: id
         required: true
         type: integer
-      - description: Login master
-        in: header
-        name: login
-        required: true
-        type: string
       - description: CSRF Token
         in: header
         name: X-Csrf-Token
@@ -232,11 +227,6 @@ paths:
         name: id
         required: true
         type: integer
-      - description: Login master
-        in: header
-        name: login
-        required: true
-        type: string
       - description: CSRF Token
         in: header
         name: X-Csrf-Token
@@ -270,17 +260,17 @@ paths:
       - application/json
       description: Send a new email message to the system
       parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
       - description: Email message in JSON format
         in: body
         name: email
         required: true
         schema:
           $ref: '#/definitions/delivery.EmailSwag'
-      - description: CSRF Token
-        in: header
-        name: X-Csrf-Token
-        required: true
-        type: string
       produces:
       - application/json
       responses:
@@ -309,6 +299,11 @@ paths:
       - application/json
       description: Update an existing email message based on its identifier
       parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
       - description: ID of the email message
         in: path
         name: id
@@ -320,11 +315,6 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/delivery.EmailSwag'
-      - description: CSRF Token
-        in: header
-        name: X-Csrf-Token
-        required: true
-        type: string
       produces:
       - application/json
       responses:
@@ -351,11 +341,6 @@ paths:
     get:
       description: Get a list of all email messages
       parameters:
-      - description: Login master
-        in: header
-        name: login
-        required: true
-        type: string
       - description: CSRF Token
         in: header
         name: X-Csrf-Token
@@ -387,11 +372,6 @@ paths:
     get:
       description: Get a list of all email messages
       parameters:
-      - description: Login master
-        in: header
-        name: login
-        required: true
-        type: string
       - description: CSRF Token
         in: header
         name: X-Csrf-Token

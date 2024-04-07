@@ -153,13 +153,6 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Login master",
-                        "name": "login",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
                         "description": "CSRF Token",
                         "name": "X-Csrf-Token",
                         "in": "header",
@@ -209,6 +202,13 @@ const docTemplate = `{
                 "summary": "Send a new email message",
                 "parameters": [
                     {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
                         "description": "Email message in JSON format",
                         "name": "email",
                         "in": "body",
@@ -216,13 +216,6 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/delivery.EmailSwag"
                         }
-                    },
-                    {
-                        "type": "string",
-                        "description": "CSRF Token",
-                        "name": "X-Csrf-Token",
-                        "in": "header",
-                        "required": true
                     }
                 ],
                 "responses": {
@@ -268,6 +261,13 @@ const docTemplate = `{
                 "summary": "Update an email message",
                 "parameters": [
                     {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
                         "type": "integer",
                         "description": "ID of the email message",
                         "name": "id",
@@ -282,13 +282,6 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/delivery.EmailSwag"
                         }
-                    },
-                    {
-                        "type": "string",
-                        "description": "CSRF Token",
-                        "name": "X-Csrf-Token",
-                        "in": "header",
-                        "required": true
                     }
                 ],
                 "responses": {
@@ -335,13 +328,6 @@ const docTemplate = `{
                         "description": "ID of the email message",
                         "name": "id",
                         "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Login master",
-                        "name": "login",
-                        "in": "header",
                         "required": true
                     },
                     {
@@ -393,13 +379,6 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Login master",
-                        "name": "login",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
                         "description": "CSRF Token",
                         "name": "X-Csrf-Token",
                         "in": "header",
@@ -445,13 +424,6 @@ const docTemplate = `{
                 ],
                 "summary": "Display the list of email messages",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Login master",
-                        "name": "login",
-                        "in": "header",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "CSRF Token",
