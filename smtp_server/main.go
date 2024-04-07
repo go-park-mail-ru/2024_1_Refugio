@@ -14,7 +14,7 @@ import (
 	"github.com/mhale/smtpd"
 )
 
-const sendEmailEndpoint = "http://89.208.223.140:8080/api/v1/sendOther"
+const sendEmailEndpoint = "http://89.208.223.140:8080/api/v1/auth/sendOther"
 
 func main() {
 	serverAddr := "0.0.0.0:587"
