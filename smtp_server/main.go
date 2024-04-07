@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/mail"
 	"regexp"
+	"strings"
 )
 
 const sendEmailEndpoint = "http://89.208.223.140:8080/api/v1/auth/sendOther"
@@ -19,18 +20,18 @@ const sendEmailEndpoint = "http://89.208.223.140:8080/api/v1/auth/sendOther"
 func main() {
 	serverAddr := "0.0.0.0:587"
 
-	err := ListenAndServe(serverAddr, mailHandler, authHandler)
-	if err != nil {
-		log.Fatal("Error starting SMTP server:", err)
-	}
-
-	/*err := smtpd.ListenAndServe(serverAddr, mailHandler, "MailHubSMTP", "")
+	/*err := ListenAndServe(serverAddr, mailHandler, authHandler)
 	if err != nil {
 		log.Fatal("Error starting SMTP server:", err)
 	}*/
+
+	err := smtpd.ListenAndServe(serverAddr, mailHandler, "MailHubSMTP", "")
+	if err != nil {
+		log.Fatal("Error starting SMTP server:", err)
+	}
 }
 
-func ListenAndServe(addr string, handler smtpd.Handler, authHandler smtpd.AuthHandler) error {
+/*func ListenAndServe(addr string, handler smtpd.Handler, authHandler smtpd.AuthHandler) error {
 	srv := &smtpd.Server{
 		Addr:         addr,
 		Handler:      handler,
@@ -40,11 +41,11 @@ func ListenAndServe(addr string, handler smtpd.Handler, authHandler smtpd.AuthHa
 		AuthRequired: true,
 	}
 	return srv.ListenAndServe()
-}
+}*/
 
-func authHandler(remoteAddr net.Addr, mechanism string, username []byte, password []byte, shared []byte) (bool, error) {
+/*func authHandler(remoteAddr net.Addr, mechanism string, username []byte, password []byte, shared []byte) (bool, error) {
 	return string(username) == "valid" && string(password) == "password", nil
-}
+}*/
 
 func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 	msg, err := mail.ReadMessage(bytes.NewReader(data))
@@ -76,28 +77,22 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 	}
 
 	topic := msg.Header.Get("Subject")
-	charsetReader, _, _ := charset.DetermineEncoding([]byte(topic), "")
-	decoder := charsetReader.NewDecoder()
-	decodedTopicBytes, err := decoder.Bytes([]byte(topic))
+	decodedTopic, err := decodeText(topic, msg.Header.Get("Content-Type"))
 	if err != nil {
 		log.Println("Error decoding message subject:", err)
 		return err
 	}
-	decodedTopic := string(decodedTopicBytes)
 
 	body, err := ioutil.ReadAll(msg.Body)
 	if err != nil {
 		log.Println("Error reading message body:", err)
 		return err
 	}
-	charsetReader, _, _ = charset.DetermineEncoding(body, "")
-	decoder = charsetReader.NewDecoder()
-	decodedBodyBytes, err := decoder.Bytes(body)
+	decodedBody, err := decodeText(string(body), msg.Header.Get("Content-Type"))
 	if err != nil {
 		log.Println("Error decoding message body:", err)
 		return err
 	}
-	decodedBody := string(decodedBodyBytes)
 
 	log.Println(decodedTopic)
 	log.Println(decodedBody)
@@ -132,38 +127,24 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 	return nil
 }
 
+// decodeText decodes the provided text using the character set specified by the contentType.
+func decodeText(text, contentType string) (string, error) {
+	charsetReader, err := charset.NewReader(strings.NewReader(text), contentType)
+	if err != nil {
+		return "", err
+	}
+
+	decodedBytes, err := ioutil.ReadAll(charsetReader)
+	if err != nil {
+		return "", err
+	}
+
+	return string(decodedBytes), nil
+}
+
 // isValidEmailFormat checks if the provided email string matches the specific format for emails ending with "@mailhub.ru".
 func isValidEmailFormat(email string) bool {
 	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@mailhub\.su$`)
 
 	return emailRegex.MatchString(email)
 }
-
-/* func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
-	msg, err := mail.ReadMessage(bytes.NewReader(data))
-	if err != nil {
-		log.Println("Error reading message:", err)
-		return err
-	}
-
-	fmt.Println(">-------------------------------------------------<")
-
-	for _, recipient := range to {
-		fmt.Println("Received mail from:", from)
-		fmt.Println("To:", recipient)
-		fmt.Println("Subject:", msg.Header.Get("Subject"))
-
-		body, err := ioutil.ReadAll(msg.Body)
-		if err != nil {
-			log.Println("Error reading message body:", err)
-			return err
-		}
-		fmt.Println("Body:", string(body))
-
-		// http.Post("18.90.89.76:8080/email/send")
-
-		return nil
-	}
-
-	return nil
-} */
