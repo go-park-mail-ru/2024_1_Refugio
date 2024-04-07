@@ -60,6 +60,10 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 		log.Println("Error reading message body:", err)
 		return err
 	}
+	log.Println(topic)
+	log.Println(body)
+	log.Println(senderAddr.Address)
+	log.Println(recipientAddr.Address)
 
 	emailData := EmailSMTP{
 		Topic:          topic,
@@ -67,8 +71,6 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 		SenderEmail:    senderAddr.Address,
 		RecipientEmail: recipientAddr.Address,
 	}
-
-	log.Printf("Email Data: %+v", emailData)
 
 	jsonData, err := json.Marshal(emailData)
 	if err != nil {
