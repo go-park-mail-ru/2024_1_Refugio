@@ -2,18 +2,16 @@ package main
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/microcosm-cc/bluemonday"
+	"github.com/mhale/smtpd"
+	"golang.org/x/text/encoding/charmap"
 	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
 	"net/mail"
 	"regexp"
-
-	"github.com/mhale/smtpd"
 )
 
 const sendEmailEndpoint = "http://89.208.223.140:8080/api/v1/auth/sendOther"
@@ -57,11 +55,13 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 	}
 
 	topic := msg.Header.Get("Subject")
-	decodedTopic, err := base64.StdEncoding.DecodeString(topic)
+	decoder := charmap.Windows1251.NewDecoder()
+	decodedTopicBytes, err := decoder.Bytes([]byte(topic))
 	if err != nil {
-		log.Println("Error decoding subject:", err)
+		log.Println("Error decoding message subject:", err)
 		return err
 	}
+	decodedTopic := string(decodedTopicBytes)
 
 	body, err := ioutil.ReadAll(msg.Body)
 	if err != nil {
@@ -69,14 +69,21 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 		return err
 	}
 
-	log.Println(sanitizeString(string(decodedTopic)))
-	log.Println(sanitizeString(string(body)))
+	decodedBodyBytes, err := decoder.Bytes(body)
+	if err != nil {
+		log.Println("Error decoding message body:", err)
+		return err
+	}
+	decodedBody := string(decodedBodyBytes)
+
+	log.Println(decodedTopic)
+	log.Println(decodedBody)
 	log.Println(senderAddr.Address)
 	log.Println(recipientAddr.Address)
 
 	emailData := EmailSMTP{
-		Topic:          sanitizeString(string(decodedTopic)),
-		Text:           sanitizeString(string(body)),
+		Topic:          decodedTopic,
+		Text:           decodedBody,
 		SenderEmail:    senderAddr.Address,
 		RecipientEmail: recipientAddr.Address,
 	}
@@ -107,12 +114,6 @@ func isValidEmailFormat(email string) bool {
 	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@mailhub\.su$`)
 
 	return emailRegex.MatchString(email)
-}
-
-// sanitizeString function for clearing text from unnecessary HTML
-func sanitizeString(str string) string {
-	p := bluemonday.UGCPolicy()
-	return p.Sanitize(str)
 }
 
 /* func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
