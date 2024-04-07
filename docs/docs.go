@@ -711,15 +711,6 @@ const docTemplate = `{
                     "users"
                 ],
                 "summary": "Verify user authentication",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "OK",

@@ -2,8 +2,10 @@ package main
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/microcosm-cc/bluemonday"
 	"io/ioutil"
 	"log"
 	"net"
@@ -55,19 +57,26 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 	}
 
 	topic := msg.Header.Get("Subject")
+	decodedTopic, err := base64.StdEncoding.DecodeString(topic)
+	if err != nil {
+		log.Println("Error decoding subject:", err)
+		return err
+	}
+
 	body, err := ioutil.ReadAll(msg.Body)
 	if err != nil {
 		log.Println("Error reading message body:", err)
 		return err
 	}
-	log.Println(topic)
-	log.Println(body)
+
+	log.Println(sanitizeString(string(decodedTopic)))
+	log.Println(sanitizeString(string(body)))
 	log.Println(senderAddr.Address)
 	log.Println(recipientAddr.Address)
 
 	emailData := EmailSMTP{
-		Topic:          topic,
-		Text:           string(body),
+		Topic:          sanitizeString(string(decodedTopic)),
+		Text:           sanitizeString(string(body)),
 		SenderEmail:    senderAddr.Address,
 		RecipientEmail: recipientAddr.Address,
 	}
@@ -98,6 +107,12 @@ func isValidEmailFormat(email string) bool {
 	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@mailhub\.su$`)
 
 	return emailRegex.MatchString(email)
+}
+
+// sanitizeString function for clearing text from unnecessary HTML
+func sanitizeString(str string) string {
+	p := bluemonday.UGCPolicy()
+	return p.Sanitize(str)
 }
 
 /* func mailHandler(origin net.Addr, from string, to []string, data []byte) error {

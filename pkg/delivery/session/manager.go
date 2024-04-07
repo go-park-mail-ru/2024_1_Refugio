@@ -51,7 +51,7 @@ func (sm *SessionsManager) GetSession(r *http.Request, requestID string) *models
 
 func (sm *SessionsManager) Check(r *http.Request, requestID string) (*models.Session, error) {
 	csrfToken := r.Header.Get("X-Csrf-Token")
-	if csrfToken == "" {
+	if r.URL.Path != "/api/v1/verify-auth" && csrfToken == "" {
 		return nil, fmt.Errorf("CSRF token not found in request headers")
 	}
 
@@ -64,7 +64,7 @@ func (sm *SessionsManager) Check(r *http.Request, requestID string) (*models.Ses
 	if ok != nil {
 		return nil, fmt.Errorf("no session found")
 	}
-	if sess.CsrfToken != csrfToken {
+	if r.URL.Path != "/api/v1/verify-auth" && sess.CsrfToken != csrfToken {
 		return nil, fmt.Errorf("CSRF token mismatch")
 	}
 

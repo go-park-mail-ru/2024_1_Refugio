@@ -47,14 +47,17 @@ func sanitizeString(str string) string {
 // @Description Verify user authentication using sessions
 // @Tags users
 // @Produce json
-// @Param X-CSRF-Token header string true "CSRF Token"
 // @Success 200 {object} delivery.Response "OK"
 // @Failure 401 {object} delivery.Response "Not Authorized"
 // @Router /api/v1/verify-auth [get]
 func (uh *UserHandler) VerifyAuth(w http.ResponseWriter, r *http.Request) {
-	csrfToken := r.Header.Get("X-Csrf-Token")
+	requestID, ok := r.Context().Value(requestIDContextKey).(string)
+	if !ok {
+		requestID = "none"
+	}
 
-	w.Header().Set("X-Csrf-Token", csrfToken)
+	sessionUser := uh.Sessions.GetSession(r, requestID)
+	w.Header().Set("X-Csrf-Token", sessionUser.CsrfToken)
 
 	delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "OK"})
 }
@@ -380,7 +383,7 @@ func (uh *UserHandler) UploadUserAvatar(w http.ResponseWriter, r *http.Request) 
 		err := os.Remove(oldFilePath)
 		if err != nil {
 			delivery.HandleError(w, http.StatusInternalServerError, "Failed to delete old file")
-			return
+			//return
 		}
 	}
 
