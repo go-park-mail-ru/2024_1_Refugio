@@ -1,21 +1,26 @@
+// 89.208.223.140
 package main
 
 import (
 	"database/sql"
 	"fmt"
+	"log"
+	"net/http"
+	"time"
+
+	"github.com/gorilla/mux"
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jmoiron/sqlx"
 	"github.com/kataras/requestid"
 	"github.com/rs/cors"
-	migrate "github.com/rubenv/sql-migrate"
-	"log"
+
 	"mail/pkg/delivery/middleware"
 	"mail/pkg/delivery/session"
 	"mail/pkg/domain/logger"
-	"net/http"
-	"time"
 
+	migrate "github.com/rubenv/sql-migrate"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
+
 	emailHand "mail/pkg/delivery/email"
 	userHand "mail/pkg/delivery/user"
 	emailRepo "mail/pkg/repository/postgres/email"
@@ -25,7 +30,6 @@ import (
 	sessionUc "mail/pkg/usecase/session"
 	userUc "mail/pkg/usecase/user"
 
-	"github.com/gorilla/mux"
 	_ "mail/docs"
 )
 
@@ -33,11 +37,11 @@ import (
 // @version 1.0
 // @description API server for mail
 
-// @host mailhub.su:8080
+// @host localhost:8080
 // @BasePath /
 func main() {
-	// dsn := "user=postgres dbname=Mail password=postgres host=localhost port=5432 sslmode=disable"
-	dsn := "user=postgres dbname=Mail password=postgres host=89.208.223.140 port=5432 sslmode=disable"
+	dsn := "user=postgres dbname=Mail password=postgres host=localhost port=5432 sslmode=disable"
+	// dsn := "user=postgres dbname=Mail password=postgres host=89.208.223.140 port=5432 sslmode=disable"
 	db, errDb := sql.Open("pgx", dsn)
 	if errDb != nil {
 		log.Fatalln("Can't parse config", errDb)
@@ -135,7 +139,6 @@ func main() {
 	if err != nil {
 		fmt.Println("Error when starting the server:", err)
 	}
-	// 89.208.223.140
 }
 
 func StartSessionCleaner(sessionCleaner *sessionUc.SessionUseCase, interval time.Duration) {

@@ -5,6 +5,7 @@ import (
 	database "mail/pkg/repository/models"
 )
 
+// UserConvertDbInCore converts a user model from database representation to core domain representation.
 func UserConvertDbInCore(userModelDb database.User) *domain.User {
 	return &domain.User{
 		ID:          userModelDb.ID,
@@ -20,6 +21,7 @@ func UserConvertDbInCore(userModelDb database.User) *domain.User {
 	}
 }
 
+// UserConvertCoreInDb converts a user model from core domain representation to database representation.
 func UserConvertCoreInDb(userModelCore domain.User) *database.User {
 	return &database.User{
 		ID:          userModelCore.ID,
