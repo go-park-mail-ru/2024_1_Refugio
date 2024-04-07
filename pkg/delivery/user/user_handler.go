@@ -195,7 +195,7 @@ func (uh *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
 // @Description Retrieve the user associated with the current session
 // @Tags users
 // @Produce json
-// @Param X-CSRF-Token header string true "CSRF Token"
+// @Param X-Csrf-Token header string true "CSRF Token"
 // @Success 200 {object} delivery.Response "User details"
 // @Failure 401 {object} delivery.ErrorResponse "Not Authorized"
 // @Failure 500 {object} delivery.ErrorResponse "Internal Server Error"
@@ -229,7 +229,7 @@ func (uh *UserHandler) GetUserBySession(w http.ResponseWriter, r *http.Request) 
 // @Tags users
 // @Accept json
 // @Produce json
-// @Param X-CSRF-Token header string true "CSRF Token"
+// @Param X-Csrf-Token header string true "CSRF Token"
 // @Param updatedUser body delivery.UserSwag true "Updated user data"
 // @Success 200 {object} delivery.Response "User data updated successfully"
 // @Failure 400 {object} delivery.ErrorResponse "Invalid request body"
@@ -278,7 +278,7 @@ func (uh *UserHandler) UpdateUserData(w http.ResponseWriter, r *http.Request) {
 // @Tags users
 // @Accept json
 // @Produce json
-// @Param X-CSRF-Token header string true "CSRF Token"
+// @Param X-Csrf-Token header string true "CSRF Token"
 // @Param id path uint32 true "User ID to delete"
 // @Success 200 {object} delivery.Response "User data deleted successfully"
 // @Failure 400 {object} delivery.ErrorResponse "Invalid user ID"
@@ -323,7 +323,7 @@ func (uh *UserHandler) DeleteUserData(w http.ResponseWriter, r *http.Request) {
 // @Tags users
 // @Accept multipart/form-data
 // @Produce json
-// @Param X-CSRF-Token header string true "CSRF Token"
+// @Param X-Csrf-Token header string true "CSRF Token"
 // @Param file formData file true "Avatar file to upload"
 // @Security ApiKeyAuth
 // @Success 200 {object} delivery.Response "File uploaded and saved successfully"

@@ -47,7 +47,7 @@ func sanitizeString(str string) string {
 // @Tags emails
 // @Produce json
 // @Param login header string true "Login master"
-// @Param X-CSRF-Token header string true "CSRF Token"
+// @Param X-Csrf-Token header string true "CSRF Token"
 // @Success 200 {object} delivery.Response "List of all email messages"
 // @Failure 401 {object} delivery.Response "Not Authorized"
 // @Failure 404 {object} delivery.Response "DB error"
@@ -87,7 +87,7 @@ func (h *EmailHandler) Incoming(w http.ResponseWriter, r *http.Request) {
 // @Tags emails
 // @Produce json
 // @Param login header string true "Login master"
-// @Param X-CSRF-Token header string true "CSRF Token"
+// @Param X-Csrf-Token header string true "CSRF Token"
 // @Success 200 {object} delivery.Response "List of all email messages"
 // @Failure 401 {object} delivery.Response "Not Authorized"
 // @Failure 404 {object} delivery.Response "DB error"
@@ -128,7 +128,7 @@ func (h *EmailHandler) Sent(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path integer true "ID of the email message"
 // @Param login header string true "Login master"
-// @Param X-CSRF-Token header string true "CSRF Token"
+// @Param X-Csrf-Token header string true "CSRF Token"
 // @Success 200 {object} delivery.Response "Email message data"
 // @Failure 400 {object} delivery.Response "Bad id in request"
 // @Failure 401 {object} delivery.Response "Not Authorized"
@@ -170,7 +170,7 @@ func (h *EmailHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param email body delivery.EmailSwag true "Email message in JSON format"
-// @Param X-CSRF-Token header string true "CSRF Token"
+// @Param X-Csrf-Token header string true "CSRF Token"
 // @Success 200 {object} delivery.Response "ID of the send email message"
 // @Failure 400 {object} delivery.Response "Bad JSON in request"
 // @Failure 401 {object} delivery.Response "Not Authorized"
@@ -276,7 +276,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path integer true "ID of the email message"
 // @Param email body delivery.EmailSwag true "Email message in JSON format"
-// @Param X-CSRF-Token header string true "CSRF Token"
+// @Param X-Csrf-Token header string true "CSRF Token"
 // @Success 200 {object} delivery.Response "Update success status"
 // @Failure 400 {object} delivery.Response "Bad id or Bad JSON"
 // @Failure 401 {object} delivery.Response "Not Authorized"
@@ -333,7 +333,7 @@ func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path integer true "ID of the email message"
 // @Param login header string true "Login master"
-// @Param X-CSRF-Token header string true "CSRF Token"
+// @Param X-Csrf-Token header string true "CSRF Token"
 // @Success 200 {object} delivery.Response "Deletion success status"
 // @Failure 400 {object} delivery.Response "Bad id"
 // @Failure 401 {object} delivery.Response "Not Authorized"

@@ -161,7 +161,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
+                        "name": "X-Csrf-Token",
                         "in": "header",
                         "required": true
                     }
@@ -220,7 +220,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
+                        "name": "X-Csrf-Token",
                         "in": "header",
                         "required": true
                     }
@@ -286,7 +286,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
+                        "name": "X-Csrf-Token",
                         "in": "header",
                         "required": true
                     }
@@ -347,7 +347,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
+                        "name": "X-Csrf-Token",
                         "in": "header",
                         "required": true
                     }
@@ -401,7 +401,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
+                        "name": "X-Csrf-Token",
                         "in": "header",
                         "required": true
                     }
@@ -455,7 +455,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
+                        "name": "X-Csrf-Token",
                         "in": "header",
                         "required": true
                     }
@@ -510,7 +510,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
+                        "name": "X-Csrf-Token",
                         "in": "header",
                         "required": true
                     },
@@ -561,7 +561,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
+                        "name": "X-Csrf-Token",
                         "in": "header",
                         "required": true
                     },
@@ -615,7 +615,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
+                        "name": "X-Csrf-Token",
                         "in": "header",
                         "required": true
                     }
@@ -659,7 +659,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
+                        "name": "X-Csrf-Token",
                         "in": "header",
                         "required": true
                     },

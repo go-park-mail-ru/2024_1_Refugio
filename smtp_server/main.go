@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/mhale/smtpd"
-	"golang.org/x/text/encoding/charmap"
+	"golang.org/x/net/html/charset"
 	"io/ioutil"
 	"log"
 	"net"
@@ -55,7 +55,8 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 	}
 
 	topic := msg.Header.Get("Subject")
-	decoder := charmap.Windows1251.NewDecoder()
+	charsetReader, _, _ := charset.DetermineEncoding([]byte(topic), "")
+	decoder := charsetReader.NewDecoder()
 	decodedTopicBytes, err := decoder.Bytes([]byte(topic))
 	if err != nil {
 		log.Println("Error decoding message subject:", err)
@@ -68,7 +69,8 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 		log.Println("Error reading message body:", err)
 		return err
 	}
-
+	charsetReader, _, _ = charset.DetermineEncoding(body, "")
+	decoder = charsetReader.NewDecoder()
 	decodedBodyBytes, err := decoder.Bytes(body)
 	if err != nil {
 		log.Println("Error decoding message body:", err)
