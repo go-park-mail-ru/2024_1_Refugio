@@ -50,7 +50,7 @@ func (sm *SessionsManager) GetSession(r *http.Request, requestID string) *models
 }
 
 func (sm *SessionsManager) Check(r *http.Request, requestID string) (*models.Session, error) {
-	csrfToken := r.Header.Get("X-CSRF-Token")
+	csrfToken := r.Header.Get("X-Csrf-Token")
 	if csrfToken == "" {
 		return nil, fmt.Errorf("CSRF token not found in request headers")
 	}
@@ -90,7 +90,7 @@ func (sm *SessionsManager) Create(w http.ResponseWriter, userID uint32, requestI
 
 	sess, _ := sm.sessionUseCase.GetSession(sessionID, requestID)
 
-	w.Header().Set("X-CSRF-Token", sess.CsrfToken)
+	w.Header().Set("X-Csrf-Token", sess.CsrfToken)
 
 	sessionCookie := &http.Cookie{
 		Name:     "session_id",
