@@ -121,6 +121,7 @@ func main() {
 		AllowedOrigins:   []string{"http://127.0.0.1:8081", "http://89.208.223.140:8081", "http://mailhub.su:8081", "http://mailhub.su:8080", "http://localhost:8080", "http://localhost:8081", "http://89.208.223.140:8080"},
 		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodDelete, http.MethodPut, http.MethodOptions},
 		AllowCredentials: true,
+		AllowedHeaders:   []string{"X-CSRF-Token", "Content-Type"},
 	})
 
 	corsHandler := c.Handler(router)

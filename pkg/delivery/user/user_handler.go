@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/microcosm-cc/bluemonday"
 	"io"
 	"mail/pkg/delivery"
 	"mail/pkg/delivery/converters"
@@ -34,6 +35,11 @@ type UserHandler struct {
 
 func InitializationEmailHandler(userHandler *UserHandler) {
 	UHandler = userHandler
+}
+
+func sanitizeString(str string) string {
+	p := bluemonday.UGCPolicy()
+	return p.Sanitize(str)
 }
 
 // VerifyAuth verifies user authentication.
@@ -68,6 +74,9 @@ func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		delivery.HandleError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
+
+	credentials.Login = sanitizeString(credentials.Login)
+	credentials.Password = sanitizeString(credentials.Password)
 
 	if isEmpty(credentials.Login) || isEmpty(credentials.Password) {
 		delivery.HandleError(w, http.StatusInternalServerError, "All fields must be filled in")
@@ -117,6 +126,11 @@ func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 		delivery.HandleError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
+
+	newUser.Login = sanitizeString(newUser.Login)
+	newUser.Password = sanitizeString(newUser.Password)
+	newUser.FirstName = sanitizeString(newUser.FirstName)
+	newUser.Surname = sanitizeString(newUser.Surname)
 
 	if isEmpty(newUser.Login) || isEmpty(newUser.Password) || isEmpty(newUser.FirstName) || isEmpty(newUser.Surname) || !domain.IsValidGender(newUser.Gender) {
 		delivery.HandleError(w, http.StatusBadRequest, "All fields must be filled in")
@@ -191,6 +205,14 @@ func (uh *UserHandler) GetUserBySession(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	userData.Login = sanitizeString(userData.Login)
+	userData.FirstName = sanitizeString(userData.FirstName)
+	userData.Surname = sanitizeString(userData.Surname)
+	userData.Patronymic = sanitizeString(userData.Patronymic)
+	userData.AvatarID = sanitizeString(userData.AvatarID)
+	userData.PhoneNumber = sanitizeString(userData.PhoneNumber)
+	userData.Description = sanitizeString(userData.Description)
+
 	delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"user": converters.UserConvertCoreInApi(*userData)})
 }
 
@@ -214,6 +236,14 @@ func (uh *UserHandler) UpdateUserData(w http.ResponseWriter, r *http.Request) {
 		delivery.HandleError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
+
+	updatedUser.Login = sanitizeString(updatedUser.Login)
+	updatedUser.FirstName = sanitizeString(updatedUser.FirstName)
+	updatedUser.Surname = sanitizeString(updatedUser.Surname)
+	updatedUser.Patronymic = sanitizeString(updatedUser.Patronymic)
+	updatedUser.AvatarID = sanitizeString(updatedUser.AvatarID)
+	updatedUser.PhoneNumber = sanitizeString(updatedUser.PhoneNumber)
+	updatedUser.Description = sanitizeString(updatedUser.Description)
 
 	requestID, ok := r.Context().Value(requestIDContextKey).(string)
 	if !ok {
@@ -340,7 +370,9 @@ func (uh *UserHandler) UploadUserAvatar(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if userData.AvatarID != "" {
-		oldFilePath := "./avatars/" + userData.AvatarID
+		parts := strings.Split(userData.AvatarID, "/")
+		filename := parts[len(parts)-1]
+		oldFilePath := "./avatars/" + filename
 		err := os.Remove(oldFilePath)
 		if err != nil {
 			delivery.HandleError(w, http.StatusInternalServerError, "Failed to delete old file")
