@@ -37,6 +37,7 @@ func InitializationEmailHandler(emailHandler *EmailHandler) {
 
 func sanitizeString(str string) string {
 	p := bluemonday.UGCPolicy()
+	p.AllowElements("b", "i", "a", "strong", "em", "p", "br", "span", "ul", "ol", "li", "h1", "h2", "h3", "div")
 	return p.Sanitize(str)
 }
 

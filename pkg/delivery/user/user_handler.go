@@ -52,6 +52,10 @@ func sanitizeString(str string) string {
 // @Failure 401 {object} delivery.Response "Not Authorized"
 // @Router /api/v1/verify-auth [get]
 func (uh *UserHandler) VerifyAuth(w http.ResponseWriter, r *http.Request) {
+	csrfToken := r.Header.Get("X-CSRF-Token")
+
+	w.Header().Set("X-CSRF-Token", csrfToken)
+
 	delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "OK"})
 }
 

@@ -122,6 +122,7 @@ func main() {
 		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodDelete, http.MethodPut, http.MethodOptions},
 		AllowCredentials: true,
 		AllowedHeaders:   []string{"X-CSRF-Token", "Content-Type"},
+		ExposedHeaders:   []string{"X-CSRF-Token"},
 	})
 
 	corsHandler := c.Handler(router)
