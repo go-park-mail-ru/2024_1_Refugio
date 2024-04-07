@@ -90,15 +90,8 @@ func (sm *SessionsManager) Create(w http.ResponseWriter, userID uint32, requestI
 
 	sess, _ := sm.sessionUseCase.GetSession(sessionID, requestID)
 
-	csrfCookie := &http.Cookie{
-		Name:     "csrf_token",
-		Value:    sess.CsrfToken,
-		Expires:  time.Now().Add(24 * time.Hour),
-		Path:     "/",
-		HttpOnly: true,
-	}
-	http.SetCookie(w, csrfCookie)
-	fmt.Println("CSRFTOKEN: ", csrfCookie.Value)
+	w.Header().Set("X-CSRF-Token", sess.CsrfToken)
+
 	sessionCookie := &http.Cookie{
 		Name:     "session_id",
 		Value:    sess.ID,
@@ -128,13 +121,6 @@ func (sm *SessionsManager) DestroyCurrent(w http.ResponseWriter, r *http.Request
 		Path:    "/",
 	}
 	http.SetCookie(w, &sessionCookieToDelete)
-
-	csrfCookieToDelete := http.Cookie{
-		Name:    "csrf_token",
-		Expires: time.Now().AddDate(0, 0, -1),
-		Path:    "/",
-	}
-	http.SetCookie(w, &csrfCookieToDelete)
 
 	return nil
 }
