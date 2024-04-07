@@ -2,16 +2,17 @@ package session
 
 import (
 	"fmt"
-	"github.com/jmoiron/sqlx"
-	"mail/pkg/domain/logger"
-	domain "mail/pkg/domain/models"
-	"mail/pkg/repository/converters"
-	database "mail/pkg/repository/models"
 	"math/rand"
 	"time"
-)
 
-var Logger = logger.InitializationBdLog()
+	"github.com/jmoiron/sqlx"
+
+	"mail/pkg/domain/logger"
+	"mail/pkg/repository/converters"
+
+	domain "mail/pkg/domain/models"
+	database "mail/pkg/repository/models"
+)
 
 // SessionRepository represents a PostgreSQL implementation of the SessionRepository interface.
 type SessionRepository struct {
@@ -25,8 +26,13 @@ func NewSessionRepository(db *sqlx.DB) *SessionRepository {
 	}
 }
 
+// Logger represents the logger used for logging database initialization.
+var Logger = logger.InitializationBdLog()
+
+// SessionGenerate is a function type used for generating session IDs.
 type SessionGenerate func() string
 
+// GenerateRandomID generates a random session ID using cryptographic random numbers.
 var GenerateRandomID SessionGenerate = func() string {
 	randID := make([]byte, 16)
 	rand.Read(randID)
@@ -41,9 +47,9 @@ func (repo *SessionRepository) CreateSession(userID uint32, device, requestID st
 		VALUES ($1, $2, $3, $4, $5, $6)
 	`
 
-	creationDate := time.Now()
 	ID := GenerateRandomID()
 	csrfToken := GenerateRandomID()
+	creationDate := time.Now()
 	args := []interface{}{ID, userID, device, creationDate, lifeTime, csrfToken}
 
 	start := time.Now()
@@ -60,10 +66,11 @@ func (repo *SessionRepository) CreateSession(userID uint32, device, requestID st
 // GetSessionByID retrieves a session by its ID.
 func (repo *SessionRepository) GetSessionByID(sessionID, requestID string) (*domain.Session, error) {
 	query := `SELECT * FROM session WHERE id = $1`
+
 	args := []interface{}{sessionID}
+	start := time.Now()
 
 	var session database.Session
-	start := time.Now()
 	err := repo.DB.Get(&session, query, sessionID)
 	if err != nil {
 		Logger.DbLog(query, requestID, 500, start, err, args)
@@ -74,16 +81,18 @@ func (repo *SessionRepository) GetSessionByID(sessionID, requestID string) (*dom
 	return converters.SessionConvertDbInCore(session), nil
 }
 
+// GetLoginBySessionID retrieves the login associated with the given session ID.
 func (repo *SessionRepository) GetLoginBySessionID(sessionID, requestID string) (string, error) {
 	query := `
 		SELECT login FROM profile
 		JOIN session ON session.profile_id = profile.id 
 		WHERE session.id = $1
 	`
+
 	args := []interface{}{sessionID}
+	start := time.Now()
 
 	var login string
-	start := time.Now()
 	err := repo.DB.Get(&login, query, sessionID)
 	if err != nil {
 		Logger.DbLog(query, requestID, 500, start, err, args)
@@ -97,9 +106,10 @@ func (repo *SessionRepository) GetLoginBySessionID(sessionID, requestID string) 
 // DeleteSessionByID deletes a session by its ID.
 func (repo *SessionRepository) DeleteSessionByID(sessionID, requestID string) error {
 	query := "DELETE FROM session WHERE id = $1"
-	args := []interface{}{sessionID}
 
+	args := []interface{}{sessionID}
 	start := time.Now()
+
 	_, err := repo.DB.Exec(query, sessionID)
 	if err != nil {
 		Logger.DbLog(query, requestID, 500, start, err, args)
@@ -113,9 +123,10 @@ func (repo *SessionRepository) DeleteSessionByID(sessionID, requestID string) er
 // DeleteExpiredSessions removes all expired sessions.
 func (repo *SessionRepository) DeleteExpiredSessions() error {
 	query := "DELETE FROM session WHERE creation_date + life_time * interval '1 second' < now()"
-	args := []interface{}{}
 
+	args := []interface{}{}
 	start := time.Now()
+
 	_, err := repo.DB.Exec(query)
 	if err != nil {
 		Logger.DbLog(query, "DeleteExpiredSessionsNULL", 500, start, err, args)

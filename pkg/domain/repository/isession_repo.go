@@ -14,6 +14,7 @@ type SessionRepository interface {
 	// GetSessionByID retrieves a session by its ID.
 	GetSessionByID(sessionID, requestID string) (*domain.Session, error)
 
+	// GetLoginBySessionID retrieves the login associated with the given session ID.
 	GetLoginBySessionID(sessionID, requestID string) (string, error)
 
 	// DeleteSessionByID deletes a session by its ID.
