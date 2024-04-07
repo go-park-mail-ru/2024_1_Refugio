@@ -33,11 +33,11 @@ import (
 // @version 1.0
 // @description API server for mail
 
-// @host localhost:8080
+// @host mailhub.su:8080
 // @BasePath /
 func main() {
-	dsn := "user=postgres dbname=Mail password=postgres host=localhost port=5432 sslmode=disable"
-	// dsn := "user=postgres dbname=Mail password=postgres host=89.208.223.140 port=5432 sslmode=disable"
+	// dsn := "user=postgres dbname=Mail password=postgres host=localhost port=5432 sslmode=disable"
+	dsn := "user=postgres dbname=Mail password=postgres host=89.208.223.140 port=5432 sslmode=disable"
 	db, errDb := sql.Open("pgx", dsn)
 	if errDb != nil {
 		log.Fatalln("Can't parse config", errDb)
