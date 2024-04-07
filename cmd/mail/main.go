@@ -86,6 +86,14 @@ func main() {
 
 	router := mux.NewRouter()
 
+	auth := mux.NewRouter().PathPrefix("/api/v1/auth").Subrouter()
+	auth.Use(Logger.AccessLogMiddleware, middleware.PanicMiddleware)
+	router.PathPrefix("/api/v1/auth").Handler(auth)
+
+	auth.HandleFunc("/login", userHandler.Login).Methods("POST", "OPTIONS")
+	auth.HandleFunc("/signup", userHandler.Signup).Methods("POST", "OPTIONS")
+	auth.HandleFunc("/logout", userHandler.Logout).Methods("POST", "OPTIONS")
+
 	logRouter := mux.NewRouter().PathPrefix("/api/v1").Subrouter()
 	logRouter.Use(Logger.AccessLogMiddleware, middleware.PanicMiddleware, middleware.AuthMiddleware)
 	router.PathPrefix("/api/v1").Handler(logRouter)
@@ -101,14 +109,6 @@ func main() {
 	logRouter.HandleFunc("/email/update/{id}", emailHandler.Update).Methods("PUT", "OPTIONS")
 	logRouter.HandleFunc("/email/delete/{id}", emailHandler.Delete).Methods("DELETE", "OPTIONS")
 	logRouter.HandleFunc("/email/send", emailHandler.Send).Methods("POST", "OPTIONS")
-
-	auth := mux.NewRouter().PathPrefix("/api/v1/auth").Subrouter()
-	auth.Use(Logger.AccessLogMiddleware, middleware.PanicMiddleware)
-	router.PathPrefix("/api/v1/auth").Handler(auth)
-
-	auth.HandleFunc("/login", userHandler.Login).Methods("POST", "OPTIONS")
-	auth.HandleFunc("/signup", userHandler.Signup).Methods("POST", "OPTIONS")
-	auth.HandleFunc("/logout", userHandler.Logout).Methods("POST", "OPTIONS")
 
 	staticDir := "/media/"
 	staticFileServer := http.StripPrefix(staticDir, http.FileServer(http.Dir("./avatars")))
