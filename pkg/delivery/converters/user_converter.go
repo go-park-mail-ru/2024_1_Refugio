@@ -5,6 +5,7 @@ import (
 	domain "mail/pkg/domain/models"
 )
 
+// UserConvertCoreInApi converts a user model from the domain package to the API representation.
 func UserConvertCoreInApi(userModelCore domain.User) *api.User {
 	return &api.User{
 		ID:          userModelCore.ID,
@@ -20,6 +21,7 @@ func UserConvertCoreInApi(userModelCore domain.User) *api.User {
 	}
 }
 
+// UserConvertApiInCore converts a user model from the API representation to the domain package.
 func UserConvertApiInCore(userModelApi api.User) *domain.User {
 	return &domain.User{
 		ID:          userModelApi.ID,

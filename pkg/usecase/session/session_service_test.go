@@ -20,10 +20,11 @@ func TestCreateNewSession(t *testing.T) {
 	userID := uint32(1)
 	device := "testDevice"
 	lifetime := 3600
+	requestID := "testRequestID"
 
-	mockRepo.EXPECT().CreateSession(userID, device, lifetime).Return(ID, nil)
+	mockRepo.EXPECT().CreateSession(userID, device, requestID, lifetime).Return(ID, nil)
 
-	sessionID, err := usecase.CreateNewSession(userID, device, lifetime)
+	sessionID, err := usecase.CreateNewSession(userID, device, requestID, lifetime)
 	assert.NoError(t, err)
 	assert.Equal(t, ID, sessionID)
 }
@@ -41,10 +42,11 @@ func TestGetSession(t *testing.T) {
 		Device:   "testDevice",
 		LifeTime: 3600,
 	}
+	requestID := "testRequestID"
 
-	mockRepo.EXPECT().GetSessionByID(expectedSession.ID).Return(expectedSession, nil)
+	mockRepo.EXPECT().GetSessionByID(expectedSession.ID, requestID).Return(expectedSession, nil)
 
-	session, err := usecase.GetSession(expectedSession.ID)
+	session, err := usecase.GetSession(expectedSession.ID, requestID)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedSession, session)
 }
@@ -57,10 +59,11 @@ func TestDeleteSession(t *testing.T) {
 	usecase := NewSessionUseCase(mockRepo)
 
 	sessionID := "10101010"
+	requestID := "testRequestID"
 
-	mockRepo.EXPECT().DeleteSessionByID(sessionID).Return(nil)
+	mockRepo.EXPECT().DeleteSessionByID(sessionID, requestID).Return(nil)
 
-	err := usecase.DeleteSession(sessionID)
+	err := usecase.DeleteSession(sessionID, requestID)
 	assert.NoError(t, err)
 }
 
@@ -75,4 +78,23 @@ func TestCleanupExpiredSessions(t *testing.T) {
 
 	err := usecase.CleanupExpiredSessions()
 	assert.NoError(t, err)
+}
+
+func TestGetLogin(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock.NewMockSessionRepository(ctrl)
+	usecase := NewSessionUseCase(mockRepo)
+
+	sessionID := "10101010"
+	requestID := "test_request"
+
+	expectedLogin := "testuser"
+
+	mockRepo.EXPECT().GetLoginBySessionID(sessionID, requestID).Return(expectedLogin, nil)
+
+	login, err := usecase.GetLogin(sessionID, requestID)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedLogin, login)
 }

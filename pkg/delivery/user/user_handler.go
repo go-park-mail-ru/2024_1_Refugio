@@ -33,12 +33,15 @@ type UserHandler struct {
 	Sessions    *session.SessionsManager
 }
 
+// InitializationEmailHandler initializes the email handler with the provided user handler.
 func InitializationEmailHandler(userHandler *UserHandler) {
 	UHandler = userHandler
 }
 
+// sanitizeString sanitizes the provided string using the UGCPolicy from the bluemonday package.
 func sanitizeString(str string) string {
 	p := bluemonday.UGCPolicy()
+
 	return p.Sanitize(str)
 }
 
@@ -374,17 +377,6 @@ func (uh *UserHandler) UploadUserAvatar(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		delivery.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 		return
-	}
-
-	if userData.AvatarID != "" {
-		parts := strings.Split(userData.AvatarID, "/")
-		filename := parts[len(parts)-1]
-		oldFilePath := "./avatars/" + filename
-		err := os.Remove(oldFilePath)
-		if err != nil {
-			delivery.HandleError(w, http.StatusInternalServerError, "Failed to delete old file")
-			//return
-		}
 	}
 
 	userData.AvatarID = "http://mailhub.su:8080/media/" + uniqueFileName

@@ -27,6 +27,7 @@ func (uc *SessionUseCase) GetSession(sessionID, requestID string) (*domain.Sessi
 	return uc.sessionRepo.GetSessionByID(sessionID, requestID)
 }
 
+// GetLogin retrieves the login associated with the provided session ID.
 func (uc *SessionUseCase) GetLogin(sessionID, requestID string) (string, error) {
 	return uc.sessionRepo.GetLoginBySessionID(sessionID, requestID)
 }
