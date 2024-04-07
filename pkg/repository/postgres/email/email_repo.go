@@ -143,6 +143,7 @@ func (r *EmailRepository) GetAllSent(login, requestID string, offset, limit int)
 
 	var emailsModelCore []*domain.Email
 	for _, e := range emailsModelDb {
+		e.ReadStatus = true
 		emailsModelCore = append(emailsModelCore, converters.EmailConvertDbInCore(e))
 	}
 
