@@ -62,12 +62,24 @@ func (sm *SessionsManager) Check(r *http.Request, requestID string) (*models.Ses
 
 func (sm *SessionsManager) ChekLogin(login, requestID string, r *http.Request) error {
 	sessionCookie, _ := r.Cookie("session_id")
-	LoginBd, _ := sm.sessionUseCase.GetLogin(sessionCookie.Value, requestID)
+	LoginBd, err := sm.sessionUseCase.GetLogin(sessionCookie.Value, requestID)
+	if err != nil {
+		return err
+	}
 	if LoginBd != login {
 		return fmt.Errorf("No right sender email")
 	}
 
 	return nil
+}
+
+func (sm SessionsManager) GetLoginBySession(r *http.Request, requestID string) (string, error) {
+	sessionCookie, _ := r.Cookie("session_id")
+	Login, err := sm.sessionUseCase.GetLogin(sessionCookie.Value, requestID)
+	if err != nil {
+		return "", err
+	}
+	return Login, nil
 }
 
 func (sm *SessionsManager) Create(w http.ResponseWriter, userID uint32, requestID string) (*models.Session, error) {
