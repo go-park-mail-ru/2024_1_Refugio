@@ -153,13 +153,6 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Login master",
-                        "name": "login",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
                         "description": "CSRF Token",
                         "name": "X-CSRF-Token",
                         "in": "header",
@@ -339,13 +332,6 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Login master",
-                        "name": "login",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
                         "description": "CSRF Token",
                         "name": "X-CSRF-Token",
                         "in": "header",
@@ -393,13 +379,6 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Login master",
-                        "name": "login",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
                         "description": "CSRF Token",
                         "name": "X-CSRF-Token",
                         "in": "header",
@@ -445,13 +424,6 @@ const docTemplate = `{
                 ],
                 "summary": "Display the list of email messages",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Login master",
-                        "name": "login",
-                        "in": "header",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "CSRF Token",
