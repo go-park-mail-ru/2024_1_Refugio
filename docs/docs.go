@@ -880,7 +880,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "89.208.223.140:8080",
+	Host:             "mailhub.su:8080",
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "API Mail",

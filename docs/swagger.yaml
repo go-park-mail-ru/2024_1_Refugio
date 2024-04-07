@@ -98,7 +98,7 @@ definitions:
     - Male
     - Female
     - Other
-host: 89.208.223.140:8080
+host: mailhub.su:8080
 info:
   contact: {}
   description: API server for mail
