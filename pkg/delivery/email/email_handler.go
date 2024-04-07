@@ -3,6 +3,7 @@ package email
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/microcosm-cc/bluemonday"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -34,12 +35,18 @@ func InitializationEmailHandler(emailHandler *EmailHandler) {
 	EHandler = emailHandler
 }
 
+func sanitizeString(str string) string {
+	p := bluemonday.UGCPolicy()
+	p.AllowElements("b", "i", "a", "strong", "em", "p", "br", "span", "ul", "ol", "li", "h1", "h2", "h3", "div")
+	return p.Sanitize(str)
+}
+
 // Incoming displays the list of email messages.
 // @Summary Display the list of email messages
 // @Description Get a list of all email messages
 // @Tags emails
 // @Produce json
-// @Param X-CSRF-Token header string true "CSRF Token"
+// @Param X-Csrf-Token header string true "CSRF Token"
 // @Success 200 {object} delivery.Response "List of all email messages"
 // @Failure 401 {object} delivery.Response "Not Authorized"
 // @Failure 404 {object} delivery.Response "DB error"
@@ -57,7 +64,7 @@ func (h *EmailHandler) Incoming(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.Sessions.ChekLogin(login, requestID, r)
+	err = h.Sessions.CheckLogin(login, requestID, r)
 	if err != nil {
 		delivery.HandleError(w, http.StatusBadRequest, "Bad sender login")
 		return
@@ -82,7 +89,7 @@ func (h *EmailHandler) Incoming(w http.ResponseWriter, r *http.Request) {
 // @Description Get a list of all email messages
 // @Tags emails
 // @Produce json
-// @Param X-CSRF-Token header string true "CSRF Token"
+// @Param X-Csrf-Token header string true "CSRF Token"
 // @Success 200 {object} delivery.Response "List of all email messages"
 // @Failure 401 {object} delivery.Response "Not Authorized"
 // @Failure 404 {object} delivery.Response "DB error"
@@ -100,7 +107,7 @@ func (h *EmailHandler) Sent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.Sessions.ChekLogin(login, requestID, r)
+	err = h.Sessions.CheckLogin(login, requestID, r)
 	if err != nil {
 		delivery.HandleError(w, http.StatusBadRequest, "Bad sender login")
 		return
@@ -126,7 +133,7 @@ func (h *EmailHandler) Sent(w http.ResponseWriter, r *http.Request) {
 // @Tags emails
 // @Produce json
 // @Param id path integer true "ID of the email message"
-// @Param X-CSRF-Token header string true "CSRF Token"
+// @Param X-Csrf-Token header string true "CSRF Token"
 // @Success 200 {object} delivery.Response "Email message data"
 // @Failure 400 {object} delivery.Response "Bad id in request"
 // @Failure 401 {object} delivery.Response "Not Authorized"
@@ -151,7 +158,7 @@ func (h *EmailHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.Sessions.ChekLogin(login, requestID, r)
+	err = h.Sessions.CheckLogin(login, requestID, r)
 	if err != nil {
 		delivery.HandleError(w, http.StatusBadRequest, "Bad sender login")
 		return
@@ -172,8 +179,8 @@ func (h *EmailHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 // @Tags emails
 // @Accept json
 // @Produce json
+// @Param X-Csrf-Token header string true "CSRF Token"
 // @Param email body delivery.EmailSwag true "Email message in JSON format"
-// @Param X-CSRF-Token header string true "CSRF Token"
 // @Success 200 {object} delivery.Response "ID of the send email message"
 // @Failure 400 {object} delivery.Response "Bad JSON in request"
 // @Failure 401 {object} delivery.Response "Not Authorized"
@@ -189,6 +196,12 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	newEmail.Topic = sanitizeString(newEmail.Topic)
+	newEmail.Text = sanitizeString(newEmail.Text)
+	newEmail.PhotoID = sanitizeString(newEmail.PhotoID)
+	newEmail.SenderEmail = sanitizeString(newEmail.SenderEmail)
+	newEmail.RecipientEmail = sanitizeString(newEmail.RecipientEmail)
+
 	sender := newEmail.SenderEmail
 	recipient := newEmail.RecipientEmail
 	requestID, ok := r.Context().Value(requestIDContextKey).(string)
@@ -198,7 +211,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 
 	switch {
 	case isValidMailhubFormat(sender) && isValidMailhubFormat(recipient):
-		err = h.Sessions.ChekLogin(sender, requestID, r)
+		err = h.Sessions.CheckLogin(sender, requestID, r)
 		if err != nil {
 			delivery.HandleError(w, http.StatusBadRequest, "Bad sender login")
 			return
@@ -271,9 +284,9 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 // @Tags emails
 // @Accept json
 // @Produce json
+// @Param X-Csrf-Token header string true "CSRF Token"
 // @Param id path integer true "ID of the email message"
 // @Param email body delivery.EmailSwag true "Email message in JSON format"
-// @Param X-CSRF-Token header string true "CSRF Token"
 // @Success 200 {object} delivery.Response "Update success status"
 // @Failure 400 {object} delivery.Response "Bad id or Bad JSON"
 // @Failure 401 {object} delivery.Response "Not Authorized"
@@ -296,13 +309,19 @@ func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	updatedEmail.Topic = sanitizeString(updatedEmail.Topic)
+	updatedEmail.Text = sanitizeString(updatedEmail.Text)
+	updatedEmail.PhotoID = sanitizeString(updatedEmail.PhotoID)
+	updatedEmail.RecipientEmail = sanitizeString(updatedEmail.RecipientEmail)
+	updatedEmail.SenderEmail = sanitizeString(updatedEmail.SenderEmail)
+
 	updatedEmail.ID = id
 	requestID, ok := r.Context().Value(requestIDContextKey).(string)
 	if !ok {
 		requestID = "none"
 	}
 
-	err = h.Sessions.ChekLogin(updatedEmail.SenderEmail, requestID, r)
+	err = h.Sessions.CheckLogin(updatedEmail.SenderEmail, requestID, r)
 	if err != nil {
 		delivery.HandleError(w, http.StatusBadRequest, "Bad sender login")
 		return
@@ -323,7 +342,7 @@ func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) {
 // @Tags emails
 // @Produce json
 // @Param id path integer true "ID of the email message"
-// @Param X-CSRF-Token header string true "CSRF Token"
+// @Param X-Csrf-Token header string true "CSRF Token"
 // @Success 200 {object} delivery.Response "Deletion success status"
 // @Failure 400 {object} delivery.Response "Bad id"
 // @Failure 401 {object} delivery.Response "Not Authorized"
@@ -348,7 +367,7 @@ func (h *EmailHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.Sessions.ChekLogin(login, requestID, r)
+	err = h.Sessions.CheckLogin(login, requestID, r)
 	if err != nil {
 		delivery.HandleError(w, http.StatusBadRequest, "Bad sender login")
 		return
@@ -361,6 +380,10 @@ func (h *EmailHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": ok})
+}
+
+func (h *EmailHandler) SendFromAnotherDomain(w http.ResponseWriter, r *http.Request) {
+	h.Send(w, r)
 }
 
 func isValidMailhubFormat(email string) bool {

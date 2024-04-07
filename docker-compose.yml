@@ -7,7 +7,7 @@ networks:
 services:
   db:
     container_name: db
-    image: postgres:latest
+    image: postgres:16
     ports:
       - "5432:5432"
     environment:
@@ -30,13 +30,6 @@ services:
       - deploy-guide-dev
     depends_on:
       - db
-    environment:
-      - DATABASE_HOST=db
-      - DATABASE_USER=postgres
-      - DATABASE_PASSWORD=postgres
-      - DATABASE_NAME=Mail
-      - DATABASE_PORT=5432
-    restart: always
 
   smtp:
     container_name: smtp

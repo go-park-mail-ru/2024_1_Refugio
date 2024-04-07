@@ -2,6 +2,7 @@ package session
 
 import (
 	"fmt"
+	"github.com/microcosm-cc/bluemonday"
 	"mail/pkg/delivery/converters"
 	"mail/pkg/delivery/models"
 	domain "mail/pkg/domain/usecase"
@@ -27,6 +28,16 @@ func NewSessionsManager(sessionUc domain.SessionUseCase) *SessionsManager {
 	}
 }
 
+func sanitizeSession(sess *models.Session) *models.Session {
+	p := bluemonday.UGCPolicy()
+
+	sess.ID = p.Sanitize(sess.ID)
+	sess.CsrfToken = p.Sanitize(sess.CsrfToken)
+	sess.Device = p.Sanitize(sess.Device)
+
+	return sess
+}
+
 func (sm *SessionsManager) GetSession(r *http.Request, requestID string) *models.Session {
 	sessionCookie, _ := r.Cookie("session_id")
 
@@ -35,12 +46,12 @@ func (sm *SessionsManager) GetSession(r *http.Request, requestID string) *models
 		return nil
 	}
 
-	return converters.SessionConvertCoreInApi(*sess)
+	return sanitizeSession(converters.SessionConvertCoreInApi(*sess))
 }
 
 func (sm *SessionsManager) Check(r *http.Request, requestID string) (*models.Session, error) {
-	csrfToken := r.Header.Get("X-CSRF-Token")
-	if csrfToken == "" {
+	csrfToken := r.Header.Get("X-Csrf-Token")
+	if r.URL.Path != "/api/v1/verify-auth" && csrfToken == "" {
 		return nil, fmt.Errorf("CSRF token not found in request headers")
 	}
 
@@ -53,14 +64,14 @@ func (sm *SessionsManager) Check(r *http.Request, requestID string) (*models.Ses
 	if ok != nil {
 		return nil, fmt.Errorf("no session found")
 	}
-	if sess.CsrfToken != csrfToken {
+	if r.URL.Path != "/api/v1/verify-auth" && sess.CsrfToken != csrfToken {
 		return nil, fmt.Errorf("CSRF token mismatch")
 	}
 
-	return converters.SessionConvertCoreInApi(*sess), nil
+	return sanitizeSession(converters.SessionConvertCoreInApi(*sess)), nil
 }
 
-func (sm *SessionsManager) ChekLogin(login, requestID string, r *http.Request) error {
+func (sm *SessionsManager) CheckLogin(login, requestID string, r *http.Request) error {
 	sessionCookie, _ := r.Cookie("session_id")
 	LoginBd, err := sm.sessionUseCase.GetLogin(sessionCookie.Value, requestID)
 	if err != nil {
@@ -91,21 +102,15 @@ func (sm *SessionsManager) Create(w http.ResponseWriter, userID uint32, requestI
 
 	sess, _ := sm.sessionUseCase.GetSession(sessionID, requestID)
 
-	csrfCookie := &http.Cookie{
-		Name:     "csrf_token",
-		Value:    sess.CsrfToken,
-		Expires:  time.Now().Add(24 * time.Hour),
-		Path:     "/",
-		HttpOnly: true,
-	}
-	http.SetCookie(w, csrfCookie)
-	fmt.Println("CSRFTOKEN: ", csrfCookie.Value)
+	w.Header().Set("X-Csrf-Token", sess.CsrfToken)
+
 	sessionCookie := &http.Cookie{
 		Name:     "session_id",
 		Value:    sess.ID,
 		Expires:  time.Now().Add(24 * time.Hour),
 		Path:     "/",
 		HttpOnly: true,
+		SameSite: http.SameSiteNoneMode,
 	}
 	http.SetCookie(w, sessionCookie)
 
@@ -129,13 +134,6 @@ func (sm *SessionsManager) DestroyCurrent(w http.ResponseWriter, r *http.Request
 		Path:    "/",
 	}
 	http.SetCookie(w, &sessionCookieToDelete)
-
-	csrfCookieToDelete := http.Cookie{
-		Name:    "csrf_token",
-		Expires: time.Now().AddDate(0, 0, -1),
-		Path:    "/",
-	}
-	http.SetCookie(w, &csrfCookieToDelete)
 
 	return nil
 }

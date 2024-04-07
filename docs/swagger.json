@@ -6,7 +6,7 @@
         "contact": {},
         "version": "1.0"
     },
-    "host": "localhost:8080",
+    "host": "mailhub.su:8080",
     "basePath": "/",
     "paths": {
         "/api/v1/auth/login": {
@@ -148,7 +148,7 @@
                     {
                         "type": "string",
                         "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
+                        "name": "X-Csrf-Token",
                         "in": "header",
                         "required": true
                     }
@@ -196,6 +196,13 @@
                 "summary": "Send a new email message",
                 "parameters": [
                     {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
                         "description": "Email message in JSON format",
                         "name": "email",
                         "in": "body",
@@ -203,13 +210,6 @@
                         "schema": {
                             "$ref": "#/definitions/delivery.EmailSwag"
                         }
-                    },
-                    {
-                        "type": "string",
-                        "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
-                        "in": "header",
-                        "required": true
                     }
                 ],
                 "responses": {
@@ -255,6 +255,13 @@
                 "summary": "Update an email message",
                 "parameters": [
                     {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
                         "type": "integer",
                         "description": "ID of the email message",
                         "name": "id",
@@ -269,13 +276,6 @@
                         "schema": {
                             "$ref": "#/definitions/delivery.EmailSwag"
                         }
-                    },
-                    {
-                        "type": "string",
-                        "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
-                        "in": "header",
-                        "required": true
                     }
                 ],
                 "responses": {
@@ -327,7 +327,7 @@
                     {
                         "type": "string",
                         "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
+                        "name": "X-Csrf-Token",
                         "in": "header",
                         "required": true
                     }
@@ -374,7 +374,7 @@
                     {
                         "type": "string",
                         "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
+                        "name": "X-Csrf-Token",
                         "in": "header",
                         "required": true
                     }
@@ -421,7 +421,7 @@
                     {
                         "type": "string",
                         "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
+                        "name": "X-Csrf-Token",
                         "in": "header",
                         "required": true
                     }
@@ -476,7 +476,7 @@
                     {
                         "type": "string",
                         "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
+                        "name": "X-Csrf-Token",
                         "in": "header",
                         "required": true
                     },
@@ -527,7 +527,7 @@
                     {
                         "type": "string",
                         "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
+                        "name": "X-Csrf-Token",
                         "in": "header",
                         "required": true
                     },
@@ -581,7 +581,7 @@
                     {
                         "type": "string",
                         "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
+                        "name": "X-Csrf-Token",
                         "in": "header",
                         "required": true
                     }
@@ -625,7 +625,7 @@
                     {
                         "type": "string",
                         "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
+                        "name": "X-Csrf-Token",
                         "in": "header",
                         "required": true
                     },
@@ -677,15 +677,6 @@
                     "users"
                 ],
                 "summary": "Verify user authentication",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "OK",

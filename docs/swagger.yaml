@@ -98,7 +98,7 @@ definitions:
     - Male
     - Female
     - Other
-host: localhost:8080
+host: mailhub.su:8080
 info:
   contact: {}
   description: API server for mail
@@ -193,7 +193,7 @@ paths:
         type: integer
       - description: CSRF Token
         in: header
-        name: X-CSRF-Token
+        name: X-Csrf-Token
         required: true
         type: string
       produces:
@@ -229,7 +229,7 @@ paths:
         type: integer
       - description: CSRF Token
         in: header
-        name: X-CSRF-Token
+        name: X-Csrf-Token
         required: true
         type: string
       produces:
@@ -260,17 +260,17 @@ paths:
       - application/json
       description: Send a new email message to the system
       parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
       - description: Email message in JSON format
         in: body
         name: email
         required: true
         schema:
           $ref: '#/definitions/delivery.EmailSwag'
-      - description: CSRF Token
-        in: header
-        name: X-CSRF-Token
-        required: true
-        type: string
       produces:
       - application/json
       responses:
@@ -299,6 +299,11 @@ paths:
       - application/json
       description: Update an existing email message based on its identifier
       parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
       - description: ID of the email message
         in: path
         name: id
@@ -310,11 +315,6 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/delivery.EmailSwag'
-      - description: CSRF Token
-        in: header
-        name: X-CSRF-Token
-        required: true
-        type: string
       produces:
       - application/json
       responses:
@@ -343,7 +343,7 @@ paths:
       parameters:
       - description: CSRF Token
         in: header
-        name: X-CSRF-Token
+        name: X-Csrf-Token
         required: true
         type: string
       produces:
@@ -374,7 +374,7 @@ paths:
       parameters:
       - description: CSRF Token
         in: header
-        name: X-CSRF-Token
+        name: X-Csrf-Token
         required: true
         type: string
       produces:
@@ -407,7 +407,7 @@ paths:
       parameters:
       - description: CSRF Token
         in: header
-        name: X-CSRF-Token
+        name: X-Csrf-Token
         required: true
         type: string
       - description: Avatar file to upload
@@ -443,7 +443,7 @@ paths:
       parameters:
       - description: CSRF Token
         in: header
-        name: X-CSRF-Token
+        name: X-Csrf-Token
         required: true
         type: string
       - description: User ID to delete
@@ -479,7 +479,7 @@ paths:
       parameters:
       - description: CSRF Token
         in: header
-        name: X-CSRF-Token
+        name: X-Csrf-Token
         required: true
         type: string
       produces:
@@ -508,7 +508,7 @@ paths:
       parameters:
       - description: CSRF Token
         in: header
-        name: X-CSRF-Token
+        name: X-Csrf-Token
         required: true
         type: string
       - description: Updated user data
@@ -542,12 +542,6 @@ paths:
   /api/v1/verify-auth:
     get:
       description: Verify user authentication using sessions
-      parameters:
-      - description: CSRF Token
-        in: header
-        name: X-CSRF-Token
-        required: true
-        type: string
       produces:
       - application/json
       responses:

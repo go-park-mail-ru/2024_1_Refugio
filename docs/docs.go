@@ -154,7 +154,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
+                        "name": "X-Csrf-Token",
                         "in": "header",
                         "required": true
                     }
@@ -202,6 +202,13 @@ const docTemplate = `{
                 "summary": "Send a new email message",
                 "parameters": [
                     {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
                         "description": "Email message in JSON format",
                         "name": "email",
                         "in": "body",
@@ -209,13 +216,6 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/delivery.EmailSwag"
                         }
-                    },
-                    {
-                        "type": "string",
-                        "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
-                        "in": "header",
-                        "required": true
                     }
                 ],
                 "responses": {
@@ -261,6 +261,13 @@ const docTemplate = `{
                 "summary": "Update an email message",
                 "parameters": [
                     {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
                         "type": "integer",
                         "description": "ID of the email message",
                         "name": "id",
@@ -275,13 +282,6 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/delivery.EmailSwag"
                         }
-                    },
-                    {
-                        "type": "string",
-                        "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
-                        "in": "header",
-                        "required": true
                     }
                 ],
                 "responses": {
@@ -333,7 +333,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
+                        "name": "X-Csrf-Token",
                         "in": "header",
                         "required": true
                     }
@@ -380,7 +380,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
+                        "name": "X-Csrf-Token",
                         "in": "header",
                         "required": true
                     }
@@ -427,7 +427,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
+                        "name": "X-Csrf-Token",
                         "in": "header",
                         "required": true
                     }
@@ -482,7 +482,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
+                        "name": "X-Csrf-Token",
                         "in": "header",
                         "required": true
                     },
@@ -533,7 +533,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
+                        "name": "X-Csrf-Token",
                         "in": "header",
                         "required": true
                     },
@@ -587,7 +587,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
+                        "name": "X-Csrf-Token",
                         "in": "header",
                         "required": true
                     }
@@ -631,7 +631,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
+                        "name": "X-Csrf-Token",
                         "in": "header",
                         "required": true
                     },
@@ -683,15 +683,6 @@ const docTemplate = `{
                     "users"
                 ],
                 "summary": "Verify user authentication",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "CSRF Token",
-                        "name": "X-CSRF-Token",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -852,7 +843,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8080",
+	Host:             "mailhub.su:8080",
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "API Mail",

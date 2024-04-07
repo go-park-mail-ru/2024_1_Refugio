@@ -33,11 +33,11 @@ import (
 // @version 1.0
 // @description API server for mail
 
-// @host localhost:8080
+// @host mailhub.su:8080
 // @BasePath /
 func main() {
-	dsn := "user=postgres dbname=Mail password=postgres host=localhost port=5432 sslmode=disable"
-	// dsn := "user=postgres dbname=Mail password=postgres host=db port=5432 sslmode=disable"
+	// dsn := "user=postgres dbname=Mail password=postgres host=localhost port=5432 sslmode=disable"
+	dsn := "user=postgres dbname=Mail password=postgres host=89.208.223.140 port=5432 sslmode=disable"
 	db, errDb := sql.Open("pgx", dsn)
 	if errDb != nil {
 		log.Fatalln("Can't parse config", errDb)
@@ -93,6 +93,7 @@ func main() {
 	auth.HandleFunc("/login", userHandler.Login).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/signup", userHandler.Signup).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/logout", userHandler.Logout).Methods("POST", "OPTIONS")
+	auth.HandleFunc("/sendOther", emailHandler.SendFromAnotherDomain).Methods("POST", "OPTIONS")
 
 	logRouter := mux.NewRouter().PathPrefix("/api/v1").Subrouter()
 	logRouter.Use(Logger.AccessLogMiddleware, middleware.PanicMiddleware, middleware.AuthMiddleware)
@@ -117,9 +118,11 @@ func main() {
 	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://127.0.0.1:8081", "http://89.208.223.140:8081", "http://localhost:8080", "http://localhost:8081", "http://89.208.223.140:8080"},
+		AllowedOrigins:   []string{"http://127.0.0.1:8081", "http://89.208.223.140:8081", "http://mailhub.su:8081", "http://mailhub.su:8080", "http://localhost:8080", "http://localhost:8081", "http://89.208.223.140:8080"},
 		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodDelete, http.MethodPut, http.MethodOptions},
 		AllowCredentials: true,
+		AllowedHeaders:   []string{"X-Csrf-Token", "Content-Type"},
+		ExposedHeaders:   []string{"X-Csrf-Token"},
 	})
 
 	corsHandler := c.Handler(router)

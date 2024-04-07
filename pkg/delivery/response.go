@@ -5,8 +5,6 @@ import (
 	"mail/pkg/domain/models"
 	"net/http"
 	"time"
-
-	api "mail/pkg/delivery/models"
 )
 
 // Response represents the response format.
@@ -41,8 +39,6 @@ func HandleError(w http.ResponseWriter, status int, message string) {
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(response)
 }
-
-type Email = api.Email
 
 // UserSwag represents information about a user.
 type UserSwag struct {
