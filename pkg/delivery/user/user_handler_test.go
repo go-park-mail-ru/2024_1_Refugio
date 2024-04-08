@@ -12,7 +12,9 @@ import (
 	"mail/pkg/domain/mock"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
+	"time"
 
 	domain "mail/pkg/domain/models"
 )
@@ -388,4 +390,100 @@ func TestDeleteUserData_NotAuthorized(t *testing.T) {
 
 	expectedResponseBody := `{"status":401,"body":{"error":"Not authorized"}}` + "\n"
 	assert.Equal(t, expectedResponseBody, rr.Body.String())
+}
+
+func TestDeleteUserData_InternalServerError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserUseCase := mock.NewMockUserUseCase(ctrl)
+	mockSessionManager := mock.NewMockSessionsManager(ctrl)
+
+	userHandler := UserHandler{
+		UserUseCase: mockUserUseCase,
+		Sessions:    mockSessionManager,
+	}
+
+	req, err := http.NewRequest("DELETE", "/api/v1/user/delete/1", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req = mux.SetURLVars(req, map[string]string{"id": "1"})
+
+	sessionData := &api.Session{
+		UserID: 1,
+	}
+	mockSessionManager.EXPECT().GetSession(req, gomock.Any()).Return(sessionData)
+
+	mockUserUseCase.EXPECT().DeleteUserByID(uint32(1), gomock.Any()).Return(false, errors.New("fail with delete"))
+
+	rr := httptest.NewRecorder()
+
+	userHandler.DeleteUserData(rr, req)
+
+	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+
+	expectedResponseBody := `{"status":500,"body":{"error":"Internal Server Error"}}` + "\n"
+	assert.Equal(t, expectedResponseBody, rr.Body.String())
+}
+
+func TestDeleteUserData_FailedToDeleteUserData(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserUseCase := mock.NewMockUserUseCase(ctrl)
+	mockSessionManager := mock.NewMockSessionsManager(ctrl)
+
+	userHandler := UserHandler{
+		UserUseCase: mockUserUseCase,
+		Sessions:    mockSessionManager,
+	}
+
+	req, err := http.NewRequest("DELETE", "/api/v1/user/delete/1", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req = mux.SetURLVars(req, map[string]string{"id": "1"})
+
+	sessionData := &api.Session{
+		UserID: 1,
+	}
+	mockSessionManager.EXPECT().GetSession(req, gomock.Any()).Return(sessionData)
+
+	mockUserUseCase.EXPECT().DeleteUserByID(uint32(1), gomock.Any()).Return(false, nil)
+
+	rr := httptest.NewRecorder()
+
+	userHandler.DeleteUserData(rr, req)
+
+	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+
+	expectedResponseBody := `{"status":500,"body":{"error":"Failed to delete user data"}}` + "\n"
+	assert.Equal(t, expectedResponseBody, rr.Body.String())
+}
+
+func TestGenerateUniqueFileName(t *testing.T) {
+	tests := []struct {
+		format string
+	}{
+		{"_test.txt"},
+		{"_data.csv"},
+		{"_output.json"},
+	}
+
+	for _, tt := range tests {
+		t.Run(fmt.Sprintf("Format_%s", tt.format), func(t *testing.T) {
+			uniqueFileName := generateUniqueFileName(tt.format)
+
+			assert.Contains(t, uniqueFileName, tt.format)
+
+			currentTime := time.Now().Format("20060102_150405")
+			assert.Contains(t, uniqueFileName, currentTime)
+
+			randomNumStr := uniqueFileName[len(currentTime)+1 : len(currentTime)+4]
+			randomNum, err := strconv.Atoi(randomNumStr)
+			assert.NoError(t, err)
+			assert.True(t, randomNum >= 0 && randomNum <= 999)
+		})
+	}
 }

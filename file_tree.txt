@@ -49,8 +49,8 @@
 │   │   │   ├── manager.go
 │   │   │   └── manager_test.go
 │   │   └── user
-│   │       ├── handlersUser_test.go
-│   │       └── user_handler.go
+│   │       ├── user_handler.go
+│   │       └── user_handler_test.go
 │   ├── domain
 │   │   ├── delivery
 │   │   │   └── imanager.go
