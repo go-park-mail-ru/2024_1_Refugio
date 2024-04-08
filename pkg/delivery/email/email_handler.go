@@ -12,7 +12,7 @@ import (
 	"mail/pkg/delivery/converters"
 
 	emailApi "mail/pkg/delivery/models"
-	"mail/pkg/delivery/session"
+	domainSession "mail/pkg/domain/delivery"
 	emailUsecase "mail/pkg/domain/usecase"
 
 	"github.com/gorilla/mux"
@@ -28,7 +28,7 @@ var requestIDContextKey interface{} = "requestid"
 // EmailHandler represents the handler for email operations.
 type EmailHandler struct {
 	EmailUseCase emailUsecase.EmailUseCase
-	Sessions     *session.SessionsManager
+	Sessions     domainSession.SessionsManager
 }
 
 func InitializationEmailHandler(emailHandler *EmailHandler) {

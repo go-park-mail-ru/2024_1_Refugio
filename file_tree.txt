@@ -23,6 +23,9 @@
 ├── log.txt
 ├── pkg
 │   ├── delivery
+│   │   ├── auth
+│   │   │   ├── auth_handler.go
+│   │   │   └── auth_handler_test.go
 │   │   ├── converters
 │   │   │   ├── email_converter.go
 │   │   │   ├── email_converter_test.go
@@ -49,11 +52,14 @@
 │   │       ├── handlersUser_test.go
 │   │       └── user_handler.go
 │   ├── domain
+│   │   ├── delivery
+│   │   │   └── imanager.go
 │   │   ├── logger
 │   │   │   └── logger.go
 │   │   ├── mock
 │   │   │   ├── email_repository_mock.go
 │   │   │   ├── email_service_mock.go
+│   │   │   ├── manager_mock.go
 │   │   │   ├── session_repository_mock.go
 │   │   │   ├── session_service_mock.go
 │   │   │   ├── user_repository_mock.go
@@ -106,11 +112,10 @@
 │           └── user_service_test.go
 └── smtp_server
     ├── Dockerfile
-    ├── commands.go
     ├── docker-compose.yml
     ├── emailSMTP.go
     ├── go.mod
     ├── go.sum
     └── main.go
 
-34 directories, 80 files
+36 directories, 83 files

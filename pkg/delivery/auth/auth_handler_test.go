@@ -67,7 +67,7 @@ func TestLogin_InvalidRequestBody(t *testing.T) {
 		Password: "password",
 	}
 	requestBodyBytesMarshal, _ := json.Marshal(requestBody)
-	fmt.Println(requestBodyBytesMarshal)
+	fmt.Println(string(requestBodyBytesMarshal))
 	requestBodyBytes := []byte(`{"birthday":"0001-01-01T00:00:00Z","login":"test@mailhub.su""password":"password"}`)
 
 	req, err := http.NewRequest("POST", "/api/v1/auth/login", bytes.NewReader(requestBodyBytes))
