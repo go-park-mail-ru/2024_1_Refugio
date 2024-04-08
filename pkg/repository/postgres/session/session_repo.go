@@ -50,9 +50,10 @@ func (repo *SessionRepository) CreateSession(userID uint32, device, requestID st
 	ID := GenerateRandomID()
 	csrfToken := GenerateRandomID()
 	creationDate := time.Now()
-	args := []interface{}{ID, userID, device, creationDate, lifeTime, csrfToken}
 
+	args := []interface{}{ID, userID, device, creationDate, lifeTime, csrfToken}
 	start := time.Now()
+
 	_, err := repo.DB.Exec(query, ID, userID, device, creationDate, lifeTime, csrfToken)
 	if err != nil {
 		Logger.DbLog(query, requestID, 500, start, err, args)
