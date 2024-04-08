@@ -86,9 +86,9 @@ func (r *UserRepository) GetAll(offset, limit int, requestID string) ([]*domain.
 	} else {
 		err = r.DB.Select(&userModelsDb, query)
 	}
+	defer Logger.DbLog(query, requestID, start, &err, args)
 
 	if err != nil {
-		Logger.DbLog(query, requestID, 500, start, err, args)
 		return nil, err
 	}
 
@@ -97,7 +97,6 @@ func (r *UserRepository) GetAll(offset, limit int, requestID string) ([]*domain.
 		usersCore = append(usersCore, converters.UserConvertDbInCore(userModelDb))
 	}
 
-	Logger.DbLog(query, requestID, 200, start, nil, args)
 	return usersCore, nil
 }
 
@@ -110,8 +109,9 @@ func (r *UserRepository) GetByID(id uint32, requestID string) (*domain.User, err
 
 	var userModelDb database.User
 	err := r.DB.Get(&userModelDb, query, id)
+	defer Logger.DbLog(query, requestID, start, &err, args)
+
 	if err != nil {
-		Logger.DbLog(query, requestID, 500, start, err, args)
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("user with id %d not found", id)
 		}
@@ -119,7 +119,6 @@ func (r *UserRepository) GetByID(id uint32, requestID string) (*domain.User, err
 		return nil, err
 	}
 
-	Logger.DbLog(query, requestID, 200, start, nil, args)
 	return converters.UserConvertDbInCore(userModelDb), nil
 }
 
@@ -132,8 +131,9 @@ func (r *UserRepository) GetUserByLogin(login, password, requestID string) (*dom
 
 	var userModelDb database.User
 	err := r.DB.Get(&userModelDb, query, login)
+	defer Logger.DbLog(query, requestID, start, &err, args)
+
 	if err != nil {
-		Logger.DbLog(query, requestID, 500, start, err, args)
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("user with login %s not found", login)
 		}
@@ -142,11 +142,10 @@ func (r *UserRepository) GetUserByLogin(login, password, requestID string) (*dom
 	}
 
 	if CheckPasswordHash(password, userModelDb.Password) {
-		Logger.DbLog(query, requestID, 200, start, nil, args)
 		return converters.UserConvertDbInCore(userModelDb), nil
 	} else {
-		Logger.DbLog(query, requestID, 500, start, fmt.Errorf("user with login %s not found", login), args)
-		return nil, fmt.Errorf("user with login %s not found", login)
+		err = fmt.Errorf("user with login %s not found", login)
+		return nil, err
 	}
 }
 
@@ -163,18 +162,17 @@ func (r *UserRepository) Add(userModelCore *domain.User, requestID string) (*dom
 
 	password, status := HashPassword(userModelDb.Password)
 	if !status {
-		Logger.DbLog(query, requestID, 500, time.Now(), fmt.Errorf("user with login %s fail", userModelDb.Login), args)
 		return &domain.User{}, fmt.Errorf("user with login %s fail", userModelDb.Login)
 	}
 
 	userModelDb.Password = password
 	_, err := r.DB.Exec(query, userModelDb.Login, userModelDb.Password, userModelDb.FirstName, userModelDb.Surname, userModelDb.Patronymic, userModelDb.Gender, userModelDb.Birthday, time.Now(), userModelDb.AvatarID, userModelDb.PhoneNumber, userModelDb.Description)
+	defer Logger.DbLog(query, requestID, start, &err, args)
+
 	if err != nil {
-		Logger.DbLog(query, requestID, 500, start, err, args)
 		return &domain.User{}, fmt.Errorf("user with login %s fail", userModelDb.Login)
 	}
 
-	Logger.DbLog(query, requestID, 200, start, nil, args)
 	return userModelCore, nil
 }
 
@@ -222,23 +220,22 @@ func (r *UserRepository) Update(newUserCore *domain.User, requestID string) (boo
 		newUserDb.Description,
 		newUserDb.ID,
 	)
+	defer Logger.DbLog(query, requestID, start, &err, args)
+
 	if err != nil {
-		Logger.DbLog(query, requestID, 500, start, err, args)
 		return false, fmt.Errorf("failed to update user: %v", err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		Logger.DbLog(query, requestID, 500, start, err, args)
 		return false, fmt.Errorf("failed to retrieve rows affected: %v", err)
 	}
 
 	if rowsAffected == 0 {
-		Logger.DbLog(query, requestID, 500, start, fmt.Errorf("user with id %d not found", newUserDb.ID), args)
-		return false, fmt.Errorf("user with id %d not found", newUserDb.ID)
+		err = fmt.Errorf("user with id %d not found", newUserDb.ID)
+		return false, err
 	}
 
-	Logger.DbLog(query, requestID, 200, start, nil, args)
 	return true, nil
 }
 
@@ -250,22 +247,21 @@ func (r *UserRepository) Delete(id uint32, requestID string) (bool, error) {
 	start := time.Now()
 
 	result, err := r.DB.Exec(query, id)
+	defer Logger.DbLog(query, requestID, start, &err, args)
+
 	if err != nil {
-		Logger.DbLog(query, requestID, 500, start, err, args)
 		return false, fmt.Errorf("failed to delete user: %v", err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		Logger.DbLog(query, requestID, 500, start, err, args)
 		return false, fmt.Errorf("failed to retrieve rows affected: %v", err)
 	}
 
 	if rowsAffected == 0 {
-		Logger.DbLog(query, requestID, 500, start, fmt.Errorf("user with id %d not found", id), args)
-		return false, fmt.Errorf("user with id %d not found", id)
+		err = fmt.Errorf("user with id %d not found", id)
+		return false, err
 	}
 
-	Logger.DbLog(query, requestID, 200, start, nil, args)
 	return true, nil
 }
