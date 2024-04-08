@@ -20,19 +20,14 @@ import (
 )
 
 var (
-	EHandler = &EmailHandler{}
+	EHandler                        = &EmailHandler{}
+	requestIDContextKey interface{} = "requestid"
 )
-
-var requestIDContextKey interface{} = "requestid"
 
 // EmailHandler represents the handler for email operations.
 type EmailHandler struct {
 	EmailUseCase emailUsecase.EmailUseCase
 	Sessions     domainSession.SessionsManager
-}
-
-func InitializationEmailHandler(emailHandler *EmailHandler) {
-	EHandler = emailHandler
 }
 
 func sanitizeString(str string) string {
@@ -245,6 +240,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 		}
 
 		delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*email)})*/
+		delivery.HandleSuccess(w, http.StatusBadRequest, "An error occurred in the recipient's domain. You cannot send messages to other email services. Make sure that the recipient's domain ends with @mailhub.su")
 		return
 	case isValidMailhubFormat(sender) == false && isValidMailhubFormat(recipient) == true:
 		err = h.EmailUseCase.CheckRecipientEmail(recipient, requestID)
