@@ -13,8 +13,9 @@ type Logger struct {
 	Logger *logger.LogrusLogger
 }
 
-var Log = Logger{}
-var requestIDContextKey interface{} = "requestid"
+var (
+	requestIDContextKey interface{} = "requestid"
+)
 
 type loggingResponseWriter struct {
 	http.ResponseWriter
