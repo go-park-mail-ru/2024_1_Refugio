@@ -21,6 +21,7 @@ import (
 	migrate "github.com/rubenv/sql-migrate"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 
+	authHand "mail/pkg/delivery/auth"
 	emailHand "mail/pkg/delivery/email"
 	userHand "mail/pkg/delivery/user"
 	emailRepo "mail/pkg/repository/postgres/email"
@@ -46,12 +47,13 @@ func main() {
 	migrateDatabase(db)
 
 	sessionsManager := initializeSessionsManager(db)
+	authHandler := initializeAuthHandler(db, sessionsManager)
 	emailHandler := initializeEmailHandler(db, sessionsManager)
 	userHandler := initializeUserHandler(db, sessionsManager)
 
 	Logger := initializeLogger()
 
-	router := setupRouter(emailHandler, userHandler, Logger)
+	router := setupRouter(authHandler, emailHandler, userHandler, Logger)
 
 	startServer(router)
 }
@@ -96,6 +98,16 @@ func initializeSessionsManager(db *sql.DB) *session.SessionsManager {
 	return sessionsManager
 }
 
+func initializeAuthHandler(db *sql.DB, sessionsManager *session.SessionsManager) *authHand.AuthHandler {
+	userRepository := userRepo.NewUserRepository(sqlx.NewDb(db, "pgx"))
+	userUseCase := userUc.NewUserUseCase(userRepository)
+
+	return &authHand.AuthHandler{
+		UserUseCase: userUseCase,
+		Sessions:    sessionsManager,
+	}
+}
+
 func initializeEmailHandler(db *sql.DB, sessionsManager *session.SessionsManager) *emailHand.EmailHandler {
 	emailRepository := emailRepo.NewEmailRepository(sqlx.NewDb(db, "pgx"))
 	emailUseCase := emailUc.NewEmailUseCase(emailRepository)
@@ -124,13 +136,13 @@ func initializeLogger() *middleware.Logger {
 	return Logger
 }
 
-func setupRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.UserHandler, logger *middleware.Logger) http.Handler {
+func setupRouter(authHandler *authHand.AuthHandler, emailHandler *emailHand.EmailHandler, userHandler *userHand.UserHandler, logger *middleware.Logger) http.Handler {
 	router := mux.NewRouter()
 
-	auth := setupAuthRouter(userHandler, emailHandler, logger)
+	auth := setupAuthRouter(authHandler, emailHandler, logger)
 	router.PathPrefix("/api/v1/auth").Handler(auth)
 
-	logRouter := setupLogRouter(emailHandler, userHandler, logger)
+	logRouter := setupLogRouter(authHandler, emailHandler, userHandler, logger)
 	router.PathPrefix("/api/v1").Handler(logRouter)
 
 	staticDir := "/media/"
@@ -142,23 +154,23 @@ func setupRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.Use
 	return logger.AccessLogMiddleware(router)
 }
 
-func setupAuthRouter(userHandler *userHand.UserHandler, emailHandler *emailHand.EmailHandler, logger *middleware.Logger) http.Handler {
+func setupAuthRouter(authHandler *authHand.AuthHandler, emailHandler *emailHand.EmailHandler, logger *middleware.Logger) http.Handler {
 	auth := mux.NewRouter().PathPrefix("/api/v1/auth").Subrouter()
 	auth.Use(logger.AccessLogMiddleware, middleware.PanicMiddleware)
 
-	auth.HandleFunc("/login", userHandler.Login).Methods("POST", "OPTIONS")
-	auth.HandleFunc("/signup", userHandler.Signup).Methods("POST", "OPTIONS")
-	auth.HandleFunc("/logout", userHandler.Logout).Methods("POST", "OPTIONS")
+	auth.HandleFunc("/login", authHandler.Login).Methods("POST", "OPTIONS")
+	auth.HandleFunc("/signup", authHandler.Signup).Methods("POST", "OPTIONS")
+	auth.HandleFunc("/logout", authHandler.Logout).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/sendOther", emailHandler.SendFromAnotherDomain).Methods("POST", "OPTIONS")
 
 	return auth
 }
 
-func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.UserHandler, logger *middleware.Logger) http.Handler {
+func setupLogRouter(authHandler *authHand.AuthHandler, emailHandler *emailHand.EmailHandler, userHandler *userHand.UserHandler, logger *middleware.Logger) http.Handler {
 	logRouter := mux.NewRouter().PathPrefix("/api/v1").Subrouter()
 	logRouter.Use(logger.AccessLogMiddleware, middleware.PanicMiddleware, middleware.AuthMiddleware)
 
-	logRouter.HandleFunc("/verify-auth", userHandler.VerifyAuth).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/verify-auth", authHandler.VerifyAuth).Methods("GET", "OPTIONS")
 	logRouter.HandleFunc("/user/get", userHandler.GetUserBySession).Methods("GET", "OPTIONS")
 	logRouter.HandleFunc("/user/update", userHandler.UpdateUserData).Methods("PUT", "OPTIONS")
 	logRouter.HandleFunc("/user/delete/{id}", userHandler.DeleteUserData).Methods("DELETE", "OPTIONS")

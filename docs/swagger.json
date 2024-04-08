@@ -19,7 +19,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "users"
+                    "auth"
                 ],
                 "summary": "User login",
                 "parameters": [
@@ -68,7 +68,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "users"
+                    "auth"
                 ],
                 "summary": "User logout",
                 "responses": {
@@ -91,7 +91,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "users"
+                    "auth"
                 ],
                 "summary": "User signup",
                 "parameters": [
@@ -674,7 +674,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "users"
+                    "auth"
                 ],
                 "summary": "Verify user authentication",
                 "responses": {

@@ -10,13 +10,11 @@ import (
 	"mail/pkg/delivery/converters"
 	api "mail/pkg/delivery/models"
 	"mail/pkg/delivery/session"
-	domain "mail/pkg/domain/models"
 	"mail/pkg/domain/usecase"
 	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -33,8 +31,8 @@ type UserHandler struct {
 	Sessions    *session.SessionsManager
 }
 
-// InitializationEmailHandler initializes the email handler with the provided user handler.
-func InitializationEmailHandler(userHandler *UserHandler) {
+// InitializationUserHandler initializes the user handler with the provided user handler.
+func InitializationUserHandler(userHandler *UserHandler) {
 	UHandler = userHandler
 }
 
@@ -43,154 +41,6 @@ func sanitizeString(str string) string {
 	p := bluemonday.UGCPolicy()
 
 	return p.Sanitize(str)
-}
-
-// VerifyAuth verifies user authentication.
-// @Summary Verify user authentication
-// @Description Verify user authentication using sessions
-// @Tags users
-// @Produce json
-// @Success 200 {object} delivery.Response "OK"
-// @Failure 401 {object} delivery.Response "Not Authorized"
-// @Router /api/v1/verify-auth [get]
-func (uh *UserHandler) VerifyAuth(w http.ResponseWriter, r *http.Request) {
-	requestID, ok := r.Context().Value(requestIDContextKey).(string)
-	if !ok {
-		requestID = "none"
-	}
-
-	sessionUser := uh.Sessions.GetSession(r, requestID)
-	w.Header().Set("X-Csrf-Token", sessionUser.CsrfToken)
-
-	delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "OK"})
-}
-
-// Login handles user login.
-// @Summary User login
-// @Description Handles user login.
-// @Tags users
-// @Accept json
-// @Produce json
-// @Param credentials body delivery.UserSwag true "User credentials for login"
-// @Success 200 {object} delivery.Response "Login successful"
-// @Failure 400 {object} delivery.ErrorResponse "Invalid request body"
-// @Failure 401 {object} delivery.ErrorResponse "Invalid credentials"
-// @Failure 500 {object} delivery.ErrorResponse "Failed to create session"
-// @Router /api/v1/auth/login [post]
-func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
-	var credentials api.User
-	err := json.NewDecoder(r.Body).Decode(&credentials)
-	if err != nil {
-		delivery.HandleError(w, http.StatusBadRequest, "Invalid request body")
-		return
-	}
-
-	credentials.Login = sanitizeString(credentials.Login)
-	credentials.Password = sanitizeString(credentials.Password)
-
-	if isEmpty(credentials.Login) || isEmpty(credentials.Password) {
-		delivery.HandleError(w, http.StatusInternalServerError, "All fields must be filled in")
-		return
-	}
-
-	if !isValidEmailFormat(credentials.Login) {
-		delivery.HandleError(w, http.StatusBadRequest, "Domain in the login is not suitable")
-		return
-	}
-
-	requestID, ok := r.Context().Value(requestIDContextKey).(string)
-	if !ok {
-		requestID = "none"
-	}
-
-	ourUser, err := uh.UserUseCase.GetUserByLogin(credentials.Login, credentials.Password, requestID)
-	if err != nil {
-		delivery.HandleError(w, http.StatusUnauthorized, "Login failed")
-		return
-	}
-
-	_, er := uh.Sessions.Create(w, ourUser.ID, requestID)
-	if er != nil {
-		delivery.HandleError(w, http.StatusInternalServerError, "Failed to create session")
-		return
-	}
-
-	delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "Login successful"})
-}
-
-// Signup handles user signup.
-// @Summary User signup
-// @Description Handles user signup.
-// @Tags users
-// @Accept json
-// @Produce json
-// @Param newUser body delivery.UserSwag true "New user details for signup"
-// @Success 200 {object} delivery.Response "Signup successful"
-// @Failure 400 {object} delivery.ErrorResponse "Invalid request body"
-// @Failure 500 {object} delivery.ErrorResponse "Failed to add user"
-// @Router /api/v1/auth/signup [post]
-func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
-	var newUser api.User
-	err := json.NewDecoder(r.Body).Decode(&newUser)
-	if err != nil {
-		delivery.HandleError(w, http.StatusBadRequest, "Invalid request body")
-		return
-	}
-
-	newUser.Login = sanitizeString(newUser.Login)
-	newUser.Password = sanitizeString(newUser.Password)
-	newUser.FirstName = sanitizeString(newUser.FirstName)
-	newUser.Surname = sanitizeString(newUser.Surname)
-
-	if isEmpty(newUser.Login) || isEmpty(newUser.Password) || isEmpty(newUser.FirstName) || isEmpty(newUser.Surname) || !domain.IsValidGender(newUser.Gender) {
-		delivery.HandleError(w, http.StatusBadRequest, "All fields must be filled in")
-		return
-	}
-
-	if !isValidEmailFormat(newUser.Login) {
-		delivery.HandleError(w, http.StatusBadRequest, "Domain in the login is not suitable")
-		return
-	}
-
-	requestID, ok := r.Context().Value(requestIDContextKey).(string)
-	if !ok {
-		requestID = "none"
-	}
-
-	loginUnique, _ := uh.UserUseCase.IsLoginUnique(newUser.Login, requestID)
-	if !loginUnique {
-		delivery.HandleError(w, http.StatusBadRequest, "Such a login already exists")
-		return
-	}
-
-	_, er := uh.UserUseCase.CreateUser(converters.UserConvertApiInCore(newUser), requestID)
-	if er != nil {
-		delivery.HandleError(w, http.StatusInternalServerError, "Failed to add user")
-		return
-	}
-
-	delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "Signup successful"})
-}
-
-// Logout handles user logout.
-// @Summary User logout
-// @Description Handles user logout.
-// @Tags users
-// @Produce json
-// @Success 200 {object} delivery.Response "Logout successful"
-// @Router /api/v1/auth/logout [post]
-func (uh *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	requestID, ok := r.Context().Value(requestIDContextKey).(string)
-	if !ok {
-		requestID = "none"
-	}
-	err := uh.Sessions.DestroyCurrent(w, r, requestID)
-	if err != nil {
-		delivery.HandleError(w, http.StatusUnauthorized, "Not Authorized")
-		return
-	}
-
-	delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "Logout successful"})
 }
 
 // GetUserBySession retrieves the user associated with the current session.
@@ -215,13 +65,13 @@ func (uh *UserHandler) GetUserBySession(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	userData.Login = sanitizeString(userData.Login)
-	userData.FirstName = sanitizeString(userData.FirstName)
-	userData.Surname = sanitizeString(userData.Surname)
-	userData.Patronymic = sanitizeString(userData.Patronymic)
-	userData.AvatarID = sanitizeString(userData.AvatarID)
-	userData.PhoneNumber = sanitizeString(userData.PhoneNumber)
-	userData.Description = sanitizeString(userData.Description)
+	userData.Login = sanitizeString(strings.TrimSpace(userData.Login))
+	userData.FirstName = sanitizeString(strings.TrimSpace(userData.FirstName))
+	userData.Surname = sanitizeString(strings.TrimSpace(userData.Surname))
+	userData.Patronymic = sanitizeString(strings.TrimSpace(userData.Patronymic))
+	userData.AvatarID = sanitizeString(strings.TrimSpace(userData.AvatarID))
+	userData.PhoneNumber = sanitizeString(strings.TrimSpace(userData.PhoneNumber))
+	userData.Description = sanitizeString(strings.TrimSpace(userData.Description))
 
 	delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"user": converters.UserConvertCoreInApi(*userData)})
 }
@@ -399,17 +249,4 @@ func generateUniqueFileName(format string) string {
 	uniqueFileName := fmt.Sprintf("%s_%d%s", currentTime, randomNum, format)
 
 	return uniqueFileName
-}
-
-// isEmpty checks if the given string is empty after trimming leading and trailing whitespace.
-// Returns true if the string is empty, and false otherwise.
-func isEmpty(str string) bool {
-	return strings.TrimSpace(str) == ""
-}
-
-// isValidEmailFormat checks if the provided email string matches the specific format for emails ending with "@mailhub.ru".
-func isValidEmailFormat(email string) bool {
-	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@mailhub\.su$`)
-
-	return emailRegex.MatchString(email)
 }
