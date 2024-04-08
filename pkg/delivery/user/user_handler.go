@@ -9,7 +9,7 @@ import (
 	"mail/pkg/delivery"
 	"mail/pkg/delivery/converters"
 	api "mail/pkg/delivery/models"
-	"mail/pkg/delivery/session"
+	domainSession "mail/pkg/domain/delivery"
 	"mail/pkg/domain/usecase"
 	"math/rand"
 	"net/http"
@@ -28,7 +28,7 @@ var (
 // UserHandler handles user-related HTTP requests.
 type UserHandler struct {
 	UserUseCase usecase.UserUseCase
-	Sessions    *session.SessionsManager
+	Sessions    domainSession.SessionsManager
 }
 
 // InitializationUserHandler initializes the user handler with the provided user handler.

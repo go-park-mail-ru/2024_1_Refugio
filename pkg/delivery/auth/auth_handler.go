@@ -6,7 +6,7 @@ import (
 	"mail/pkg/delivery"
 	"mail/pkg/delivery/converters"
 	api "mail/pkg/delivery/models"
-	"mail/pkg/delivery/session"
+	domainSession "mail/pkg/domain/delivery"
 	domain "mail/pkg/domain/models"
 	"mail/pkg/domain/usecase"
 	"net/http"
@@ -22,7 +22,7 @@ var (
 // AuthHandler handles user-related HTTP requests.
 type AuthHandler struct {
 	UserUseCase usecase.UserUseCase
-	Sessions    *session.SessionsManager
+	Sessions    domainSession.SessionsManager
 }
 
 // InitializationAuthHandler initializes the auth handler with the provided user handler.

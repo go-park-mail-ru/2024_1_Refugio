@@ -1,3 +1,4 @@
+//go:generate mockgen -source=./manager.go -destination=../../domain/mock/manager_mock.go -package=mock
 package session
 
 import (
