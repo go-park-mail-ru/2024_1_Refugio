@@ -8,10 +8,15 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
+	"io"
+	"io/ioutil"
 	api "mail/pkg/delivery/models"
 	"mail/pkg/domain/mock"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strconv"
 	"testing"
 	"time"
@@ -486,4 +491,89 @@ func TestGenerateUniqueFileName(t *testing.T) {
 			assert.True(t, randomNum >= 0 && randomNum <= 999)
 		})
 	}
+}
+
+func TestUploadUserAvatar_ErrorProcessingFile(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockSessionsManager := mock.NewMockSessionsManager(ctrl)
+	mockUserUseCase := mock.NewMockUserUseCase(ctrl)
+
+	userHandler := &UserHandler{
+		Sessions:    mockSessionsManager,
+		UserUseCase: mockUserUseCase,
+	}
+
+	rr := httptest.NewRecorder()
+
+	req := httptest.NewRequest("POST", "/api/v1/user/avatar/upload", nil)
+	req.Header.Set("Content-Type", "multipart/form-data")
+
+	tempFile, err := ioutil.TempFile("", "test_avatar.*")
+	if err != nil {
+		t.Fatalf("Failed to create temporary file: %v", err)
+	}
+	defer os.Remove(tempFile.Name())
+	defer tempFile.Close()
+
+	writer := multipart.NewWriter(rr.Body)
+	part, err := writer.CreateFormFile("file", filepath.Base(tempFile.Name()))
+	if err != nil {
+		t.Fatalf("Failed to create form file: %v", err)
+	}
+	_, err = io.Copy(part, tempFile)
+	if err != nil {
+		t.Fatalf("Failed to copy file content: %v", err)
+	}
+	writer.Close()
+
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	userHandler.UploadUserAvatar(rr, req)
+
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+}
+
+func TestUploadUserAvatar_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserUseCase := mock.NewMockUserUseCase(ctrl)
+	mockSessionManager := mock.NewMockSessionsManager(ctrl)
+
+	userHandler := &UserHandler{
+		UserUseCase: mockUserUseCase,
+		Sessions:    mockSessionManager,
+	}
+
+	tempDir := t.TempDir()
+	tempFile, err := os.CreateTemp(tempDir, "test_avatar.*")
+	if err != nil {
+		t.Fatalf("Failed to create temporary file: %v", err)
+	}
+	defer os.Remove(tempFile.Name())
+	defer tempFile.Close()
+
+	var requestBody bytes.Buffer
+	multipartWriter := multipart.NewWriter(&requestBody)
+	fileWriter, err := multipartWriter.CreateFormFile("file", filepath.Base(tempFile.Name()))
+	if err != nil {
+		t.Fatalf("Failed to create form file writer: %v", err)
+	}
+
+	_, err = io.Copy(fileWriter, tempFile)
+	if err != nil {
+		t.Fatalf("Failed to copy file content: %v", err)
+	}
+	multipartWriter.Close()
+
+	req := httptest.NewRequest("POST", "/api/v1/user/avatar/upload", &requestBody)
+	req.Header.Set("Content-Type", multipartWriter.FormDataContentType())
+
+	rr := httptest.NewRecorder()
+
+	userHandler.UploadUserAvatar(rr, req)
+
+	assert.Equal(t, http.StatusInternalServerError, rr.Code)
 }
