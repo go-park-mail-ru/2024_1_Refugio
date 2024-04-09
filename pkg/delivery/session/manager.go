@@ -1,9 +1,7 @@
-//go:generate mockgen -source=./manager.go -destination=../../domain/mock/manager_mock.go -package=mock
 package session
 
 import (
 	"fmt"
-	"github.com/microcosm-cc/bluemonday"
 	"mail/pkg/delivery/converters"
 	"mail/pkg/delivery/models"
 	domain "mail/pkg/domain/usecase"
@@ -33,17 +31,6 @@ func NewSessionsManager(sessionUc domain.SessionUseCase) *SessionsManager {
 	}
 }
 
-// sanitizeSession sanitizes the session data using UGCPolicy from bluemonday.
-func sanitizeSession(sess *models.Session) *models.Session {
-	p := bluemonday.UGCPolicy()
-
-	sess.ID = p.Sanitize(sess.ID)
-	sess.CsrfToken = p.Sanitize(sess.CsrfToken)
-	sess.Device = p.Sanitize(sess.Device)
-
-	return sess
-}
-
 // GetSession retrieves the session from the request and sanitizes it.
 func (sm *SessionsManager) GetSession(r *http.Request, requestID string) *models.Session {
 	sessionCookie, _ := r.Cookie("session_id")
@@ -53,7 +40,7 @@ func (sm *SessionsManager) GetSession(r *http.Request, requestID string) *models
 		return nil
 	}
 
-	return sanitizeSession(converters.SessionConvertCoreInApi(*sess))
+	return converters.SessionConvertCoreInApi(*sess)
 }
 
 // Check checks the validity of the session and CSRF token in the request.
@@ -76,7 +63,7 @@ func (sm *SessionsManager) Check(r *http.Request, requestID string) (*models.Ses
 		return nil, fmt.Errorf("CSRF token mismatch")
 	}
 
-	return sanitizeSession(converters.SessionConvertCoreInApi(*sess)), nil
+	return converters.SessionConvertCoreInApi(*sess), nil
 }
 
 // CheckLogin checks if the login associated with the session matches the provided login.
@@ -100,6 +87,7 @@ func (sm SessionsManager) GetLoginBySession(r *http.Request, requestID string) (
 	if err != nil {
 		return "", err
 	}
+
 	return Login, nil
 }
 
@@ -121,7 +109,7 @@ func (sm *SessionsManager) Create(w http.ResponseWriter, userID uint32, requestI
 		Expires:  time.Now().Add(24 * time.Hour),
 		Path:     "/",
 		HttpOnly: true,
-		//SameSite: http.SameSiteNoneMode,
+		// SameSite: http.SameSiteNoneMode,
 	}
 	http.SetCookie(w, sessionCookie)
 

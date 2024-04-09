@@ -43,6 +43,26 @@ func sanitizeString(str string) string {
 	return p.Sanitize(str)
 }
 
+// VerifyAuth verifies user authentication.
+// @Summary Verify user authentication
+// @Description Verify user authentication using sessions
+// @Tags users
+// @Produce json
+// @Success 200 {object} delivery.Response "OK"
+// @Failure 401 {object} delivery.Response "Not Authorized"
+// @Router /api/v1/verify-auth [get]
+func (uh *UserHandler) VerifyAuth(w http.ResponseWriter, r *http.Request) {
+	requestID, ok := r.Context().Value(requestIDContextKey).(string)
+	if !ok {
+		requestID = "none"
+	}
+
+	sessionUser := uh.Sessions.GetSession(r, requestID)
+	w.Header().Set("X-Csrf-Token", sessionUser.CsrfToken)
+
+	delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "OK"})
+}
+
 // GetUserBySession retrieves the user associated with the current session.
 // @Summary Get user by session
 // @Description Retrieve the user associated with the current session

@@ -98,7 +98,7 @@ definitions:
     - Male
     - Female
     - Other
-host: localhost:8080
+host: mailhub.su:8080
 info:
   contact: {}
   description: API server for mail
@@ -555,5 +555,5 @@ paths:
             $ref: '#/definitions/delivery.Response'
       summary: Verify user authentication
       tags:
-      - auth
+      - users
 swagger: "2.0"

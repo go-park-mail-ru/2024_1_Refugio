@@ -38,7 +38,7 @@ import (
 // @version 1.0
 // @description API server for mail
 
-// @host localhost:8080
+// @host mailhub.su:8080
 // @BasePath /
 func main() {
 	db := initializeDatabase()
@@ -59,8 +59,8 @@ func main() {
 }
 
 func initializeDatabase() *sql.DB {
-	dsn := "user=postgres dbname=Mail password=postgres host=localhost port=5432 sslmode=disable"
-	// dsn := "user=postgres dbname=Mail password=postgres host=89.208.223.140 port=5432 sslmode=disable"
+	// dsn := "user=postgres dbname=Mail password=postgres host=localhost port=5432 sslmode=disable"
+	dsn := "user=postgres dbname=Mail password=postgres host=89.208.223.140 port=5432 sslmode=disable"
 	db, err := sql.Open("pgx", dsn)
 	if err != nil {
 		log.Fatalln("Can't parse config", err)
@@ -142,7 +142,7 @@ func setupRouter(authHandler *authHand.AuthHandler, emailHandler *emailHand.Emai
 	auth := setupAuthRouter(authHandler, emailHandler, logger)
 	router.PathPrefix("/api/v1/auth").Handler(auth)
 
-	logRouter := setupLogRouter(authHandler, emailHandler, userHandler, logger)
+	logRouter := setupLogRouter(emailHandler, userHandler, logger)
 	router.PathPrefix("/api/v1").Handler(logRouter)
 
 	staticDir := "/media/"
@@ -166,11 +166,11 @@ func setupAuthRouter(authHandler *authHand.AuthHandler, emailHandler *emailHand.
 	return auth
 }
 
-func setupLogRouter(authHandler *authHand.AuthHandler, emailHandler *emailHand.EmailHandler, userHandler *userHand.UserHandler, logger *middleware.Logger) http.Handler {
+func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.UserHandler, logger *middleware.Logger) http.Handler {
 	logRouter := mux.NewRouter().PathPrefix("/api/v1").Subrouter()
 	logRouter.Use(logger.AccessLogMiddleware, middleware.PanicMiddleware, middleware.AuthMiddleware)
 
-	logRouter.HandleFunc("/verify-auth", authHandler.VerifyAuth).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/verify-auth", userHandler.VerifyAuth).Methods("GET", "OPTIONS")
 	logRouter.HandleFunc("/user/get", userHandler.GetUserBySession).Methods("GET", "OPTIONS")
 	logRouter.HandleFunc("/user/update", userHandler.UpdateUserData).Methods("PUT", "OPTIONS")
 	logRouter.HandleFunc("/user/delete/{id}", userHandler.DeleteUserData).Methods("DELETE", "OPTIONS")

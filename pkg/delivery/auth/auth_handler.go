@@ -37,26 +37,6 @@ func sanitizeString(str string) string {
 	return p.Sanitize(str)
 }
 
-// VerifyAuth verifies user authentication.
-// @Summary Verify user authentication
-// @Description Verify user authentication using sessions
-// @Tags auth
-// @Produce json
-// @Success 200 {object} delivery.Response "OK"
-// @Failure 401 {object} delivery.Response "Not Authorized"
-// @Router /api/v1/verify-auth [get]
-func (ah *AuthHandler) VerifyAuth(w http.ResponseWriter, r *http.Request) {
-	requestID, ok := r.Context().Value(requestIDContextKey).(string)
-	if !ok {
-		requestID = "none"
-	}
-
-	sessionUser := ah.Sessions.GetSession(r, requestID)
-	w.Header().Set("X-Csrf-Token", sessionUser.CsrfToken)
-
-	delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "OK"})
-}
-
 // Login handles user login.
 // @Summary User login
 // @Description Handles user login.
@@ -133,6 +113,10 @@ func (ah *AuthHandler) Signup(w http.ResponseWriter, r *http.Request) {
 	newUser.Password = sanitizeString(newUser.Password)
 	newUser.FirstName = sanitizeString(newUser.FirstName)
 	newUser.Surname = sanitizeString(newUser.Surname)
+	newUser.Patronymic = sanitizeString(newUser.Patronymic)
+	newUser.PhoneNumber = sanitizeString(newUser.PhoneNumber)
+	newUser.Description = sanitizeString(newUser.Description)
+	newUser.AvatarID = sanitizeString(newUser.AvatarID)
 
 	if isEmpty(newUser.Login) || isEmpty(newUser.Password) || isEmpty(newUser.FirstName) || isEmpty(newUser.Surname) || !domain.IsValidGender(newUser.Gender) {
 		delivery.HandleError(w, http.StatusBadRequest, "All fields must be filled in")
