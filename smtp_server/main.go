@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/mhale/smtpd"
@@ -77,8 +78,6 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 	}
 
 	topic := msg.Header.Get("Subject")
-	log.Println("topic")
-	log.Println(topic)
 	var decodedTopic string
 	if topic != "" {
 		decodedTopic, err = decodeText(topic, msg.Header.Get("Content-Type"))
@@ -86,8 +85,6 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 			log.Println("Error decoding message subject:", err)
 			return err
 		}
-		log.Println("decodedTopic")
-		log.Println(decodedTopic)
 	}
 
 	body, err := ioutil.ReadAll(msg.Body)
@@ -97,6 +94,9 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 	}
 	log.Println("body")
 	log.Println(string(body))
+	log.Println("---")
+	log.Println(DecodeBase64(string(body)))
+	log.Println("---")
 	var decodedBody string
 	if body != nil {
 		decodedBody, err = decodeText(string(body), msg.Header.Get("Content-Type"))
@@ -152,6 +152,14 @@ func decodeText(text, contentType string) (string, error) {
 	}
 
 	return string(decodedBytes), nil
+}
+
+func DecodeBase64(encodedMessage string) (string, error) {
+	decodedMessage, err := base64.StdEncoding.DecodeString(encodedMessage)
+	if err != nil {
+		return "", err
+	}
+	return string(decodedMessage), nil
 }
 
 // isValidEmailFormat checks if the provided email string matches the specific format for emails ending with "@mailhub.ru".
