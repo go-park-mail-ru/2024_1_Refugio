@@ -3,7 +3,6 @@ package session
 
 import (
 	"fmt"
-	"github.com/microcosm-cc/bluemonday"
 	"mail/pkg/delivery/converters"
 	"mail/pkg/delivery/models"
 	domain "mail/pkg/domain/usecase"
@@ -34,7 +33,7 @@ func NewSessionsManager(sessionUc domain.SessionUseCase) *SessionsManager {
 }
 
 // sanitizeSession sanitizes the session data using UGCPolicy from bluemonday.
-func sanitizeSession(sess *models.Session) *models.Session {
+/*func sanitizeSession(sess *models.Session) *models.Session {
 	p := bluemonday.UGCPolicy()
 
 	sess.ID = p.Sanitize(sess.ID)
@@ -42,7 +41,7 @@ func sanitizeSession(sess *models.Session) *models.Session {
 	sess.Device = p.Sanitize(sess.Device)
 
 	return sess
-}
+}*/
 
 // GetSession retrieves the session from the request and sanitizes it.
 func (sm *SessionsManager) GetSession(r *http.Request, requestID string) *models.Session {
@@ -53,7 +52,7 @@ func (sm *SessionsManager) GetSession(r *http.Request, requestID string) *models
 		return nil
 	}
 
-	return sanitizeSession(converters.SessionConvertCoreInApi(*sess))
+	return converters.SessionConvertCoreInApi(*sess) //sanitizeSession(converters.SessionConvertCoreInApi(*sess))
 }
 
 // Check checks the validity of the session and CSRF token in the request.
@@ -76,7 +75,7 @@ func (sm *SessionsManager) Check(r *http.Request, requestID string) (*models.Ses
 		return nil, fmt.Errorf("CSRF token mismatch")
 	}
 
-	return sanitizeSession(converters.SessionConvertCoreInApi(*sess)), nil
+	return converters.SessionConvertCoreInApi(*sess), nil //sanitizeSession(converters.SessionConvertCoreInApi(*sess)), nil
 }
 
 // CheckLogin checks if the login associated with the session matches the provided login.
