@@ -13,8 +13,9 @@ type Logger struct {
 	Logger *logger.LogrusLogger
 }
 
-var Log = Logger{}
-var requestIDContextKey interface{} = "requestid"
+var (
+	requestIDContextKey interface{} = "requestid"
+)
 
 type loggingResponseWriter struct {
 	http.ResponseWriter
@@ -37,7 +38,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		if !ok {
 			requestID = "none"
 		}
-		_, err := session.GlobalSeaaionManager.Check(r, requestID)
+		_, err := session.GlobalSessionManager.Check(r, requestID)
 		if err != nil {
 			delivery.HandleError(w, http.StatusUnauthorized, "Not Authorized")
 			return

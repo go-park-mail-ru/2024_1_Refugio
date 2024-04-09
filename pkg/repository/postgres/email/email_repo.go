@@ -34,12 +34,12 @@ func (r *EmailRepository) Add(emailModelCore *domain.Email, requestID string) (i
 	var id int64
 	start := time.Now()
 	err := r.DB.QueryRow(query, args[0].(string), args[1].(string), args[2].(string), args[3].(string), args[4].(string), args[5].(string), args[6].(bool), args[7].(bool), args[8].(bool), args[9].(bool)).Scan(&id)
+	defer Logger.DbLog(query, requestID, start, &err, args)
+
 	if err != nil {
-		Logger.DbLog(query, requestID, 500, start, err, args)
-		return 0, emailModelCore, fmt.Errorf("Email with id %d fail", id)
+		return 0, &domain.Email{}, fmt.Errorf("Email with id %d fail", id)
 	}
 
-	Logger.DbLog(query, requestID, 200, start, nil, args)
 	return id, emailModelCore, nil
 }
 
@@ -51,12 +51,12 @@ func (r *EmailRepository) AddProfileEmail(email_id int64, sender, recipient, req
 	args := []interface{}{sender, recipient, email_id}
 	start := time.Now()
 	_, err := r.DB.Exec(query, sender, recipient, email_id)
+	defer Logger.DbLog(query, requestID, start, &err, args)
+
 	if err != nil {
-		Logger.DbLog(query, requestID, 500, start, err, args)
-		return fmt.Errorf("Profile_email with profile_id=%d and  fail", email_id)
+		return fmt.Errorf("Profile_email with profile_id=%d and fail", email_id)
 	}
 
-	Logger.DbLog(query, requestID, 200, start, nil, args)
 	return nil
 
 }
@@ -66,13 +66,14 @@ func (r *EmailRepository) FindEmail(login, requestID string) error {
 	args := []interface{}{login}
 	var userModelDb database.User
 	start := time.Now()
+
 	err := r.DB.Get(&userModelDb, query, login)
+	defer Logger.DbLog(query, requestID, start, &err, args)
 
 	if err != nil {
-		Logger.DbLog(query, requestID, 500, start, err, args)
-		return fmt.Errorf("user with login = %d not found", login)
+		return fmt.Errorf("user with login = %v not found", login)
 	}
-	Logger.DbLog(query, requestID, 200, start, nil, args)
+
 	return nil
 }
 
@@ -95,9 +96,9 @@ func (r *EmailRepository) GetAllIncoming(login, requestID string, offset, limit 
 		args = []interface{}{login}
 		err = r.DB.Select(&emailsModelDb, query, login)
 	}
+	defer Logger.DbLog(query, requestID, start, &err, args)
 
 	if err != nil {
-		Logger.DbLog(query, requestID, 500, start, err, args)
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("DB no have emails")
 		}
@@ -109,7 +110,6 @@ func (r *EmailRepository) GetAllIncoming(login, requestID string, offset, limit 
 		emailsModelCore = append(emailsModelCore, converters.EmailConvertDbInCore(e))
 	}
 
-	Logger.DbLog(query, requestID, 200, start, nil, args)
 	return emailsModelCore, nil
 }
 
@@ -132,9 +132,9 @@ func (r *EmailRepository) GetAllSent(login, requestID string, offset, limit int)
 		args = []interface{}{login}
 		err = r.DB.Select(&emailsModelDb, query, login)
 	}
+	defer Logger.DbLog(query, requestID, start, &err, args)
 
 	if err != nil {
-		Logger.DbLog(query, requestID, 500, start, err, args)
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("DB no have emails")
 		}
@@ -147,7 +147,6 @@ func (r *EmailRepository) GetAllSent(login, requestID string, offset, limit int)
 		emailsModelCore = append(emailsModelCore, converters.EmailConvertDbInCore(e))
 	}
 
-	Logger.DbLog(query, requestID, 200, start, nil, args)
 	return emailsModelCore, nil
 }
 
@@ -160,15 +159,14 @@ func (r *EmailRepository) GetByID(id uint64, login, requestID string) (*domain.E
 	var emailModelDb database.Email
 	start := time.Now()
 	err := r.DB.Get(&emailModelDb, query, int(id), login)
+	defer Logger.DbLog(query, requestID, start, &err, args)
 	if err != nil {
-		Logger.DbLog(query, requestID, 500, start, err, args)
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("email with id %d not found", id)
 		}
 		return nil, err
 	}
 
-	Logger.DbLog(query, requestID, 200, start, nil, args)
 	return converters.EmailConvertDbInCore(emailModelDb), nil
 }
 
@@ -193,22 +191,21 @@ func (r *EmailRepository) Update(newEmail *domain.Email, requestID string) (bool
 
 	start := time.Now()
 	result, err := r.DB.Exec(query, newEmailDb.Topic, newEmailDb.Text, newEmailDb.PhotoID, newEmailDb.ReadStatus, newEmailDb.Deleted, newEmailDb.DraftStatus, newEmailDb.ReplyToEmailID, newEmailDb.Flag, newEmailDb.ID, newEmailDb.SenderEmail)
+	defer Logger.DbLog(query, requestID, start, &err, args)
 	if err != nil {
 		return false, fmt.Errorf("failed to update email: %v", err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		Logger.DbLog(query, requestID, 500, start, err, args)
 		return false, fmt.Errorf("failed to retrieve rows affected: %v", err)
 	}
 
 	if rowsAffected == 0 {
-		Logger.DbLog(query, requestID, 500, start, err, args)
-		return false, fmt.Errorf("email with id %d not found", newEmailDb.ID)
+		err = fmt.Errorf("email with id %d not found", newEmailDb.ID)
+		return false, err
 	}
 
-	Logger.DbLog(query, requestID, 200, start, nil, args)
 	return true, nil
 }
 
@@ -218,21 +215,20 @@ func (r *EmailRepository) Delete(id uint64, login, requestID string) (bool, erro
 	args := []interface{}{id, login}
 	start := time.Now()
 	result, err := r.DB.Exec(query, id, login)
+	defer Logger.DbLog(query, requestID, start, &err, args)
 	if err != nil {
 		return false, fmt.Errorf("failed to delete email: %v", err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		Logger.DbLog(query, requestID, 500, start, err, args)
 		return false, fmt.Errorf("failed to retrieve rows affected: %v", err)
 	}
 
 	if rowsAffected == 0 {
-		Logger.DbLog(query, requestID, 500, start, err, args)
-		return false, fmt.Errorf("email with id %d not found", id)
+		err = fmt.Errorf("email with id %d not found", id)
+		return false, err
 	}
 
-	Logger.DbLog(query, requestID, 200, start, nil, args)
 	return true, nil
 }

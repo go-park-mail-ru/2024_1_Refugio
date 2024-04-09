@@ -17,15 +17,18 @@ import (
 	database "mail/pkg/repository/models"
 )
 
-var Logger = logger.InitializationBdLog()
-
+// UserRepository represents a repository for managing user data in the database.
 type UserRepository struct {
 	DB *sqlx.DB
 }
 
+// NewUserRepository creates a new instance of UserRepository with the given database connection.
 func NewUserRepository(db *sqlx.DB) *UserRepository {
 	return &UserRepository{DB: db}
 }
+
+// Logger is an instance of a logger used for logging database operations.
+var Logger = logger.InitializationBdLog()
 
 // PasswordHasher represents the password hashing function.
 type PasswordHasher func(password string) (string, bool)
@@ -40,31 +43,14 @@ var HashPassword PasswordHasher = func(password string) (string, bool) {
 	return string(bytes), true
 }
 
+// CheckPassword compares a password with a hash and returns true if they match, otherwise false.
+type CheckPassword func(password, hash string) bool
+
 // CheckPasswordHash compares a password with a hash and returns true if they match, otherwise false.
-func CheckPasswordHash(password, hash string) bool {
+var CheckPasswordHash CheckPassword = func(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 
 	return err == nil
-}
-
-// ComparingUserObjects compares two user objects by comparing.
-// If all fields match, the function returns true, otherwise false.
-func ComparingUserObjects(object1, object2 domain.User) bool {
-	userDb1 := converters.UserConvertCoreInDb(object1)
-	userDb2 := converters.UserConvertCoreInDb(object2)
-
-	if userDb1.ID == userDb2.ID &&
-		userDb1.FirstName == userDb2.FirstName &&
-		userDb1.Surname == userDb2.Surname &&
-		userDb1.Patronymic == userDb2.Patronymic &&
-		userDb1.Gender == userDb2.Gender &&
-		userDb1.Birthday == userDb2.Birthday &&
-		userDb1.Login == userDb2.Login &&
-		CheckPasswordHash(userDb2.Password, userDb1.Password) {
-		return true
-	}
-
-	return false
 }
 
 // RandomIDGenerator represents a function that generates random uint32 identifiers.
@@ -73,6 +59,7 @@ type RandomIDGenerator func() uint32
 // GenerateRandomID generates a random uint32 identifier.
 var GenerateRandomID RandomIDGenerator = func() uint32 {
 	randBytes := make([]byte, 4)
+
 	_, err := rand.Read(randBytes)
 	if err != nil {
 		// В случае ошибки вернуть ноль, но это можно обработать в вашем приложении по-разному.
@@ -80,26 +67,28 @@ var GenerateRandomID RandomIDGenerator = func() uint32 {
 	}
 
 	randID := binary.BigEndian.Uint32(randBytes)
+
 	return randID / 100
 }
 
 // GetAll returns all users from the storage.
 func (r *UserRepository) GetAll(offset, limit int, requestID string) ([]*domain.User, error) {
 	query := "SELECT * FROM profile"
+
 	args := []interface{}{}
+	start := time.Now()
 
 	var userModelsDb []database.User
 	var err error
-	start := time.Now()
 	if offset >= 0 && limit > 0 {
 		query += " OFFSET $1 LIMIT $2"
 		err = r.DB.Select(&userModelsDb, query, offset, limit)
 	} else {
 		err = r.DB.Select(&userModelsDb, query)
 	}
+	defer Logger.DbLog(query, requestID, start, &err, args)
 
 	if err != nil {
-		Logger.DbLog(query, requestID, 500, start, err, args)
 		return nil, err
 	}
 
@@ -108,52 +97,55 @@ func (r *UserRepository) GetAll(offset, limit int, requestID string) ([]*domain.
 		usersCore = append(usersCore, converters.UserConvertDbInCore(userModelDb))
 	}
 
-	Logger.DbLog(query, requestID, 200, start, nil, args)
 	return usersCore, nil
 }
 
 // GetByID returns the user by its unique identifier.
 func (r *UserRepository) GetByID(id uint32, requestID string) (*domain.User, error) {
 	query := "SELECT * FROM profile WHERE id = $1"
+
 	args := []interface{}{id}
+	start := time.Now()
 
 	var userModelDb database.User
-	start := time.Now()
 	err := r.DB.Get(&userModelDb, query, id)
+	defer Logger.DbLog(query, requestID, start, &err, args)
+
 	if err != nil {
-		Logger.DbLog(query, requestID, 500, start, err, args)
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("user with id %d not found", id)
 		}
+
 		return nil, err
 	}
 
-	Logger.DbLog(query, requestID, 200, start, nil, args)
 	return converters.UserConvertDbInCore(userModelDb), nil
 }
 
 // GetUserByLogin returns the user by login.
 func (r *UserRepository) GetUserByLogin(login, password, requestID string) (*domain.User, error) {
 	query := "SELECT * FROM profile WHERE login = $1"
+
 	args := []interface{}{login}
+	start := time.Now()
 
 	var userModelDb database.User
-	start := time.Now()
 	err := r.DB.Get(&userModelDb, query, login)
+	defer Logger.DbLog(query, requestID, start, &err, args)
+
 	if err != nil {
-		Logger.DbLog(query, requestID, 500, start, err, args)
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("user with login %s not found", login)
 		}
+
 		return nil, err
 	}
 
 	if CheckPasswordHash(password, userModelDb.Password) {
-		Logger.DbLog(query, requestID, 200, start, nil, args)
 		return converters.UserConvertDbInCore(userModelDb), nil
 	} else {
-		Logger.DbLog(query, requestID, 500, start, fmt.Errorf("user with login %s not found", login), args)
-		return nil, fmt.Errorf("user with login %s not found", login)
+		err = fmt.Errorf("user with login %s not found", login)
+		return nil, err
 	}
 }
 
@@ -166,20 +158,21 @@ func (r *UserRepository) Add(userModelCore *domain.User, requestID string) (*dom
 
 	userModelDb := converters.UserConvertCoreInDb(*userModelCore)
 	args := []interface{}{userModelDb.Login, userModelDb.Password, userModelDb.FirstName, userModelDb.Surname, userModelDb.Patronymic, userModelDb.Gender, userModelDb.Birthday, time.Now(), userModelDb.AvatarID, userModelDb.PhoneNumber, userModelDb.Description}
+	start := time.Now()
+
 	password, status := HashPassword(userModelDb.Password)
 	if !status {
-		Logger.DbLog(query, requestID, 500, time.Now(), fmt.Errorf("user with login %s fail", userModelDb.Login), args)
-		return &domain.User{}, fmt.Errorf("user with login %s fail", userModelDb.Login)
-	}
-	userModelDb.Password = password
-	start := time.Now()
-	_, err := r.DB.Exec(query, userModelDb.Login, userModelDb.Password, userModelDb.FirstName, userModelDb.Surname, userModelDb.Patronymic, userModelDb.Gender, userModelDb.Birthday, time.Now(), userModelDb.AvatarID, userModelDb.PhoneNumber, userModelDb.Description)
-	if err != nil {
-		Logger.DbLog(query, requestID, 500, start, err, args)
 		return &domain.User{}, fmt.Errorf("user with login %s fail", userModelDb.Login)
 	}
 
-	Logger.DbLog(query, requestID, 200, start, nil, args)
+	userModelDb.Password = password
+	_, err := r.DB.Exec(query, userModelDb.Login, userModelDb.Password, userModelDb.FirstName, userModelDb.Surname, userModelDb.Patronymic, userModelDb.Gender, userModelDb.Birthday, time.Now(), userModelDb.AvatarID, userModelDb.PhoneNumber, userModelDb.Description)
+	defer Logger.DbLog(query, requestID, start, &err, args)
+
+	if err != nil {
+		return &domain.User{}, fmt.Errorf("user with login %s fail", userModelDb.Login)
+	}
+
 	return userModelCore, nil
 }
 
@@ -201,6 +194,7 @@ func (r *UserRepository) Update(newUserCore *domain.User, requestID string) (boo
         WHERE
             id = $9
     `
+
 	args := []interface{}{
 		newUserDb.FirstName,
 		newUserDb.Surname,
@@ -212,8 +206,8 @@ func (r *UserRepository) Update(newUserCore *domain.User, requestID string) (boo
 		newUserDb.Description,
 		newUserDb.ID,
 	}
-
 	start := time.Now()
+
 	result, err := r.DB.Exec(
 		query,
 		newUserDb.FirstName,
@@ -226,49 +220,48 @@ func (r *UserRepository) Update(newUserCore *domain.User, requestID string) (boo
 		newUserDb.Description,
 		newUserDb.ID,
 	)
+	defer Logger.DbLog(query, requestID, start, &err, args)
+
 	if err != nil {
-		Logger.DbLog(query, requestID, 500, start, err, args)
 		return false, fmt.Errorf("failed to update user: %v", err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		Logger.DbLog(query, requestID, 500, start, err, args)
 		return false, fmt.Errorf("failed to retrieve rows affected: %v", err)
 	}
 
 	if rowsAffected == 0 {
-		Logger.DbLog(query, requestID, 500, start, fmt.Errorf("user with id %d not found", newUserDb.ID), args)
-		return false, fmt.Errorf("user with id %d not found", newUserDb.ID)
+		err = fmt.Errorf("user with id %d not found", newUserDb.ID)
+		return false, err
 	}
 
-	Logger.DbLog(query, requestID, 200, start, nil, args)
 	return true, nil
 }
 
 // Delete removes the user from the storage by its unique identifier.
 func (r *UserRepository) Delete(id uint32, requestID string) (bool, error) {
 	query := "DELETE FROM profile WHERE id = $1"
-	args := []interface{}{id}
 
+	args := []interface{}{id}
 	start := time.Now()
+
 	result, err := r.DB.Exec(query, id)
+	defer Logger.DbLog(query, requestID, start, &err, args)
+
 	if err != nil {
-		Logger.DbLog(query, requestID, 500, start, err, args)
 		return false, fmt.Errorf("failed to delete user: %v", err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		Logger.DbLog(query, requestID, 500, start, err, args)
 		return false, fmt.Errorf("failed to retrieve rows affected: %v", err)
 	}
 
 	if rowsAffected == 0 {
-		Logger.DbLog(query, requestID, 500, start, fmt.Errorf("user with id %d not found", id), args)
-		return false, fmt.Errorf("user with id %d not found", id)
+		err = fmt.Errorf("user with id %d not found", id)
+		return false, err
 	}
 
-	Logger.DbLog(query, requestID, 200, start, nil, args)
 	return true, nil
 }

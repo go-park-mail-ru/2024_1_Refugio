@@ -102,7 +102,7 @@ func InitializationAccesLog() *LogrusLogger {
 	return log
 }
 
-func (log *LogrusLogger) DbLog(query, requestID string, status int, start time.Time, err error, args []interface{}) {
+func (log *LogrusLogger) DbLog(query, requestID string, start time.Time, err *error, args []interface{}) {
 	resArgs := "{ "
 	for _, a := range args {
 		resArgs += fmt.Sprintf("%#v, ", a)
@@ -113,15 +113,12 @@ func (log *LogrusLogger) DbLog(query, requestID string, status int, start time.T
 		"requestID": requestID,
 		"mode":      "[db_log]",
 		"query":     query,
-		"err":       err,
 		"args":      resArgs,
 	})
-	switch {
-	case status >= 200 && status <= 207:
-		en.Info("StatusOK")
-	case status >= 400 && status <= 451:
-		en.Warning("Client-side HTTP error")
-	case status >= 500 && status <= 510:
+
+	if *err != nil {
 		en.Error("StatusServerError")
+	} else {
+		en.Info("StatusOK")
 	}
 }

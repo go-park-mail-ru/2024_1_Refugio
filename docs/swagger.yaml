@@ -98,7 +98,7 @@ definitions:
     - Male
     - Female
     - Other
-host: mailhub.su:8080
+host: localhost:8080
 info:
   contact: {}
   description: API server for mail
@@ -138,7 +138,7 @@ paths:
             $ref: '#/definitions/delivery.ErrorResponse'
       summary: User login
       tags:
-      - users
+      - auth
   /api/v1/auth/logout:
     post:
       description: Handles user logout.
@@ -151,7 +151,7 @@ paths:
             $ref: '#/definitions/delivery.Response'
       summary: User logout
       tags:
-      - users
+      - auth
   /api/v1/auth/signup:
     post:
       consumes:
@@ -181,7 +181,7 @@ paths:
             $ref: '#/definitions/delivery.ErrorResponse'
       summary: User signup
       tags:
-      - users
+      - auth
   /api/v1/email/{id}:
     get:
       description: Get an email message by its unique identifier
@@ -555,5 +555,5 @@ paths:
             $ref: '#/definitions/delivery.Response'
       summary: Verify user authentication
       tags:
-      - users
+      - auth
 swagger: "2.0"

@@ -37,10 +37,12 @@ func (uc *EmailUseCase) CreateEmail(newEmail *domain.Email, requestID string) (i
 	return uc.repo.Add(newEmail, requestID)
 }
 
+// CreateProfileEmail creates a new profile_email
 func (uc *EmailUseCase) CreateProfileEmail(email_id int64, sender, recipient, requestID string) error {
 	return uc.repo.AddProfileEmail(email_id, sender, recipient, requestID)
 }
 
+// CheckRecipientEmail checking recipient email
 func (uc *EmailUseCase) CheckRecipientEmail(recipient, requestID string) error {
 	if er := uc.repo.FindEmail(recipient, requestID); er != nil {
 		return er

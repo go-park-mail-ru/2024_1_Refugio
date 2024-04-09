@@ -5,6 +5,7 @@ import (
 	emailCore "mail/pkg/domain/models"
 )
 
+// EmailConvertCoreInApi converts an email model from the core package to the API representation.
 func EmailConvertCoreInApi(emailModelDb emailCore.Email) *emailApi.Email {
 	return &emailApi.Email{
 		ID:             emailModelDb.ID,
@@ -22,6 +23,7 @@ func EmailConvertCoreInApi(emailModelDb emailCore.Email) *emailApi.Email {
 	}
 }
 
+// EmailConvertApiInCore converts an email model from the API representation to the core package.
 func EmailConvertApiInCore(emailModelApi emailApi.Email) *emailCore.Email {
 	return &emailCore.Email{
 		ID:             emailModelApi.ID,

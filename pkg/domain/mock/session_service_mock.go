@@ -49,45 +49,60 @@ func (mr *MockSessionUseCaseMockRecorder) CleanupExpiredSessions() *gomock.Call 
 }
 
 // CreateNewSession mocks base method.
-func (m *MockSessionUseCase) CreateNewSession(userID uint32, device string, lifeTime int) (string, error) {
+func (m *MockSessionUseCase) CreateNewSession(userID uint32, device, requestID string, lifeTime int) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateNewSession", userID, device, lifeTime)
+	ret := m.ctrl.Call(m, "CreateNewSession", userID, device, requestID, lifeTime)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateNewSession indicates an expected call of CreateNewSession.
-func (mr *MockSessionUseCaseMockRecorder) CreateNewSession(userID, device, lifeTime interface{}) *gomock.Call {
+func (mr *MockSessionUseCaseMockRecorder) CreateNewSession(userID, device, requestID, lifeTime interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNewSession", reflect.TypeOf((*MockSessionUseCase)(nil).CreateNewSession), userID, device, lifeTime)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNewSession", reflect.TypeOf((*MockSessionUseCase)(nil).CreateNewSession), userID, device, requestID, lifeTime)
 }
 
 // DeleteSession mocks base method.
-func (m *MockSessionUseCase) DeleteSession(sessionID string) error {
+func (m *MockSessionUseCase) DeleteSession(sessionID, requestID string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteSession", sessionID)
+	ret := m.ctrl.Call(m, "DeleteSession", sessionID, requestID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteSession indicates an expected call of DeleteSession.
-func (mr *MockSessionUseCaseMockRecorder) DeleteSession(sessionID interface{}) *gomock.Call {
+func (mr *MockSessionUseCaseMockRecorder) DeleteSession(sessionID, requestID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSession", reflect.TypeOf((*MockSessionUseCase)(nil).DeleteSession), sessionID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSession", reflect.TypeOf((*MockSessionUseCase)(nil).DeleteSession), sessionID, requestID)
+}
+
+// GetLogin mocks base method.
+func (m *MockSessionUseCase) GetLogin(sessionID, requestID string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetLogin", sessionID, requestID)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetLogin indicates an expected call of GetLogin.
+func (mr *MockSessionUseCaseMockRecorder) GetLogin(sessionID, requestID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLogin", reflect.TypeOf((*MockSessionUseCase)(nil).GetLogin), sessionID, requestID)
 }
 
 // GetSession mocks base method.
-func (m *MockSessionUseCase) GetSession(sessionID string) (*models.Session, error) {
+func (m *MockSessionUseCase) GetSession(sessionID, requestID string) (*models.Session, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSession", sessionID)
+	ret := m.ctrl.Call(m, "GetSession", sessionID, requestID)
 	ret0, _ := ret[0].(*models.Session)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetSession indicates an expected call of GetSession.
-func (mr *MockSessionUseCaseMockRecorder) GetSession(sessionID interface{}) *gomock.Call {
+func (mr *MockSessionUseCaseMockRecorder) GetSession(sessionID, requestID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSession", reflect.TypeOf((*MockSessionUseCase)(nil).GetSession), sessionID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSession", reflect.TypeOf((*MockSessionUseCase)(nil).GetSession), sessionID, requestID)
 }

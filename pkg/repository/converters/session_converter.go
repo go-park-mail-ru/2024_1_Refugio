@@ -5,6 +5,7 @@ import (
 	sessionDb "mail/pkg/repository/models"
 )
 
+// SessionConvertDbInCore converts a session model from database representation to core domain representation.
 func SessionConvertDbInCore(sessionModelDb sessionDb.Session) *sessionCore.Session {
 	return &sessionCore.Session{
 		ID:           sessionModelDb.ID,
@@ -16,6 +17,7 @@ func SessionConvertDbInCore(sessionModelDb sessionDb.Session) *sessionCore.Sessi
 	}
 }
 
+// SessionConvertCoreInDb converts a session model from core domain representation to database representation.
 func SessionConvertCoreInDb(sessionModelCore sessionCore.Session) *sessionDb.Session {
 	return &sessionDb.Session{
 		ID:           sessionModelCore.ID,

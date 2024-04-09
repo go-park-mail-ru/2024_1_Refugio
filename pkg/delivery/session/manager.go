@@ -1,3 +1,4 @@
+//go:generate mockgen -source=./manager.go -destination=../../domain/mock/manager_mock.go -package=mock
 package session
 
 import (
@@ -10,24 +11,29 @@ import (
 	"time"
 )
 
+// GlobalSessionManager is a global instance of SessionsManager.
 var (
-	GlobalSeaaionManager = &SessionsManager{}
+	GlobalSessionManager = &SessionsManager{}
 )
 
+// SessionsManager manages user sessions.
 type SessionsManager struct {
 	sessionUseCase domain.SessionUseCase
 }
 
+// InitializationGlobalSeaaionManager initializes the global session manager.
 func InitializationGlobalSeaaionManager(sessionManager *SessionsManager) {
-	GlobalSeaaionManager = sessionManager
+	GlobalSessionManager = sessionManager
 }
 
+// NewSessionsManager creates a new instance of SessionsManager.
 func NewSessionsManager(sessionUc domain.SessionUseCase) *SessionsManager {
 	return &SessionsManager{
 		sessionUseCase: sessionUc,
 	}
 }
 
+// sanitizeSession sanitizes the session data using UGCPolicy from bluemonday.
 func sanitizeSession(sess *models.Session) *models.Session {
 	p := bluemonday.UGCPolicy()
 
@@ -38,6 +44,7 @@ func sanitizeSession(sess *models.Session) *models.Session {
 	return sess
 }
 
+// GetSession retrieves the session from the request and sanitizes it.
 func (sm *SessionsManager) GetSession(r *http.Request, requestID string) *models.Session {
 	sessionCookie, _ := r.Cookie("session_id")
 
@@ -49,6 +56,7 @@ func (sm *SessionsManager) GetSession(r *http.Request, requestID string) *models
 	return sanitizeSession(converters.SessionConvertCoreInApi(*sess))
 }
 
+// Check checks the validity of the session and CSRF token in the request.
 func (sm *SessionsManager) Check(r *http.Request, requestID string) (*models.Session, error) {
 	csrfToken := r.Header.Get("X-Csrf-Token")
 	if r.URL.Path != "/api/v1/verify-auth" && csrfToken == "" {
@@ -71,6 +79,7 @@ func (sm *SessionsManager) Check(r *http.Request, requestID string) (*models.Ses
 	return sanitizeSession(converters.SessionConvertCoreInApi(*sess)), nil
 }
 
+// CheckLogin checks if the login associated with the session matches the provided login.
 func (sm *SessionsManager) CheckLogin(login, requestID string, r *http.Request) error {
 	sessionCookie, _ := r.Cookie("session_id")
 	LoginBd, err := sm.sessionUseCase.GetLogin(sessionCookie.Value, requestID)
@@ -84,6 +93,7 @@ func (sm *SessionsManager) CheckLogin(login, requestID string, r *http.Request) 
 	return nil
 }
 
+// GetLoginBySession retrieves the login associated with the session from the request.
 func (sm SessionsManager) GetLoginBySession(r *http.Request, requestID string) (string, error) {
 	sessionCookie, _ := r.Cookie("session_id")
 	Login, err := sm.sessionUseCase.GetLogin(sessionCookie.Value, requestID)
@@ -93,6 +103,7 @@ func (sm SessionsManager) GetLoginBySession(r *http.Request, requestID string) (
 	return Login, nil
 }
 
+// Create creates a new session for the user and sets the session ID cookie in the response.
 func (sm *SessionsManager) Create(w http.ResponseWriter, userID uint32, requestID string) (*models.Session, error) {
 	sessionID, err := sm.sessionUseCase.CreateNewSession(userID, "", requestID, 60*60*24)
 
@@ -117,6 +128,7 @@ func (sm *SessionsManager) Create(w http.ResponseWriter, userID uint32, requestI
 	return converters.SessionConvertCoreInApi(*sess), nil
 }
 
+// DestroyCurrent destroys the current session by deleting the session ID cookie from the response.
 func (sm *SessionsManager) DestroyCurrent(w http.ResponseWriter, r *http.Request, requestID string) error {
 	sessionCookie, err := r.Cookie("session_id")
 	if err != nil {
