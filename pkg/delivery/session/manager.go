@@ -32,17 +32,6 @@ func NewSessionsManager(sessionUc domain.SessionUseCase) *SessionsManager {
 	}
 }
 
-// sanitizeSession sanitizes the session data using UGCPolicy from bluemonday.
-/*func sanitizeSession(sess *models.Session) *models.Session {
-	p := bluemonday.UGCPolicy()
-
-	sess.ID = p.Sanitize(sess.ID)
-	sess.CsrfToken = p.Sanitize(sess.CsrfToken)
-	sess.Device = p.Sanitize(sess.Device)
-
-	return sess
-}*/
-
 // GetSession retrieves the session from the request and sanitizes it.
 func (sm *SessionsManager) GetSession(r *http.Request, requestID string) *models.Session {
 	sessionCookie, _ := r.Cookie("session_id")
