@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"time"
+	_ "time/tzdata"
 
 	"github.com/gorilla/mux"
 	_ "github.com/jackc/pgx/stdlib"
@@ -42,6 +43,8 @@ import (
 // @host mailhub.su:8080
 // @BasePath /
 func main() {
+	settingTime()
+
 	db := initializeDatabase()
 	defer db.Close()
 
@@ -63,6 +66,15 @@ func main() {
 	router := setupRouter(authHandler, emailHandler, userHandler, Logger)
 
 	startServer(router)
+}
+
+func settingTime() {
+	loc, err := time.LoadLocation("Europe/Moscow")
+	if err != nil {
+		fmt.Println("Error loc time")
+	}
+
+	time.Local = loc
 }
 
 func initializeDatabase() *sql.DB {
