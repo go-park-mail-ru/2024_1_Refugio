@@ -3,7 +3,7 @@
 #### Profile
 - **Id**: Уникальный идентификатор пользователя в базе данных.
 - **Login**: Электронная почта пользователя, используемая для входа.
-- **Password**: Пароль пользователя.
+- **PasswordHash**: Хэш пароль пользователя.
 - **Name**: Имя пользователя.
 - **Surname**: Фамилия пользователя.
 - **Patronymic**: Отчество пользователя.
@@ -38,7 +38,6 @@
 - **ArchiveId**: Ссылка на архив.
 
 #### ProfileEmail
-- **Id**: Уникальный идентификатор связи пользователя с письмом в базе данных.
 - **ProfileId**: Уникальный идентификатор пользователя, участвующего в переписке.
 - **EmailId**: Уникальный идентификатор письма, полученного или отправленного пользователем.
 
@@ -48,7 +47,6 @@
 - **Name**: Название папки.
 
 #### FolderEmail
-- **Id**: Уникальный идентификатор связи папки с письмом в базе данных.
 - **FolderId**: Уникальный идентификатор папки, в которой находится письмо.
 - **EmailId**: Уникальный идентификатор письма, находящегося в папке.
 
@@ -89,9 +87,9 @@ ER-diagram
 ```mermaid
 erDiagram
     PROFILE {
-        _ Id
-        _ Login
-        _ Password
+        _ Id (PK)
+        _ Login (AK1.1)
+        _ PasswordHash
         _ Name
         _ Surname
         _ Patronymic
@@ -99,11 +97,11 @@ erDiagram
         _ Birthday
         _ RegistrationDate
         _ AvatarId
-        _ PhoneNumber
+        _ PhoneNumber (AK2.2)
         _ Description
     }
     EMAIL {
-        _ Id
+        _ Id (PK)
         _ Topic
         _ Text
         _ DateOfDispatch
@@ -117,7 +115,7 @@ erDiagram
         _ Flag
     }
     FILE {
-        _ Id
+        _ Id (PK)
         _ EmailId
         _ DocumentId
         _ VideoId
@@ -126,28 +124,26 @@ erDiagram
         _ ArchiveId
     }
     PROFILEEMAIL {
-        _ Id
-        _ ProfileId
-        _ EmailId
+        _ ProfileId (FK)
+        _ EmailId (FK)
     }
     FOLDER {
-        _ Id
-        _ ProfileId
-        _ Name
+        _ Id (PK)
+        _ ProfileId (AK1.1)
+        _ Name (AK1.2)
     }
     FOLDEREMAIL {
-        _ Id
-        _ FolderId
-        _ EmailId
+        _ FolderId (FK)
+        _ EmailId (FK)
     }
     SETTINGS {
-        _ Id
-        _ ProfileId
+        _ Id (PK)
+        _ ProfileId (AK1.1)
         _ NotificationTolerance
         _ Language
     }
     SESSION {
-        _ Id
+        _ Id (PK)
         _ ProfileId
         _ CreationDate
         _ Device
@@ -168,7 +164,9 @@ erDiagram
 ### Functional Dependencies
 
 #### Profile:
-- {Id} -> Login, Password, Name, Surname, Middlename, Gender, Birthday, RegistrationDate, AvatarId, PhoneNumber, Description
+- {Id} -> Login, PasswordHash, Name, Surname, Middlename, Gender, Birthday, RegistrationDate, AvatarId, PhoneNumber, Description
+- {Login} -> id, PasswordHash, Name, Surname, Middlename, Gender, Birthday, RegistrationDate, AvatarId, PhoneNumber, Description
+- {PhoneNumber} -> id, Login, PasswordHash, Name, Surname, Middlename, Gender, Birthday, RegistrationDate, AvatarId, Description
 
 #### Email:
 - {Id} -> Topic, Text, DateOfDispatch, PhotoId, SenderEmail, RecipientEmail, ReadStatus, DeletedStatus, DraftStatus, ReplyToEmailId, Flag
@@ -177,16 +175,18 @@ erDiagram
 - {Id} -> EmailId, DocumentId, VideoId, GifId, MusicId, ArchiveId
 
 #### ProfileEmail:
-- {Id} -> ProfileId, EmailId
+- {ProfileId, EmailId} 
 
 #### Folder:
 - {Id} -> Name, UserId
+- {Name, UserId} -> Id   
 
 #### FolderEmail:
-- {Id} -> FolderId, EmailId
+- {FolderId, EmailId}
 
 #### Settings:
 - {Id} -> ProfileId, NotificationTolerance, Language
+- {ProfileId} -> Id, NotificationTolerance, Language
 
 #### Session:
 - {Id} -> ProfileId, CreationDate, Device, LifeTime, CsrfToken

@@ -160,7 +160,7 @@ func (r *UserRepository) GetUserByLogin(login, password, requestID string) (*dom
 // Add adds a new user to the storage and returns its assigned unique identifier.
 func (r *UserRepository) Add(userModelCore *domain.User, requestID string) (*domain.User, error) {
 	query := `
-		INSERT INTO profile (login, password, firstname, surname, patronymic, gender, birthday, registration_date, avatar_id, phone_number, description)
+		INSERT INTO profile (login, password_hash, firstname, surname, patronymic, gender, birthday, registration_date, avatar_id, phone_number, description)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 	`
 

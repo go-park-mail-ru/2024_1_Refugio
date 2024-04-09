@@ -24,7 +24,7 @@ func NewEmailRepository(db *sqlx.DB) *EmailRepository {
 
 func (r *EmailRepository) Add(emailModelCore *domain.Email, requestID string) (int64, *domain.Email, error) {
 	query := `
-		INSERT INTO email (topic, text, date_of_dispatch, photoid, sender_email, recipient_email, read_status, deleted_status, draft_status, flag) 
+		INSERT INTO email (topic, text, date_of_dispatch, photoid, sender_email, recipient_email, isRead, isDeleted, isDraft, flag) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
 		RETURNING id
 	`
@@ -180,11 +180,11 @@ func (r *EmailRepository) Update(newEmail *domain.Email, requestID string) (bool
             topic = $1, 
             text = $2, 
             photoid = $3,
-            read_status = $4, 
-            deleted_status = $5, 
-            draft_status = $6, 
+            isRead = $4, 
+            isDeleted = $5, 
+            isDraft = $6, 
             reply_to_email_id = $7, 
-            flag = $8
+            flag_important_email = $8
         WHERE
             id = $9 AND sender_email = $10
     `
