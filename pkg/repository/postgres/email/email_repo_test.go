@@ -532,7 +532,7 @@ func TestDeleteEmail(t *testing.T) {
 	t.Run("EmailDeletedSuccessfully", func(t *testing.T) {
 		emailID := uint64(1)
 
-		mock.ExpectExec(`DELETE FROM email WHERE id = \$1 AND \(recipient_email = \$2 OR sender_email = \&2\)`).WithArgs(emailID, login).WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectExec(`DELETE FROM email WHERE id = \$1 AND \(recipient_email = \$2 OR sender_email = \$2\)`).WithArgs(emailID, login).WillReturnResult(sqlmock.NewResult(0, 1))
 
 		deleted, err := repo.Delete(emailID, login, requestID)
 

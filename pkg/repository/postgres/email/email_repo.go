@@ -216,7 +216,7 @@ func (r *EmailRepository) Update(newEmail *domain.Email, requestID string) (bool
 }
 
 func (r *EmailRepository) Delete(id uint64, login, requestID string) (bool, error) {
-	query := "DELETE FROM email WHERE id = $1 AND (recipient_email = $2 OR sender_email = &2)"
+	query := "DELETE FROM email WHERE id = $1 AND (recipient_email = $2 OR sender_email = $2)"
 
 	args := []interface{}{id, login}
 	start := time.Now()
