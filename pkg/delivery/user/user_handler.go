@@ -213,12 +213,14 @@ func (uh *UserHandler) UploadUserAvatar(w http.ResponseWriter, r *http.Request) 
 
 	file, handler, err := r.FormFile("file")
 	if err != nil {
+		fmt.Println(err)
 		delivery.HandleError(w, http.StatusBadRequest, "Failed to get file")
 		return
 	}
 	defer file.Close()
 
 	if handler.Size > (5 * 1024 * 1024) {
+		fmt.Println(err)
 		delivery.HandleError(w, http.StatusInternalServerError, "Failed to get file")
 		return
 	}
@@ -227,6 +229,7 @@ func (uh *UserHandler) UploadUserAvatar(w http.ResponseWriter, r *http.Request) 
 	uniqueFileName := generateUniqueFileName(fileExt)
 	outFile, err := os.Create("./avatars/" + uniqueFileName)
 	if err != nil {
+		fmt.Println(err)
 		delivery.HandleError(w, http.StatusInternalServerError, "Error creating file")
 		return
 	}
@@ -234,6 +237,7 @@ func (uh *UserHandler) UploadUserAvatar(w http.ResponseWriter, r *http.Request) 
 
 	_, err = io.Copy(outFile, file)
 	if err != nil {
+		fmt.Println(err)
 		delivery.HandleError(w, http.StatusInternalServerError, "Error saving file")
 		return
 	}
@@ -246,6 +250,7 @@ func (uh *UserHandler) UploadUserAvatar(w http.ResponseWriter, r *http.Request) 
 	sessionUser := uh.Sessions.GetSession(r, requestID)
 	userData, err := uh.UserUseCase.GetUserByID(sessionUser.UserID, requestID)
 	if err != nil {
+		fmt.Println(err)
 		delivery.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
@@ -253,6 +258,7 @@ func (uh *UserHandler) UploadUserAvatar(w http.ResponseWriter, r *http.Request) 
 	userData.AvatarID = "http://mailhub.su:8080/media/" + uniqueFileName
 	userUpdated, err := uh.UserUseCase.UpdateUser(userData, requestID)
 	if err != nil {
+		fmt.Println(err)
 		delivery.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
