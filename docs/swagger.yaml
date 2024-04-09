@@ -555,5 +555,5 @@ paths:
             $ref: '#/definitions/delivery.Response'
       summary: Verify user authentication
       tags:
-      - auth
+      - users
 swagger: "2.0"

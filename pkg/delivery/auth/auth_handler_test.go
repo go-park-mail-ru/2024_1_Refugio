@@ -8,7 +8,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	api "mail/pkg/delivery/models"
-	deliverySession "mail/pkg/delivery/models"
 	"mail/pkg/domain/mock"
 	domain "mail/pkg/domain/models"
 	"net/http"
@@ -473,34 +472,6 @@ func TestLogout_NotAuthorized(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, rr.Code)
 
 	expectedResponseBody := `{"status":401,"body":{"error":"Not Authorized"}}` + "\n"
-	assert.Equal(t, expectedResponseBody, rr.Body.String())
-}
-
-func TestVerifyAuth_Success(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockSessionsManager := mock.NewMockSessionsManager(ctrl)
-
-	authHandler := AuthHandler{
-		Sessions: mockSessionsManager,
-	}
-
-	req, err := http.NewRequest("GET", "/api/v1/verify-auth", nil)
-	assert.NoError(t, err)
-
-	rr := httptest.NewRecorder()
-
-	mockSessionsManager.EXPECT().GetSession(req, gomock.Any()).Return(&deliverySession.Session{CsrfToken: "csrf"})
-
-	http.HandlerFunc(authHandler.VerifyAuth).ServeHTTP(rr, req)
-
-	assert.Equal(t, http.StatusOK, rr.Code)
-
-	csrfToken := rr.Header().Get("X-Csrf-Token")
-	assert.NotEmpty(t, csrfToken)
-
-	expectedResponseBody := `{"status":200,"body":{"Success":"OK"}}` + "\n"
 	assert.Equal(t, expectedResponseBody, rr.Body.String())
 }
 

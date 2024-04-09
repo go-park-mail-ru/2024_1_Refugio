@@ -41,7 +41,7 @@ func (sm *SessionsManager) GetSession(r *http.Request, requestID string) *models
 		return nil
 	}
 
-	return converters.SessionConvertCoreInApi(*sess) //sanitizeSession(converters.SessionConvertCoreInApi(*sess))
+	return converters.SessionConvertCoreInApi(*sess)
 }
 
 // Check checks the validity of the session and CSRF token in the request.
@@ -64,7 +64,7 @@ func (sm *SessionsManager) Check(r *http.Request, requestID string) (*models.Ses
 		return nil, fmt.Errorf("CSRF token mismatch")
 	}
 
-	return converters.SessionConvertCoreInApi(*sess), nil //sanitizeSession(converters.SessionConvertCoreInApi(*sess)), nil
+	return converters.SessionConvertCoreInApi(*sess), nil
 }
 
 // CheckLogin checks if the login associated with the session matches the provided login.
@@ -88,6 +88,7 @@ func (sm SessionsManager) GetLoginBySession(r *http.Request, requestID string) (
 	if err != nil {
 		return "", err
 	}
+
 	return Login, nil
 }
 
