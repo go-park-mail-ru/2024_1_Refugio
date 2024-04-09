@@ -67,8 +67,8 @@ CREATE TABLE IF NOT EXISTS profile_email (
     profile_id INT,
     email_id INT,
     /*PRIMARY KEY ( profile_id , email_id ),*/
-    CONSTRAINT fk_profile FOREIGN KEY (profile_id) REFERENCES profile(id),
-    CONSTRAINT fk_email FOREIGN KEY (email_id)  REFERENCES email(id)
+    CONSTRAINT fk_profile FOREIGN KEY (profile_id) REFERENCES profile(id) ON DELETE CASCADE,
+    CONSTRAINT fk_email FOREIGN KEY (email_id)  REFERENCES email(id) ON DELETE CASCADE
 );
 
 INSERT INTO profile_email
