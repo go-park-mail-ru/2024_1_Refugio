@@ -206,6 +206,7 @@ func (uh *UserHandler) DeleteUserData(w http.ResponseWriter, r *http.Request) {
 func (uh *UserHandler) UploadUserAvatar(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseMultipartForm(5 * 1024 * 1024)
 	if err != nil {
+		fmt.Println(err)
 		delivery.HandleError(w, http.StatusBadRequest, "Error processing file")
 		return
 	}
