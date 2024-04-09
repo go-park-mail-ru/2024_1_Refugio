@@ -55,7 +55,8 @@
 │   │   ├── delivery
 │   │   │   └── imanager.go
 │   │   ├── logger
-│   │   │   └── logger.go
+│   │   │   ├── logger.go
+│   │   │   └── logger_test.go
 │   │   ├── mock
 │   │   │   ├── email_repository_mock.go
 │   │   │   ├── email_service_mock.go
@@ -118,4 +119,4 @@
     ├── go.sum
     └── main.go
 
-36 directories, 83 files
+36 directories, 84 files
