@@ -7,6 +7,7 @@ import (
 	"github.com/jhillyerd/enmime"
 	"github.com/mhale/smtpd"
 	"log"
+	"mime"
 	"net"
 	"net/http"
 	"net/mail"
@@ -75,20 +76,27 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 	}
 
 	topic := msg.Header.Get("Subject")
+	wordDecoder := new(mime.WordDecoder)
+	decodedTopic, err := wordDecoder.DecodeHeader(topic)
+	if err != nil {
+		log.Println("Error decoding the message subject:", err)
+		return err
+	}
 
 	env, err := enmime.ReadEnvelope(bytes.NewReader(data))
 	if err != nil {
-		log.Println("Ошибка декодирования тела сообщения:", err)
+		log.Println("Error decoding the message body:", err)
 		return err
 	}
 	decodedBody := env.Text
 
+	log.Println(decodedTopic)
 	log.Println(decodedBody)
 	log.Println(senderAddr.Address)
 	log.Println(recipientAddr.Address)
 
 	emailData := EmailSMTP{
-		Topic:          topic,
+		Topic:          decodedTopic,
 		Text:           decodedBody,
 		SenderEmail:    senderAddr.Address,
 		RecipientEmail: recipientAddr.Address,
