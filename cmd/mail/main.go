@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -51,7 +52,13 @@ func main() {
 	emailHandler := initializeEmailHandler(db, sessionsManager)
 	userHandler := initializeUserHandler(db, sessionsManager)
 
-	Logger := initializeLogger()
+	f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		fmt.Println("Failed to create logfile" + "log.txt")
+	}
+	defer f.Close()
+
+	Logger := initializeLogger(f)
 
 	router := setupRouter(authHandler, emailHandler, userHandler, Logger)
 
@@ -128,8 +135,8 @@ func initializeUserHandler(db *sql.DB, sessionsManager *session.SessionsManager)
 	}
 }
 
-func initializeLogger() *middleware.Logger {
-	Logrus := logger.InitializationAccesLog()
+func initializeLogger(f *os.File) *middleware.Logger {
+	Logrus := logger.InitializationAccesLog(f)
 	Logger := new(middleware.Logger)
 	Logger.Logger = Logrus
 

@@ -3,6 +3,7 @@ package session
 import (
 	"fmt"
 	"math/rand"
+	"os"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -19,15 +20,20 @@ type SessionRepository struct {
 	DB *sqlx.DB
 }
 
+// Logger represents the logger used for logging database initialization.
+var Logger = logger.InitializationEmptyLog()
+
 // NewSessionRepository creates a new instance of SessionRepository.
 func NewSessionRepository(db *sqlx.DB) *SessionRepository {
+	f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		fmt.Println("Failed to create logfile in session_repo" + "log.txt")
+	}
+	Logger = logger.InitializationBdLog(f)
 	return &SessionRepository{
 		DB: db,
 	}
 }
-
-// Logger represents the logger used for logging database initialization.
-var Logger = logger.InitializationBdLog()
 
 // SessionGenerate is a function type used for generating session IDs.
 type SessionGenerate func() string

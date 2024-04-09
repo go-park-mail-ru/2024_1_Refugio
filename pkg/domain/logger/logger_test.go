@@ -13,9 +13,14 @@ import (
 )
 
 func TestInitializationBdLog(t *testing.T) {
+	f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		fmt.Println("Failed to create logfile in session_repo" + "log.txt")
+	}
+	defer f.Close()
 	expectedLog := new(LogrusLogger)
 	expectedLog.LogrusLogger = &logrus.Logger{
-		Out:   io.MultiWriter(os.Stdout),
+		Out:   io.MultiWriter(f, os.Stdout),
 		Level: logrus.InfoLevel,
 		Formatter: &Formatter{
 			LogFormat:     "[%lvl%]: %time% - %msg% requestID=%requestID% work_time=%work_time% mode=%mode% query=%query% arguments=%args%\n",
@@ -28,18 +33,23 @@ func TestInitializationBdLog(t *testing.T) {
 		},
 	}
 
-	log := InitializationBdLog()
+	log := InitializationBdLog(f)
 
 	assert.Equal(t, expectedLog, log)
 }
 
 func TestInitializationAccesLog(t *testing.T) {
+	f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		fmt.Println("Failed to create logfile in session_repo" + "log.txt")
+	}
+	defer f.Close()
 	expectedLog := new(LogrusLogger)
 	expectedLog.LogrusLogger = &logrus.Logger{
-		Out:   io.MultiWriter(os.Stdout),
+		Out:   io.MultiWriter(f, os.Stdout),
 		Level: logrus.InfoLevel,
 		Formatter: &Formatter{
-			LogFormat:     "[%lvl%]: %time% - %msg% method=%method% StatusCode=%StatusCode% requestID=%requestID% host=%host% port=%port% URL=%URL% work_time=%work_time% mode=%mode%\n",
+			LogFormat:     "[%lvl%]: %time% - %msg% requestID=%requestID% method=%method% StatusCode=%StatusCode% host=%host% port=%port% URL=%URL% work_time=%work_time% mode=%mode%\n",
 			ForceColors:   true,
 			ColorInfo:     color.New(color.FgBlue),
 			ColorWarning:  color.New(color.FgYellow),
@@ -49,9 +59,9 @@ func TestInitializationAccesLog(t *testing.T) {
 		},
 	}
 
-	log := InitializationAccesLog()
+	log := InitializationAccesLog(f)
 
-	assert.Equal(t, expectedLog, log)
+	assert.Equal(t, *expectedLog, *log)
 }
 
 func TestDbLog(t *testing.T) {
@@ -117,7 +127,12 @@ func TestFormat(t *testing.T) {
 	start := time.Now()
 
 	t.Run("FormatDbLog", func(t *testing.T) {
-		log := InitializationBdLog()
+		f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+		if err != nil {
+			fmt.Println("Failed to create logfile in session_repo" + "log.txt")
+		}
+		defer f.Close()
+		log := InitializationBdLog(f)
 
 		en := log.LogrusLogger.WithFields(logrus.Fields{
 			"work_time": time.Since(start),
@@ -139,7 +154,12 @@ func TestFormat(t *testing.T) {
 	})
 
 	t.Run("FormatAccessLog", func(t *testing.T) {
-		log := InitializationAccesLog()
+		f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+		if err != nil {
+			fmt.Println("Failed to create logfile in session_repo" + "log.txt")
+		}
+		defer f.Close()
+		log := InitializationAccesLog(f)
 
 		en := log.LogrusLogger.WithFields(logrus.Fields{
 			"method":     "GET",
@@ -158,7 +178,7 @@ func TestFormat(t *testing.T) {
 
 		fmt.Println(string(b))
 
-		expectedLog := fmt.Sprintf("[INFO]: 0001-01-01 00:00:00 -  method=GET StatusCode=200 requestID=test_request host=localhost port=8080 URL=/ work_time=%v mode=[access_log]\n", en.Data["work_time"].(time.Duration).String())
+		expectedLog := fmt.Sprintf("[INFO]: 0001-01-01 00:00:00 -  requestID=test_request method=GET StatusCode=200 host=localhost port=8080 URL=/ work_time=%v mode=[access_log]\n", en.Data["work_time"].(time.Duration).String())
 		assert.NoError(t, err)
 		assert.Equal(t, expectedLog, string(b))
 	})

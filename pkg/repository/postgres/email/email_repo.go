@@ -9,6 +9,7 @@ import (
 	domain "mail/pkg/domain/models"
 	"mail/pkg/repository/converters"
 	database "mail/pkg/repository/models"
+	"os"
 	"time"
 )
 
@@ -16,9 +17,14 @@ type EmailRepository struct {
 	DB *sqlx.DB
 }
 
-var Logger = logger.InitializationBdLog()
+var Logger = logger.InitializationEmptyLog()
 
 func NewEmailRepository(db *sqlx.DB) *EmailRepository {
+	f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		fmt.Println("Failed to create logfile in email_repo" + "log.txt")
+	}
+	Logger = logger.InitializationBdLog(f)
 	return &EmailRepository{DB: db}
 }
 

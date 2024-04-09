@@ -64,10 +64,10 @@ func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
 	return []byte(output), nil
 }
 
-func InitializationBdLog() *LogrusLogger {
+func InitializationBdLog(f *os.File) *LogrusLogger {
 	log := new(LogrusLogger)
 	log.LogrusLogger = &logrus.Logger{
-		Out:   io.MultiWriter(os.Stdout),
+		Out:   io.MultiWriter(f, os.Stdout),
 		Level: logrus.InfoLevel,
 		Formatter: &Formatter{
 			LogFormat:     "[%lvl%]: %time% - %msg% requestID=%requestID% work_time=%work_time% mode=%mode% query=%query% arguments=%args%\n",
@@ -83,13 +83,13 @@ func InitializationBdLog() *LogrusLogger {
 	return log
 }
 
-func InitializationAccesLog() *LogrusLogger {
+func InitializationAccesLog(f *os.File) *LogrusLogger {
 	log := new(LogrusLogger)
 	log.LogrusLogger = &logrus.Logger{
-		Out:   io.MultiWriter(os.Stdout),
+		Out:   io.MultiWriter(f, os.Stdout),
 		Level: logrus.InfoLevel,
 		Formatter: &Formatter{
-			LogFormat:     "[%lvl%]: %time% - %msg% method=%method% StatusCode=%StatusCode% requestID=%requestID% host=%host% port=%port% URL=%URL% work_time=%work_time% mode=%mode%\n",
+			LogFormat:     "[%lvl%]: %time% - %msg% requestID=%requestID% method=%method% StatusCode=%StatusCode% host=%host% port=%port% URL=%URL% work_time=%work_time% mode=%mode%\n",
 			ForceColors:   true,
 			ColorInfo:     color.New(color.FgBlue),
 			ColorWarning:  color.New(color.FgYellow),
@@ -99,6 +99,12 @@ func InitializationAccesLog() *LogrusLogger {
 		},
 	}
 
+	return log
+}
+
+func InitializationEmptyLog() *LogrusLogger {
+	log := new(LogrusLogger)
+	log.LogrusLogger = &logrus.Logger{}
 	return log
 }
 
