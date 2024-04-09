@@ -2,18 +2,15 @@ package main
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/jhillyerd/enmime"
 	"github.com/mhale/smtpd"
-	"golang.org/x/net/html/charset"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
 	"net/mail"
 	"regexp"
-	"strings"
 )
 
 const sendEmailEndpoint = "http://89.208.223.140:8080/api/v1/auth/sendOther"
@@ -78,41 +75,20 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 	}
 
 	topic := msg.Header.Get("Subject")
-	var decodedTopic string
-	if topic != "" {
-		decodedTopic, err = decodeText(topic, msg.Header.Get("Content-Type"))
-		if err != nil {
-			log.Println("Error decoding message subject:", err)
-			return err
-		}
-	}
 
-	body, err := ioutil.ReadAll(msg.Body)
+	env, err := enmime.ReadEnvelope(bytes.NewReader(data))
 	if err != nil {
-		log.Println("Error reading message body:", err)
+		log.Println("Ошибка декодирования тела сообщения:", err)
 		return err
 	}
-	log.Println("body")
-	log.Println(string(body))
-	log.Println("---")
-	log.Println(DecodeBase64(string(body)))
-	log.Println("---")
-	var decodedBody string
-	if body != nil {
-		decodedBody, err = decodeText(string(body), msg.Header.Get("Content-Type"))
-		if err != nil {
-			log.Println("Error decoding message body:", err)
-			return err
-		}
-		log.Println("decodedBody")
-		log.Println(decodedBody)
-	}
+	decodedBody := env.Text
 
+	log.Println(decodedBody)
 	log.Println(senderAddr.Address)
 	log.Println(recipientAddr.Address)
 
 	emailData := EmailSMTP{
-		Topic:          decodedTopic,
+		Topic:          topic,
 		Text:           decodedBody,
 		SenderEmail:    senderAddr.Address,
 		RecipientEmail: recipientAddr.Address,
@@ -137,29 +113,6 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 	}
 
 	return nil
-}
-
-// decodeText decodes the provided text using the character set specified by the contentType.
-func decodeText(text, contentType string) (string, error) {
-	charsetReader, err := charset.NewReader(strings.NewReader(text), contentType)
-	if err != nil {
-		return "", err
-	}
-
-	decodedBytes, err := ioutil.ReadAll(charsetReader)
-	if err != nil {
-		return "", err
-	}
-
-	return string(decodedBytes), nil
-}
-
-func DecodeBase64(encodedMessage string) (string, error) {
-	decodedMessage, err := base64.StdEncoding.DecodeString(encodedMessage)
-	if err != nil {
-		return "", err
-	}
-	return string(decodedMessage), nil
 }
 
 // isValidEmailFormat checks if the provided email string matches the specific format for emails ending with "@mailhub.ru".
