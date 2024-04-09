@@ -77,10 +77,17 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 	}
 
 	topic := msg.Header.Get("Subject")
-	decodedTopic, err := decodeText(topic, msg.Header.Get("Content-Type"))
-	if err != nil {
-		log.Println("Error decoding message subject:", err)
-		return err
+	log.Println("topic")
+	log.Println(topic)
+	var decodedTopic string
+	if topic != "" {
+		decodedTopic, err = decodeText(topic, msg.Header.Get("Content-Type"))
+		if err != nil {
+			log.Println("Error decoding message subject:", err)
+			return err
+		}
+		log.Println("decodedTopic")
+		log.Println(decodedTopic)
 	}
 
 	body, err := ioutil.ReadAll(msg.Body)
@@ -88,16 +95,19 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 		log.Println("Error reading message body:", err)
 		return err
 	}
-	decodedBody, err := decodeText(string(body), msg.Header.Get("Content-Type"))
-	if err != nil {
-		log.Println("Error decoding message body:", err)
-		return err
+	log.Println("body")
+	log.Println(string(body))
+	var decodedBody string
+	if body != nil {
+		decodedBody, err = decodeText(string(body), msg.Header.Get("Content-Type"))
+		if err != nil {
+			log.Println("Error decoding message body:", err)
+			return err
+		}
+		log.Println("decodedBody")
+		log.Println(decodedBody)
 	}
 
-	log.Println(topic)
-	log.Println(decodedTopic)
-	log.Println(body)
-	log.Println(decodedBody)
 	log.Println(senderAddr.Address)
 	log.Println(recipientAddr.Address)
 
