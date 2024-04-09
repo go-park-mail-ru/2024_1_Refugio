@@ -9,6 +9,7 @@ import (
 	domain "mail/pkg/domain/models"
 	"mail/pkg/repository/converters"
 	database "mail/pkg/repository/models"
+	"os"
 	"time"
 )
 
@@ -16,24 +17,29 @@ type EmailRepository struct {
 	DB *sqlx.DB
 }
 
-var Logger = logger.InitializationBdLog()
+var Logger = logger.InitializationEmptyLog()
 
 func NewEmailRepository(db *sqlx.DB) *EmailRepository {
+	f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		fmt.Println("Failed to create logfile in email_repo" + "log.txt")
+	}
+	Logger = logger.InitializationBdLog(f)
 	return &EmailRepository{DB: db}
 }
 
 func (r *EmailRepository) Add(emailModelCore *domain.Email, requestID string) (int64, *domain.Email, error) {
 	query := `
-		INSERT INTO email (topic, text, date_of_dispatch, photoid, sender_email, recipient_email, read_status, deleted_status, draft_status, flag) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
+		INSERT INTO email (topic, text, date_of_dispatch, photoid, sender_email, recipient_email, read_status, deleted_status, draft_status, reply_to_email_id, flag) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
 		RETURNING id
 	`
 	emailModelDb := converters.EmailConvertCoreInDb(*emailModelCore)
 	format := "2006/01/02 15:04:05"
-	args := []interface{}{emailModelDb.Topic, emailModelDb.Text, time.Now().Format(format), emailModelDb.PhotoID, emailModelDb.SenderEmail, emailModelDb.RecipientEmail, emailModelDb.ReadStatus, emailModelDb.Deleted, emailModelDb.DraftStatus, emailModelDb.Flag}
+	args := []interface{}{emailModelDb.Topic, emailModelDb.Text, time.Now().Format(format), emailModelDb.PhotoID, emailModelDb.SenderEmail, emailModelDb.RecipientEmail, emailModelDb.ReadStatus, emailModelDb.Deleted, emailModelDb.DraftStatus, emailModelDb.ReplyToEmailID, emailModelDb.Flag}
 	var id int64
 	start := time.Now()
-	err := r.DB.QueryRow(query, args[0].(string), args[1].(string), args[2].(string), args[3].(string), args[4].(string), args[5].(string), args[6].(bool), args[7].(bool), args[8].(bool), args[9].(bool)).Scan(&id)
+	err := r.DB.QueryRow(query, emailModelDb.Topic, emailModelDb.Text, time.Now().Format(format), emailModelDb.PhotoID, emailModelDb.SenderEmail, emailModelDb.RecipientEmail, emailModelDb.ReadStatus, emailModelDb.Deleted, emailModelDb.DraftStatus, emailModelDb.ReplyToEmailID, emailModelDb.Flag).Scan(&id)
 	defer Logger.DbLog(query, requestID, start, &err, args)
 
 	if err != nil {

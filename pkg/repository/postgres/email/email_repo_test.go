@@ -59,15 +59,16 @@ func TestAddEmail(t *testing.T) {
 			DraftStatus:    false,
 			SenderEmail:    "ivan@mailhub.su",
 			RecipientEmail: "sergey@mailhub.su",
+			ReplyToEmailID: 0,
 		}
 
 		rows := sqlmock.NewRows([]string{"id"}).AddRow(1)
 		mock.ExpectQuery(`
-			INSERT INTO email \(topic, text, date_of_dispatch, photoid, sender_email, recipient_email, read_status, deleted_status, draft_status, flag\) 
-			VALUES \(\$1, \$2, \$3, \$4, \$5, \$6, \$7, \$8, \$9, \$10\) 
+			INSERT INTO email \(topic, text, date_of_dispatch, photoid, sender_email, recipient_email, read_status, deleted_status, draft_status, reply_to_email_id, flag\) 
+			VALUES \(\$1, \$2, \$3, \$4, \$5, \$6, \$7, \$8, \$9, \$10, \$11\) 
 			RETURNING id
 		`).
-			WithArgs(email.Topic, email.Text, sqlmock.AnyArg(), email.PhotoID, email.SenderEmail, email.RecipientEmail, email.ReadStatus, email.Deleted, email.DraftStatus, email.Flag).
+			WithArgs(email.Topic, email.Text, sqlmock.AnyArg(), email.PhotoID, email.SenderEmail, email.RecipientEmail, email.ReadStatus, email.Deleted, email.DraftStatus, nil, email.Flag).
 			WillReturnRows(rows)
 
 		id, emailRes, err := repo.Add(email, requestID)

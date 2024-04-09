@@ -12,7 +12,7 @@ func EmailConvertDbInCore(emailModelDb database.Email) *domain.Email {
 	if emailModelDb.ReplyToEmailID == nil {
 		ReplyToEmailID = 0
 	} else {
-		ReplyToEmailID = emailModelDb.ReplyToEmailID.(uint64)
+		ReplyToEmailID = uint64(emailModelDb.ReplyToEmailID.(int64))
 	}
 
 	return &domain.Email{

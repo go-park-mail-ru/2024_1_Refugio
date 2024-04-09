@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	_ "time/tzdata"
 )
 
 type LogrusLogger struct {
@@ -45,11 +46,17 @@ func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
 		output = strings.Replace(output, "%lvl%", f.ColorDefault.Sprintf("%s", strings.ToUpper(entry.Level.String())), 1)
 	}
 
+	loc, err := time.LoadLocation("Europe/Moscow")
+	if err != nil {
+		fmt.Println("Error loc time")
+	}
+	time.Local = loc
+
 	output = strings.Replace(output, "%msg%", entry.Message, 1)
 	output = strings.Replace(output, "%work_time%", entry.Data["work_time"].(time.Duration).String(), 1)
 	output = strings.Replace(output, "%mode%", entry.Data["mode"].(string), 1)
 	output = strings.Replace(output, "%requestID%", entry.Data["requestID"].(string), 1)
-	output = strings.Replace(output, "%time%", entry.Time.Format("2006-01-02 15:04:05"), 1)
+	output = strings.Replace(output, "%time%", time.Now().Format("2006-01-02 15:04:05"), 1)
 
 	if entry.Data["mode"].(string) == "[access_log]" {
 		output = strings.Replace(output, "%port%", "8080", 1)
@@ -64,10 +71,10 @@ func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
 	return []byte(output), nil
 }
 
-func InitializationBdLog() *LogrusLogger {
+func InitializationBdLog(f *os.File) *LogrusLogger {
 	log := new(LogrusLogger)
 	log.LogrusLogger = &logrus.Logger{
-		Out:   io.MultiWriter(os.Stdout),
+		Out:   io.MultiWriter(f, os.Stdout),
 		Level: logrus.InfoLevel,
 		Formatter: &Formatter{
 			LogFormat:     "[%lvl%]: %time% - %msg% requestID=%requestID% work_time=%work_time% mode=%mode% query=%query% arguments=%args%\n",
@@ -83,13 +90,13 @@ func InitializationBdLog() *LogrusLogger {
 	return log
 }
 
-func InitializationAccesLog() *LogrusLogger {
+func InitializationAccesLog(f *os.File) *LogrusLogger {
 	log := new(LogrusLogger)
 	log.LogrusLogger = &logrus.Logger{
-		Out:   io.MultiWriter(os.Stdout),
+		Out:   io.MultiWriter(f, os.Stdout),
 		Level: logrus.InfoLevel,
 		Formatter: &Formatter{
-			LogFormat:     "[%lvl%]: %time% - %msg% method=%method% StatusCode=%StatusCode% requestID=%requestID% host=%host% port=%port% URL=%URL% work_time=%work_time% mode=%mode%\n",
+			LogFormat:     "[%lvl%]: %time% - %msg% requestID=%requestID% method=%method% StatusCode=%StatusCode% host=%host% port=%port% URL=%URL% work_time=%work_time% mode=%mode%\n",
 			ForceColors:   true,
 			ColorInfo:     color.New(color.FgBlue),
 			ColorWarning:  color.New(color.FgYellow),
@@ -99,6 +106,12 @@ func InitializationAccesLog() *LogrusLogger {
 		},
 	}
 
+	return log
+}
+
+func InitializationEmptyLog() *LogrusLogger {
+	log := new(LogrusLogger)
+	log.LogrusLogger = &logrus.Logger{}
 	return log
 }
 

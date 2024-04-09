@@ -9,6 +9,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"mail/pkg/domain/logger"
 	"math/rand"
+	"os"
 	"time"
 
 	"mail/pkg/repository/converters"
@@ -22,13 +23,18 @@ type UserRepository struct {
 	DB *sqlx.DB
 }
 
+// Logger is an instance of a logger used for logging database operations.
+var Logger = logger.InitializationEmptyLog()
+
 // NewUserRepository creates a new instance of UserRepository with the given database connection.
 func NewUserRepository(db *sqlx.DB) *UserRepository {
+	f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		fmt.Println("Failed to create logfile in user_repo" + "log.txt")
+	}
+	Logger = logger.InitializationBdLog(f)
 	return &UserRepository{DB: db}
 }
-
-// Logger is an instance of a logger used for logging database operations.
-var Logger = logger.InitializationBdLog()
 
 // PasswordHasher represents the password hashing function.
 type PasswordHasher func(password string) (string, bool)

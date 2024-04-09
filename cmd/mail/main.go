@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
+	_ "time/tzdata"
 
 	"github.com/gorilla/mux"
 	_ "github.com/jackc/pgx/stdlib"
@@ -41,6 +43,8 @@ import (
 // @host mailhub.su:8080
 // @BasePath /
 func main() {
+	settingTime()
+
 	db := initializeDatabase()
 	defer db.Close()
 
@@ -51,11 +55,26 @@ func main() {
 	emailHandler := initializeEmailHandler(db, sessionsManager)
 	userHandler := initializeUserHandler(db, sessionsManager)
 
-	Logger := initializeLogger()
+	f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		fmt.Println("Failed to create logfile" + "log.txt")
+	}
+	defer f.Close()
+
+	Logger := initializeLogger(f)
 
 	router := setupRouter(authHandler, emailHandler, userHandler, Logger)
 
 	startServer(router)
+}
+
+func settingTime() {
+	loc, err := time.LoadLocation("Europe/Moscow")
+	if err != nil {
+		fmt.Println("Error loc time")
+	}
+
+	time.Local = loc
 }
 
 func initializeDatabase() *sql.DB {
@@ -128,8 +147,8 @@ func initializeUserHandler(db *sql.DB, sessionsManager *session.SessionsManager)
 	}
 }
 
-func initializeLogger() *middleware.Logger {
-	Logrus := logger.InitializationAccesLog()
+func initializeLogger(f *os.File) *middleware.Logger {
+	Logrus := logger.InitializationAccesLog(f)
 	Logger := new(middleware.Logger)
 	Logger.Logger = Logrus
 
