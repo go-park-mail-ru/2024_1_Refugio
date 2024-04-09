@@ -10,6 +10,7 @@ import (
 	"os"
 	"testing"
 	"time"
+	_ "time/tzdata"
 )
 
 func TestInitializationBdLog(t *testing.T) {
@@ -148,7 +149,13 @@ func TestFormat(t *testing.T) {
 			return
 		}
 
-		expectedLog := fmt.Sprintf("[INFO]: 0001-01-01 00:00:00 -  requestID=test_request work_time=%v mode=[db_log] query=TestQuery arguments={ }\n", en.Data["work_time"].(time.Duration).String())
+		loc, err := time.LoadLocation("Europe/Moscow")
+		if err != nil {
+			fmt.Println("Error loc time")
+		}
+		time.Local = loc
+
+		expectedLog := fmt.Sprintf("[INFO]: %v -  requestID=test_request work_time=%v mode=[db_log] query=TestQuery arguments={ }\n", time.Now().Format("2006-01-02 15:04:05"), en.Data["work_time"].(time.Duration).String())
 		assert.NoError(t, err)
 		assert.Equal(t, expectedLog, string(b))
 	})
@@ -176,9 +183,13 @@ func TestFormat(t *testing.T) {
 			return
 		}
 
-		fmt.Println(string(b))
+		loc, err := time.LoadLocation("Europe/Moscow")
+		if err != nil {
+			fmt.Println("Error loc time")
+		}
+		time.Local = loc
 
-		expectedLog := fmt.Sprintf("[INFO]: 0001-01-01 00:00:00 -  requestID=test_request method=GET StatusCode=200 host=localhost port=8080 URL=/ work_time=%v mode=[access_log]\n", en.Data["work_time"].(time.Duration).String())
+		expectedLog := fmt.Sprintf("[INFO]: %v -  requestID=test_request method=GET StatusCode=200 host=localhost port=8080 URL=/ work_time=%v mode=[access_log]\n", time.Now().Format("2006-01-02 15:04:05"), en.Data["work_time"].(time.Duration).String())
 		assert.NoError(t, err)
 		assert.Equal(t, expectedLog, string(b))
 	})
