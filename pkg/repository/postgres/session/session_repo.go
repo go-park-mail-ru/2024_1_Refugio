@@ -55,12 +55,11 @@ func (repo *SessionRepository) CreateSession(userID uint32, device, requestID st
 	start := time.Now()
 
 	_, err := repo.DB.Exec(query, ID, userID, device, creationDate, lifeTime, csrfToken)
+	defer Logger.DbLog(query, requestID, start, &err, args)
 	if err != nil {
-		Logger.DbLog(query, requestID, 500, start, err, args)
 		return "", fmt.Errorf("failed to create session: %v", err)
 	}
 
-	Logger.DbLog(query, requestID, 200, start, nil, args)
 	return ID, nil
 }
 
@@ -73,12 +72,11 @@ func (repo *SessionRepository) GetSessionByID(sessionID, requestID string) (*dom
 
 	var session database.Session
 	err := repo.DB.Get(&session, query, sessionID)
+	defer Logger.DbLog(query, requestID, start, &err, args)
 	if err != nil {
-		Logger.DbLog(query, requestID, 500, start, err, args)
 		return nil, fmt.Errorf("failed to get session: %v", err)
 	}
 
-	Logger.DbLog(query, requestID, 200, start, nil, args)
 	return converters.SessionConvertDbInCore(session), nil
 }
 
@@ -95,12 +93,11 @@ func (repo *SessionRepository) GetLoginBySessionID(sessionID, requestID string) 
 
 	var login string
 	err := repo.DB.Get(&login, query, sessionID)
+	defer Logger.DbLog(query, requestID, start, &err, args)
 	if err != nil {
-		Logger.DbLog(query, requestID, 500, start, err, args)
 		return "", fmt.Errorf("failed to get session: %v", err)
 	}
 
-	Logger.DbLog(query, requestID, 200, start, nil, args)
 	return login, nil
 }
 
@@ -112,12 +109,11 @@ func (repo *SessionRepository) DeleteSessionByID(sessionID, requestID string) er
 	start := time.Now()
 
 	_, err := repo.DB.Exec(query, sessionID)
+	defer Logger.DbLog(query, requestID, start, &err, args)
 	if err != nil {
-		Logger.DbLog(query, requestID, 500, start, err, args)
 		return fmt.Errorf("failed to delete session: %v", err)
 	}
 
-	Logger.DbLog(query, requestID, 200, start, nil, args)
 	return nil
 }
 
@@ -129,11 +125,10 @@ func (repo *SessionRepository) DeleteExpiredSessions() error {
 	start := time.Now()
 
 	_, err := repo.DB.Exec(query)
+	defer Logger.DbLog(query, "DeleteExpiredSessionsNULL", start, &err, args)
 	if err != nil {
-		Logger.DbLog(query, "DeleteExpiredSessionsNULL", 500, start, err, args)
 		return fmt.Errorf("failed to delete expired sessions: %v", err)
 	}
 
-	Logger.DbLog(query, "DeleteExpiredSessionsNULL", 200, start, nil, args)
 	return nil
 }

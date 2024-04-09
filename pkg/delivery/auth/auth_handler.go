@@ -113,6 +113,10 @@ func (ah *AuthHandler) Signup(w http.ResponseWriter, r *http.Request) {
 	newUser.Password = sanitizeString(newUser.Password)
 	newUser.FirstName = sanitizeString(newUser.FirstName)
 	newUser.Surname = sanitizeString(newUser.Surname)
+	newUser.Patronymic = sanitizeString(newUser.Patronymic)
+	newUser.PhoneNumber = sanitizeString(newUser.PhoneNumber)
+	newUser.Description = sanitizeString(newUser.Description)
+	newUser.AvatarID = sanitizeString(newUser.AvatarID)
 
 	if isEmpty(newUser.Login) || isEmpty(newUser.Password) || isEmpty(newUser.FirstName) || isEmpty(newUser.Surname) || !domain.IsValidGender(newUser.Gender) {
 		delivery.HandleError(w, http.StatusBadRequest, "All fields must be filled in")

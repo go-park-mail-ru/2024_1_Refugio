@@ -1,49 +1,66 @@
 package middleware
 
 import (
-	"fmt"
 	"github.com/fatih/color"
 	"github.com/golang/mock/gomock"
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
-	"io"
 	"mail/pkg/delivery/session"
+	"mail/pkg/domain/logger"
 	"mail/pkg/domain/mock"
 	domain "mail/pkg/domain/models"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 	"time"
 	//"time"
 	//"mail/pkg/delivery/session"
 )
 
-func TestInitializationAcceslog(t *testing.T) {
-	logExpected := new(LogrusLogger)
-	logFile := "log.txt"
-	f, err := os.OpenFile(logFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		fmt.Println("Error OpenFile InitializationAcceslog")
-		return
+func TestAccessLogMiddleware(t *testing.T) {
+	fakeHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	req := httptest.NewRequest("GET", "/", nil)
+	rec := httptest.NewRecorder()
+
+	testlogger, hook := test.NewNullLogger()
+
+	f := &logger.Formatter{
+		LogFormat:     "[%lvl%]: %time% - %msg% method=%method% StatusCode=%StatusCode% requestID=%requestID% host=%host% port=%port% URL=%URL% work_time=%work_time% remote_addr=%remote_addr% access_log=%access_log%\n",
+		ForceColors:   true,
+		ColorInfo:     color.New(color.FgBlue),
+		ColorWarning:  color.New(color.FgYellow),
+		ColorError:    color.New(color.FgRed),
+		ColorCritical: color.New(color.BgRed, color.FgWhite),
+		ColorDefault:  color.New(color.FgWhite),
 	}
-	defer f.Close()
-	logExpected.LogrusLogger = &logrus.Logger{
-		Out:   io.MultiWriter(f, os.Stdout), //os.Stdout,
-		Level: logrus.InfoLevel,
-		Formatter: &Formatter{
-			LogFormat:     "[%lvl%]: %time% - %msg% method=%method% StatusCode=%StatusCode% requestID=%requestID% host=%host% port=%port% URL=%URL% work_time=%work_time% remote_addr=%remote_addr% access_log=%access_log%\n",
-			ForceColors:   true,
-			ColorInfo:     color.New(color.FgBlue),
-			ColorWarning:  color.New(color.FgYellow),
-			ColorError:    color.New(color.FgRed),
-			ColorCritical: color.New(color.BgRed, color.FgWhite),
-			ColorDefault:  color.New(color.FgWhite),
-		},
+
+	testlogger.SetFormatter(f)
+	testlogger.SetLevel(logrus.InfoLevel)
+	log := new(logger.LogrusLogger)
+	log.LogrusLogger = testlogger
+	Logrus := new(Logger)
+	Logrus.Logger = log
+
+	Logrus.AccessLogMiddleware(fakeHandler).ServeHTTP(rec, req)
+
+	if hook.LastEntry().Message != "StatusOK" {
+		t.Errorf("Bad input handled incorrectly")
 	}
-	Log := InitializationAcceslog(f)
-	assert.Equal(t, logExpected, Log)
+	expectedData := logrus.Fields{
+		"method":     "GET",
+		"work_time":  hook.LastEntry().Data["work_time"],
+		"URL":        "/",
+		"mode":       "[access_log]",
+		"StatusCode": 200,
+		"requestID":  hook.LastEntry().Data["requestID"].(string),
+	}
+
+	assert.Equal(t, "StatusOK", hook.LastEntry().Message)
+	assert.Equal(t, logrus.InfoLevel, hook.LastEntry().Level)
+	assert.Equal(t, expectedData, hook.LastEntry().Data)
 }
 
 func TestAuthMiddleware(t *testing.T) {
@@ -82,7 +99,7 @@ func TestAuthMiddleware(t *testing.T) {
 			CsrfToken:    "csrf_token",
 		}
 		mockSessionUseCase.EXPECT().
-			GetSession("session_id").
+			GetSession("session_id", "none").
 			Return(expectedSession, nil).
 			Times(1)
 
@@ -96,49 +113,6 @@ func TestAuthMiddleware(t *testing.T) {
 	})
 }
 
-func TestAccessLogMiddleware(t *testing.T) {
-	fakeHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
-	req := httptest.NewRequest("GET", "/", nil)
-	rec := httptest.NewRecorder()
-
-	testlogger, hook := test.NewNullLogger()
-
-	f := &Formatter{
-		LogFormat:     "[%lvl%]: %time% - %msg% method=%method% StatusCode=%StatusCode% requestID=%requestID% host=%host% port=%port% URL=%URL% work_time=%work_time% remote_addr=%remote_addr% access_log=%access_log%\n",
-		ForceColors:   true,
-		ColorInfo:     color.New(color.FgBlue),
-		ColorWarning:  color.New(color.FgYellow),
-		ColorError:    color.New(color.FgRed),
-		ColorCritical: color.New(color.BgRed, color.FgWhite),
-		ColorDefault:  color.New(color.FgWhite),
-	}
-
-	testlogger.SetFormatter(f)
-	testlogger.SetLevel(logrus.InfoLevel)
-	Logrus := new(LogrusLogger)
-	Logrus.LogrusLogger = testlogger
-
-	Logrus.AccessLogMiddleware(fakeHandler).ServeHTTP(rec, req)
-
-	if hook.LastEntry().Message != "StatusOK" {
-		t.Errorf("Bad input handled incorrectly")
-	}
-	expectedData := logrus.Fields{
-		"method":     "GET",
-		"work_time":  hook.LastEntry().Data["work_time"],
-		"URL":        "/",
-		"mode":       "[access_log]",
-		"StatusCode": 200,
-		"requestID":  hook.LastEntry().Data["requestID"].(string),
-	}
-
-	assert.Equal(t, "StatusOK", hook.LastEntry().Message)
-	assert.Equal(t, logrus.InfoLevel, hook.LastEntry().Level)
-	assert.Equal(t, expectedData, hook.LastEntry().Data)
-}
-
 func TestPanicMiddleware(t *testing.T) {
 	fakeHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -150,4 +124,16 @@ func TestPanicMiddleware(t *testing.T) {
 		assert.Equal(t, http.StatusOK, recWithoutCookie.Code)
 	})
 
+}
+
+func TestWriteHeader(t *testing.T) {
+	w := httptest.NewRecorder()
+	lrw := NewLoggingResponseWriter(w)
+	lrw.WriteHeader(200)
+
+	expectedLrw := new(loggingResponseWriter)
+	expectedLrw.statusCode = 200
+	expectedLrw.ResponseWriter = w
+
+	assert.Equal(t, expectedLrw, lrw)
 }
