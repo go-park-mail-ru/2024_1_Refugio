@@ -72,7 +72,8 @@ func main() {
 	password := "password"
 
 	to := []string{
-		"fedasov03@mail.ru",
+		"vlad.pomorenko2017@yandex.ru",
+		//"fedasov03@mail.ru",
 		//"fedasovsergey00@gmail.com",
 	}
 
@@ -87,7 +88,8 @@ func main() {
 	//auth := PlainAuth("", from, password, host)
 	auth := LoginAuth(from, password)
 
-	err := smtp.SendMail(address, auth, "test@example.org", to, message)
+	err := smtp.SendMail(address, auth, "ivan@mailhub.su", to, message)
+	//err := smtp.SendMail(address, auth, "test@example.org", to, message)
 	if err != nil {
 		log.Fatal(err)
 	}
