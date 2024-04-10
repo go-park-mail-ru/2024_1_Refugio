@@ -1,0 +1,101 @@
+[INFO]: 2024-04-10 00:22:23 - StatusOK requestID=test_request work_time=191.581µs mode=[db_log] query=
+		INSERT INTO email (topic, text, date_of_dispatch, photoid, sender_email, recipient_email, read_status, deleted_status, draft_status, reply_to_email_id, flag) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
+		RETURNING id
+	 arguments={ "Test Topic", "Test Text", "2024/04/10 00:22:23", "", "ivan@mailhub.su", "sergey@mailhub.su", false, false, false, <nil>, false, }
+[ERROR]: 2024-04-10 00:22:23 - StatusServerError requestID=test_request work_time=110.213µs mode=[db_log] query=
+		INSERT INTO email (topic, text, date_of_dispatch, photoid, sender_email, recipient_email, read_status, deleted_status, draft_status, reply_to_email_id, flag) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
+		RETURNING id
+	 arguments={ "Test Topic", "Test Text", "2024/04/10 00:22:23", "", "ivan@mailhub.su", "sergey@mailhub.su", false, false, false, <nil>, false, }
+[INFO]: 2024-04-10 00:22:23 - StatusOK requestID=test_request work_time=86.187µs mode=[db_log] query=
+		INSERT INTO profile_email (profile_id, email_id)
+		VALUES ((SELECT id FROM profile WHERE login=$1), $3), ((SELECT id FROM profile WHERE login=$2), $3)
+	 arguments={ "sender_test@mailhub.su", "recipient_test@mailhub.su", 1, }
+[ERROR]: 2024-04-10 00:22:23 - StatusServerError requestID=test_request work_time=74.104µs mode=[db_log] query=
+		INSERT INTO profile_email (profile_id, email_id)
+		VALUES ((SELECT id FROM profile WHERE login=$1), $3), ((SELECT id FROM profile WHERE login=$2), $3)
+	 arguments={ "sender_test@mailhub.su", "recipient_test@mailhub.su", 1, }
+[INFO]: 2024-04-10 00:22:23 - StatusOK requestID=test_request work_time=113.775µs mode=[db_log] query=SELECT * FROM profile WHERE login = $1 arguments={ "test@nailhub.su", }
+[ERROR]: 2024-04-10 00:22:23 - StatusServerError requestID=test_request work_time=36.668µs mode=[db_log] query=SELECT * FROM profile WHERE login = $1 arguments={ "test@nailhub.su", }
+[INFO]: 2024-04-10 00:22:23 - StatusOK requestID=test_request work_time=91.146µs mode=[db_log] query=
+		SELECT * FROM email
+		WHERE recipient_email = $1
+		ORDER BY date_of_dispatch ASC
+	 arguments={ "test@mailhub.su", }
+[INFO]: 2024-04-10 00:22:23 - StatusOK requestID=test_request work_time=52.872µs mode=[db_log] query=
+		SELECT * FROM email
+		WHERE recipient_email = $1
+		ORDER BY date_of_dispatch ASC
+	 OFFSET $2 LIMIT $3 arguments={ "test@mailhub.su", 1, 2, }
+[ERROR]: 2024-04-10 00:22:23 - StatusServerError requestID=test_request work_time=42.395µs mode=[db_log] query=
+		SELECT * FROM email
+		WHERE recipient_email = $1
+		ORDER BY date_of_dispatch ASC
+	 arguments={ "test@mailhub.su", }
+[INFO]: 2024-04-10 00:22:23 - StatusOK requestID=test_request work_time=69.285µs mode=[db_log] query=
+		SELECT * FROM email
+		WHERE sender_email = $1
+		ORDER BY date_of_dispatch ASC
+	 arguments={ "test@mailhub.su", }
+[INFO]: 2024-04-10 00:22:23 - StatusOK requestID=test_request work_time=52.453µs mode=[db_log] query=
+		SELECT * FROM email
+		WHERE sender_email = $1
+		ORDER BY date_of_dispatch ASC
+	 OFFSET $2 LIMIT $3 arguments={ "test@mailhub.su", 1, 2, }
+[ERROR]: 2024-04-10 00:22:23 - StatusServerError requestID=test_request work_time=41.907µs mode=[db_log] query=
+		SELECT * FROM email
+		WHERE sender_email = $1
+		ORDER BY date_of_dispatch ASC
+	 arguments={ "test@mailhub.su", }
+[INFO]: 2024-04-10 00:22:23 - StatusOK requestID=test_request work_time=50.916µs mode=[db_log] query=
+		SELECT * FROM email WHERE id = $1 AND (recipient_email = $2 OR sender_email = $2)
+	 arguments={ 0x1, "test@mailhub.su", }
+[ERROR]: 2024-04-10 00:22:23 - StatusServerError requestID=test_request work_time=46.306µs mode=[db_log] query=
+		SELECT * FROM email WHERE id = $1 AND (recipient_email = $2 OR sender_email = $2)
+	 arguments={ 0x1, "test@mailhub.su", }
+[INFO]: 2024-04-10 00:22:23 - StatusOK requestID=test_request work_time=90.168µs mode=[db_log] query=
+        UPDATE email
+        SET
+            topic = $1, 
+            text = $2, 
+            photoid = $3,
+            read_status = $4, 
+            deleted_status = $5, 
+            draft_status = $6, 
+            reply_to_email_id = $7, 
+            flag = $8
+        WHERE
+            id = $9 AND sender_email = $10
+     arguments={ "Test Topic", "Test Text", "", false, false, false, <nil>, false, 0x1, "sergey@mailhub.su", }
+[ERROR]: 2024-04-10 00:22:23 - StatusServerError requestID=test_request work_time=80.46µs mode=[db_log] query=
+        UPDATE email
+        SET
+            topic = $1, 
+            text = $2, 
+            photoid = $3,
+            read_status = $4, 
+            deleted_status = $5, 
+            draft_status = $6, 
+            reply_to_email_id = $7, 
+            flag = $8
+        WHERE
+            id = $9 AND sender_email = $10
+     arguments={ "Test Topic", "Test Text", "", false, false, false, <nil>, false, 0x2, "sergey@mailhub.su", }
+[ERROR]: 2024-04-10 00:22:23 - StatusServerError requestID=test_request work_time=78.364µs mode=[db_log] query=
+        UPDATE email
+        SET
+            topic = $1, 
+            text = $2, 
+            photoid = $3,
+            read_status = $4, 
+            deleted_status = $5, 
+            draft_status = $6, 
+            reply_to_email_id = $7, 
+            flag = $8
+        WHERE
+            id = $9 AND sender_email = $10
+     arguments={ "Test Topic", "Test Text", "", false, false, false, <nil>, false, 0x2, "sergey@mailhub.su", }
+[INFO]: 2024-04-10 00:22:23 - StatusOK requestID=test_request work_time=56.782µs mode=[db_log] query=DELETE FROM email WHERE id = $1 AND (recipient_email = $2 OR sender_email = &2) arguments={ 0x1, "test@mailhub.su", }
+[ERROR]: 2024-04-10 00:22:23 - StatusServerError requestID=test_request work_time=44.979µs mode=[db_log] query=DELETE FROM email WHERE id = $1 AND (recipient_email = $2 OR sender_email = &2) arguments={ 0x2, "test@mailhub.su", }
+[ERROR]: 2024-04-10 00:22:23 - StatusServerError requestID=test_request work_time=49.031µs mode=[db_log] query=DELETE FROM email WHERE id = $1 AND (recipient_email = $2 OR sender_email = &2) arguments={ 0x3, "test@mailhub.su", }

@@ -87,8 +87,8 @@ ER-diagram
 ```mermaid
 erDiagram
     PROFILE {
-        _ Id (PK)
-        _ Login (AK1.1)
+        _ Id(PK)
+        _ Login(AK1.1)
         _ PasswordHash
         _ Name
         _ Surname
@@ -97,11 +97,11 @@ erDiagram
         _ Birthday
         _ RegistrationDate
         _ AvatarId
-        _ PhoneNumber (AK2.2)
+        _ PhoneNumber(AK2.2)
         _ Description
     }
     EMAIL {
-        _ Id (PK)
+        _ Id(PK)
         _ Topic
         _ Text
         _ DateOfDispatch
@@ -115,7 +115,7 @@ erDiagram
         _ Flag
     }
     FILE {
-        _ Id (PK)
+        _ Id(PK)
         _ EmailId
         _ DocumentId
         _ VideoId
@@ -124,26 +124,26 @@ erDiagram
         _ ArchiveId
     }
     PROFILEEMAIL {
-        _ ProfileId (FK)
-        _ EmailId (FK)
+        _ ProfileId(FK)
+        _ EmailId(FK)
     }
     FOLDER {
-        _ Id (PK)
-        _ ProfileId (AK1.1)
-        _ Name (AK1.2)
+        _ Id(PK)
+        _ ProfileId(AK1.1)
+        _ Name(AK1.2)
     }
     FOLDEREMAIL {
-        _ FolderId (FK)
-        _ EmailId (FK)
+        _ FolderId(FK)
+        _ EmailId(FK)
     }
     SETTINGS {
-        _ Id (PK)
-        _ ProfileId (AK1.1)
+        _ Id(PK)
+        _ ProfileId(AK1.1)
         _ NotificationTolerance
         _ Language
     }
     SESSION {
-        _ Id (PK)
+        _ Id(PK)
         _ ProfileId
         _ CreationDate
         _ Device
