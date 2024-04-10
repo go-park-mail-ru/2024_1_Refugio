@@ -9,8 +9,8 @@ CREATE TABLE IF NOT EXISTS profile (
     patronymic TEXT CHECK (LENGTH(patronymic) <= 50),
     gender TEXT NOT NULL CHECK (gender = 'Male' OR gender = 'Female' OR gender = 'Other'),
     birthday DATE,
-    registration_date DATE NOT NULL DEFAULT '2022-08-10 10:10:00',
-    avatar_id TEXT CHECK (LENGTH(avatar_id) <= 200),
+    registration_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    file_id TEXT CHECK (LENGTH(file_id) <= 200),
     phone_number TEXT CHECK (LENGTH(phone_number) <= 20),
     description TEXT CHECK (LENGTH(description) <= 300)
 );
@@ -25,7 +25,7 @@ OWNED BY profile.id;
 CREATE TABLE IF NOT EXISTS session (
     id TEXT PRIMARY KEY CHECK (LENGTH(id) <= 50),
     profile_id INTEGER REFERENCES profile(id) ON DELETE CASCADE,
-    creation_date TIMESTAMPTZ NOT NULL DEFAULT '2022-08-10 10:10:00',
+    creation_date TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     device TEXT CHECK (LENGTH(device) <= 100),
     life_time INTEGER NOT NULL,
     csrf_token TEXT NOT NULL CHECK (LENGTH(csrf_token) <= 50)
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS email (
     id INTEGER PRIMARY KEY,
     topic TEXT,
     text TEXT,
-    date_of_dispatch TIMESTAMPTZ NOT NULL DEFAULT '2022-08-10 10:10:00',
+    date_of_dispatch TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     photoid TEXT CHECK (LENGTH(photoid) <= 200),
     sender_email TEXT NOT NULL CHECK (LENGTH(sender_email) <= 50),
     recipient_email TEXT NOT NULL CHECK (LENGTH(recipient_email) <= 50),
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS email (
     isDeleted BOOLEAN NOT NULL,
     isDraft BOOLEAN NOT NULL,
     reply_to_email_id INTEGER REFERENCES email(id) ON DELETE NO ACTION DEFAULT NULL,
-    flag_important_email BOOLEAN NOT NULL
+    is_important BOOLEAN NOT NULL
 );
 
 -- Создание Sequence последовательности для email.id
@@ -113,7 +113,7 @@ OWNED BY settings.id;
 
 -- Вставка начальных данных в таблицу users
 INSERT INTO profile
-    (id, login, password_hash, firstname, surname, patronymic, gender, birthday, registration_date, avatar_id, phone_number, description)
+    (id, login, password_hash, firstname, surname, patronymic, gender, birthday, registration_date, file_id, phone_number, description)
 VALUES
     (nextval('profileId'), 'sergey@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Sergey', 'Fedasov', 'Aleksandrovich', 'Male', '2003-08-20', NOW(), '', '+77777777777', 'Description'),
     (nextval('profileId'), 'ivan@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Ivan', 'Karpov', 'Aleksandrovich', 'Male', '2003-10-17', NOW(), '', '+79697045539', 'Description'),
@@ -122,7 +122,7 @@ ON CONFLICT (login) DO NOTHING;
 
 -- Вставка начальных данных в таблицу email
 INSERT INTO email
-    (id, topic, text, date_of_dispatch, photoid, sender_email, recipient_email, isRead, isDeleted, isDraft, reply_to_email_id, flag_important_email)
+    (id, topic, text, date_of_dispatch, photoid, sender_email, recipient_email, isRead, isDeleted, isDraft, reply_to_email_id, is_important)
 VALUES
     (nextval('emailId'), 'Topic1 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', 'sergey@mailhub.su', 'ivan@mailhub.su', False, False, False, Null, False),
     (nextval('emailId'), 'Topic2 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', 'sergey@mailhub.su', 'max@mailhub.su', False, False, False, Null, False),

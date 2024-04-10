@@ -191,6 +191,65 @@ erDiagram
 #### Session:
 - {Id} -> ProfileId, CreationDate, Device, LifeTime, CsrfToken
 
+
+### Candidate Key
+
+#### Profile:
+- {Id} -> Login, PasswordHash, Name, Surname, Middlename, Gender, Birthday, RegistrationDate, AvatarId, PhoneNumber, Description
+- {Login} -> id, PasswordHash, Name, Surname, Middlename, Gender, Birthday, RegistrationDate, AvatarId, PhoneNumber, Description
+- {PhoneNumber} -> id, Login, PasswordHash, Name, Surname, Middlename, Gender, Birthday, RegistrationDate, AvatarId, Description
+
+#### Email:
+- {Id} -> Topic, Text, DateOfDispatch, PhotoId, SenderEmail, RecipientEmail, ReadStatus, DeletedStatus, DraftStatus, ReplyToEmailId, Flag
+
+#### File:
+- {Id} -> EmailId, DocumentId, VideoId, GifId, MusicId, ArchiveId
+
+#### ProfileEmail:
+- {ProfileId, EmailId}
+
+#### Folder:
+- {Id} -> Name, UserId
+- {Name, UserId} -> Id
+
+#### FolderEmail:
+- {FolderId, EmailId}
+
+#### Settings:
+- {Id} -> ProfileId, NotificationTolerance, Language
+- {ProfileId} -> Id, NotificationTolerance, Language
+
+#### Session:
+- {Id} -> ProfileId, CreationDate, Device, LifeTime, CsrfToken
+
+
+### Primary Key
+
+#### Profile:
+- {Id} -> Login, PasswordHash, Name, Surname, Middlename, Gender, Birthday, RegistrationDate, AvatarId, PhoneNumber, Description
+
+#### Email:
+- {Id} -> Topic, Text, DateOfDispatch, PhotoId, SenderEmail, RecipientEmail, ReadStatus, DeletedStatus, DraftStatus, ReplyToEmailId, Flag
+
+#### File:
+- {Id} -> EmailId, DocumentId, VideoId, GifId, MusicId, ArchiveId
+
+#### ProfileEmail:
+- {ProfileId, EmailId}
+
+#### Folder:
+- {Id} -> Name, UserId
+
+#### FolderEmail:
+- {FolderId, EmailId}
+
+#### Settings:
+- {Id} -> ProfileId, NotificationTolerance, Language
+
+#### Session:
+- {Id} -> ProfileId, CreationDate, Device, LifeTime, CsrfToken
+
+
 ### Functional Dependencies Explanation:
 
 - 1NF: Все отношения имеют простые атрибуты и уникальные идентификаторы (ключи).
