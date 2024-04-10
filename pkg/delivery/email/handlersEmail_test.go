@@ -358,6 +358,7 @@ func TestUpdate(t *testing.T) {
 		w := httptest.NewRecorder()
 
 		mockSessionsManager.EXPECT().CheckLogin(newEmail.SenderEmail, requestID, r).Return(nil)
+		mockSessionsManager.EXPECT().CheckLogin(newEmail.RecipientEmail, requestID, r).Return(nil)
 		mockEmailUseCase.EXPECT().UpdateEmail(converters.EmailConvertApiInCore(newEmail), requestID).Return(true, nil)
 
 		emailHandler.Update(w, r)
@@ -371,6 +372,7 @@ func TestUpdate(t *testing.T) {
 		w := httptest.NewRecorder()
 
 		mockSessionsManager.EXPECT().CheckLogin(newEmail.SenderEmail, requestID, r).Return(fmt.Errorf("CheckLogin"))
+		mockSessionsManager.EXPECT().CheckLogin(newEmail.RecipientEmail, requestID, r).Return(fmt.Errorf("CheckLogin"))
 
 		emailHandler.Update(w, r)
 		assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -383,6 +385,7 @@ func TestUpdate(t *testing.T) {
 		w := httptest.NewRecorder()
 
 		mockSessionsManager.EXPECT().CheckLogin(newEmail.SenderEmail, requestID, r).Return(nil)
+		mockSessionsManager.EXPECT().CheckLogin(newEmail.RecipientEmail, requestID, r).Return(nil)
 		mockEmailUseCase.EXPECT().UpdateEmail(converters.EmailConvertApiInCore(newEmail), requestID).Return(false, fmt.Errorf("UpdateEmail"))
 
 		emailHandler.Update(w, r)

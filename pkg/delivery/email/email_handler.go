@@ -317,8 +317,9 @@ func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) {
 		requestID = "none"
 	}
 
-	err = h.Sessions.CheckLogin(updatedEmail.SenderEmail, requestID, r)
-	if err != nil {
+	err1 := h.Sessions.CheckLogin(updatedEmail.SenderEmail, requestID, r)
+	err2 := h.Sessions.CheckLogin(updatedEmail.RecipientEmail, requestID, r)
+	if err1 != nil && err2 != nil {
 		delivery.HandleError(w, http.StatusBadRequest, "Bad sender login")
 		return
 	}
