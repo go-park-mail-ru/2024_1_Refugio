@@ -88,7 +88,7 @@ ER-diagram
 erDiagram
     PROFILE {
         _ Id(PK)
-        _ Login(AK1.1)
+        _ Login"(AK1.1)"
         _ PasswordHash
         _ Name
         _ Surname
@@ -97,7 +97,7 @@ erDiagram
         _ Birthday
         _ RegistrationDate
         _ AvatarId
-        _ PhoneNumber(AK2.2)
+        _ PhoneNumber"(AK2.2)"
         _ Description
     }
     EMAIL {
@@ -129,8 +129,8 @@ erDiagram
     }
     FOLDER {
         _ Id(PK)
-        _ ProfileId(AK1.1)
-        _ Name(AK1.2)
+        _ ProfileId"(AK1.1)"
+        _ Name"(AK1.2)"
     }
     FOLDEREMAIL {
         _ FolderId(FK)
@@ -138,7 +138,7 @@ erDiagram
     }
     SETTINGS {
         _ Id(PK)
-        _ ProfileId(AK1.1)
+        _ ProfileId"(AK1.1)"
         _ NotificationTolerance
         _ Language
     }
