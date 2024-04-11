@@ -57,9 +57,7 @@ CREATE TABLE IF NOT EXISTS email (
     isDeleted BOOLEAN NOT NULL,
     isDraft BOOLEAN NOT NULL,
     reply_to_email_id INTEGER REFERENCES email(id) ON DELETE NO ACTION DEFAULT NULL,
-    is_important BOOLEAN NOT NULL,
-    file_id INT,
-    CONSTRAINT fk_file_id FOREIGN KEY (file_id) REFERENCES file(id) ON DELETE NO ACTION
+    is_important BOOLEAN NOT NULL
 );
 
 -- Создание Sequence последовательности для email.id
@@ -67,6 +65,19 @@ CREATE SEQUENCE IF NOT EXISTS emailId
 START 1
 INCREMENT 1
 OWNED BY email.id;
+
+-- Создание таблицы вложений (file)
+CREATE TABLE IF NOT EXISTS email_file (
+    id INTEGER PRIMARY KEY,
+    email_id INT REFERENCES email(id) ON DELETE CASCADE,
+    file_id INT REFERENCES file(id) ON DELETE CASCADE UNIQUE
+);
+
+-- Создание Sequence последовательности для email_file.id
+CREATE SEQUENCE IF NOT EXISTS email_fileId
+    START 1
+INCREMENT 1
+OWNED BY email_file.id;
 
 -- Создание таблицы письма пользователя (profile_email)
 CREATE TABLE IF NOT EXISTS profile_email (

@@ -27,12 +27,16 @@
 - **DraftStatus**: Статус черновика письма (черновик/не черновик).
 - **ReplyToEmailId**: Уникальный идентификатор письма, на который данное письмо является ответом (если есть).
 - **Flag**: Флаг, который может быть установлен пользователем (например, помечено как важное).
-- **FileId**: Ссылка на файлы сообщения в таблице файлов.
+- **FileId**: Ссылка на файлы сообщения в таблице EmailFile.
 
 #### File
 - **Id**: Уникальный идентификатор вложения в базе данных.
 - **FileId**: Ссылка на файл.
 - **FileType**: Тип файла.
+
+#### EmailFile
+- **Id**: Уникальный идентификатор вложения в базе данных.
+- **FileId**: Ссылка на файл в таблице файлов.
 
 #### Folder
 - **Id**: Уникальный идентификатор папки в базе данных.
@@ -70,7 +74,9 @@ erDiagram
     EMAIL ||--o{ FOLDEREMAIL : "Located"
     EMAIL ||--o{ PROFILEEMAIL : "Related"
     PROFILE ||--o{ PROFILEEMAIL : "Received"
-    EMAIL ||--|{ FILE : "Contains"
+    EMAIL ||--|{ EMAILFILE : "Contains"
+    FILE ||--|{ EMAILFILE : "Contains"
+    FILE ||--|{ PROFILE : "Contains"
 ```
 
 ---
@@ -112,6 +118,11 @@ erDiagram
         _ Id"(PK)"
         _ FileId
         _ FileType
+    }
+    EMAILFILE {
+        _ Id"(PK)"
+        _ EmailId"(FK1.1)"
+        _ FileId"(FK2.2)"
     }
     PROFILEEMAIL {
         _ ProfileId"(PK1.1 FK)"
