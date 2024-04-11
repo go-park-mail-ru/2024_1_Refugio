@@ -27,7 +27,6 @@
 - **DraftStatus**: Статус черновика письма (черновик/не черновик).
 - **ReplyToEmailId**: Уникальный идентификатор письма, на который данное письмо является ответом (если есть).
 - **Flag**: Флаг, который может быть установлен пользователем (например, помечено как важное).
-- **FileId**: Ссылка на файлы сообщения в таблице EmailFile.
 
 #### File
 - **Id**: Уникальный идентификатор вложения в базе данных.
@@ -36,6 +35,7 @@
 
 #### EmailFile
 - **Id**: Уникальный идентификатор вложения в базе данных.
+- **EmailId**: Ссылка на письмо в таблице email
 - **FileId**: Ссылка на файл в таблице файлов.
 
 #### Folder
@@ -95,7 +95,7 @@ erDiagram
         _ Gender
         _ Birthday
         _ RegistrationDate
-        _ AvatarId
+        _ AvatarId"(FK)"
         _ PhoneNumber"(AK2.2)"
         _ Description
     }
@@ -110,9 +110,8 @@ erDiagram
         _ ReadStatus
         _ DeletedStatus
         _ DraftStatus
-        _ ReplyToEmailId
+        _ ReplyToEmailId"(FK)"
         _ Flag
-        _ FileId(FK)
     }
     FILE {
         _ Id"(PK)"
@@ -130,7 +129,7 @@ erDiagram
     }
     FOLDER {
         _ Id"(PK)"
-        _ ProfileId"(AK1.1)"
+        _ ProfileId"(AK1.1 FK)"
         _ Name"(AK1.2)"
     }
     FOLDEREMAIL {
@@ -139,13 +138,13 @@ erDiagram
     }
     SETTINGS {
         _ Id"(PK)"
-        _ ProfileId"(AK1.1)"
+        _ ProfileId"(AK1.1 FK)"
         _ NotificationTolerance
         _ Language
     }
     SESSION {
         _ Id"(PK)"
-        _ ProfileId
+        _ ProfileId"(FK)"
         _ CreationDate
         _ Device
         _ LifeTime
@@ -173,7 +172,10 @@ erDiagram
 - {Id} -> Topic, Text, DateOfDispatch, PhotoId, SenderEmail, RecipientEmail, ReadStatus, DeletedStatus, DraftStatus, ReplyToEmailId, Flag
 
 #### File:
-- {Id} -> EmailId, DocumentId, VideoId, GifId, MusicId, ArchiveId
+- {Id} -> EmailId, FileId, FileType
+
+#### EmailFile:
+- {Id} -> EmailId, FileId
 
 #### ProfileEmail:
 - {ProfileId, EmailId} 
@@ -206,6 +208,9 @@ erDiagram
 #### File:
 - {Id}
 
+#### EmailFile:
+- {Id}
+
 #### ProfileEmail:
 - {ProfileId, EmailId}
 
@@ -233,6 +238,9 @@ erDiagram
 - {Id}
 
 #### File:
+- {Id}
+
+#### EmailFile:
 - {Id}
 
 #### ProfileEmail:
