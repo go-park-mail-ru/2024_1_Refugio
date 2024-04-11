@@ -158,7 +158,9 @@ erDiagram
     EMAIL ||--o{ FOLDEREMAIL : "Located"
     EMAIL ||--o{ PROFILEEMAIL : "Related"
     PROFILE ||--o{ PROFILEEMAIL : "Received"
-    EMAIL ||--|{ FILE : "Contains"
+    EMAIL ||--|{ EMAILFILE : "Contains"
+    FILE ||--|{ EMAILFILE : "Contains"
+    FILE ||--|{ PROFILE : "Contains"
 ```
 
 ### Functional Dependencies
