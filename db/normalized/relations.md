@@ -10,7 +10,7 @@
 - **Gender**: Пол пользователя.
 - **Birthday**: Дата рождения пользователя.
 - **RegistrationDate**: Дата регистрации пользователя.
-- **AvatarId**: Ссылка на фотографию пользователя.
+- **AvatarId**: Ссылка на фотографию пользователя в таблице файлов.
 - **PhoneNumber**: Номер телефона пользователя.
 - **Description**: Дополнительная информация, которую пользователь может предоставить о себе.
 
@@ -27,19 +27,12 @@
 - **DraftStatus**: Статус черновика письма (черновик/не черновик).
 - **ReplyToEmailId**: Уникальный идентификатор письма, на который данное письмо является ответом (если есть).
 - **Flag**: Флаг, который может быть установлен пользователем (например, помечено как важное).
+- **FileId**: Ссылка на файлы сообщения в таблице файлов.
 
 #### File
 - **Id**: Уникальный идентификатор вложения в базе данных.
-- **EmailId**: Уникальный идентификатор письма, к которому прикреплено вложение.
-- **DocumentId**: Ссылка на документ.
-- **VideoId**: Ссылка на видео.
-- **GifId**: Ссылка на гифку.
-- **MusicId**: Ссылка на музыку.
-- **ArchiveId**: Ссылка на архив.
-
-#### ProfileEmail
-- **ProfileId**: Уникальный идентификатор пользователя, участвующего в переписке.
-- **EmailId**: Уникальный идентификатор письма, полученного или отправленного пользователем.
+- **FileId**: Ссылка на файл.
+- **FileType**: Тип файла.
 
 #### Folder
 - **Id**: Уникальный идентификатор папки в базе данных.
@@ -87,7 +80,7 @@ ER-diagram
 ```mermaid
 erDiagram
     PROFILE {
-        _ Id(PK)
+        _ Id"(PK)"
         _ Login"(AK1.1)"
         _ PasswordHash
         _ Name
@@ -101,7 +94,7 @@ erDiagram
         _ Description
     }
     EMAIL {
-        _ Id(PK)
+        _ Id"(PK)"
         _ Topic
         _ Text
         _ DateOfDispatch
@@ -113,37 +106,34 @@ erDiagram
         _ DraftStatus
         _ ReplyToEmailId
         _ Flag
+        _ FileId(FK)
     }
     FILE {
-        _ Id(PK)
-        _ EmailId
-        _ DocumentId
-        _ VideoId
-        _ GifId
-        _ MusicId
-        _ ArchiveId
+        _ Id"(PK)"
+        _ FileId
+        _ FileType
     }
     PROFILEEMAIL {
-        _ ProfileId(FK)
-        _ EmailId(FK)
+        _ ProfileId"(PK1.1 FK)"
+        _ EmailId"(PK1.2 FK)"
     }
     FOLDER {
-        _ Id(PK)
+        _ Id"(PK)"
         _ ProfileId"(AK1.1)"
         _ Name"(AK1.2)"
     }
     FOLDEREMAIL {
-        _ FolderId(FK)
-        _ EmailId(FK)
+        _ FolderId"(PK1.1 FK)"
+        _ EmailId"(PK1.2 FK)"
     }
     SETTINGS {
-        _ Id(PK)
+        _ Id"(PK)"
         _ ProfileId"(AK1.1)"
         _ NotificationTolerance
         _ Language
     }
     SESSION {
-        _ Id(PK)
+        _ Id"(PK)"
         _ ProfileId
         _ CreationDate
         _ Device
@@ -195,59 +185,59 @@ erDiagram
 ### Candidate Key
 
 #### Profile:
-- {Id} -> Login, PasswordHash, Name, Surname, Middlename, Gender, Birthday, RegistrationDate, AvatarId, PhoneNumber, Description
-- {Login} -> id, PasswordHash, Name, Surname, Middlename, Gender, Birthday, RegistrationDate, AvatarId, PhoneNumber, Description
-- {PhoneNumber} -> id, Login, PasswordHash, Name, Surname, Middlename, Gender, Birthday, RegistrationDate, AvatarId, Description
+- {Id}
+- {Login}
+- {PhoneNumber}
 
 #### Email:
-- {Id} -> Topic, Text, DateOfDispatch, PhotoId, SenderEmail, RecipientEmail, ReadStatus, DeletedStatus, DraftStatus, ReplyToEmailId, Flag
+- {Id}
 
 #### File:
-- {Id} -> EmailId, DocumentId, VideoId, GifId, MusicId, ArchiveId
+- {Id}
 
 #### ProfileEmail:
 - {ProfileId, EmailId}
 
 #### Folder:
-- {Id} -> Name, UserId
-- {Name, UserId} -> Id
+- {Id}
+- {Name, UserId}
 
 #### FolderEmail:
 - {FolderId, EmailId}
 
 #### Settings:
-- {Id} -> ProfileId, NotificationTolerance, Language
-- {ProfileId} -> Id, NotificationTolerance, Language
+- {Id}
+- {ProfileId}
 
 #### Session:
-- {Id} -> ProfileId, CreationDate, Device, LifeTime, CsrfToken
+- {Id}
 
 
 ### Primary Key
 
 #### Profile:
-- {Id} -> Login, PasswordHash, Name, Surname, Middlename, Gender, Birthday, RegistrationDate, AvatarId, PhoneNumber, Description
+- {Id}
 
 #### Email:
-- {Id} -> Topic, Text, DateOfDispatch, PhotoId, SenderEmail, RecipientEmail, ReadStatus, DeletedStatus, DraftStatus, ReplyToEmailId, Flag
+- {Id}
 
 #### File:
-- {Id} -> EmailId, DocumentId, VideoId, GifId, MusicId, ArchiveId
+- {Id}
 
 #### ProfileEmail:
 - {ProfileId, EmailId}
 
 #### Folder:
-- {Id} -> Name, UserId
+- {Id}
 
 #### FolderEmail:
 - {FolderId, EmailId}
 
 #### Settings:
-- {Id} -> ProfileId, NotificationTolerance, Language
+- {Id}
 
 #### Session:
-- {Id} -> ProfileId, CreationDate, Device, LifeTime, CsrfToken
+- {Id}
 
 
 ### Functional Dependencies Explanation:

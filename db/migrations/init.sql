@@ -1,4 +1,17 @@
 -- +migrate Up
+-- Создание таблицы вложений (file)
+CREATE TABLE IF NOT EXISTS file (
+    id INTEGER PRIMARY KEY,
+    file_id TEXT CHECK (LENGTH(file_id) <= 200),
+    file_type TEXT CHECK (LENGTH(file_id) <= 200)
+);
+
+-- Создание Sequence последовательности для file.id
+CREATE SEQUENCE IF NOT EXISTS fileId
+    START 1
+INCREMENT 1
+OWNED BY file.id;
+
 -- Создание таблицы пользователей (profile)
 CREATE TABLE IF NOT EXISTS profile (
     id INTEGER PRIMARY KEY,
@@ -10,13 +23,13 @@ CREATE TABLE IF NOT EXISTS profile (
     gender TEXT NOT NULL CHECK (gender = 'Male' OR gender = 'Female' OR gender = 'Other'),
     birthday DATE,
     registration_date DATE NOT NULL DEFAULT CURRENT_DATE,
-    file_id TEXT CHECK (LENGTH(file_id) <= 200),
+    avatar_id INTEGER REFERENCES file(id) ON DELETE NO ACTION DEFAULT NULL,
     phone_number TEXT CHECK (LENGTH(phone_number) <= 20),
     description TEXT CHECK (LENGTH(description) <= 300)
 );
 
 -- Создание Sequence последовательности для profile.id
-CREATE SEQUENCE profileId
+CREATE SEQUENCE IF NOT EXISTS profileId
 START 1
 INCREMENT 1
 OWNED BY profile.id;
@@ -44,11 +57,13 @@ CREATE TABLE IF NOT EXISTS email (
     isDeleted BOOLEAN NOT NULL,
     isDraft BOOLEAN NOT NULL,
     reply_to_email_id INTEGER REFERENCES email(id) ON DELETE NO ACTION DEFAULT NULL,
-    is_important BOOLEAN NOT NULL
+    is_important BOOLEAN NOT NULL,
+    file_id INT,
+    CONSTRAINT fk_file_id FOREIGN KEY (file_id) REFERENCES file(id) ON DELETE NO ACTION
 );
 
 -- Создание Sequence последовательности для email.id
-CREATE SEQUENCE emailId
+CREATE SEQUENCE IF NOT EXISTS emailId
 START 1
 INCREMENT 1
 OWNED BY email.id;
@@ -62,19 +77,6 @@ CREATE TABLE IF NOT EXISTS profile_email (
     CONSTRAINT fk_email FOREIGN KEY (email_id)  REFERENCES email(id)
 );
 
--- Создание таблицы вложений (file)
-CREATE TABLE IF NOT EXISTS file (
-    id INTEGER PRIMARY KEY,
-    email_id INT REFERENCES email(id) ON DELETE CASCADE,
-    file_id TEXT CHECK (LENGTH(file_id) <= 200)
-);
-
--- Создание Sequence последовательности для file.id
-CREATE SEQUENCE fileId
-START 1
-INCREMENT 1
-OWNED BY file.id;
-
 -- Создание таблицы папок (folder)
 CREATE TABLE IF NOT EXISTS folder (
     id INTEGER PRIMARY KEY,
@@ -83,7 +85,7 @@ CREATE TABLE IF NOT EXISTS folder (
 );
 
 -- Создание Sequence последовательности для folder.id
-CREATE SEQUENCE folderId
+CREATE SEQUENCE IF NOT EXISTS folderId
 START 1
 INCREMENT 1
 OWNED BY folder.id;
@@ -106,18 +108,18 @@ CREATE TABLE IF NOT EXISTS settings (
 );
 
 -- Создание Sequence последовательности для settings.id
-CREATE SEQUENCE settingsId
+CREATE SEQUENCE IF NOT EXISTS settingsId
 START 1
 INCREMENT 1
 OWNED BY settings.id;
 
 -- Вставка начальных данных в таблицу users
 INSERT INTO profile
-    (id, login, password_hash, firstname, surname, patronymic, gender, birthday, registration_date, file_id, phone_number, description)
+    (id, login, password_hash, firstname, surname, patronymic, gender, birthday, registration_date, phone_number, description)
 VALUES
-    (nextval('profileId'), 'sergey@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Sergey', 'Fedasov', 'Aleksandrovich', 'Male', '2003-08-20', NOW(), '', '+77777777777', 'Description'),
-    (nextval('profileId'), 'ivan@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Ivan', 'Karpov', 'Aleksandrovich', 'Male', '2003-10-17', NOW(), '', '+79697045539', 'Description'),
-    (nextval('profileId'), 'max@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Maxim', 'Frelich', 'Aleksandrovich', 'Male', '2003-08-20', NOW(), '', '+79099099090', 'Description')
+    (nextval('profileId'), 'sergey@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Sergey', 'Fedasov', 'Aleksandrovich', 'Male', '2003-08-20', NOW(), '+77777777777', 'Description'),
+    (nextval('profileId'), 'ivan@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Ivan', 'Karpov', 'Aleksandrovich', 'Male', '2003-10-17', NOW(), '+79697045539', 'Description'),
+    (nextval('profileId'), 'max@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Maxim', 'Frelich', 'Aleksandrovich', 'Male', '2003-08-20', NOW(), '+79099099090', 'Description')
 ON CONFLICT (login) DO NOTHING;
 
 -- Вставка начальных данных в таблицу email
