@@ -16,22 +16,21 @@ import (
 	"github.com/kataras/requestid"
 	"github.com/rs/cors"
 
-	"mail/pkg/delivery/middleware"
-	"mail/pkg/delivery/session"
-	"mail/pkg/domain/logger"
+	"mail/internal/logger"
+	"mail/internal/pkg/middleware"
+	"mail/internal/pkg/session"
 
 	migrate "github.com/rubenv/sql-migrate"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 
-	authHand "mail/pkg/delivery/auth"
-	emailHand "mail/pkg/delivery/email"
-	userHand "mail/pkg/delivery/user"
-	emailRepo "mail/pkg/repository/postgres/email"
-	sessionRepo "mail/pkg/repository/postgres/session"
-	userRepo "mail/pkg/repository/postgres/user"
-	emailUc "mail/pkg/usecase/email"
-	sessionUc "mail/pkg/usecase/session"
-	userUc "mail/pkg/usecase/user"
+	userHand "mail/internal/pkg/auth/delivery/http"
+	sessionRepo "mail/internal/pkg/auth/repository"
+	userRepo "mail/internal/pkg/auth/repository"
+	sessionUc "mail/internal/pkg/auth/usecase"
+	userUc "mail/internal/pkg/auth/usecase"
+	emailHand "mail/internal/pkg/email/delivery/http"
+	emailRepo "mail/internal/pkg/email/repository"
+	emailUc "mail/internal/pkg/email/usecase"
 
 	_ "mail/docs"
 )
@@ -40,7 +39,7 @@ import (
 // @version 1.0
 // @description API server for mail
 
-// @host mailhub.su:8080
+// @host localhost:8080
 // @BasePath /
 func main() {
 	settingTime()
@@ -51,7 +50,6 @@ func main() {
 	migrateDatabase(db)
 
 	sessionsManager := initializeSessionsManager(db)
-	authHandler := initializeAuthHandler(db, sessionsManager)
 	emailHandler := initializeEmailHandler(db, sessionsManager)
 	userHandler := initializeUserHandler(db, sessionsManager)
 
@@ -63,7 +61,7 @@ func main() {
 
 	Logger := initializeLogger(f)
 
-	router := setupRouter(authHandler, emailHandler, userHandler, Logger)
+	router := setupRouter(userHandler, emailHandler, Logger)
 
 	startServer(router)
 }
@@ -78,8 +76,8 @@ func settingTime() {
 }
 
 func initializeDatabase() *sql.DB {
-	// dsn := "user=postgres dbname=Mail password=postgres host=localhost port=5432 sslmode=disable"
-	dsn := "user=postgres dbname=Mail password=postgres host=89.208.223.140 port=5432 sslmode=disable"
+	dsn := "user=postgres dbname=Mail password=postgres host=localhost port=5432 sslmode=disable"
+	// dsn := "user=postgres dbname=Mail password=postgres host=89.208.223.140 port=5432 sslmode=disable"
 	db, err := sql.Open("pgx", dsn)
 	if err != nil {
 		log.Fatalln("Can't parse config", err)
@@ -117,16 +115,6 @@ func initializeSessionsManager(db *sql.DB) *session.SessionsManager {
 	return sessionsManager
 }
 
-func initializeAuthHandler(db *sql.DB, sessionsManager *session.SessionsManager) *authHand.AuthHandler {
-	userRepository := userRepo.NewUserRepository(sqlx.NewDb(db, "pgx"))
-	userUseCase := userUc.NewUserUseCase(userRepository)
-
-	return &authHand.AuthHandler{
-		UserUseCase: userUseCase,
-		Sessions:    sessionsManager,
-	}
-}
-
 func initializeEmailHandler(db *sql.DB, sessionsManager *session.SessionsManager) *emailHand.EmailHandler {
 	emailRepository := emailRepo.NewEmailRepository(sqlx.NewDb(db, "pgx"))
 	emailUseCase := emailUc.NewEmailUseCase(emailRepository)
@@ -155,10 +143,10 @@ func initializeLogger(f *os.File) *middleware.Logger {
 	return Logger
 }
 
-func setupRouter(authHandler *authHand.AuthHandler, emailHandler *emailHand.EmailHandler, userHandler *userHand.UserHandler, logger *middleware.Logger) http.Handler {
+func setupRouter(userHandler *userHand.UserHandler, emailHandler *emailHand.EmailHandler, logger *middleware.Logger) http.Handler {
 	router := mux.NewRouter()
 
-	auth := setupAuthRouter(authHandler, emailHandler, logger)
+	auth := setupAuthRouter(userHandler, emailHandler, logger)
 	router.PathPrefix("/api/v1/auth").Handler(auth)
 
 	logRouter := setupLogRouter(emailHandler, userHandler, logger)
@@ -173,13 +161,13 @@ func setupRouter(authHandler *authHand.AuthHandler, emailHandler *emailHand.Emai
 	return logger.AccessLogMiddleware(router)
 }
 
-func setupAuthRouter(authHandler *authHand.AuthHandler, emailHandler *emailHand.EmailHandler, logger *middleware.Logger) http.Handler {
+func setupAuthRouter(userHandler *userHand.UserHandler, emailHandler *emailHand.EmailHandler, logger *middleware.Logger) http.Handler {
 	auth := mux.NewRouter().PathPrefix("/api/v1/auth").Subrouter()
 	auth.Use(logger.AccessLogMiddleware, middleware.PanicMiddleware)
 
-	auth.HandleFunc("/login", authHandler.Login).Methods("POST", "OPTIONS")
-	auth.HandleFunc("/signup", authHandler.Signup).Methods("POST", "OPTIONS")
-	auth.HandleFunc("/logout", authHandler.Logout).Methods("POST", "OPTIONS")
+	auth.HandleFunc("/login", userHandler.Login).Methods("POST", "OPTIONS")
+	auth.HandleFunc("/signup", userHandler.Signup).Methods("POST", "OPTIONS")
+	auth.HandleFunc("/logout", userHandler.Logout).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/sendOther", emailHandler.SendFromAnotherDomain).Methods("POST", "OPTIONS")
 
 	return auth

@@ -34,7 +34,7 @@ services:
   smtp:
     container_name: smtp
     build:
-      context: ./smtp_server
+      context: ./internal/smtp_server
       dockerfile: Dockerfile
     ports:
       - "25:587"

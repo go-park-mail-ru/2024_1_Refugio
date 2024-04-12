@@ -35,7 +35,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/delivery.UserSwag"
+                            "$ref": "#/definitions/response.UserSwag"
                         }
                     }
                 ],
@@ -43,25 +43,25 @@ const docTemplate = `{
                     "200": {
                         "description": "Login successful",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "400": {
                         "description": "Invalid request body",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Invalid credentials",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Failed to create session",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -81,7 +81,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Logout successful",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     }
                 }
@@ -107,7 +107,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/delivery.UserSwag"
+                            "$ref": "#/definitions/response.UserSwag"
                         }
                     }
                 ],
@@ -115,19 +115,19 @@ const docTemplate = `{
                     "200": {
                         "description": "Signup successful",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "400": {
                         "description": "Invalid request body",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Failed to add user",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -163,25 +163,25 @@ const docTemplate = `{
                     "200": {
                         "description": "Deletion success status",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "400": {
                         "description": "Bad id",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "401": {
                         "description": "Not Authorized",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "500": {
                         "description": "Failed to delete email message",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     }
                 }
@@ -214,7 +214,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/delivery.EmailSwag"
+                            "$ref": "#/definitions/response.EmailSwag"
                         }
                     }
                 ],
@@ -222,25 +222,25 @@ const docTemplate = `{
                     "200": {
                         "description": "ID of the send email message",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "400": {
                         "description": "Bad JSON in request",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "401": {
                         "description": "Not Authorized",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "500": {
                         "description": "Failed to add email message",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     }
                 }
@@ -280,7 +280,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/delivery.EmailSwag"
+                            "$ref": "#/definitions/response.EmailSwag"
                         }
                     }
                 ],
@@ -288,25 +288,25 @@ const docTemplate = `{
                     "200": {
                         "description": "Update success status",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "400": {
                         "description": "Bad id or Bad JSON",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "401": {
                         "description": "Not Authorized",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "500": {
                         "description": "Failed to update email message",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     }
                 }
@@ -342,25 +342,25 @@ const docTemplate = `{
                     "200": {
                         "description": "Email message data",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "400": {
                         "description": "Bad id in request",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "401": {
                         "description": "Not Authorized",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "404": {
                         "description": "Email not found",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     }
                 }
@@ -389,25 +389,25 @@ const docTemplate = `{
                     "200": {
                         "description": "List of all email messages",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "401": {
                         "description": "Not Authorized",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "404": {
                         "description": "DB error",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "500": {
                         "description": "JSON encoding error",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     }
                 }
@@ -436,25 +436,25 @@ const docTemplate = `{
                     "200": {
                         "description": "List of all email messages",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "401": {
                         "description": "Not Authorized",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "404": {
                         "description": "DB error",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "500": {
                         "description": "JSON encoding error",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     }
                 }
@@ -498,19 +498,19 @@ const docTemplate = `{
                     "200": {
                         "description": "File uploaded and saved successfully",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "400": {
                         "description": "Error processing file or failed to get file",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -549,25 +549,25 @@ const docTemplate = `{
                     "200": {
                         "description": "User data deleted successfully",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "400": {
                         "description": "Invalid user ID",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Not authorized",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -596,19 +596,19 @@ const docTemplate = `{
                     "200": {
                         "description": "User details",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "401": {
                         "description": "Not Authorized",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -641,7 +641,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/delivery.UserSwag"
+                            "$ref": "#/definitions/response.UserSwag"
                         }
                     }
                 ],
@@ -649,25 +649,25 @@ const docTemplate = `{
                     "200": {
                         "description": "User data updated successfully",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "400": {
                         "description": "Invalid request body",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Not authorized",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/delivery.ErrorResponse"
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     }
                 }
@@ -687,13 +687,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     },
                     "401": {
                         "description": "Not Authorized",
                         "schema": {
-                            "$ref": "#/definitions/delivery.Response"
+                            "$ref": "#/definitions/response.Response"
                         }
                     }
                 }
@@ -701,7 +701,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "delivery.EmailSwag": {
+        "response.EmailSwag": {
             "type": "object",
             "properties": {
                 "dateOfDispatch": {
@@ -754,7 +754,7 @@ const docTemplate = `{
                 }
             }
         },
-        "delivery.ErrorResponse": {
+        "response.ErrorResponse": {
             "type": "object",
             "properties": {
                 "error": {
@@ -762,7 +762,7 @@ const docTemplate = `{
                 }
             }
         },
-        "delivery.Response": {
+        "response.Response": {
             "type": "object",
             "properties": {
                 "body": {},
@@ -771,71 +771,8 @@ const docTemplate = `{
                 }
             }
         },
-        "delivery.UserSwag": {
-            "type": "object",
-            "properties": {
-                "avatar": {
-                    "description": "AvatarID stores the identifier of the user's avatar image.",
-                    "type": "string"
-                },
-                "birthday": {
-                    "description": "Birthday stores the birthdate of the user.",
-                    "type": "string"
-                },
-                "description": {
-                    "description": "Description stores additional information about the user.",
-                    "type": "string"
-                },
-                "firstname": {
-                    "description": "FirstName stores the first name of the user.",
-                    "type": "string"
-                },
-                "gender": {
-                    "description": "Gender stores the gender of the user.",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/models.UserGender"
-                        }
-                    ]
-                },
-                "id": {
-                    "description": "ID uniquely identifies the user.",
-                    "type": "integer"
-                },
-                "login": {
-                    "description": "Login is the username used for authentication.",
-                    "type": "string"
-                },
-                "middlename": {
-                    "description": "Patronymic stores the middle name of the user, if available.",
-                    "type": "string"
-                },
-                "password": {
-                    "description": "Password is the hashed password of the user.",
-                    "type": "string"
-                },
-                "phonenumber": {
-                    "description": "PhoneNumber stores the phone number of the user.",
-                    "type": "string"
-                },
-                "surname": {
-                    "description": "Surname stores the last name of the user.",
-                    "type": "string"
-                }
-            }
-        },
-        "models.UserGender": {
-            "type": "string",
-            "enum": [
-                "Male",
-                "Female",
-                "Other"
-            ],
-            "x-enum-varnames": [
-                "Male",
-                "Female",
-                "Other"
-            ]
+        "response.UserSwag": {
+            "type": "object"
         }
     }
 }`
@@ -843,7 +780,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "mailhub.su:8080",
+	Host:             "localhost:8080",
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "API Mail",
