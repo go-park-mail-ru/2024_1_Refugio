@@ -51,6 +51,16 @@ definitions:
       status:
         type: integer
     type: object
+  response.UserGenderSwag:
+    enum:
+    - Male
+    - Female
+    - Other
+    type: string
+    x-enum-varnames:
+    - Male
+    - Female
+    - Other
   response.UserSwag:
     properties:
       avatar:
@@ -66,8 +76,9 @@ definitions:
         description: FirstName stores the first name of the user.
         type: string
       gender:
+        allOf:
+        - $ref: '#/definitions/response.UserGenderSwag'
         description: Gender stores the gender of the user.
-        type: string
       id:
         description: ID uniquely identifies the user.
         type: integer
