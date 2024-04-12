@@ -2,8 +2,8 @@ package middleware
 
 import (
 	"github.com/sirupsen/logrus"
-	"mail/internal/logger"
 	response "mail/internal/models/response"
+	"mail/internal/pkg/logger"
 	"mail/internal/pkg/session"
 	"net/http"
 	"time"

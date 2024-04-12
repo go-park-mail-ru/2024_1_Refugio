@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	"golang.org/x/crypto/bcrypt"
-	"mail/internal/logger"
+	"mail/internal/pkg/logger"
 	"math/rand"
 	"os"
 	"time"

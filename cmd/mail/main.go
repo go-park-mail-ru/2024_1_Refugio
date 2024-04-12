@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"mail/internal/pkg/logger"
 	"net/http"
 	"os"
 	"time"
@@ -16,7 +17,6 @@ import (
 	"github.com/kataras/requestid"
 	"github.com/rs/cors"
 
-	"mail/internal/logger"
 	"mail/internal/pkg/middleware"
 	"mail/internal/pkg/session"
 

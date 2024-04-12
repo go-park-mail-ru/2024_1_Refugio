@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/jmoiron/sqlx"
-	"mail/internal/logger"
 	domain "mail/internal/models/domain_models"
 	converters "mail/internal/models/repository_converters"
 	database "mail/internal/models/repository_models"
+	"mail/internal/pkg/logger"
 	"os"
 	"time"
 )

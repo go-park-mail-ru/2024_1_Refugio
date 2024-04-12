@@ -46,8 +46,8 @@ func sanitizeString(str string) string {
 }
 
 // Login handles user login.
-// @Summary User login
-// @Description Handles user login.
+// @Summary Login User
+// @Description Login Handles user.
 // @Tags auth
 // @Accept json
 // @Produce json

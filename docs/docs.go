@@ -17,7 +17,7 @@ const docTemplate = `{
     "paths": {
         "/api/v1/auth/login": {
             "post": {
-                "description": "Handles user login.",
+                "description": "Login Handles user.",
                 "consumes": [
                     "application/json"
                 ],
@@ -27,7 +27,7 @@ const docTemplate = `{
                 "tags": [
                     "auth"
                 ],
-                "summary": "User login",
+                "summary": "Login User",
                 "parameters": [
                     {
                         "description": "User credentials for login",
@@ -772,7 +772,53 @@ const docTemplate = `{
             }
         },
         "response.UserSwag": {
-            "type": "object"
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "description": "AvatarID stores the identifier of the user's avatar image.",
+                    "type": "string"
+                },
+                "birthday": {
+                    "description": "Birthday stores the birthdate of the user.",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description stores additional information about the user.",
+                    "type": "string"
+                },
+                "firstname": {
+                    "description": "FirstName stores the first name of the user.",
+                    "type": "string"
+                },
+                "gender": {
+                    "description": "Gender stores the gender of the user.",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "ID uniquely identifies the user.",
+                    "type": "integer"
+                },
+                "login": {
+                    "description": "Login is the username used for authentication.",
+                    "type": "string"
+                },
+                "middlename": {
+                    "description": "Patronymic stores the middle name of the user, if available.",
+                    "type": "string"
+                },
+                "password": {
+                    "description": "Password is the hashed password of the user.",
+                    "type": "string"
+                },
+                "phonenumber": {
+                    "description": "PhoneNumber stores the phone number of the user.",
+                    "type": "string"
+                },
+                "surname": {
+                    "description": "Surname stores the last name of the user.",
+                    "type": "string"
+                }
+            }
         }
     }
 }`

@@ -2,13 +2,13 @@ package repository
 
 import (
 	"fmt"
+	"mail/internal/pkg/logger"
 	"math/rand"
 	"os"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 
-	"mail/internal/logger"
 	converters "mail/internal/models/repository_converters"
 
 	domain "mail/internal/models/domain_models"
