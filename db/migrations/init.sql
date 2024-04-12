@@ -1,20 +1,14 @@
 -- +migrate Up
 -- Создание таблицы вложений (file)
 CREATE TABLE IF NOT EXISTS file (
-    id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     file_id TEXT CHECK (LENGTH(file_id) <= 200),
     file_type TEXT CHECK (LENGTH(file_id) <= 200)
 );
 
--- Создание Sequence последовательности для file.id
-CREATE SEQUENCE IF NOT EXISTS fileId
-    START 1
-INCREMENT 1
-OWNED BY file.id;
-
 -- Создание таблицы пользователей (profile)
 CREATE TABLE IF NOT EXISTS profile (
-    id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     login TEXT NOT NULL UNIQUE CHECK (LENGTH(login) <= 50),
     password_hash TEXT NOT NULL CHECK (LENGTH(password_hash) <= 200),
     firstname TEXT NOT NULL CHECK (LENGTH(firstname) <= 50),
@@ -28,12 +22,6 @@ CREATE TABLE IF NOT EXISTS profile (
     description TEXT CHECK (LENGTH(description) <= 300)
 );
 
--- Создание Sequence последовательности для profile.id
-CREATE SEQUENCE IF NOT EXISTS profileId
-START 1
-INCREMENT 1
-OWNED BY profile.id;
-
 -- Создание таблицы сессий (session)
 CREATE TABLE IF NOT EXISTS session (
     id TEXT PRIMARY KEY CHECK (LENGTH(id) <= 50),
@@ -46,7 +34,7 @@ CREATE TABLE IF NOT EXISTS session (
 
 -- Создание таблицы писем (email)
 CREATE TABLE IF NOT EXISTS email (
-    id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     topic TEXT,
     text TEXT,
     date_of_dispatch TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -60,24 +48,12 @@ CREATE TABLE IF NOT EXISTS email (
     is_important BOOLEAN NOT NULL
 );
 
--- Создание Sequence последовательности для email.id
-CREATE SEQUENCE IF NOT EXISTS emailId
-START 1
-INCREMENT 1
-OWNED BY email.id;
-
 -- Создание таблицы вложений (file)
 CREATE TABLE IF NOT EXISTS email_file (
-    id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     email_id INT REFERENCES email(id) ON DELETE CASCADE,
     file_id INT REFERENCES file(id) ON DELETE CASCADE UNIQUE
 );
-
--- Создание Sequence последовательности для email_file.id
-CREATE SEQUENCE IF NOT EXISTS email_fileId
-    START 1
-INCREMENT 1
-OWNED BY email_file.id;
 
 -- Создание таблицы письма пользователя (profile_email)
 CREATE TABLE IF NOT EXISTS profile_email (
@@ -90,16 +66,10 @@ CREATE TABLE IF NOT EXISTS profile_email (
 
 -- Создание таблицы папок (folder)
 CREATE TABLE IF NOT EXISTS folder (
-    id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     profile_id INTEGER REFERENCES profile(id) ON DELETE CASCADE,
     name TEXT NOT NULL CHECK (LENGTH(name) <= 100)
 );
-
--- Создание Sequence последовательности для folder.id
-CREATE SEQUENCE IF NOT EXISTS folderId
-START 1
-INCREMENT 1
-OWNED BY folder.id;
 
 -- Создание таблицы связи папок с письмами (folder_email)
 CREATE TABLE IF NOT EXISTS folder_email (
@@ -112,37 +82,31 @@ CREATE TABLE IF NOT EXISTS folder_email (
 
 -- Создание таблицы настроек (settings)
 CREATE TABLE IF NOT EXISTS settings (
-    id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     profile_id INTEGER REFERENCES profile(id) ON DELETE CASCADE,
     notifications_enabled BOOLEAN,
     language TEXT CHECK (LENGTH(language) <= 50)
 );
 
--- Создание Sequence последовательности для settings.id
-CREATE SEQUENCE IF NOT EXISTS settingsId
-START 1
-INCREMENT 1
-OWNED BY settings.id;
-
 -- Вставка начальных данных в таблицу users
 INSERT INTO profile
-    (id, login, password_hash, firstname, surname, patronymic, gender, birthday, registration_date, phone_number, description)
+    (login, password_hash, firstname, surname, patronymic, gender, birthday, registration_date, phone_number, description)
 VALUES
-    (nextval('profileId'), 'sergey@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Sergey', 'Fedasov', 'Aleksandrovich', 'Male', '2003-08-20', NOW(), '+77777777777', 'Description'),
-    (nextval('profileId'), 'ivan@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Ivan', 'Karpov', 'Aleksandrovich', 'Male', '2003-10-17', NOW(), '+79697045539', 'Description'),
-    (nextval('profileId'), 'max@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Maxim', 'Frelich', 'Aleksandrovich', 'Male', '2003-08-20', NOW(), '+79099099090', 'Description')
+    ('sergey@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Sergey', 'Fedasov', 'Aleksandrovich', 'Male', '2003-08-20', NOW(), '+77777777777', 'Description'),
+    ('ivan@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Ivan', 'Karpov', 'Aleksandrovich', 'Male', '2003-10-17', NOW(), '+79697045539', 'Description'),
+    ('max@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Maxim', 'Frelich', 'Aleksandrovich', 'Male', '2003-08-20', NOW(), '+79099099090', 'Description')
 ON CONFLICT (login) DO NOTHING;
 
 -- Вставка начальных данных в таблицу email
 INSERT INTO email
-    (id, topic, text, date_of_dispatch, photoid, sender_email, recipient_email, isRead, isDeleted, isDraft, reply_to_email_id, is_important)
+    (topic, text, date_of_dispatch, photoid, sender_email, recipient_email, isRead, isDeleted, isDraft, reply_to_email_id, is_important)
 VALUES
-    (nextval('emailId'), 'Topic1 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', 'sergey@mailhub.su', 'ivan@mailhub.su', False, False, False, Null, False),
-    (nextval('emailId'), 'Topic2 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', 'sergey@mailhub.su', 'max@mailhub.su', False, False, False, Null, False),
-    (nextval('emailId'), 'Topic3 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', 'ivan@mailhub.su', 'max@mailhub.su', False, False, False, Null, False),
-    (nextval('emailId'), 'Topic4 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', 'max@mailhub.su', 'sergey@mailhub.su', False, False, False, Null, False),
-    (nextval('emailId'), 'Topic5 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', 'max@mailhub.su', 'ivan@mailhub.su', False, False, False, Null, False),
-    (nextval('emailId'), 'Topic6 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', 'sergey@mailhub.su', 'ivan@mailhub.su', False, False, False, Null, False);
+    ('Topic1 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', 'sergey@mailhub.su', 'ivan@mailhub.su', False, False, False, Null, False),
+    ('Topic2 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', 'sergey@mailhub.su', 'max@mailhub.su', False, False, False, Null, False),
+    ('Topic3 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', 'ivan@mailhub.su', 'max@mailhub.su', False, False, False, Null, False),
+    ('Topic4 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', 'max@mailhub.su', 'sergey@mailhub.su', False, False, False, Null, False),
+    ('Topic5 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', 'max@mailhub.su', 'ivan@mailhub.su', False, False, False, Null, False),
+    ('Topic6 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', 'sergey@mailhub.su', 'ivan@mailhub.su', False, False, False, Null, False);
 
 -- Вставка начальных данных в таблицу profile_email
 INSERT INTO profile_email
