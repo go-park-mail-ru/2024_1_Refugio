@@ -771,6 +771,19 @@ const docTemplate = `{
                 }
             }
         },
+        "response.UserGenderSwag": {
+            "type": "string",
+            "enum": [
+                "Male",
+                "Female",
+                "Other"
+            ],
+            "x-enum-varnames": [
+                "Male",
+                "Female",
+                "Other"
+            ]
+        },
         "response.UserSwag": {
             "type": "object",
             "properties": {
@@ -792,7 +805,11 @@ const docTemplate = `{
                 },
                 "gender": {
                     "description": "Gender stores the gender of the user.",
-                    "type": "string"
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/response.UserGenderSwag"
+                        }
+                    ]
                 },
                 "id": {
                     "description": "ID uniquely identifies the user.",
