@@ -17,14 +17,15 @@ func TestGetAllUsers_Success(t *testing.T) {
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
 
-	requestID := "test_request"
 	expectedUsers := []*domain.User{
 		{ID: 1, FirstName: "User 1"},
 		{ID: 2, FirstName: "User 2"},
 	}
-	mockRepo.EXPECT().GetAll(0, 0, requestID).Return(expectedUsers, nil)
+	ctx := GetCTX()
 
-	users, err := useCase.GetAllUsers(requestID)
+	mockRepo.EXPECT().GetAll(0, 0, ctx).Return(expectedUsers, nil)
+
+	users, err := useCase.GetAllUsers(ctx)
 
 	assert.NoError(t, err)
 	assert.Equal(t, expectedUsers, users)
@@ -37,11 +38,11 @@ func TestGetAllUsers_ErrorFromRepository(t *testing.T) {
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
 
-	requestID := "test_request"
+	ctx := GetCTX()
 
-	mockRepo.EXPECT().GetAll(0, 0, requestID).Return(nil, errors.New("repository error"))
+	mockRepo.EXPECT().GetAll(0, 0, ctx).Return(nil, errors.New("repository error"))
 
-	users, err := useCase.GetAllUsers(requestID)
+	users, err := useCase.GetAllUsers(ctx)
 
 	assert.Error(t, err)
 	assert.Nil(t, users)
@@ -54,11 +55,12 @@ func TestGetUserByID_Success(t *testing.T) {
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
 
-	requestID := "test_request"
 	expectedUser := &domain.User{ID: 1, FirstName: "User 1"}
-	mockRepo.EXPECT().GetByID(uint32(1), requestID).Return(expectedUser, nil)
+	ctx := GetCTX()
 
-	user, err := useCase.GetUserByID(1, requestID)
+	mockRepo.EXPECT().GetByID(uint32(1), ctx).Return(expectedUser, nil)
+
+	user, err := useCase.GetUserByID(1, ctx)
 
 	assert.NoError(t, err)
 	assert.Equal(t, expectedUser, user)
@@ -71,10 +73,10 @@ func TestGetUserByID_ErrorFromRepository(t *testing.T) {
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
 
-	requestID := "test_request"
-	mockRepo.EXPECT().GetByID(uint32(1), requestID).Return(nil, errors.New("repository error"))
+	ctx := GetCTX()
+	mockRepo.EXPECT().GetByID(uint32(1), ctx).Return(nil, errors.New("repository error"))
 
-	user, err := useCase.GetUserByID(1, requestID)
+	user, err := useCase.GetUserByID(1, ctx)
 
 	assert.Error(t, err)
 	assert.Nil(t, user)
@@ -87,11 +89,11 @@ func TestGetUserByLogin_Success(t *testing.T) {
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
 
-	requestID := "test_request"
+	ctx := GetCTX()
 	expectedUser := &domain.User{ID: 1, FirstName: "User 1"}
-	mockRepo.EXPECT().GetUserByLogin("username", "password", requestID).Return(expectedUser, nil)
+	mockRepo.EXPECT().GetUserByLogin("username", "password", ctx).Return(expectedUser, nil)
 
-	user, err := useCase.GetUserByLogin("username", "password", requestID)
+	user, err := useCase.GetUserByLogin("username", "password", ctx)
 
 	assert.NoError(t, err)
 	assert.Equal(t, expectedUser, user)
@@ -104,10 +106,10 @@ func TestGetUserByLogin_ErrorFromRepository(t *testing.T) {
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
 
-	requestID := "test_request"
-	mockRepo.EXPECT().GetUserByLogin("username", "password", requestID).Return(nil, errors.New("repository error"))
+	ctx := GetCTX()
+	mockRepo.EXPECT().GetUserByLogin("username", "password", ctx).Return(nil, errors.New("repository error"))
 
-	user, err := useCase.GetUserByLogin("username", "password", requestID)
+	user, err := useCase.GetUserByLogin("username", "password", ctx)
 
 	assert.Error(t, err)
 	assert.Nil(t, user)
@@ -120,11 +122,11 @@ func TestCreateUser_Success(t *testing.T) {
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
 
-	requestID := "test_request"
+	ctx := GetCTX()
 	newUser := &domain.User{FirstName: "New User"}
-	mockRepo.EXPECT().Add(newUser, requestID).Return(newUser, nil)
+	mockRepo.EXPECT().Add(newUser, ctx).Return(newUser, nil)
 
-	userRes, err := useCase.CreateUser(newUser, requestID)
+	userRes, err := useCase.CreateUser(newUser, ctx)
 
 	assert.NoError(t, err)
 	assert.Equal(t, newUser, userRes)
@@ -136,11 +138,11 @@ func TestCreateUser_ErrorFromRepository(t *testing.T) {
 
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
-	requestID := "test_request"
+	ctx := GetCTX()
 	newUser := &domain.User{FirstName: "New User"}
-	mockRepo.EXPECT().Add(newUser, requestID).Return(newUser, errors.New("repository error"))
+	mockRepo.EXPECT().Add(newUser, ctx).Return(newUser, errors.New("repository error"))
 
-	userRes, err := useCase.CreateUser(newUser, requestID)
+	userRes, err := useCase.CreateUser(newUser, ctx)
 
 	assert.Error(t, err)
 	assert.Equal(t, newUser, userRes)
@@ -153,7 +155,7 @@ func TestIsLoginUnique_Success(t *testing.T) {
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
 
-	requestID := "test_request"
+	ctx := GetCTX()
 	login := "testUser"
 	mockUsers := []*domain.User{
 		{ID: 1, Login: "user1"},
@@ -161,8 +163,8 @@ func TestIsLoginUnique_Success(t *testing.T) {
 		{ID: 3, Login: "user3"},
 	}
 
-	mockRepo.EXPECT().GetAll(0, 0, requestID).Return(mockUsers, nil)
-	unique, err := useCase.IsLoginUnique(login, requestID)
+	mockRepo.EXPECT().GetAll(0, 0, ctx).Return(mockUsers, nil)
+	unique, err := useCase.IsLoginUnique(login, ctx)
 	assert.NoError(t, err)
 	assert.True(t, unique)
 }
@@ -174,7 +176,7 @@ func TestIsLoginUnique_NonUnique(t *testing.T) {
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
 
-	requestID := "test_request"
+	ctx := GetCTX()
 	nonUniqueLogin := "user2"
 	mockUsers := []*domain.User{
 		{ID: 1, Login: "user1"},
@@ -182,8 +184,8 @@ func TestIsLoginUnique_NonUnique(t *testing.T) {
 		{ID: 3, Login: "user3"},
 	}
 
-	mockRepo.EXPECT().GetAll(0, 0, requestID).Return(mockUsers, nil)
-	unique, err := useCase.IsLoginUnique(nonUniqueLogin, requestID)
+	mockRepo.EXPECT().GetAll(0, 0, ctx).Return(mockUsers, nil)
+	unique, err := useCase.IsLoginUnique(nonUniqueLogin, ctx)
 	assert.NoError(t, err)
 	assert.False(t, unique)
 }
@@ -195,9 +197,9 @@ func TestIsLoginUnique_ErrorFromRepository(t *testing.T) {
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
 
-	requestID := "test_request"
-	mockRepo.EXPECT().GetAll(0, 0, requestID).Return(nil, errors.New("repository error"))
-	unique, err := useCase.IsLoginUnique("testUser", requestID)
+	ctx := GetCTX()
+	mockRepo.EXPECT().GetAll(0, 0, ctx).Return(nil, errors.New("repository error"))
+	unique, err := useCase.IsLoginUnique("testUser", ctx)
 	assert.Error(t, err)
 	assert.False(t, unique)
 }
@@ -209,7 +211,7 @@ func TestUpdateUser_Success(t *testing.T) {
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
 
-	requestID := "test_request"
+	ctx := GetCTX()
 	userNew := &domain.User{
 		ID:          1,
 		FirstName:   "John",
@@ -232,11 +234,11 @@ func TestUpdateUser_Success(t *testing.T) {
 		PhoneNumber: "+9876543210",
 	}
 
-	mockRepo.EXPECT().GetByID(userNew.ID, requestID).Return(userOld, nil)
+	mockRepo.EXPECT().GetByID(userNew.ID, ctx).Return(userOld, nil)
 
-	mockRepo.EXPECT().Update(gomock.Any(), requestID).Return(true, nil)
+	mockRepo.EXPECT().Update(gomock.Any(), ctx).Return(true, nil)
 
-	updatedUser, err := useCase.UpdateUser(userNew, requestID)
+	updatedUser, err := useCase.UpdateUser(userNew, ctx)
 
 	assert.NoError(t, err)
 	assert.Equal(t, userNew, updatedUser)
@@ -249,7 +251,7 @@ func TestUpdateUser_FailureToUpdate(t *testing.T) {
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
 
-	requestID := "test_request"
+	ctx := GetCTX()
 	userNew := &domain.User{
 		ID:          1,
 		FirstName:   "John",
@@ -272,11 +274,11 @@ func TestUpdateUser_FailureToUpdate(t *testing.T) {
 		PhoneNumber: "+9876543210",
 	}
 
-	mockRepo.EXPECT().GetByID(userNew.ID, requestID).Return(userOld, nil)
+	mockRepo.EXPECT().GetByID(userNew.ID, ctx).Return(userOld, nil)
 
-	mockRepo.EXPECT().Update(gomock.Any(), requestID).Return(false, errors.New("update failed"))
+	mockRepo.EXPECT().Update(gomock.Any(), ctx).Return(false, errors.New("update failed"))
 
-	_, err := useCase.UpdateUser(userNew, requestID)
+	_, err := useCase.UpdateUser(userNew, ctx)
 
 	assert.Error(t, err)
 }
@@ -288,7 +290,7 @@ func TestUpdateUser_RepositoryError(t *testing.T) {
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
 
-	requestID := "test_request"
+	ctx := GetCTX()
 	userNew := &domain.User{
 		ID:          1,
 		FirstName:   "John",
@@ -300,9 +302,9 @@ func TestUpdateUser_RepositoryError(t *testing.T) {
 		PhoneNumber: "+1234567890",
 	}
 
-	mockRepo.EXPECT().GetByID(userNew.ID, requestID).Return(&domain.User{}, errors.New("repository error"))
+	mockRepo.EXPECT().GetByID(userNew.ID, ctx).Return(&domain.User{}, errors.New("repository error"))
 
-	_, err := useCase.UpdateUser(userNew, requestID)
+	_, err := useCase.UpdateUser(userNew, ctx)
 
 	assert.Error(t, err)
 }
@@ -314,11 +316,11 @@ func TestDeleteUserByID_Success(t *testing.T) {
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
 
-	requestID := "test_request"
+	ctx := GetCTX()
 	userID := uint32(1)
-	mockRepo.EXPECT().Delete(userID, requestID).Return(true, nil)
+	mockRepo.EXPECT().Delete(userID, ctx).Return(true, nil)
 
-	deleted, err := useCase.DeleteUserByID(userID, requestID)
+	deleted, err := useCase.DeleteUserByID(userID, ctx)
 
 	assert.NoError(t, err)
 	assert.True(t, deleted)
@@ -331,11 +333,11 @@ func TestDeleteUserByID_Failure(t *testing.T) {
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
 
-	requestID := "test_request"
+	ctx := GetCTX()
 	userID := uint32(1)
-	mockRepo.EXPECT().Delete(userID, requestID).Return(false, nil)
+	mockRepo.EXPECT().Delete(userID, ctx).Return(false, nil)
 
-	deleted, err := useCase.DeleteUserByID(userID, requestID)
+	deleted, err := useCase.DeleteUserByID(userID, ctx)
 
 	assert.NoError(t, err)
 	assert.False(t, deleted)
@@ -348,11 +350,11 @@ func TestDeleteUserByID_ErrorFromRepository(t *testing.T) {
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
 
-	requestID := "test_request"
+	ctx := GetCTX()
 	userID := uint32(1)
-	mockRepo.EXPECT().Delete(userID, requestID).Return(false, errors.New("repository error"))
+	mockRepo.EXPECT().Delete(userID, ctx).Return(false, errors.New("repository error"))
 
-	deleted, err := useCase.DeleteUserByID(userID, requestID)
+	deleted, err := useCase.DeleteUserByID(userID, ctx)
 
 	assert.Error(t, err)
 	assert.False(t, deleted)

@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	domain "mail/internal/models/domain_models"
 	repository "mail/internal/pkg/auth/interface"
 )
@@ -18,26 +19,26 @@ func NewSessionUseCase(repo repository.SessionRepository) *SessionUseCase {
 }
 
 // CreateNewSession initiates a new session for a user.
-func (uc *SessionUseCase) CreateNewSession(userID uint32, device, requestID string, lifeTime int) (string, error) {
-	return uc.sessionRepo.CreateSession(userID, device, requestID, lifeTime)
+func (uc *SessionUseCase) CreateNewSession(userID uint32, device string, lifeTime int, ctx context.Context) (string, error) {
+	return uc.sessionRepo.CreateSession(userID, device, lifeTime, ctx)
 }
 
 // GetSession fetches a session by its unique identifier.
-func (uc *SessionUseCase) GetSession(sessionID, requestID string) (*domain.Session, error) {
-	return uc.sessionRepo.GetSessionByID(sessionID, requestID)
+func (uc *SessionUseCase) GetSession(sessionID string, ctx context.Context) (*domain.Session, error) {
+	return uc.sessionRepo.GetSessionByID(sessionID, ctx)
 }
 
 // GetLogin retrieves the login associated with the provided session ID.
-func (uc *SessionUseCase) GetLogin(sessionID, requestID string) (string, error) {
-	return uc.sessionRepo.GetLoginBySessionID(sessionID, requestID)
+func (uc *SessionUseCase) GetLogin(sessionID string, ctx context.Context) (string, error) {
+	return uc.sessionRepo.GetLoginBySessionID(sessionID, ctx)
 }
 
 // DeleteSession terminates a session identified by its ID.
-func (uc *SessionUseCase) DeleteSession(sessionID, requestID string) error {
-	return uc.sessionRepo.DeleteSessionByID(sessionID, requestID)
+func (uc *SessionUseCase) DeleteSession(sessionID string, ctx context.Context) error {
+	return uc.sessionRepo.DeleteSessionByID(sessionID, ctx)
 }
 
 // CleanupExpiredSessions removes sessions that have exceeded their lifetime.
-func (uc *SessionUseCase) CleanupExpiredSessions() error {
-	return uc.sessionRepo.DeleteExpiredSessions()
+func (uc *SessionUseCase) CleanupExpiredSessions(ctx context.Context) error {
+	return uc.sessionRepo.DeleteExpiredSessions(ctx)
 }

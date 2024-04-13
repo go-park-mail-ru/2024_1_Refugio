@@ -2,6 +2,7 @@
 package _interface
 
 import (
+	"context"
 	api "mail/internal/models/delivery_models"
 	"net/http"
 )
@@ -9,20 +10,20 @@ import (
 // SessionsManager represents the interface for managing user sessions.
 type SessionsManager interface {
 	// GetSession retrieves the session from the request and sanitizes it.
-	GetSession(r *http.Request, requestID string) *api.Session
+	GetSession(r *http.Request, ctx context.Context) *api.Session
 
 	// Check checks the validity of the session and CSRF token in the request.
-	Check(r *http.Request, requestID string) (*api.Session, error)
+	Check(r *http.Request, ctx context.Context) (*api.Session, error)
 
 	// CheckLogin checks if the login associated with the session matches the provided login.
-	CheckLogin(login, requestID string, r *http.Request) error
+	CheckLogin(login string, r *http.Request, ctx context.Context) error
 
 	// GetLoginBySession retrieves the login associated with the session from the request.
-	GetLoginBySession(r *http.Request, requestID string) (string, error)
+	GetLoginBySession(r *http.Request, ctx context.Context) (string, error)
 
 	// Create creates a new session for the user and sets the session ID cookie in the response.
-	Create(w http.ResponseWriter, userID uint32, requestID string) (*api.Session, error)
+	Create(w http.ResponseWriter, userID uint32, ctx context.Context) (*api.Session, error)
 
 	// DestroyCurrent destroys the current session by deleting the session ID cookie from the response.
-	DestroyCurrent(w http.ResponseWriter, r *http.Request, requestID string) error
+	DestroyCurrent(w http.ResponseWriter, r *http.Request, ctx context.Context) error
 }

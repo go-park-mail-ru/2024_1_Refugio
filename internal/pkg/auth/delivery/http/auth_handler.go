@@ -78,18 +78,13 @@ func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	requestID, ok := r.Context().Value(requestIDContextKey).(string)
-	if !ok {
-		requestID = "none"
-	}
-
-	ourUser, err := uh.UserUseCase.GetUserByLogin(credentials.Login, credentials.Password, requestID)
+	ourUser, err := uh.UserUseCase.GetUserByLogin(credentials.Login, credentials.Password, r.Context())
 	if err != nil {
 		response.HandleError(w, http.StatusUnauthorized, "Login failed")
 		return
 	}
 
-	_, er := uh.Sessions.Create(w, ourUser.ID, requestID)
+	_, er := uh.Sessions.Create(w, ourUser.ID, r.Context())
 	if er != nil {
 		response.HandleError(w, http.StatusInternalServerError, "Failed to create session")
 		return
@@ -136,18 +131,13 @@ func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	requestID, ok := r.Context().Value(requestIDContextKey).(string)
-	if !ok {
-		requestID = "none"
-	}
-
-	loginUnique, _ := uh.UserUseCase.IsLoginUnique(newUser.Login, requestID)
+	loginUnique, _ := uh.UserUseCase.IsLoginUnique(newUser.Login, r.Context())
 	if !loginUnique {
 		response.HandleError(w, http.StatusBadRequest, "Such a login already exists")
 		return
 	}
 
-	_, er := uh.UserUseCase.CreateUser(converters.UserConvertApiInCore(newUser), requestID)
+	_, er := uh.UserUseCase.CreateUser(converters.UserConvertApiInCore(newUser), r.Context())
 	if er != nil {
 		response.HandleError(w, http.StatusInternalServerError, "Failed to add user")
 		return
@@ -164,12 +154,7 @@ func (uh *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} response.Response "Logout successful"
 // @Router /api/v1/auth/logout [post]
 func (uh *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	requestID, ok := r.Context().Value(requestIDContextKey).(string)
-	if !ok {
-		requestID = "none"
-	}
-
-	err := uh.Sessions.DestroyCurrent(w, r, requestID)
+	err := uh.Sessions.DestroyCurrent(w, r, r.Context())
 	if err != nil {
 		response.HandleError(w, http.StatusUnauthorized, "Not Authorized")
 		return
@@ -187,12 +172,7 @@ func (uh *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
 // @Failure 401 {object} response.Response "Not Authorized"
 // @Router /api/v1/verify-auth [get]
 func (uh *UserHandler) VerifyAuth(w http.ResponseWriter, r *http.Request) {
-	requestID, ok := r.Context().Value(requestIDContextKey).(string)
-	if !ok {
-		requestID = "none"
-	}
-
-	sessionUser := uh.Sessions.GetSession(r, requestID)
+	sessionUser := uh.Sessions.GetSession(r, r.Context())
 	w.Header().Set("X-Csrf-Token", sessionUser.CsrfToken)
 
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "OK"})
@@ -209,12 +189,8 @@ func (uh *UserHandler) VerifyAuth(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} response.ErrorResponse "Internal Server Error"
 // @Router /api/v1/user/get [get]
 func (uh *UserHandler) GetUserBySession(w http.ResponseWriter, r *http.Request) {
-	requestID, ok := r.Context().Value(requestIDContextKey).(string)
-	if !ok {
-		requestID = "none"
-	}
-	sessionUser := uh.Sessions.GetSession(r, requestID)
-	userData, err := uh.UserUseCase.GetUserByID(sessionUser.UserID, requestID)
+	sessionUser := uh.Sessions.GetSession(r, r.Context())
+	userData, err := uh.UserUseCase.GetUserByID(sessionUser.UserID, r.Context())
 	if err != nil {
 		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -260,18 +236,13 @@ func (uh *UserHandler) UpdateUserData(w http.ResponseWriter, r *http.Request) {
 	updatedUser.PhoneNumber = sanitizeString(updatedUser.PhoneNumber)
 	updatedUser.Description = sanitizeString(updatedUser.Description)
 
-	requestID, ok := r.Context().Value(requestIDContextKey).(string)
-	if !ok {
-		requestID = "none"
-	}
-
-	sessionUser := uh.Sessions.GetSession(r, requestID)
+	sessionUser := uh.Sessions.GetSession(r, r.Context())
 	if sessionUser.UserID != updatedUser.ID {
 		response.HandleError(w, http.StatusUnauthorized, "Not authorized")
 		return
 	}
 
-	userUpdated, err := uh.UserUseCase.UpdateUser(converters.UserConvertApiInCore(updatedUser), requestID)
+	userUpdated, err := uh.UserUseCase.UpdateUser(converters.UserConvertApiInCore(updatedUser), r.Context())
 	if err != nil {
 		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -301,18 +272,13 @@ func (uh *UserHandler) DeleteUserData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	requestID, ok := r.Context().Value(requestIDContextKey).(string)
-	if !ok {
-		requestID = "none"
-	}
-
-	sessionUser := uh.Sessions.GetSession(r, requestID)
+	sessionUser := uh.Sessions.GetSession(r, r.Context())
 	if sessionUser.UserID != uint32(userID) {
 		response.HandleError(w, http.StatusUnauthorized, "Not authorized")
 		return
 	}
 
-	deleted, err := uh.UserUseCase.DeleteUserByID(uint32(userID), requestID)
+	deleted, err := uh.UserUseCase.DeleteUserByID(uint32(userID), r.Context())
 	if err != nil {
 		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 		return
@@ -372,20 +338,15 @@ func (uh *UserHandler) UploadUserAvatar(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	requestID, ok := r.Context().Value(requestIDContextKey).(string)
-	if !ok {
-		requestID = "none"
-	}
-
-	sessionUser := uh.Sessions.GetSession(r, requestID)
-	userData, err := uh.UserUseCase.GetUserByID(sessionUser.UserID, requestID)
+	sessionUser := uh.Sessions.GetSession(r, r.Context())
+	userData, err := uh.UserUseCase.GetUserByID(sessionUser.UserID, r.Context())
 	if err != nil {
 		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
 
 	userData.AvatarID = "http://mailhub.su:8080/media/" + uniqueFileName
-	userUpdated, err := uh.UserUseCase.UpdateUser(userData, requestID)
+	userUpdated, err := uh.UserUseCase.UpdateUser(userData, r.Context())
 	if err != nil {
 		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 		return

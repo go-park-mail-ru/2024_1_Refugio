@@ -72,6 +72,22 @@ func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
 }
 
 func InitializationBdLog(f *os.File) *LogrusLogger {
+	//log := new(LogrusLogger)
+	/*log := &logrus.Logger{
+		Out:   io.MultiWriter(f, os.Stdout),
+		Level: logrus.InfoLevel,
+		Formatter: &Formatter{
+			LogFormat:     "[%lvl%]: %time% - %msg% requestID=%requestID% work_time=%work_time% mode=%mode% query=%query% arguments=%args%\n",
+			ForceColors:   true,
+			ColorInfo:     color.New(color.FgBlue),
+			ColorWarning:  color.New(color.FgYellow),
+			ColorError:    color.New(color.FgRed),
+			ColorCritical: color.New(color.BgRed, color.FgWhite),
+			ColorDefault:  color.New(color.FgWhite),
+		},
+	}
+
+	return log*/
 	log := new(LogrusLogger)
 	log.LogrusLogger = &logrus.Logger{
 		Out:   io.MultiWriter(f, os.Stdout),
@@ -122,6 +138,27 @@ func (log *LogrusLogger) DbLog(query, requestID string, start time.Time, err *er
 	}
 	resArgs += "}"
 	en := log.LogrusLogger.WithFields(logrus.Fields{
+		"work_time": time.Since(start),
+		"requestID": requestID,
+		"mode":      "[db_log]",
+		"query":     query,
+		"args":      resArgs,
+	})
+
+	if *err != nil {
+		en.Error("StatusServerError")
+	} else {
+		en.Info("StatusOK")
+	}
+}
+
+func DbLogTest(query, requestID string, start time.Time, err *error, args []interface{}) {
+	resArgs := "{ "
+	for _, a := range args {
+		resArgs += fmt.Sprintf("%#v, ", a)
+	}
+	resArgs += "}"
+	en := logrus.WithFields(logrus.Fields{
 		"work_time": time.Since(start),
 		"requestID": requestID,
 		"mode":      "[db_log]",

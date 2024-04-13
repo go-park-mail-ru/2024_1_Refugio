@@ -1,10 +1,10 @@
 package repository
 
 import (
+	"context"
 	"fmt"
 	"mail/internal/pkg/logger"
 	"math/rand"
-	"os"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -20,16 +20,8 @@ type SessionRepository struct {
 	DB *sqlx.DB
 }
 
-// Logger represents the logger used for logging database initialization.
-var sessionLogger = logger.InitializationEmptyLog()
-
 // NewSessionRepository creates a new instance of SessionRepository.
 func NewSessionRepository(db *sqlx.DB) *SessionRepository {
-	f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		fmt.Println("Failed to create logfile in session_repo" + "log.txt")
-	}
-	Logger = logger.InitializationBdLog(f)
 	return &SessionRepository{
 		DB: db,
 	}
@@ -47,7 +39,7 @@ var SessionGenerateRandomID SessionGenerate = func() string {
 }
 
 // CreateSession creates a new session and returns its ID.
-func (repo *SessionRepository) CreateSession(userID uint32, device, requestID string, lifeTime int) (string, error) {
+func (repo *SessionRepository) CreateSession(userID uint32, device string, lifeTime int, ctx context.Context) (string, error) {
 	query := `
 		INSERT INTO session (id, profile_id, device, creation_date, life_time, csrf_token)
 		VALUES ($1, $2, $3, $4, $5, $6)
@@ -61,7 +53,7 @@ func (repo *SessionRepository) CreateSession(userID uint32, device, requestID st
 	start := time.Now()
 
 	_, err := repo.DB.Exec(query, ID, userID, device, creationDate, lifeTime, csrfToken)
-	defer sessionLogger.DbLog(query, requestID, start, &err, args)
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).(string), start, &err, args)
 	if err != nil {
 		return "", fmt.Errorf("failed to create session: %v", err)
 	}
@@ -70,7 +62,7 @@ func (repo *SessionRepository) CreateSession(userID uint32, device, requestID st
 }
 
 // GetSessionByID retrieves a session by its ID.
-func (repo *SessionRepository) GetSessionByID(sessionID, requestID string) (*domain.Session, error) {
+func (repo *SessionRepository) GetSessionByID(sessionID string, ctx context.Context) (*domain.Session, error) {
 	query := `SELECT * FROM session WHERE id = $1`
 
 	args := []interface{}{sessionID}
@@ -78,7 +70,7 @@ func (repo *SessionRepository) GetSessionByID(sessionID, requestID string) (*dom
 
 	var session database.Session
 	err := repo.DB.Get(&session, query, sessionID)
-	defer sessionLogger.DbLog(query, requestID, start, &err, args)
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).(string), start, &err, args)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get session: %v", err)
 	}
@@ -87,7 +79,7 @@ func (repo *SessionRepository) GetSessionByID(sessionID, requestID string) (*dom
 }
 
 // GetLoginBySessionID retrieves the login associated with the given session ID.
-func (repo *SessionRepository) GetLoginBySessionID(sessionID, requestID string) (string, error) {
+func (repo *SessionRepository) GetLoginBySessionID(sessionID string, ctx context.Context) (string, error) {
 	query := `
 		SELECT login FROM profile
 		JOIN session ON session.profile_id = profile.id 
@@ -99,7 +91,7 @@ func (repo *SessionRepository) GetLoginBySessionID(sessionID, requestID string) 
 
 	var login string
 	err := repo.DB.Get(&login, query, sessionID)
-	defer sessionLogger.DbLog(query, requestID, start, &err, args)
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).(string), start, &err, args)
 	if err != nil {
 		return "", fmt.Errorf("failed to get session: %v", err)
 	}
@@ -108,14 +100,14 @@ func (repo *SessionRepository) GetLoginBySessionID(sessionID, requestID string) 
 }
 
 // DeleteSessionByID deletes a session by its ID.
-func (repo *SessionRepository) DeleteSessionByID(sessionID, requestID string) error {
+func (repo *SessionRepository) DeleteSessionByID(sessionID string, ctx context.Context) error {
 	query := "DELETE FROM session WHERE id = $1"
 
 	args := []interface{}{sessionID}
 	start := time.Now()
 
 	_, err := repo.DB.Exec(query, sessionID)
-	defer sessionLogger.DbLog(query, requestID, start, &err, args)
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).(string), start, &err, args)
 	if err != nil {
 		return fmt.Errorf("failed to delete session: %v", err)
 	}
@@ -124,14 +116,14 @@ func (repo *SessionRepository) DeleteSessionByID(sessionID, requestID string) er
 }
 
 // DeleteExpiredSessions removes all expired sessions.
-func (repo *SessionRepository) DeleteExpiredSessions() error {
+func (repo *SessionRepository) DeleteExpiredSessions(ctx context.Context) error {
 	query := "DELETE FROM session WHERE creation_date + life_time * interval '1 second' < now()"
 
 	args := []interface{}{}
 	start := time.Now()
 
 	_, err := repo.DB.Exec(query)
-	defer sessionLogger.DbLog(query, "DeleteExpiredSessionsNULL", start, &err, args)
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).(string), start, &err, args)
 	if err != nil {
 		return fmt.Errorf("failed to delete expired sessions: %v", err)
 	}

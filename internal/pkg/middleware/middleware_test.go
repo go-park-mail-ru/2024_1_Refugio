@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"context"
+	"fmt"
 	"github.com/fatih/color"
 	"github.com/golang/mock/gomock"
 	"github.com/sirupsen/logrus"
@@ -12,6 +14,7 @@ import (
 	"mail/internal/pkg/session"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 	//"time"
@@ -98,14 +101,27 @@ func TestAuthMiddleware(t *testing.T) {
 			LifeTime:     3600,
 			CsrfToken:    "csrf_token",
 		}
-		mockSessionUseCase.EXPECT().
-			GetSession("session_id", "none").
-			Return(expectedSession, nil).
-			Times(1)
+
+		requestID := "testID"
+
+		f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+		if err != nil {
+			fmt.Println("Failed to create logfile" + "log.txt")
+		}
+		defer f.Close()
+
+		c := context.WithValue(context.Background(), "logger", logger.InitializationBdLog(f))
+		ctx := context.WithValue(c, "requestID", requestID)
 
 		req, _ := http.NewRequest("GET", "/api/v1/auth/verify-auth", nil)
+		req.WithContext(ctx)
 		req.Header.Set("X-CSRF-Token", "csrf_token")
 		req.AddCookie(&http.Cookie{Name: "session_id", Value: "session_id"})
+
+		mockSessionUseCase.EXPECT().
+			GetSession("session_id", req.Context()).
+			Return(expectedSession, nil).
+			Times(1)
 
 		recW := httptest.NewRecorder()
 		AuthMiddleware(fakeHandler).ServeHTTP(recW, req)

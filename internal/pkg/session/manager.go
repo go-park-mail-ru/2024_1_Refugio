@@ -1,6 +1,7 @@
 package session
 
 import (
+	"context"
 	"fmt"
 	converters "mail/internal/models/delivery_converters"
 	api "mail/internal/models/delivery_models"
@@ -32,10 +33,10 @@ func NewSessionsManager(sessionUc domain.SessionUseCase) *SessionsManager {
 }
 
 // GetSession retrieves the session from the request and sanitizes it.
-func (sm *SessionsManager) GetSession(r *http.Request, requestID string) *api.Session {
+func (sm *SessionsManager) GetSession(r *http.Request, ctx context.Context) *api.Session {
 	sessionCookie, _ := r.Cookie("session_id")
 
-	sess, _ := sm.sessionUseCase.GetSession(sessionCookie.Value, requestID)
+	sess, _ := sm.sessionUseCase.GetSession(sessionCookie.Value, ctx)
 	if sess == nil {
 		return nil
 	}
@@ -44,7 +45,7 @@ func (sm *SessionsManager) GetSession(r *http.Request, requestID string) *api.Se
 }
 
 // Check checks the validity of the session and CSRF token in the request.
-func (sm *SessionsManager) Check(r *http.Request, requestID string) (*api.Session, error) {
+func (sm *SessionsManager) Check(r *http.Request, ctx context.Context) (*api.Session, error) {
 	csrfToken := r.Header.Get("X-Csrf-Token")
 	if r.URL.Path != "/api/v1/verify-auth" && csrfToken == "" {
 		return nil, fmt.Errorf("CSRF token not found in request headers")
@@ -55,7 +56,7 @@ func (sm *SessionsManager) Check(r *http.Request, requestID string) (*api.Sessio
 		return nil, fmt.Errorf("no session found")
 	}
 
-	sess, ok := sm.sessionUseCase.GetSession(sessionCookie.Value, requestID)
+	sess, ok := sm.sessionUseCase.GetSession(sessionCookie.Value, ctx)
 	if ok != nil {
 		return nil, fmt.Errorf("no session found")
 	}
@@ -67,9 +68,9 @@ func (sm *SessionsManager) Check(r *http.Request, requestID string) (*api.Sessio
 }
 
 // CheckLogin checks if the login associated with the session matches the provided login.
-func (sm *SessionsManager) CheckLogin(login, requestID string, r *http.Request) error {
+func (sm *SessionsManager) CheckLogin(login string, r *http.Request, ctx context.Context) error {
 	sessionCookie, _ := r.Cookie("session_id")
-	LoginBd, err := sm.sessionUseCase.GetLogin(sessionCookie.Value, requestID)
+	LoginBd, err := sm.sessionUseCase.GetLogin(sessionCookie.Value, ctx)
 	if err != nil {
 		return err
 	}
@@ -81,9 +82,9 @@ func (sm *SessionsManager) CheckLogin(login, requestID string, r *http.Request) 
 }
 
 // GetLoginBySession retrieves the login associated with the session from the request.
-func (sm SessionsManager) GetLoginBySession(r *http.Request, requestID string) (string, error) {
+func (sm SessionsManager) GetLoginBySession(r *http.Request, ctx context.Context) (string, error) {
 	sessionCookie, _ := r.Cookie("session_id")
-	Login, err := sm.sessionUseCase.GetLogin(sessionCookie.Value, requestID)
+	Login, err := sm.sessionUseCase.GetLogin(sessionCookie.Value, ctx)
 	if err != nil {
 		return "", err
 	}
@@ -92,14 +93,14 @@ func (sm SessionsManager) GetLoginBySession(r *http.Request, requestID string) (
 }
 
 // Create creates a new session for the user and sets the session ID cookie in the response.
-func (sm *SessionsManager) Create(w http.ResponseWriter, userID uint32, requestID string) (*api.Session, error) {
-	sessionID, err := sm.sessionUseCase.CreateNewSession(userID, "", requestID, 60*60*24)
+func (sm *SessionsManager) Create(w http.ResponseWriter, userID uint32, ctx context.Context) (*api.Session, error) {
+	sessionID, err := sm.sessionUseCase.CreateNewSession(userID, "", 60*60*24, ctx)
 
 	if err != nil {
 		return nil, fmt.Errorf("session already exist")
 	}
 
-	sess, _ := sm.sessionUseCase.GetSession(sessionID, requestID)
+	sess, _ := sm.sessionUseCase.GetSession(sessionID, ctx)
 
 	w.Header().Set("X-Csrf-Token", sess.CsrfToken)
 
@@ -117,13 +118,13 @@ func (sm *SessionsManager) Create(w http.ResponseWriter, userID uint32, requestI
 }
 
 // DestroyCurrent destroys the current session by deleting the session ID cookie from the response.
-func (sm *SessionsManager) DestroyCurrent(w http.ResponseWriter, r *http.Request, requestID string) error {
+func (sm *SessionsManager) DestroyCurrent(w http.ResponseWriter, r *http.Request, ctx context.Context) error {
 	sessionCookie, err := r.Cookie("session_id")
 	if err != nil {
 		return err
 	}
 
-	ok := sm.sessionUseCase.DeleteSession(sessionCookie.Value, requestID)
+	ok := sm.sessionUseCase.DeleteSession(sessionCookie.Value, ctx)
 	if ok != nil {
 		return fmt.Errorf("no session found")
 	}

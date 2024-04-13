@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"github.com/DATA-DOG/go-sqlmock"
@@ -8,9 +9,25 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	domain "mail/internal/models/domain_models"
+	"mail/internal/pkg/logger"
+	"os"
 	"testing"
 	"time"
 )
+
+func GetCTX() context.Context {
+	requestID := "testID"
+
+	f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		fmt.Println("Failed to create logfile" + "log.txt")
+	}
+	defer f.Close()
+
+	c := context.WithValue(context.Background(), "logger", logger.InitializationBdLog(f))
+	ctx := context.WithValue(c, "requestID", requestID)
+	return ctx
+}
 
 func TestNewEmailRepository(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -45,7 +62,7 @@ func TestAddEmail(t *testing.T) {
 		DB: sqlx.NewDb(mockDB, "sqlmock"),
 	}
 
-	requestID := "test_request"
+	ctx := GetCTX()
 
 	t.Run("EmailAddedSuccessfully", func(t *testing.T) {
 		email := &domain.Email{
@@ -71,7 +88,7 @@ func TestAddEmail(t *testing.T) {
 			WithArgs(email.Topic, email.Text, sqlmock.AnyArg(), email.PhotoID, email.SenderEmail, email.RecipientEmail, email.ReadStatus, email.Deleted, email.DraftStatus, nil, email.Flag).
 			WillReturnRows(rows)
 
-		id, emailRes, err := repo.Add(email, requestID)
+		id, emailRes, err := repo.Add(email, ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, int64(1), id)
 		assert.Equal(t, email, emailRes)
@@ -98,7 +115,7 @@ func TestAddEmail(t *testing.T) {
 		`).WithArgs(email.Topic, email.Text, sqlmock.AnyArg(), email.PhotoID, email.SenderEmail, email.RecipientEmail, email.ReadStatus, email.Deleted, email.DraftStatus, email.Flag).
 			WillReturnError(fmt.Errorf("failed to insert email"))
 
-		id, emailRes, err := repo.Add(email, requestID)
+		id, emailRes, err := repo.Add(email, ctx)
 		assert.Error(t, err)
 		assert.Equal(t, int64(0), id)
 		assert.Equal(t, &domain.Email{}, emailRes)
@@ -119,7 +136,7 @@ func TestAddProfileEmail(t *testing.T) {
 		DB: sqlx.NewDb(mockDB, "sqlmock"),
 	}
 
-	requestID := "test_request"
+	ctx := GetCTX()
 
 	t.Run("ddProfileEmailSuccessfully", func(t *testing.T) {
 		emailID := int64(1)
@@ -133,7 +150,7 @@ func TestAddProfileEmail(t *testing.T) {
 			WithArgs(sender, recipient, emailID).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		err := repo.AddProfileEmail(emailID, sender, recipient, requestID)
+		err := repo.AddProfileEmail(emailID, sender, recipient, ctx)
 		assert.NoError(t, err)
 	})
 
@@ -149,7 +166,7 @@ func TestAddProfileEmail(t *testing.T) {
 			WithArgs(recipient, emailID).
 			WillReturnResult(sqlmock.NewResult(0, 0))
 
-		err := repo.AddProfileEmail(emailID, sender, recipient, requestID)
+		err := repo.AddProfileEmail(emailID, sender, recipient, ctx)
 		assert.Error(t, err)
 	})
 }
@@ -168,8 +185,8 @@ func TestFindEmail(t *testing.T) {
 		DB: sqlx.NewDb(mockDB, "sqlmock"),
 	}
 
-	requestID := "test_request"
 	login := "test@nailhub.su"
+	ctx := GetCTX()
 
 	t.Run("FindEmailSuccessfully", func(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"login"}).AddRow(login)
@@ -177,7 +194,7 @@ func TestFindEmail(t *testing.T) {
 			WithArgs(login).
 			WillReturnRows(rows)
 
-		err := repo.FindEmail(login, requestID)
+		err := repo.FindEmail(login, ctx)
 		assert.NoError(t, err)
 	})
 
@@ -186,7 +203,7 @@ func TestFindEmail(t *testing.T) {
 			WithArgs(login).
 			WillReturnError(fmt.Errorf("database error"))
 
-		err := repo.FindEmail(login, requestID)
+		err := repo.FindEmail(login, ctx)
 		assert.Error(t, err)
 	})
 }
@@ -205,8 +222,8 @@ func TestGetAllIncoming(t *testing.T) {
 		DB: sqlx.NewDb(mockDB, "sqlmock"),
 	}
 
-	requestID := "test_request"
 	login := "test@mailhub.su"
+	ctx := GetCTX()
 
 	t.Run("NoOffsetAndLimit", func(t *testing.T) {
 		expectedEmails := []*domain.Email{
@@ -226,7 +243,7 @@ func TestGetAllIncoming(t *testing.T) {
 			ORDER BY date_of_dispatch ASC
 		`).WillReturnRows(rows)
 
-		emails, err := repo.GetAllIncoming(login, requestID, -1, -1)
+		emails, err := repo.GetAllIncoming(login, -1, -1, ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, expectedEmails, emails)
 	})
@@ -248,7 +265,7 @@ func TestGetAllIncoming(t *testing.T) {
 			OFFSET \$2 LIMIT \$3
 		`).WillReturnRows(rows)
 
-		emails, err := repo.GetAllIncoming(login, requestID, 1, 2)
+		emails, err := repo.GetAllIncoming(login, 1, 2, ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, expectedEmails, emails)
 	})
@@ -260,7 +277,7 @@ func TestGetAllIncoming(t *testing.T) {
 			ORDER BY date_of_dispatch ASC
 		`).WillReturnError(sql.ErrNoRows)
 
-		emails, err := repo.GetAllIncoming(login, requestID, -1, -1)
+		emails, err := repo.GetAllIncoming(login, -1, -1, ctx)
 		assert.Error(t, err)
 		assert.Nil(t, emails)
 	})
@@ -280,8 +297,8 @@ func TestGetAllSent(t *testing.T) {
 		DB: sqlx.NewDb(mockDB, "sqlmock"),
 	}
 
-	requestID := "test_request"
 	login := "test@mailhub.su"
+	ctx := GetCTX()
 
 	t.Run("NoOffsetAndLimit", func(t *testing.T) {
 		expectedEmails := []*domain.Email{
@@ -301,7 +318,7 @@ func TestGetAllSent(t *testing.T) {
 			ORDER BY date_of_dispatch ASC
 		`).WillReturnRows(rows)
 
-		emails, err := repo.GetAllSent(login, requestID, -1, -1)
+		emails, err := repo.GetAllSent(login, -1, -1, ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, expectedEmails, emails)
 	})
@@ -323,7 +340,7 @@ func TestGetAllSent(t *testing.T) {
 			OFFSET \$2 LIMIT \$3
 		`).WillReturnRows(rows)
 
-		emails, err := repo.GetAllSent(login, requestID, 1, 2)
+		emails, err := repo.GetAllSent(login, 1, 2, ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, expectedEmails, emails)
 	})
@@ -335,7 +352,7 @@ func TestGetAllSent(t *testing.T) {
 			ORDER BY date_of_dispatch ASC
 		`).WillReturnError(sql.ErrNoRows)
 
-		emails, err := repo.GetAllSent(login, requestID, -1, -1)
+		emails, err := repo.GetAllSent(login, -1, -1, ctx)
 		assert.Error(t, err)
 		assert.Nil(t, emails)
 	})
@@ -356,14 +373,14 @@ func TestGetByID(t *testing.T) {
 	}
 
 	login := "test@mailhub.su"
-	requestID := "test_request"
+	ctx := GetCTX()
 
 	t.Run("EmailExists", func(t *testing.T) {
 		expectedEmail := &domain.Email{ID: 1, Topic: "Topic 1", Text: "Text 1", SenderEmail: login}
 		rows := sqlmock.NewRows([]string{"id", "topic", "text", "sender_email"}).AddRow(expectedEmail.ID, expectedEmail.Topic, expectedEmail.Text, login)
 		mock.ExpectQuery(`SELECT \* FROM email WHERE id = \$1 AND \(recipient_email = \$2 OR sender_email = \$2\)`).WithArgs(1, login).WillReturnRows(rows)
 
-		email, err := repo.GetByID(expectedEmail.ID, login, requestID)
+		email, err := repo.GetByID(expectedEmail.ID, login, ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, expectedEmail, email)
 	})
@@ -371,7 +388,7 @@ func TestGetByID(t *testing.T) {
 	t.Run("EmailNotFound", func(t *testing.T) {
 		mock.ExpectQuery(`SELECT \* FROM email WHERE id = \$1 AND \(recipient_email = \$2 OR sender_email = \$2\)`).WithArgs(1, login).WillReturnError(sql.ErrNoRows)
 
-		email, err := repo.GetByID(1, login, requestID)
+		email, err := repo.GetByID(1, login, ctx)
 		assert.Nil(t, email)
 		assert.Error(t, err)
 		expectedErrorMessage := fmt.Sprintf("email with id %d not found", 1)
@@ -394,7 +411,7 @@ func TestUpdateEmail(t *testing.T) {
 		DB: sqlx.NewDb(mockDB, "sqlmock"),
 	}
 
-	requestID := "test_request"
+	ctx := GetCTX()
 
 	t.Run("EmailUpdatedSuccessfully", func(t *testing.T) {
 		newEmail := &domain.Email{
@@ -428,7 +445,7 @@ func TestUpdateEmail(t *testing.T) {
 			WithArgs(newEmail.Topic, newEmail.Text, newEmail.PhotoID, newEmail.ReadStatus, newEmail.Deleted, newEmail.DraftStatus, sqlmock.AnyArg(), newEmail.Flag, newEmail.ID, newEmail.SenderEmail).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
-		updated, err := repo.Update(newEmail, requestID)
+		updated, err := repo.Update(newEmail, ctx)
 
 		assert.NoError(t, err)
 		assert.True(t, updated)
@@ -466,7 +483,7 @@ func TestUpdateEmail(t *testing.T) {
 			WithArgs(newEmail.Topic, newEmail.Text, newEmail.PhotoID, newEmail.ReadStatus, newEmail.Deleted, newEmail.DraftStatus, sqlmock.AnyArg(), newEmail.Flag, newEmail.ID, newEmail.SenderEmail).
 			WillReturnResult(sqlmock.NewResult(0, 0))
 
-		updated, err := repo.Update(newEmail, requestID)
+		updated, err := repo.Update(newEmail, ctx)
 
 		assert.Error(t, err)
 		assert.False(t, updated)
@@ -504,7 +521,7 @@ func TestUpdateEmail(t *testing.T) {
 			WithArgs(newEmail.Topic, newEmail.Text, newEmail.PhotoID, newEmail.ReadStatus, newEmail.Deleted, newEmail.DraftStatus, sqlmock.AnyArg(), newEmail.Flag, newEmail.ID, newEmail.SenderEmail).
 			WillReturnError(fmt.Errorf("database error"))
 
-		updated, err := repo.Update(newEmail, requestID)
+		updated, err := repo.Update(newEmail, ctx)
 
 		assert.Error(t, err)
 		assert.False(t, updated)
@@ -527,14 +544,14 @@ func TestDeleteEmail(t *testing.T) {
 	}
 
 	login := "test@mailhub.su"
-	requestID := "test_request"
+	ctx := GetCTX()
 
 	t.Run("EmailDeletedSuccessfully", func(t *testing.T) {
 		emailID := uint64(1)
 
 		mock.ExpectExec(`DELETE FROM email WHERE id = \$1 AND \(recipient_email = \$2 OR sender_email = \$2\)`).WithArgs(emailID, login).WillReturnResult(sqlmock.NewResult(0, 1))
 
-		deleted, err := repo.Delete(emailID, login, requestID)
+		deleted, err := repo.Delete(emailID, login, ctx)
 
 		assert.NoError(t, err)
 		assert.True(t, deleted)
@@ -545,7 +562,7 @@ func TestDeleteEmail(t *testing.T) {
 
 		mock.ExpectExec(`DELETE FROM email WHERE id = \$1 AND \(recipient_email = \$2 OR sender_email = \&2\)`).WithArgs(emailID, login).WillReturnResult(sqlmock.NewResult(0, 0))
 
-		deleted, err := repo.Delete(emailID, login, requestID)
+		deleted, err := repo.Delete(emailID, login, ctx)
 
 		assert.Error(t, err)
 		assert.False(t, deleted)
@@ -556,7 +573,7 @@ func TestDeleteEmail(t *testing.T) {
 
 		mock.ExpectExec(`DELETE FROM email WHERE id = \$1 AND \(recipient_email = \$2 OR sender_email = \&2\)`).WithArgs(emailID, login).WillReturnError(fmt.Errorf("database error"))
 
-		deleted, err := repo.Delete(emailID, login, requestID)
+		deleted, err := repo.Delete(emailID, login, ctx)
 
 		assert.Error(t, err)
 		assert.False(t, deleted)

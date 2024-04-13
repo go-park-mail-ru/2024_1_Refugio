@@ -2,15 +2,19 @@ package repository
 
 import (
 	"database/sql"
+	"regexp"
+
+	//"database/sql"
 	"fmt"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/golang/mock/gomock"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	domain "mail/internal/models/domain_models"
-	"regexp"
-	"testing"
 	"time"
+
+	//"regexp"
+	"testing"
 )
 
 func TestCreateSession(t *testing.T) {
@@ -35,6 +39,8 @@ func TestCreateSession(t *testing.T) {
 		DB: sqlx.NewDb(mockDB, "sqlmock"),
 	}
 
+	ctx := GetCTX()
+
 	t.Run("Success", func(t *testing.T) {
 		ID := "10101010"
 		userID := uint32(100)
@@ -44,7 +50,7 @@ func TestCreateSession(t *testing.T) {
 
 		mock.ExpectExec(`INSERT INTO session`).WithArgs(ID, userID, device, sqlmock.AnyArg(), lifeTime, csrfToken).WillReturnResult(sqlmock.NewResult(1, 1))
 
-		sessionID, err := repo.CreateSession(userID, device, "requestID", lifeTime)
+		sessionID, err := repo.CreateSession(userID, device, lifeTime, ctx)
 
 		assert.NoError(t, err)
 		assert.Equal(t, ID, sessionID)
@@ -59,7 +65,7 @@ func TestCreateSession(t *testing.T) {
 
 		mock.ExpectExec(`INSERT INTO session`).WithArgs(ID, userID, device, sqlmock.AnyArg(), lifeTime, csrfToken).WillReturnError(fmt.Errorf("failed to insert"))
 
-		sessionID, err := repo.CreateSession(userID, device, "requestID", lifeTime)
+		sessionID, err := repo.CreateSession(userID, device, lifeTime, ctx)
 
 		assert.Error(t, err)
 		assert.Zero(t, sessionID)
@@ -84,6 +90,8 @@ func TestGetSessionByID(t *testing.T) {
 		DB: sqlx.NewDb(mockDB, "sqlmock"),
 	}
 
+	ctx := GetCTX()
+
 	t.Run("Success", func(t *testing.T) {
 		sessionID := "10101010"
 		expectedSession := &domain.Session{
@@ -101,7 +109,7 @@ func TestGetSessionByID(t *testing.T) {
 		query := `SELECT \* FROM session WHERE id = \$1`
 		mock.ExpectQuery(query).WithArgs(sessionID).WillReturnRows(rows)
 
-		session, err := repo.GetSessionByID(sessionID, "requestID")
+		session, err := repo.GetSessionByID(sessionID, ctx)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, session)
@@ -114,7 +122,7 @@ func TestGetSessionByID(t *testing.T) {
 		query := `SELECT \* FROM session WHERE id = \$1`
 		mock.ExpectQuery(query).WithArgs(sessionID).WillReturnError(sql.ErrNoRows)
 
-		session, err := repo.GetSessionByID(sessionID, "requestID")
+		session, err := repo.GetSessionByID(sessionID, ctx)
 
 		assert.Error(t, err)
 		assert.Nil(t, session)
@@ -139,13 +147,15 @@ func TestDeleteSessionByID(t *testing.T) {
 		DB: sqlx.NewDb(mockDB, "sqlmock"),
 	}
 
+	ctx := GetCTX()
+
 	t.Run("Success", func(t *testing.T) {
 		sessionID := "10101010"
 
 		query := `DELETE FROM session WHERE id = \$1`
 		mock.ExpectExec(query).WithArgs(sessionID).WillReturnResult(sqlmock.NewResult(0, 1))
 
-		err := repo.DeleteSessionByID(sessionID, "requestID")
+		err := repo.DeleteSessionByID(sessionID, ctx)
 
 		assert.NoError(t, err)
 	})
@@ -156,7 +166,7 @@ func TestDeleteSessionByID(t *testing.T) {
 		query := `DELETE FROM session WHERE id = \$1`
 		mock.ExpectExec(query).WithArgs(sessionID).WillReturnError(fmt.Errorf("failed to delete session"))
 
-		err := repo.DeleteSessionByID(sessionID, "requestID")
+		err := repo.DeleteSessionByID(sessionID, ctx)
 
 		assert.Error(t, err)
 	})
@@ -180,11 +190,13 @@ func TestDeleteExpiredSessions(t *testing.T) {
 		DB: sqlx.NewDb(mockDB, "sqlmock"),
 	}
 
+	ctx := GetCTX()
+
 	t.Run("Success", func(t *testing.T) {
 		queryPattern := regexp.QuoteMeta(`DELETE FROM session WHERE creation_date + life_time * interval '1 second' < now()`)
 		mock.ExpectExec(queryPattern).WillReturnResult(sqlmock.NewResult(0, 3)) // Assuming 3 expired sessions were deleted
 
-		err := repo.DeleteExpiredSessions()
+		err := repo.DeleteExpiredSessions(ctx)
 
 		assert.NoError(t, err)
 	})
@@ -193,7 +205,7 @@ func TestDeleteExpiredSessions(t *testing.T) {
 		queryPattern := regexp.QuoteMeta(`DELETE FROM session WHERE creation_date + life_time * interval '1 second' < now()`)
 		mock.ExpectExec(queryPattern).WillReturnError(fmt.Errorf("failed to delete expired sessions"))
 
-		err := repo.DeleteExpiredSessions()
+		err := repo.DeleteExpiredSessions(ctx)
 
 		assert.Error(t, err)
 	})
@@ -217,6 +229,8 @@ func TestGetLoginBySessionID(t *testing.T) {
 		DB: sqlx.NewDb(mockDB, "sqlmock"),
 	}
 
+	ctx := GetCTX()
+
 	t.Run("Success", func(t *testing.T) {
 		sessionID := "10101010"
 		expectedLogin := "test_user"
@@ -226,7 +240,7 @@ func TestGetLoginBySessionID(t *testing.T) {
 		query := `SELECT login FROM profile JOIN session ON session.profile_id = profile.id WHERE session.id = \$1`
 		mock.ExpectQuery(query).WithArgs(sessionID).WillReturnRows(rows)
 
-		login, err := repo.GetLoginBySessionID(sessionID, "requestID")
+		login, err := repo.GetLoginBySessionID(sessionID, ctx)
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedLogin, login)
@@ -239,7 +253,7 @@ func TestGetLoginBySessionID(t *testing.T) {
 		query := `SELECT login FROM profile JOIN session ON session.profile_id = profile.id WHERE session.id = \$1`
 		mock.ExpectQuery(query).WithArgs(sessionID).WillReturnError(expectedError)
 
-		login, err := repo.GetLoginBySessionID(sessionID, "requestID")
+		login, err := repo.GetLoginBySessionID(sessionID, ctx)
 
 		assert.Error(t, err)
 		assert.Empty(t, login)
@@ -253,7 +267,7 @@ func TestGetLoginBySessionID(t *testing.T) {
 		query := `SELECT login FROM profile JOIN session ON session.profile_id = profile.id WHERE session.id = \$1`
 		mock.ExpectQuery(query).WithArgs(sessionID).WillReturnRows(rows)
 
-		login, err := repo.GetLoginBySessionID(sessionID, "requestID")
+		login, err := repo.GetLoginBySessionID(sessionID, ctx)
 
 		assert.Error(t, err)
 		assert.Empty(t, login)
@@ -266,7 +280,7 @@ func TestGetLoginBySessionID(t *testing.T) {
 		query := `SELECT login FROM profile JOIN session ON session.profile_id = profile.id WHERE session.id = \$1`
 		mock.ExpectQuery(query).WithArgs(sessionID).WillReturnError(expectedError)
 
-		login, err := repo.GetLoginBySessionID(sessionID, "requestID")
+		login, err := repo.GetLoginBySessionID(sessionID, ctx)
 
 		assert.Error(t, err)
 		assert.Empty(t, login)

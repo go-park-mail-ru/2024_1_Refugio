@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -9,26 +10,25 @@ import (
 	converters "mail/internal/models/repository_converters"
 	database "mail/internal/models/repository_models"
 	"mail/internal/pkg/logger"
-	"os"
 	"time"
 )
+
+var requestIDContextKey interface{} = "requestID"
 
 type EmailRepository struct {
 	DB *sqlx.DB
 }
 
-var Logger = logger.InitializationEmptyLog()
-
 func NewEmailRepository(db *sqlx.DB) *EmailRepository {
-	f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	/*f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		fmt.Println("Failed to create logfile in email_repo" + "log.txt")
 	}
-	Logger = logger.InitializationBdLog(f)
+	Logger = logger.InitializationBdLog(f)*/
 	return &EmailRepository{DB: db}
 }
 
-func (r *EmailRepository) Add(emailModelCore *domain.Email, requestID string) (int64, *domain.Email, error) {
+func (r *EmailRepository) Add(emailModelCore *domain.Email, ctx context.Context) (int64, *domain.Email, error) {
 	query := `
 		INSERT INTO email (topic, text, date_of_dispatch, photoid, sender_email, recipient_email, read_status, deleted_status, draft_status, reply_to_email_id, flag) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
@@ -40,7 +40,7 @@ func (r *EmailRepository) Add(emailModelCore *domain.Email, requestID string) (i
 	var id int64
 	start := time.Now()
 	err := r.DB.QueryRow(query, emailModelDb.Topic, emailModelDb.Text, time.Now().Format(format), emailModelDb.PhotoID, emailModelDb.SenderEmail, emailModelDb.RecipientEmail, emailModelDb.ReadStatus, emailModelDb.Deleted, emailModelDb.DraftStatus, emailModelDb.ReplyToEmailID, emailModelDb.Flag).Scan(&id)
-	defer Logger.DbLog(query, requestID, start, &err, args)
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).(string), start, &err, args)
 
 	if err != nil {
 		return 0, &domain.Email{}, fmt.Errorf("Email with id %d fail", id)
@@ -49,7 +49,7 @@ func (r *EmailRepository) Add(emailModelCore *domain.Email, requestID string) (i
 	return id, emailModelCore, nil
 }
 
-func (r *EmailRepository) AddProfileEmail(email_id int64, sender, recipient, requestID string) error {
+func (r *EmailRepository) AddProfileEmail(email_id int64, sender, recipient string, ctx context.Context) error {
 	query := `
 		INSERT INTO profile_email (profile_id, email_id)
 		VALUES ((SELECT id FROM profile WHERE login=$1), $3), ((SELECT id FROM profile WHERE login=$2), $3)
@@ -57,7 +57,7 @@ func (r *EmailRepository) AddProfileEmail(email_id int64, sender, recipient, req
 	args := []interface{}{sender, recipient, email_id}
 	start := time.Now()
 	_, err := r.DB.Exec(query, sender, recipient, email_id)
-	defer Logger.DbLog(query, requestID, start, &err, args)
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).(string), start, &err, args)
 
 	if err != nil {
 		return fmt.Errorf("Profile_email with profile_id=%d and fail", email_id)
@@ -67,14 +67,14 @@ func (r *EmailRepository) AddProfileEmail(email_id int64, sender, recipient, req
 
 }
 
-func (r *EmailRepository) FindEmail(login, requestID string) error {
+func (r *EmailRepository) FindEmail(login string, ctx context.Context) error {
 	query := "SELECT * FROM profile WHERE login = $1"
 	args := []interface{}{login}
 	var userModelDb database.User
 	start := time.Now()
 
 	err := r.DB.Get(&userModelDb, query, login)
-	defer Logger.DbLog(query, requestID, start, &err, args)
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).(string), start, &err, args)
 
 	if err != nil {
 		return fmt.Errorf("user with login = %v not found", login)
@@ -83,7 +83,7 @@ func (r *EmailRepository) FindEmail(login, requestID string) error {
 	return nil
 }
 
-func (r *EmailRepository) GetAllIncoming(login, requestID string, offset, limit int) ([]*domain.Email, error) {
+func (r *EmailRepository) GetAllIncoming(login string, offset, limit int, ctx context.Context) ([]*domain.Email, error) {
 	query := `
 		SELECT * FROM email
 		WHERE recipient_email = $1
@@ -102,7 +102,7 @@ func (r *EmailRepository) GetAllIncoming(login, requestID string, offset, limit 
 		args = []interface{}{login}
 		err = r.DB.Select(&emailsModelDb, query, login)
 	}
-	defer Logger.DbLog(query, requestID, start, &err, args)
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).(string), start, &err, args)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -119,7 +119,7 @@ func (r *EmailRepository) GetAllIncoming(login, requestID string, offset, limit 
 	return emailsModelCore, nil
 }
 
-func (r *EmailRepository) GetAllSent(login, requestID string, offset, limit int) ([]*domain.Email, error) {
+func (r *EmailRepository) GetAllSent(login string, offset, limit int, ctx context.Context) ([]*domain.Email, error) {
 	query := `
 		SELECT * FROM email
 		WHERE sender_email = $1
@@ -138,7 +138,7 @@ func (r *EmailRepository) GetAllSent(login, requestID string, offset, limit int)
 		args = []interface{}{login}
 		err = r.DB.Select(&emailsModelDb, query, login)
 	}
-	defer Logger.DbLog(query, requestID, start, &err, args)
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).(string), start, &err, args)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -156,7 +156,7 @@ func (r *EmailRepository) GetAllSent(login, requestID string, offset, limit int)
 	return emailsModelCore, nil
 }
 
-func (r *EmailRepository) GetByID(id uint64, login, requestID string) (*domain.Email, error) {
+func (r *EmailRepository) GetByID(id uint64, login string, ctx context.Context) (*domain.Email, error) {
 	query := `
 		SELECT * FROM email WHERE id = $1 AND (recipient_email = $2 OR sender_email = $2)
 	`
@@ -165,7 +165,7 @@ func (r *EmailRepository) GetByID(id uint64, login, requestID string) (*domain.E
 	var emailModelDb database.Email
 	start := time.Now()
 	err := r.DB.Get(&emailModelDb, query, int(id), login)
-	defer Logger.DbLog(query, requestID, start, &err, args)
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).(string), start, &err, args)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("email with id %d not found", id)
@@ -176,7 +176,7 @@ func (r *EmailRepository) GetByID(id uint64, login, requestID string) (*domain.E
 	return converters.EmailConvertDbInCore(emailModelDb), nil
 }
 
-func (r *EmailRepository) Update(newEmail *domain.Email, requestID string) (bool, error) {
+func (r *EmailRepository) Update(newEmail *domain.Email, ctx context.Context) (bool, error) {
 	newEmailDb := converters.EmailConvertCoreInDb(*newEmail)
 
 	query := `
@@ -197,7 +197,7 @@ func (r *EmailRepository) Update(newEmail *domain.Email, requestID string) (bool
 
 	start := time.Now()
 	result, err := r.DB.Exec(query, newEmailDb.Topic, newEmailDb.Text, newEmailDb.PhotoID, newEmailDb.ReadStatus, newEmailDb.Deleted, newEmailDb.DraftStatus, newEmailDb.ReplyToEmailID, newEmailDb.Flag, newEmailDb.ID, newEmailDb.SenderEmail)
-	defer Logger.DbLog(query, requestID, start, &err, args)
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).(string), start, &err, args)
 	if err != nil {
 		return false, fmt.Errorf("failed to update email: %v", err)
 	}
@@ -215,13 +215,13 @@ func (r *EmailRepository) Update(newEmail *domain.Email, requestID string) (bool
 	return true, nil
 }
 
-func (r *EmailRepository) Delete(id uint64, login, requestID string) (bool, error) {
+func (r *EmailRepository) Delete(id uint64, login string, ctx context.Context) (bool, error) {
 	query := "DELETE FROM email WHERE id = $1 AND (recipient_email = $2 OR sender_email = $2)"
 
 	args := []interface{}{id, login}
 	start := time.Now()
 	result, err := r.DB.Exec(query, id, login)
-	defer Logger.DbLog(query, requestID, start, &err, args)
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).(string), start, &err, args)
 	if err != nil {
 		return false, fmt.Errorf("failed to delete email: %v", err)
 	}

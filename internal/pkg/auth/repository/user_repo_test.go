@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"github.com/DATA-DOG/go-sqlmock"
@@ -8,9 +9,25 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	domain "mail/internal/models/domain_models"
+	"mail/internal/pkg/logger"
+	"os"
 	"testing"
 	"time"
 )
+
+func GetCTX() context.Context {
+	requestID := "testID"
+
+	f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		fmt.Println("Failed to create logfile" + "log.txt")
+	}
+	defer f.Close()
+
+	c := context.WithValue(context.Background(), "logger", logger.InitializationBdLog(f))
+	ctx := context.WithValue(c, "requestID", requestID)
+	return ctx
+}
 
 func TestGetAll(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -26,6 +43,8 @@ func TestGetAll(t *testing.T) {
 		DB: sqlx.NewDb(mockDB, "sqlmock"),
 	}
 
+	ctx := GetCTX()
+
 	t.Run("NoOffsetAndLimit", func(t *testing.T) {
 		expectedUsers := []*domain.User{
 			{ID: 1, FirstName: "User 1"},
@@ -40,7 +59,7 @@ func TestGetAll(t *testing.T) {
 
 		mock.ExpectQuery(`SELECT \* FROM profile`).WillReturnRows(rows)
 
-		users, err := repo.GetAll(-1, -1, "requestID")
+		users, err := repo.GetAll(-1, -1, ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, expectedUsers, users)
 	})
@@ -57,7 +76,7 @@ func TestGetAll(t *testing.T) {
 
 		mock.ExpectQuery(`SELECT \* FROM profile OFFSET \$1 LIMIT \$2`).WithArgs(1, 2).WillReturnRows(rows)
 
-		users, err := repo.GetAll(1, 2, "requestID")
+		users, err := repo.GetAll(1, 2, ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, expectedUsers, users)
 	})
@@ -65,7 +84,7 @@ func TestGetAll(t *testing.T) {
 	t.Run("Error", func(t *testing.T) {
 		mock.ExpectQuery("SELECT * FROM profile").WillReturnError(sql.ErrNoRows)
 
-		users, err := repo.GetAll(-1, -1, "requestID")
+		users, err := repo.GetAll(-1, -1, ctx)
 		assert.Error(t, err)
 		assert.Nil(t, users)
 	})
@@ -85,6 +104,8 @@ func TestGetByID(t *testing.T) {
 		DB: sqlx.NewDb(mockDB, "sqlmock"),
 	}
 
+	ctx := GetCTX()
+
 	t.Run("UserExists", func(t *testing.T) {
 		expectedUser := &domain.User{
 			ID:        1,
@@ -97,7 +118,7 @@ func TestGetByID(t *testing.T) {
 
 		mock.ExpectQuery(`SELECT \* FROM profile WHERE id = \$1`).WithArgs(expectedUser.ID).WillReturnRows(rows)
 
-		user, err := repo.GetByID(expectedUser.ID, "requestID")
+		user, err := repo.GetByID(expectedUser.ID, ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, expectedUser, user)
 	})
@@ -105,7 +126,7 @@ func TestGetByID(t *testing.T) {
 	t.Run("UserNotFound", func(t *testing.T) {
 		mock.ExpectQuery(`SELECT \* FROM profile WHERE id = \$1`).WithArgs(1).WillReturnError(sql.ErrNoRows)
 
-		user, err := repo.GetByID(1, "requestID")
+		user, err := repo.GetByID(1, ctx)
 		assert.Nil(t, user)
 		assert.Error(t, err)
 		expectedErrorMessage := fmt.Sprintf("user with id %d not found", 1)
@@ -143,6 +164,8 @@ func TestAddUser(t *testing.T) {
 		DB: sqlx.NewDb(mockDB, "sqlmock"),
 	}
 
+	ctx := GetCTX()
+
 	t.Run("UserAddedSuccessfully", func(t *testing.T) {
 		user := &domain.User{
 			Login:       "testuser",
@@ -161,7 +184,7 @@ func TestAddUser(t *testing.T) {
 			WithArgs(user.Login, user.Password, user.FirstName, user.Surname, user.Patronymic, user.Gender, user.Birthday, sqlmock.AnyArg(), user.AvatarID, user.PhoneNumber, user.Description).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		createUser, err := repo.Add(user, "requestID")
+		createUser, err := repo.Add(user, ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, user, createUser)
 	})
@@ -184,7 +207,7 @@ func TestAddUser(t *testing.T) {
 			WithArgs(user.Login, user.Password, user.FirstName, user.Surname, user.Patronymic, user.Gender, user.Birthday, sqlmock.AnyArg(), user.AvatarID, user.PhoneNumber, user.Description).
 			WillReturnError(fmt.Errorf("failed to insert user"))
 
-		userRes, err := repo.Add(user, "requestID")
+		userRes, err := repo.Add(user, ctx)
 		assert.Error(t, err)
 		assert.Equal(t, &domain.User{}, userRes)
 	})
@@ -204,6 +227,8 @@ func TestUpdateUser(t *testing.T) {
 		DB: sqlx.NewDb(mockDB, "sqlmock"),
 	}
 
+	ctx := GetCTX()
+
 	t.Run("UserUpdatedSuccessfully", func(t *testing.T) {
 		newUser := &domain.User{
 			ID:          1,
@@ -221,7 +246,7 @@ func TestUpdateUser(t *testing.T) {
 			WithArgs(newUser.FirstName, newUser.Surname, newUser.Patronymic, newUser.Gender, newUser.Birthday, newUser.AvatarID, newUser.PhoneNumber, newUser.Description, newUser.ID).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
-		updated, err := repo.Update(newUser, "requestID")
+		updated, err := repo.Update(newUser, ctx)
 
 		assert.NoError(t, err)
 		assert.True(t, updated)
@@ -244,7 +269,7 @@ func TestUpdateUser(t *testing.T) {
 			WithArgs(newUser.FirstName, newUser.Surname, newUser.Patronymic, newUser.Gender, newUser.Birthday, newUser.AvatarID, newUser.PhoneNumber, newUser.Description, newUser.ID).
 			WillReturnResult(sqlmock.NewResult(0, 0))
 
-		updated, err := repo.Update(newUser, "requestID")
+		updated, err := repo.Update(newUser, ctx)
 
 		assert.Error(t, err)
 		assert.False(t, updated)
@@ -267,7 +292,7 @@ func TestUpdateUser(t *testing.T) {
 			WithArgs(newUser.FirstName, newUser.Surname, newUser.Patronymic, newUser.Gender, newUser.Birthday, newUser.AvatarID, newUser.PhoneNumber, newUser.Description, newUser.ID).
 			WillReturnError(fmt.Errorf("database error"))
 
-		updated, err := repo.Update(newUser, "requestID")
+		updated, err := repo.Update(newUser, ctx)
 
 		assert.Error(t, err)
 		assert.False(t, updated)
@@ -288,12 +313,14 @@ func TestDeleteUser(t *testing.T) {
 		DB: sqlx.NewDb(mockDB, "sqlmock"),
 	}
 
+	ctx := GetCTX()
+
 	t.Run("UserDeletedSuccessfully", func(t *testing.T) {
 		userID := uint32(1)
 
 		mock.ExpectExec(`DELETE FROM profile`).WithArgs(userID).WillReturnResult(sqlmock.NewResult(0, 1))
 
-		deleted, err := repo.Delete(userID, "requestID")
+		deleted, err := repo.Delete(userID, ctx)
 
 		assert.NoError(t, err)
 		assert.True(t, deleted)
@@ -304,7 +331,7 @@ func TestDeleteUser(t *testing.T) {
 
 		mock.ExpectExec(`DELETE FROM profile`).WithArgs(userID).WillReturnResult(sqlmock.NewResult(0, 0))
 
-		deleted, err := repo.Delete(userID, "requestID")
+		deleted, err := repo.Delete(userID, ctx)
 
 		assert.Error(t, err)
 		assert.False(t, deleted)
@@ -315,7 +342,7 @@ func TestDeleteUser(t *testing.T) {
 
 		mock.ExpectExec(`DELETE FROM profile`).WithArgs(userID).WillReturnError(fmt.Errorf("database error"))
 
-		deleted, err := repo.Delete(userID, "requestID")
+		deleted, err := repo.Delete(userID, ctx)
 
 		assert.Error(t, err)
 		assert.False(t, deleted)
@@ -344,11 +371,12 @@ func TestGetUserByLogin(t *testing.T) {
 		DB: sqlx.NewDb(mockDB, "sqlmock"),
 	}
 
-	t.Run("UserFound", func(t *testing.T) {
-		login := "testuser"
-		password := "password"
-		requestID := "requestID"
+	login := "testuser"
+	password := "password"
 
+	ctx := GetCTX()
+
+	t.Run("UserFound", func(t *testing.T) {
 		expectedUser := &domain.User{
 			ID:        1,
 			Login:     login,
@@ -361,20 +389,16 @@ func TestGetUserByLogin(t *testing.T) {
 
 		mock.ExpectQuery(`SELECT \* FROM profile WHERE login = \$1`).WithArgs(login).WillReturnRows(rows)
 
-		user, err := repo.GetUserByLogin(login, password, requestID)
+		user, err := repo.GetUserByLogin(login, password, ctx)
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedUser, user)
 	})
 
 	t.Run("UserNotFound", func(t *testing.T) {
-		login := "testuser"
-		password := "password"
-		requestID := "requestID"
-
 		mock.ExpectQuery(`SELECT \* FROM profile WHERE login = \$1`).WithArgs(login).WillReturnError(sql.ErrNoRows)
 
-		user, err := repo.GetUserByLogin(login, password, requestID)
+		user, err := repo.GetUserByLogin(login, password, ctx)
 
 		assert.Error(t, err)
 		assert.Nil(t, user)
@@ -383,10 +407,6 @@ func TestGetUserByLogin(t *testing.T) {
 	})
 
 	t.Run("InvalidPassword", func(t *testing.T) {
-		login := "testuser"
-		password := "invalid_password"
-		requestID := "requestID"
-
 		mockCheckPassword := func(password, hash string) bool {
 			return false
 		}
@@ -400,7 +420,7 @@ func TestGetUserByLogin(t *testing.T) {
 
 		mock.ExpectQuery(`SELECT \* FROM profile WHERE login = \$1`).WithArgs(login).WillReturnRows(rows)
 
-		user, err := repo.GetUserByLogin(login, password, requestID)
+		user, err := repo.GetUserByLogin(login, password, ctx)
 
 		assert.Error(t, err)
 		assert.Nil(t, user)

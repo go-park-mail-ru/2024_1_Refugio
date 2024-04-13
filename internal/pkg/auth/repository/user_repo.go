@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"encoding/binary"
 	"errors"
@@ -9,7 +10,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"mail/internal/pkg/logger"
 	"math/rand"
-	"os"
 	"time"
 
 	converters "mail/internal/models/repository_converters"
@@ -18,21 +18,15 @@ import (
 	database "mail/internal/models/repository_models"
 )
 
+var requestIDContextKey interface{} = "requestID"
+
 // UserRepository represents a repository for managing user data in the database.
 type UserRepository struct {
 	DB *sqlx.DB
 }
 
-// Logger is an instance of a logger used for logging database operations.
-var Logger = logger.InitializationEmptyLog()
-
 // NewUserRepository creates a new instance of UserRepository with the given database connection.
 func NewUserRepository(db *sqlx.DB) *UserRepository {
-	f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		fmt.Println("Failed to create logfile in user_repo" + "log.txt")
-	}
-	Logger = logger.InitializationBdLog(f)
 	return &UserRepository{DB: db}
 }
 
@@ -78,7 +72,7 @@ var GenerateRandomID RandomIDGenerator = func() uint32 {
 }
 
 // GetAll returns all users from the storage.
-func (r *UserRepository) GetAll(offset, limit int, requestID string) ([]*domain.User, error) {
+func (r *UserRepository) GetAll(offset, limit int, ctx context.Context) ([]*domain.User, error) {
 	query := "SELECT * FROM profile"
 
 	args := []interface{}{}
@@ -92,7 +86,7 @@ func (r *UserRepository) GetAll(offset, limit int, requestID string) ([]*domain.
 	} else {
 		err = r.DB.Select(&userModelsDb, query)
 	}
-	defer Logger.DbLog(query, requestID, start, &err, args)
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).(string), start, &err, args)
 
 	if err != nil {
 		return nil, err
@@ -107,7 +101,7 @@ func (r *UserRepository) GetAll(offset, limit int, requestID string) ([]*domain.
 }
 
 // GetByID returns the user by its unique identifier.
-func (r *UserRepository) GetByID(id uint32, requestID string) (*domain.User, error) {
+func (r *UserRepository) GetByID(id uint32, ctx context.Context) (*domain.User, error) {
 	query := "SELECT * FROM profile WHERE id = $1"
 
 	args := []interface{}{id}
@@ -115,7 +109,7 @@ func (r *UserRepository) GetByID(id uint32, requestID string) (*domain.User, err
 
 	var userModelDb database.User
 	err := r.DB.Get(&userModelDb, query, id)
-	defer Logger.DbLog(query, requestID, start, &err, args)
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).(string), start, &err, args)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -129,7 +123,7 @@ func (r *UserRepository) GetByID(id uint32, requestID string) (*domain.User, err
 }
 
 // GetUserByLogin returns the user by login.
-func (r *UserRepository) GetUserByLogin(login, password, requestID string) (*domain.User, error) {
+func (r *UserRepository) GetUserByLogin(login, password string, ctx context.Context) (*domain.User, error) {
 	query := "SELECT * FROM profile WHERE login = $1"
 
 	args := []interface{}{login}
@@ -137,7 +131,7 @@ func (r *UserRepository) GetUserByLogin(login, password, requestID string) (*dom
 
 	var userModelDb database.User
 	err := r.DB.Get(&userModelDb, query, login)
-	defer Logger.DbLog(query, requestID, start, &err, args)
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).(string), start, &err, args)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -156,14 +150,14 @@ func (r *UserRepository) GetUserByLogin(login, password, requestID string) (*dom
 }
 
 // Add adds a new user to the storage and returns its assigned unique identifier.
-func (r *UserRepository) Add(userModelCore *domain.User, requestID string) (*domain.User, error) {
+func (r *UserRepository) Add(userModelCore *domain.User, ctx context.Context) (*domain.User, error) {
 	query := `
 		INSERT INTO profile (login, password, firstname, surname, patronymic, gender, birthday, registration_date, avatar_id, phone_number, description)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 	`
 
 	userModelDb := converters.UserConvertCoreInDb(*userModelCore)
-	args := []interface{}{userModelDb.Login, userModelDb.Password, userModelDb.FirstName, userModelDb.Surname, userModelDb.Patronymic, userModelDb.Gender, userModelDb.Birthday, time.Now(), userModelDb.AvatarID, userModelDb.PhoneNumber, userModelDb.Description}
+	args := []interface{}{userModelDb.Login, userModelDb.FirstName, userModelDb.Surname, userModelDb.Patronymic, userModelDb.Gender, userModelDb.Birthday, time.Now(), userModelDb.AvatarID, userModelDb.PhoneNumber, userModelDb.Description}
 	start := time.Now()
 
 	password, status := HashPassword(userModelDb.Password)
@@ -173,7 +167,7 @@ func (r *UserRepository) Add(userModelCore *domain.User, requestID string) (*dom
 
 	userModelDb.Password = password
 	_, err := r.DB.Exec(query, userModelDb.Login, userModelDb.Password, userModelDb.FirstName, userModelDb.Surname, userModelDb.Patronymic, userModelDb.Gender, userModelDb.Birthday, time.Now(), userModelDb.AvatarID, userModelDb.PhoneNumber, userModelDb.Description)
-	defer Logger.DbLog(query, requestID, start, &err, args)
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).(string), start, &err, args)
 
 	if err != nil {
 		return &domain.User{}, fmt.Errorf("user with login %s fail", userModelDb.Login)
@@ -183,7 +177,7 @@ func (r *UserRepository) Add(userModelCore *domain.User, requestID string) (*dom
 }
 
 // Update updates the information of a user in the storage based on the provided new user.
-func (r *UserRepository) Update(newUserCore *domain.User, requestID string) (bool, error) {
+func (r *UserRepository) Update(newUserCore *domain.User, ctx context.Context) (bool, error) {
 	newUserDb := converters.UserConvertCoreInDb(*newUserCore)
 
 	query := `
@@ -226,7 +220,7 @@ func (r *UserRepository) Update(newUserCore *domain.User, requestID string) (boo
 		newUserDb.Description,
 		newUserDb.ID,
 	)
-	defer Logger.DbLog(query, requestID, start, &err, args)
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).(string), start, &err, args)
 
 	if err != nil {
 		return false, fmt.Errorf("failed to update user: %v", err)
@@ -246,14 +240,14 @@ func (r *UserRepository) Update(newUserCore *domain.User, requestID string) (boo
 }
 
 // Delete removes the user from the storage by its unique identifier.
-func (r *UserRepository) Delete(id uint32, requestID string) (bool, error) {
+func (r *UserRepository) Delete(id uint32, ctx context.Context) (bool, error) {
 	query := "DELETE FROM profile WHERE id = $1"
 
 	args := []interface{}{id}
 	start := time.Now()
 
 	result, err := r.DB.Exec(query, id)
-	defer Logger.DbLog(query, requestID, start, &err, args)
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).(string), start, &err, args)
 
 	if err != nil {
 		return false, fmt.Errorf("failed to delete user: %v", err)

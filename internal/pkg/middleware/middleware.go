@@ -1,11 +1,14 @@
 package middleware
 
 import (
+	"context"
+	"fmt"
 	"github.com/sirupsen/logrus"
 	response "mail/internal/models/response"
 	"mail/internal/pkg/logger"
 	"mail/internal/pkg/session"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -34,11 +37,7 @@ func (lrw *loggingResponseWriter) WriteHeader(code int) {
 // AuthMiddleware is a middleware to check user authentication using cookies.
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		requestID, ok := r.Context().Value(requestIDContextKey).(string)
-		if !ok {
-			requestID = "none"
-		}
-		_, err := session.GlobalSessionManager.Check(r, requestID)
+		_, err := session.GlobalSessionManager.Check(r, r.Context())
 		if err != nil {
 			response.HandleError(w, http.StatusUnauthorized, "Not Authorized")
 			return
@@ -50,14 +49,25 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 func (log *Logger) AccessLogMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
 		lrw := NewLoggingResponseWriter(w)
-		next.ServeHTTP(lrw, r)
 
 		id, ok := r.Context().Value(requestIDContextKey).(string)
 		if !ok {
 			id = "none"
 		}
+
+		f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+		if err != nil {
+			fmt.Println("Failed to create logfile" + "log.txt")
+		}
+		defer f.Close()
+
+		c := context.WithValue(r.Context(), "logger", logger.InitializationBdLog(f))
+		ctx := context.WithValue(c, "requestID", id)
+		req := r.WithContext(ctx)
+
+		start := time.Now()
+		next.ServeHTTP(lrw, req)
 
 		statusCode := lrw.statusCode
 		en := log.Logger.LogrusLogger.WithFields(logrus.Fields{

@@ -11,6 +11,7 @@ import (
 	"time"
 	_ "time/tzdata"
 
+	"context"
 	"github.com/gorilla/mux"
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jmoiron/sqlx"
@@ -49,19 +50,13 @@ func main() {
 
 	migrateDatabase(db)
 
+	LoggerAcces := initializeLogger()
+
 	sessionsManager := initializeSessionsManager(db)
 	emailHandler := initializeEmailHandler(db, sessionsManager)
 	userHandler := initializeUserHandler(db, sessionsManager)
 
-	f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		fmt.Println("Failed to create logfile" + "log.txt")
-	}
-	defer f.Close()
-
-	Logger := initializeLogger(f)
-
-	router := setupRouter(userHandler, emailHandler, Logger)
+	router := setupRouter(userHandler, emailHandler, LoggerAcces)
 
 	startServer(router)
 }
@@ -135,12 +130,17 @@ func initializeUserHandler(db *sql.DB, sessionsManager *session.SessionsManager)
 	}
 }
 
-func initializeLogger(f *os.File) *middleware.Logger {
-	Logrus := logger.InitializationAccesLog(f)
-	Logger := new(middleware.Logger)
-	Logger.Logger = Logrus
+func initializeLogger() *middleware.Logger {
+	f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		fmt.Println("Failed to create logfile" + "log.txt")
+	}
+	defer f.Close()
+	LogrusAcces := logger.InitializationAccesLog(f)
+	LoggerAcces := new(middleware.Logger)
+	LoggerAcces.Logger = LogrusAcces
 
-	return Logger
+	return LoggerAcces
 }
 
 func setupRouter(userHandler *userHand.UserHandler, emailHandler *emailHand.EmailHandler, logger *middleware.Logger) http.Handler {
@@ -219,7 +219,16 @@ func StartSessionCleaner(sessionCleaner *sessionUc.SessionUseCase, interval time
 		for {
 			select {
 			case <-ticker.C:
-				err := sessionCleaner.CleanupExpiredSessions()
+				f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+				if err != nil {
+					fmt.Println("Failed to create logfile" + "log.txt")
+				}
+				defer f.Close()
+
+				c := context.WithValue(context.Background(), "logger", logger.InitializationBdLog(f))
+				ctx := context.WithValue(c, "requestID", "DeleteExpiredSessionsNULL")
+
+				err = sessionCleaner.CleanupExpiredSessions(ctx)
 				if err != nil {
 					fmt.Printf("Error cleaning expired sessions: %v\n", err)
 				}
