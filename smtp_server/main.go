@@ -14,7 +14,7 @@ import (
 	"regexp"
 )
 
-const sendEmailEndpoint = "http://89.208.223.140:8080/api/v1/auth/sendOther"
+const sendEmailEndpoint = "https://mailhub.su/api/v1/auth/sendOther"
 
 func main() {
 	serverAddr := "0.0.0.0:587"
