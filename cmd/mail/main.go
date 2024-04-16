@@ -206,10 +206,10 @@ func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.
 
 func startServer(router http.Handler) {
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{
+		AllowedOrigins: []string{
 			"http://127.0.0.1:8081", "http://89.208.223.140:8081", "http://mailhub.su:8081", "http://mailhub.su:8080", "http://localhost:8080", "http://localhost:8081", "http://89.208.223.140:8080",
 			"https://127.0.0.1:8081", "https://89.208.223.140:8081", "https://mailhub.su:8081", "https://mailhub.su:8080", "https://localhost:8080", "https://localhost:8081", "https://89.208.223.140:8080",
-			"http://127.0.0.1", "http://89.208.223.140", "http://mailhub.su", "http://mailhub.su", "http://localhost", "http://localhost", "http://89.208.223.140"},
+			"https://127.0.0.1", "https://89.208.223.140", "https://mailhub.su", "https://mailhub.su", "https://localhost", "https://localhost", "https://89.208.223.140"},
 		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodDelete, http.MethodPut, http.MethodOptions},
 		AllowCredentials: true,
 		AllowedHeaders:   []string{"X-Csrf-Token", "Content-Type"},
