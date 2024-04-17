@@ -249,8 +249,7 @@ func (uh *UserHandler) UploadUserAvatar(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	userData.AvatarID = "http://mailhub.su:8080/media/" + uniqueFileName
-	// userData.AvatarID = "https://mailhub.su/media/" + uniqueFileName
+	userData.AvatarID = "https://mailhub.su/media/" + uniqueFileName
 	userUpdated, err := uh.UserUseCase.UpdateUser(userData, requestID)
 	if err != nil {
 		delivery.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
