@@ -19,18 +19,18 @@ const sendEmailEndpoint = "https://mailhub.su/api/v1/auth/sendOther"
 func main() {
 	serverAddr := "0.0.0.0:587"
 
-	/*err := ListenAndServe(serverAddr, mailHandler, authHandler)
-	if err != nil {
-		log.Fatal("Error starting SMTP server:", err)
-	}*/
-
-	err := smtpd.ListenAndServe(serverAddr, mailHandler, "MailHubSMTP", "")
+	err := ListenAndServe(serverAddr, mailHandler, authHandler)
 	if err != nil {
 		log.Fatal("Error starting SMTP server:", err)
 	}
+
+	/*err := smtpd.ListenAndServe(serverAddr, mailHandler, "MailHubSMTP", "")
+	if err != nil {
+		log.Fatal("Error starting SMTP server:", err)
+	}*/
 }
 
-/*func ListenAndServe(addr string, handler smtpd.Handler, authHandler smtpd.AuthHandler) error {
+func ListenAndServe(addr string, handler smtpd.Handler, authHandler smtpd.AuthHandler) error {
 	srv := &smtpd.Server{
 		Addr:         addr,
 		Handler:      handler,
@@ -40,11 +40,18 @@ func main() {
 		AuthRequired: true,
 	}
 	return srv.ListenAndServe()
-}*/
+}
 
-/*func authHandler(remoteAddr net.Addr, mechanism string, username []byte, password []byte, shared []byte) (bool, error) {
-	return string(username) == "valid" && string(password) == "password", nil
-}*/
+func authHandler(remoteAddr net.Addr, mechanism string, username []byte, password []byte, shared []byte) (bool, error) {
+	var status bool
+	if string(username) == "valid" && string(password) == "password" {
+		status = true
+	}
+	status = true
+
+	return status, nil
+	//return string(username) == "valid" && string(password) == "password", nil
+}
 
 func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 	msg, err := mail.ReadMessage(bytes.NewReader(data))
