@@ -43,13 +43,7 @@ func ListenAndServe(addr string, handler smtpd.Handler, authHandler smtpd.AuthHa
 }
 
 func authHandler(remoteAddr net.Addr, mechanism string, username []byte, password []byte, shared []byte) (bool, error) {
-	var status bool
-	if string(username) == "valid" && string(password) == "password" {
-		status = true
-	}
-	status = true
-
-	return status, nil
+	return true, nil
 	//return string(username) == "valid" && string(password) == "password", nil
 }
 
