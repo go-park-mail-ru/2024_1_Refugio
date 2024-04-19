@@ -30,16 +30,22 @@ func NewEmailRepository(db *sqlx.DB) *EmailRepository {
 
 func (r *EmailRepository) Add(emailModelCore *domain.Email, requestID string) (int64, *domain.Email, error) {
 	query := `
-		INSERT INTO email (topic, text, date_of_dispatch, photoid, sender_email, recipient_email, read_status, deleted_status, draft_status, reply_to_email_id, flag) 
+		INSERT INTO email (topic, text, date_of_dispatch, /*photoid,*/ sender_email, recipient_email, read_status, deleted_status, draft_status, reply_to_email_id, flag) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
 		RETURNING id
 	`
+
+	/*query := `
+		INSERT INTO profile_email (profile_id, email_id)
+		VALUES ((SELECT id FROM profile WHERE login=$1), $3), ((SELECT id FROM profile WHERE login=$2), $3)
+	`*/
+
 	emailModelDb := converters.EmailConvertCoreInDb(*emailModelCore)
 	format := "2006/01/02 15:04:05"
-	args := []interface{}{emailModelDb.Topic, emailModelDb.Text, time.Now().Format(format), emailModelDb.PhotoID, emailModelDb.SenderEmail, emailModelDb.RecipientEmail, emailModelDb.ReadStatus, emailModelDb.Deleted, emailModelDb.DraftStatus, emailModelDb.ReplyToEmailID, emailModelDb.Flag}
+	args := []interface{}{emailModelDb.Topic, emailModelDb.Text, time.Now().Format(format), emailModelDb.SenderEmail, emailModelDb.RecipientEmail, emailModelDb.ReadStatus, emailModelDb.Deleted, emailModelDb.DraftStatus, emailModelDb.ReplyToEmailID, emailModelDb.Flag}
 	var id int64
 	start := time.Now()
-	err := r.DB.QueryRow(query, emailModelDb.Topic, emailModelDb.Text, time.Now().Format(format), emailModelDb.PhotoID, emailModelDb.SenderEmail, emailModelDb.RecipientEmail, emailModelDb.ReadStatus, emailModelDb.Deleted, emailModelDb.DraftStatus, emailModelDb.ReplyToEmailID, emailModelDb.Flag).Scan(&id)
+	err := r.DB.QueryRow(query, emailModelDb.Topic, emailModelDb.Text, time.Now().Format(format), emailModelDb.SenderEmail, emailModelDb.RecipientEmail, emailModelDb.ReadStatus, emailModelDb.Deleted, emailModelDb.DraftStatus, emailModelDb.ReplyToEmailID, emailModelDb.Flag).Scan(&id)
 	defer Logger.DbLog(query, requestID, start, &err, args)
 
 	if err != nil {
@@ -85,10 +91,17 @@ func (r *EmailRepository) FindEmail(login, requestID string) error {
 
 func (r *EmailRepository) GetAllIncoming(login, requestID string, offset, limit int) ([]*domain.Email, error) {
 	query := `
+		SELECT email.id, email.topic, email.text, email.date_of_dispatch, email.sender_email, email.recipient_email, email.read_status, email.deleted_status, email.draft_status, email.reply_to_email_id, email.flag, profile.avatar_id
+		FROM email
+		JOIN profile ON email.sender_email = profile.login
+		WHERE sender_email = $1
+		ORDER BY date_of_dispatch DESC
+	`
+	/*query := `
 		SELECT * FROM email
 		WHERE recipient_email = $1
 		ORDER BY date_of_dispatch ASC
-	`
+	`*/
 	emailsModelDb := []database.Email{}
 
 	var err error
@@ -121,10 +134,17 @@ func (r *EmailRepository) GetAllIncoming(login, requestID string, offset, limit 
 
 func (r *EmailRepository) GetAllSent(login, requestID string, offset, limit int) ([]*domain.Email, error) {
 	query := `
+		SELECT email.id, email.topic, email.text, email.date_of_dispatch, email.sender_email, email.recipient_email, email.read_status, email.deleted_status, email.draft_status, email.reply_to_email_id, email.flag, profile.avatar_id
+		FROM email
+		JOIN profile ON email.sender_email = profile.login
+		WHERE sender_email = $1
+		ORDER BY date_of_dispatch DESC
+	`
+	/*query := `
 		SELECT * FROM email
 		WHERE sender_email = $1
 		ORDER BY date_of_dispatch ASC
-	`
+	`*/
 	emailsModelDb := []database.Email{}
 
 	var err error
@@ -184,19 +204,18 @@ func (r *EmailRepository) Update(newEmail *domain.Email, requestID string) (bool
         SET
             topic = $1, 
             text = $2, 
-            photoid = $3,
-            read_status = $4, 
-            deleted_status = $5, 
-            draft_status = $6, 
-            reply_to_email_id = $7, 
-            flag = $8
+            read_status = $3, 
+            deleted_status = $4, 
+            draft_status = $5, 
+            reply_to_email_id = $6, 
+            flag = $7
         WHERE
-            id = $9 AND sender_email = $10
+            id = $8 AND sender_email = $9
     `
-	args := []interface{}{newEmailDb.Topic, newEmailDb.Text, newEmailDb.PhotoID, newEmailDb.ReadStatus, newEmailDb.Deleted, newEmailDb.DraftStatus, newEmailDb.ReplyToEmailID, newEmailDb.Flag, newEmailDb.ID, newEmailDb.RecipientEmail}
+	args := []interface{}{newEmailDb.Topic, newEmailDb.Text, newEmailDb.ReadStatus, newEmailDb.Deleted, newEmailDb.DraftStatus, newEmailDb.ReplyToEmailID, newEmailDb.Flag, newEmailDb.ID, newEmailDb.RecipientEmail}
 
 	start := time.Now()
-	result, err := r.DB.Exec(query, newEmailDb.Topic, newEmailDb.Text, newEmailDb.PhotoID, newEmailDb.ReadStatus, newEmailDb.Deleted, newEmailDb.DraftStatus, newEmailDb.ReplyToEmailID, newEmailDb.Flag, newEmailDb.ID, newEmailDb.SenderEmail)
+	result, err := r.DB.Exec(query, newEmailDb.Topic, newEmailDb.Text, newEmailDb.ReadStatus, newEmailDb.Deleted, newEmailDb.DraftStatus, newEmailDb.ReplyToEmailID, newEmailDb.Flag, newEmailDb.ID, newEmailDb.SenderEmail)
 	defer Logger.DbLog(query, requestID, start, &err, args)
 	if err != nil {
 		return false, fmt.Errorf("failed to update email: %v", err)

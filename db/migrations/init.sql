@@ -41,26 +41,27 @@ CREATE TABLE IF NOT EXISTS email (
     topic TEXT,
     text TEXT,
     date_of_dispatch TIMESTAMP NOT NULL DEFAULT '2022-08-10 10:10:00',     /*date_of_dispatch DATE, */
-    photoid TEXT CHECK (LENGTH(photoid) <= 200),
+    /*sender_photoid TEXT CHECK (LENGTH(sender_photoid) <= 200),
+    recipient_photoid TEXT CHECK (LENGTH(recipient_photoid) <= 200),*/
     sender_email TEXT CHECK (LENGTH(sender_email) <= 50),
     recipient_email TEXT CHECK (LENGTH(recipient_email) <= 50),
     read_status BOOLEAN NOT NULL,
     deleted_status BOOLEAN NOT NULL,
     draft_status BOOLEAN NOT NULL,
-    reply_to_email_id INTEGER REFERENCES email(id) ON DELETE NO ACTION DEFAULT NULL,
+    reply_to_email_id INTEGER REFERENCES email(id) ON DELETE SET NULL DEFAULT NULL,
     flag BOOLEAN NOT NULL
 );
 
 -- Вставка начальных данных в таблицу email
 INSERT INTO email
-    (topic, text, date_of_dispatch, photoid, sender_email, recipient_email, read_status, deleted_status, draft_status, reply_to_email_id, flag)
+    (topic, text, date_of_dispatch, sender_photoid, recipient_photoid, sender_email, recipient_email, read_status, deleted_status, draft_status, reply_to_email_id, flag)
 VALUES
-    ('Topic1 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', 'sergey@mailhub.su', 'ivan@mailhub.su', False, False, False, Null, False),
-    ('Topic2 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', 'sergey@mailhub.su', 'max@mailhub.su', False, False, False, Null, False),
-    ('Topic3 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', 'ivan@mailhub.su', 'max@mailhub.su', False, False, False, Null, False),
-    ('Topic4 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', 'max@mailhub.su', 'sergey@mailhub.su', False, False, False, Null, False),
-    ('Topic5 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', 'max@mailhub.su', 'ivan@mailhub.su', False, False, False, Null, False),
-    ('Topic6 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', 'sergey@mailhub.su', 'ivan@mailhub.su', False, False, False, Null, False);
+    ('Topic1 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', '', 'sergey@mailhub.su', 'ivan@mailhub.su', False, False, False, Null, False),
+    ('Topic2 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', '', 'sergey@mailhub.su', 'max@mailhub.su', False, False, False, Null, False),
+    ('Topic3 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', '', 'ivan@mailhub.su', 'max@mailhub.su', False, False, False, Null, False),
+    ('Topic4 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', '', 'max@mailhub.su', 'sergey@mailhub.su', False, False, False, Null, False),
+    ('Topic5 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', '', 'max@mailhub.su', 'ivan@mailhub.su', False, False, False, Null, False),
+    ('Topic6 Enough pretended estimating.', 'Laughing say assurance indulgence mean unlocked stairs denote above prudent get use latter margaret. Unreserved another abode blushes old steepest lady disposing enjoyment immediate prevailed charm. Looked ladies civil sigh. Because cold offended quiet bred the. Hastened outlived supported.', '2022-08-10 10:10:00', '', '', 'sergey@mailhub.su', 'ivan@mailhub.su', False, False, False, Null, False);
 
 CREATE TABLE IF NOT EXISTS profile_email (
     id SERIAL PRIMARY KEY,
