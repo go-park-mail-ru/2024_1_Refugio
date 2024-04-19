@@ -6,7 +6,7 @@
         "contact": {},
         "version": "1.0"
     },
-    "host": "mailhub.su",
+    "host": "localhost:8080",
     "basePath": "/",
     "paths": {
         "/api/v1/auth/login": {
@@ -717,10 +717,6 @@
                 "mark": {
                     "description": "Mark is a flag, such as marking the email as a favorite.",
                     "type": "boolean"
-                },
-                "photoId": {
-                    "description": "PhotoID is the link to the photo attached to the email, if any.",
-                    "type": "string"
                 },
                 "readStatus": {
                     "description": "ReadStatus indicates whether the email has been read.",

@@ -724,10 +724,6 @@ const docTemplate = `{
                     "description": "Mark is a flag, such as marking the email as a favorite.",
                     "type": "boolean"
                 },
-                "photoId": {
-                    "description": "PhotoID is the link to the photo attached to the email, if any.",
-                    "type": "string"
-                },
                 "readStatus": {
                     "description": "ReadStatus indicates whether the email has been read.",
                     "type": "boolean"
@@ -843,7 +839,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "mailhub.su",
+	Host:             "localhost:8080",
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "API Mail",
