@@ -172,10 +172,15 @@ func (r *EmailRepository) GetAllSent(login, requestID string, offset, limit int)
 
 func (r *EmailRepository) GetByID(id uint64, login, requestID string) (*domain.Email, error) {
 	query := `
-		SELECT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.read_status, e.deleted_status, e.draft_status, e.reply_to_email_id, e.flag, profile.avatar_id
+		SELECT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.read_status, e.deleted_status, e.draft_status, e.reply_to_email_id, e.flag,
+			CASE
+		WHEN profile IS NULL THEN NULL
+		ELSE profile.avatar_id
+		END AS avatar_id
 		FROM email e
-		JOIN profile ON (e.sender_email = profile.login AND e.id = $1 AND e.recipient_email = $2)
-                 	 OR (e.recipient_email = profile.login AND e.id = $1 AND e.sender_email = $2);
+		LEFT JOIN profile ON (e.sender_email = profile.login AND e.recipient_email = $2)
+		OR (e.recipient_email = profile.login AND e.sender_email = $2)
+		WHERE e.id = $1;
 	`
 	/*query := `
 		SELECT * FROM email WHERE id = $1 AND (recipient_email = $2 OR sender_email = $2)
