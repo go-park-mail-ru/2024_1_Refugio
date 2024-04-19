@@ -68,7 +68,7 @@ func (uc *UserUseCase) UpdateUser(userNew *domain.User, requestID string) (*doma
 	if strings.TrimSpace(userNew.Surname) != "" && userNew.Surname != userOld.Surname {
 		userOld.Surname = userNew.Surname
 	}
-	if strings.TrimSpace(userNew.Patronymic) != "" && userNew.Patronymic != userOld.Patronymic {
+	if /*strings.TrimSpace(userNew.Patronymic) != "" &&*/ userNew.Patronymic != userOld.Patronymic {
 		userOld.Patronymic = userNew.Patronymic
 	}
 	if domain.IsValidGender(userNew.Gender) && userNew.Gender != userOld.Gender {
@@ -77,13 +77,13 @@ func (uc *UserUseCase) UpdateUser(userNew *domain.User, requestID string) (*doma
 	if !userNew.Birthday.Equal(userOld.Birthday) {
 		userOld.Birthday = userNew.Birthday
 	}
-	if strings.TrimSpace(userNew.Description) != "" && userNew.Description != userOld.Description {
+	if /*strings.TrimSpace(userNew.Description) != "" &&*/ userNew.Description != userOld.Description {
 		userOld.Description = userNew.Description
 	}
-	if strings.TrimSpace(userNew.PhoneNumber) != "" && userNew.PhoneNumber != userOld.PhoneNumber {
+	if /*strings.TrimSpace(userNew.PhoneNumber) != "" &&*/ userNew.PhoneNumber != userOld.PhoneNumber {
 		userOld.PhoneNumber = userNew.PhoneNumber
 	}
-	if strings.TrimSpace(userNew.AvatarID) != "" && userNew.AvatarID != userOld.AvatarID {
+	if /*strings.TrimSpace(userNew.AvatarID) != "" &&*/ userNew.AvatarID != userOld.AvatarID {
 		userOld.AvatarID = userNew.AvatarID
 	}
 
