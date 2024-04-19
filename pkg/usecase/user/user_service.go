@@ -83,7 +83,7 @@ func (uc *UserUseCase) UpdateUser(userNew *domain.User, requestID string) (*doma
 	if /*strings.TrimSpace(userNew.PhoneNumber) != "" &&*/ userNew.PhoneNumber != userOld.PhoneNumber {
 		userOld.PhoneNumber = userNew.PhoneNumber
 	}
-	if /*strings.TrimSpace(userNew.AvatarID) != "" &&*/ userNew.AvatarID != userOld.AvatarID {
+	if strings.TrimSpace(userNew.AvatarID) != "" && userNew.AvatarID != userOld.AvatarID {
 		userOld.AvatarID = userNew.AvatarID
 	}
 
