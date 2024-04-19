@@ -87,7 +87,7 @@ func (r *EmailRepository) GetAllIncoming(login, requestID string, offset, limit 
 	query := `
 		SELECT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.read_status, e.deleted_status, e.draft_status, e.reply_to_email_id, e.flag, profile.avatar_id
 		FROM email e
-		JOIN profile ON e.sender_email = profile.login
+		LEFT JOIN profile ON e.sender_email = profile.login
 		WHERE e.recipient_email = $1
 		ORDER BY date_of_dispatch ASC
 	`
@@ -130,7 +130,7 @@ func (r *EmailRepository) GetAllSent(login, requestID string, offset, limit int)
 	query := `
 		SELECT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.read_status, e.deleted_status, e.draft_status, e.reply_to_email_id, e.flag, profile.avatar_id
 		FROM email e
-		JOIN profile ON e.recipient_email = profile.login
+		LEFT JOIN profile ON e.recipient_email = profile.login
 		WHERE e.sender_email = $1
 		ORDER BY date_of_dispatch ASC
 	`

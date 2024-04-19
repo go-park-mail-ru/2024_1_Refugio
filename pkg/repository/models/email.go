@@ -7,7 +7,7 @@ type Email struct {
 	ID             uint64      `db:"id"`                // ID is the unique identifier of the email in the database.
 	Topic          string      `db:"topic"`             // Topic is the subject of the email.
 	Text           string      `db:"text"`              // Text is the body of the email.
-	PhotoID        string      `db:"avatar_id"`         // PhotoID is the link to the photo attached to the email, if any.
+	PhotoID        *string     `db:"avatar_id"`         // PhotoID is the link to the photo attached to the email, if any.
 	ReadStatus     bool        `db:"read_status"`       // ReadStatus indicates whether the email has been read.
 	Flag           bool        `db:"flag"`              // Flag is a flag, such as marking the email as a favorite.
 	Deleted        bool        `db:"deleted_status"`    // Deleted indicates whether the email has been deleted.
