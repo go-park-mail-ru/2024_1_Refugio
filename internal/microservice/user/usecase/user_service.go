@@ -99,6 +99,28 @@ func (uc *UserUseCase) UpdateUser(userNew *domain_models.User, ctx context.Conte
 	return userOld, nil
 }
 
+// DeleteUserAvatar updates user data based on the provided ID.
+func (uc *UserUseCase) DeleteUserAvatar(userNew *domain_models.User, ctx context.Context) (*domain_models.User, error) {
+	userOld, err := uc.repo.GetByID(userNew.ID, ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if userNew.AvatarID != userOld.AvatarID {
+		userOld.AvatarID = userNew.AvatarID
+	}
+
+	status, err := uc.repo.Update(userOld, ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !status {
+		return nil, fmt.Errorf("failed to update user avatar")
+	}
+
+	return userOld, nil
+}
+
 // DeleteUserByID deletes the user with the given ID.
 func (uc *UserUseCase) DeleteUserByID(id uint32, ctx context.Context) (bool, error) {
 	return uc.repo.Delete(id, ctx)

@@ -73,9 +73,6 @@ var GenerateRandomID RandomIDGenerator = func() uint32 {
 func (r *UserRepository) GetAll(offset, limit int, ctx context.Context) ([]*domain.User, error) {
 	query := "SELECT * FROM profile"
 
-	args := []interface{}{}
-	start := time.Now()
-
 	var userModelsDb []database.User
 	var err error
 	if offset >= 0 && limit > 0 {
@@ -84,7 +81,12 @@ func (r *UserRepository) GetAll(offset, limit int, ctx context.Context) ([]*doma
 	} else {
 		err = r.DB.Select(&userModelsDb, query)
 	}
-	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).(string), start, &err, args)
+
+	args := []interface{}{}
+	start := time.Now()
+	requestIDValue := ctx.Value(requestIDContextKey)
+	requestIDValue = logger.GetRequestIDString(requestIDValue)
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, requestIDValue.(string), start, &err, args)
 
 	if err != nil {
 		return nil, err
@@ -126,12 +128,14 @@ func (r *UserRepository) GetByID(id uint32, ctx context.Context) (*domain.User, 
 func (r *UserRepository) GetUserByLogin(login, password string, ctx context.Context) (*domain.User, error) {
 	query := "SELECT * FROM profile WHERE login = $1"
 
-	args := []interface{}{login}
-	start := time.Now()
-
 	var userModelDb database.User
 	err := r.DB.Get(&userModelDb, query, login)
-	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).(string), start, &err, args)
+
+	args := []interface{}{login}
+	start := time.Now()
+	requestIDValue := ctx.Value(requestIDContextKey)
+	requestIDValue = logger.GetRequestIDString(requestIDValue)
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, requestIDValue.(string), start, &err, args)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -157,8 +161,6 @@ func (r *UserRepository) Add(userModelCore *domain.User, ctx context.Context) (*
 	`
 
 	userModelDb := converters.UserConvertCoreInDb(*userModelCore)
-	args := []interface{}{userModelDb.Login, userModelDb.FirstName, userModelDb.Surname, userModelDb.Patronymic, userModelDb.Gender, userModelDb.Birthday, time.Now(), userModelDb.AvatarID, userModelDb.PhoneNumber, userModelDb.Description}
-	start := time.Now()
 
 	password, status := HashPassword(userModelDb.Password)
 	if !status {
@@ -167,7 +169,12 @@ func (r *UserRepository) Add(userModelCore *domain.User, ctx context.Context) (*
 
 	userModelDb.Password = password
 	_, err := r.DB.Exec(query, userModelDb.Login, userModelDb.Password, userModelDb.FirstName, userModelDb.Surname, userModelDb.Patronymic, userModelDb.Gender, userModelDb.Birthday, time.Now(), userModelDb.AvatarID, userModelDb.PhoneNumber, userModelDb.Description)
-	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).(string), start, &err, args)
+
+	args := []interface{}{userModelDb.Login, userModelDb.FirstName, userModelDb.Surname, userModelDb.Patronymic, userModelDb.Gender, userModelDb.Birthday, time.Now(), userModelDb.AvatarID, userModelDb.PhoneNumber, userModelDb.Description}
+	start := time.Now()
+	requestIDValue := ctx.Value(requestIDContextKey)
+	requestIDValue = logger.GetRequestIDString(requestIDValue)
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, requestIDValue.(string), start, &err, args)
 
 	if err != nil {
 		return &domain.User{}, fmt.Errorf("user with login %s fail", userModelDb.Login)
@@ -195,19 +202,6 @@ func (r *UserRepository) Update(newUserCore *domain.User, ctx context.Context) (
             id = $9
     `
 
-	args := []interface{}{
-		newUserDb.FirstName,
-		newUserDb.Surname,
-		newUserDb.Patronymic,
-		newUserDb.Gender,
-		newUserDb.Birthday,
-		newUserDb.AvatarID,
-		newUserDb.PhoneNumber,
-		newUserDb.Description,
-		newUserDb.ID,
-	}
-	start := time.Now()
-
 	result, err := r.DB.Exec(
 		query,
 		newUserDb.FirstName,
@@ -220,7 +214,22 @@ func (r *UserRepository) Update(newUserCore *domain.User, ctx context.Context) (
 		newUserDb.Description,
 		newUserDb.ID,
 	)
-	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).(string), start, &err, args)
+
+	args := []interface{}{
+		newUserDb.FirstName,
+		newUserDb.Surname,
+		newUserDb.Patronymic,
+		newUserDb.Gender,
+		newUserDb.Birthday,
+		newUserDb.AvatarID,
+		newUserDb.PhoneNumber,
+		newUserDb.Description,
+		newUserDb.ID,
+	}
+	start := time.Now()
+	requestIDValue := ctx.Value(requestIDContextKey)
+	requestIDValue = logger.GetRequestIDString(requestIDValue)
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, requestIDValue.(string), start, &err, args)
 
 	if err != nil {
 		return false, fmt.Errorf("failed to update user: %v", err)
@@ -243,11 +252,13 @@ func (r *UserRepository) Update(newUserCore *domain.User, ctx context.Context) (
 func (r *UserRepository) Delete(id uint32, ctx context.Context) (bool, error) {
 	query := "DELETE FROM profile WHERE id = $1"
 
+	result, err := r.DB.Exec(query, id)
+
 	args := []interface{}{id}
 	start := time.Now()
-
-	result, err := r.DB.Exec(query, id)
-	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).(string), start, &err, args)
+	requestIDValue := ctx.Value(requestIDContextKey)
+	requestIDValue = logger.GetRequestIDString(requestIDValue)
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, requestIDValue.(string), start, &err, args)
 
 	if err != nil {
 		return false, fmt.Errorf("failed to delete user: %v", err)

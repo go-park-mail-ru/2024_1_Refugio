@@ -1,15 +1,32 @@
 package usecase
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	domain "mail/internal/microservice/models/domain_models"
 	mock_repository "mail/internal/microservice/user/mocks"
-	"mail/internal/pkg/auth/usecase"
+	"mail/internal/pkg/logger"
+	"os"
 	"testing"
 	"time"
 )
+
+func GetCTX() context.Context {
+	requestID := "testID"
+
+	f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		fmt.Println("Failed to create logfile" + "log.txt")
+	}
+	defer f.Close()
+
+	c := context.WithValue(context.Background(), "logger", logger.InitializationBdLog(f))
+	ctx := context.WithValue(c, "requestID", requestID)
+	return ctx
+}
 
 func TestGetAllUsers_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -22,7 +39,7 @@ func TestGetAllUsers_Success(t *testing.T) {
 		{ID: 1, FirstName: "User 1"},
 		{ID: 2, FirstName: "User 2"},
 	}
-	ctx := usecase.GetCTX()
+	ctx := GetCTX()
 
 	mockRepo.EXPECT().GetAll(0, 0, ctx).Return(expectedUsers, nil)
 
@@ -39,7 +56,7 @@ func TestGetAllUsers_ErrorFromRepository(t *testing.T) {
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
 
-	ctx := usecase.GetCTX()
+	ctx := GetCTX()
 
 	mockRepo.EXPECT().GetAll(0, 0, ctx).Return(nil, errors.New("repository error"))
 
@@ -57,7 +74,7 @@ func TestGetUserByID_Success(t *testing.T) {
 	useCase := NewUserUseCase(mockRepo)
 
 	expectedUser := &domain.User{ID: 1, FirstName: "User 1"}
-	ctx := usecase.GetCTX()
+	ctx := GetCTX()
 
 	mockRepo.EXPECT().GetByID(uint32(1), ctx).Return(expectedUser, nil)
 
@@ -74,7 +91,7 @@ func TestGetUserByID_ErrorFromRepository(t *testing.T) {
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
 
-	ctx := usecase.GetCTX()
+	ctx := GetCTX()
 	mockRepo.EXPECT().GetByID(uint32(1), ctx).Return(nil, errors.New("repository error"))
 
 	user, err := useCase.GetUserByID(1, ctx)
@@ -90,7 +107,7 @@ func TestGetUserByLogin_Success(t *testing.T) {
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
 
-	ctx := usecase.GetCTX()
+	ctx := GetCTX()
 	expectedUser := &domain.User{ID: 1, FirstName: "User 1"}
 	mockRepo.EXPECT().GetUserByLogin("username", "password", ctx).Return(expectedUser, nil)
 
@@ -107,7 +124,7 @@ func TestGetUserByLogin_ErrorFromRepository(t *testing.T) {
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
 
-	ctx := usecase.GetCTX()
+	ctx := GetCTX()
 	mockRepo.EXPECT().GetUserByLogin("username", "password", ctx).Return(nil, errors.New("repository error"))
 
 	user, err := useCase.GetUserByLogin("username", "password", ctx)
@@ -123,7 +140,7 @@ func TestCreateUser_Success(t *testing.T) {
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
 
-	ctx := usecase.GetCTX()
+	ctx := GetCTX()
 	newUser := &domain.User{FirstName: "New User"}
 	mockRepo.EXPECT().Add(newUser, ctx).Return(newUser, nil)
 
@@ -139,7 +156,7 @@ func TestCreateUser_ErrorFromRepository(t *testing.T) {
 
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
-	ctx := usecase.GetCTX()
+	ctx := GetCTX()
 	newUser := &domain.User{FirstName: "New User"}
 	mockRepo.EXPECT().Add(newUser, ctx).Return(newUser, errors.New("repository error"))
 
@@ -156,7 +173,7 @@ func TestIsLoginUnique_Success(t *testing.T) {
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
 
-	ctx := usecase.GetCTX()
+	ctx := GetCTX()
 	login := "testUser"
 	mockUsers := []*domain.User{
 		{ID: 1, Login: "user1"},
@@ -177,7 +194,7 @@ func TestIsLoginUnique_NonUnique(t *testing.T) {
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
 
-	ctx := usecase.GetCTX()
+	ctx := GetCTX()
 	nonUniqueLogin := "user2"
 	mockUsers := []*domain.User{
 		{ID: 1, Login: "user1"},
@@ -198,7 +215,7 @@ func TestIsLoginUnique_ErrorFromRepository(t *testing.T) {
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
 
-	ctx := usecase.GetCTX()
+	ctx := GetCTX()
 	mockRepo.EXPECT().GetAll(0, 0, ctx).Return(nil, errors.New("repository error"))
 	unique, err := useCase.IsLoginUnique("testUser", ctx)
 	assert.Error(t, err)
@@ -212,7 +229,7 @@ func TestUpdateUser_Success(t *testing.T) {
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
 
-	ctx := usecase.GetCTX()
+	ctx := GetCTX()
 	userNew := &domain.User{
 		ID:          1,
 		FirstName:   "John",
@@ -252,7 +269,7 @@ func TestUpdateUser_FailureToUpdate(t *testing.T) {
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
 
-	ctx := usecase.GetCTX()
+	ctx := GetCTX()
 	userNew := &domain.User{
 		ID:          1,
 		FirstName:   "John",
@@ -291,7 +308,7 @@ func TestUpdateUser_RepositoryError(t *testing.T) {
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
 
-	ctx := usecase.GetCTX()
+	ctx := GetCTX()
 	userNew := &domain.User{
 		ID:          1,
 		FirstName:   "John",
@@ -317,7 +334,7 @@ func TestDeleteUserByID_Success(t *testing.T) {
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
 
-	ctx := usecase.GetCTX()
+	ctx := GetCTX()
 	userID := uint32(1)
 	mockRepo.EXPECT().Delete(userID, ctx).Return(true, nil)
 
@@ -334,7 +351,7 @@ func TestDeleteUserByID_Failure(t *testing.T) {
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
 
-	ctx := usecase.GetCTX()
+	ctx := GetCTX()
 	userID := uint32(1)
 	mockRepo.EXPECT().Delete(userID, ctx).Return(false, nil)
 
@@ -351,7 +368,7 @@ func TestDeleteUserByID_ErrorFromRepository(t *testing.T) {
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
 
-	ctx := usecase.GetCTX()
+	ctx := GetCTX()
 	userID := uint32(1)
 	mockRepo.EXPECT().Delete(userID, ctx).Return(false, errors.New("repository error"))
 

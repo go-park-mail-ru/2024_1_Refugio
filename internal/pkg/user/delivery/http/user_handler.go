@@ -2,7 +2,6 @@ package http
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/gorilla/mux"
 	"google.golang.org/grpc/metadata"
 	"io"
@@ -126,11 +125,24 @@ func (uh *UserHandler) UpdateUserData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userUpdated, err := uh.UserUseCase.UpdateUser(converters.UserConvertApiInCore(updatedUser), r.Context())
+	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.UserService))
 	if err != nil {
 		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
+	defer conn.Close()
+
+	userServiceClient := proto.NewUserServiceClient(conn)
+	userUpdateProto, err := userServiceClient.UpdateUser(
+		metadata.NewOutgoingContext(r.Context(),
+			metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		proto_converters.UserConvertCoreInProto(*converters.UserConvertApiInCore(updatedUser)),
+	)
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+	userUpdated := proto_converters.UserConvertProtoInCore(*userUpdateProto)
 
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"user": converters.UserConvertCoreInApi(*userUpdated)})
 }
@@ -162,12 +174,24 @@ func (uh *UserHandler) DeleteUserData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deleted, err := uh.UserUseCase.DeleteUserByID(uint32(userID), r.Context())
+	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.UserService))
 	if err != nil {
 		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
-	if !deleted {
+	defer conn.Close()
+
+	userServiceClient := proto.NewUserServiceClient(conn)
+	deleted, err := userServiceClient.DeleteUserById(
+		metadata.NewOutgoingContext(r.Context(),
+			metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		&proto.UserId{Id: sessionUser.UserID},
+	)
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+	if !deleted.DeleteStatus {
 		response.HandleError(w, http.StatusInternalServerError, "Failed to delete user data")
 		return
 	}
@@ -223,19 +247,75 @@ func (uh *UserHandler) UploadUserAvatar(w http.ResponseWriter, r *http.Request) 
 	}
 
 	sessionUser := uh.Sessions.GetSession(r, r.Context())
-	userData, err := uh.UserUseCase.GetUserByID(sessionUser.UserID, r.Context())
+
+	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.UserService))
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+	defer conn.Close()
+
+	userServiceClient := proto.NewUserServiceClient(conn)
+	userDataProto, err := userServiceClient.GetUser(
+		metadata.NewOutgoingContext(r.Context(),
+			metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		&proto.UserId{Id: sessionUser.UserID},
+	)
 	if err != nil {
 		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
 
-	userData.AvatarID = "http://mailhub.su:8080/media/" + uniqueFileName
-	userUpdated, err := uh.UserUseCase.UpdateUser(userData, r.Context())
-	if err != nil {
+	userDataProto.Avatar = "https://mailhub.su/media/" + uniqueFileName
+	_, errAvatar := userServiceClient.UploadUserAvatar(
+		metadata.NewOutgoingContext(r.Context(),
+			metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		&proto.UserAvatar{Id: userDataProto.Id, Avatar: userDataProto.Avatar},
+	)
+	if errAvatar != nil {
 		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
-	fmt.Println(userUpdated)
 
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "File is uploaded and saved"})
+}
+
+// DeleteUserAvatar handles requests to delete user avatar.
+// @Summary Delete user avatar
+// @Description Handles requests to delete user avatar.
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param X-Csrf-Token header string true "CSRF Token"
+// @Success 200 {object} response.Response "User avatar deleted successfully"
+// @Failure 400 {object} response.ErrorResponse "Invalid user ID"
+// @Failure 401 {object} response.ErrorResponse "Not authorized"
+// @Failure 500 {object} response.ErrorResponse "Internal Server Error"
+// @Router /api/v1/user/avatar/delete [delete]
+func (uh *UserHandler) DeleteUserAvatar(w http.ResponseWriter, r *http.Request) {
+	sessionUser := uh.Sessions.GetSession(r, r.Context())
+
+	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.UserService))
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+	defer conn.Close()
+
+	userServiceClient := proto.NewUserServiceClient(conn)
+	deleted, err := userServiceClient.DeleteUserAvatar(
+		metadata.NewOutgoingContext(r.Context(),
+			metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		&proto.UserId{Id: sessionUser.UserID},
+	)
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+	if !deleted.DeleteStatus {
+		response.HandleError(w, http.StatusInternalServerError, "Failed to delete user avatar")
+		return
+	}
+
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"message": "User avatar deleted successfully"})
 }

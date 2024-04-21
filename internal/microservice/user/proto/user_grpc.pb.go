@@ -19,9 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	UserService_GetUser_FullMethodName        = "/proto.UserService/GetUser"
-	UserService_DeleteUserById_FullMethodName = "/proto.UserService/DeleteUserById"
-	UserService_UpdateUser_FullMethodName     = "/proto.UserService/UpdateUser"
+	UserService_GetUser_FullMethodName          = "/proto.UserService/GetUser"
+	UserService_DeleteUserById_FullMethodName   = "/proto.UserService/DeleteUserById"
+	UserService_UpdateUser_FullMethodName       = "/proto.UserService/UpdateUser"
+	UserService_UploadUserAvatar_FullMethodName = "/proto.UserService/UploadUserAvatar"
+	UserService_DeleteUserAvatar_FullMethodName = "/proto.UserService/DeleteUserAvatar"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -31,6 +33,8 @@ type UserServiceClient interface {
 	GetUser(ctx context.Context, in *UserId, opts ...grpc.CallOption) (*User, error)
 	DeleteUserById(ctx context.Context, in *UserId, opts ...grpc.CallOption) (*Status, error)
 	UpdateUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*User, error)
+	UploadUserAvatar(ctx context.Context, in *UserAvatar, opts ...grpc.CallOption) (*Empty, error)
+	DeleteUserAvatar(ctx context.Context, in *UserId, opts ...grpc.CallOption) (*Status, error)
 }
 
 type userServiceClient struct {
@@ -68,6 +72,24 @@ func (c *userServiceClient) UpdateUser(ctx context.Context, in *User, opts ...gr
 	return out, nil
 }
 
+func (c *userServiceClient) UploadUserAvatar(ctx context.Context, in *UserAvatar, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, UserService_UploadUserAvatar_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) DeleteUserAvatar(ctx context.Context, in *UserId, opts ...grpc.CallOption) (*Status, error) {
+	out := new(Status)
+	err := c.cc.Invoke(ctx, UserService_DeleteUserAvatar_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility
@@ -75,6 +97,8 @@ type UserServiceServer interface {
 	GetUser(context.Context, *UserId) (*User, error)
 	DeleteUserById(context.Context, *UserId) (*Status, error)
 	UpdateUser(context.Context, *User) (*User, error)
+	UploadUserAvatar(context.Context, *UserAvatar) (*Empty, error)
+	DeleteUserAvatar(context.Context, *UserId) (*Status, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -90,6 +114,12 @@ func (UnimplementedUserServiceServer) DeleteUserById(context.Context, *UserId) (
 }
 func (UnimplementedUserServiceServer) UpdateUser(context.Context, *User) (*User, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
+}
+func (UnimplementedUserServiceServer) UploadUserAvatar(context.Context, *UserAvatar) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UploadUserAvatar not implemented")
+}
+func (UnimplementedUserServiceServer) DeleteUserAvatar(context.Context, *UserId) (*Status, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteUserAvatar not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 
@@ -158,6 +188,42 @@ func _UserService_UpdateUser_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_UploadUserAvatar_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserAvatar)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).UploadUserAvatar(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_UploadUserAvatar_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).UploadUserAvatar(ctx, req.(*UserAvatar))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_DeleteUserAvatar_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserId)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).DeleteUserAvatar(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_DeleteUserAvatar_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).DeleteUserAvatar(ctx, req.(*UserId))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -176,6 +242,14 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateUser",
 			Handler:    _UserService_UpdateUser_Handler,
+		},
+		{
+			MethodName: "UploadUserAvatar",
+			Handler:    _UserService_UploadUserAvatar_Handler,
+		},
+		{
+			MethodName: "DeleteUserAvatar",
+			Handler:    _UserService_DeleteUserAvatar_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

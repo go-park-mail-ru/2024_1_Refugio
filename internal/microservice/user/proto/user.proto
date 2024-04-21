@@ -12,6 +12,8 @@ service UserService {
   rpc GetUser(UserId) returns(User) {}
   rpc DeleteUserById(UserId) returns(Status) {}
   rpc UpdateUser(User) returns(User) {}
+  rpc UploadUserAvatar(UserAvatar) returns(Empty) {}
+  rpc DeleteUserAvatar(UserId) returns(Status) {}
 }
 
 message UserId {
@@ -34,4 +36,13 @@ message User {
 
 message Status {
   bool delete_status = 1;
+}
+
+message UserAvatar {
+  uint32 id = 1;
+  string avatar = 2;
+}
+
+message Empty {
+
 }
