@@ -8,7 +8,7 @@ const (
 	Other  UserGender = "Other"
 )
 
-// Function to check if the given value is a valid UserGender.
+// IsValidGender function to check if the given value is a valid UserGender.
 func IsValidGender(gender UserGender) bool {
 	switch gender {
 	case Male, Female, Other:
@@ -18,6 +18,7 @@ func IsValidGender(gender UserGender) bool {
 	}
 }
 
+// GetGender returns the string representation of a UserGender enum value.
 func GetGender(gender UserGender) string {
 	switch gender {
 	case Male:

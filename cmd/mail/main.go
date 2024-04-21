@@ -2,36 +2,37 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
-	userRepo "mail/internal/microservice/user/repository"
-	userUc "mail/internal/microservice/user/usecase"
-	"mail/internal/pkg/logger"
 	"net/http"
 	"os"
 	"time"
 	_ "time/tzdata"
 
-	"context"
 	"github.com/gorilla/mux"
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jmoiron/sqlx"
 	"github.com/kataras/requestid"
 	"github.com/rs/cors"
 
+	"mail/internal/pkg/logger"
 	"mail/internal/pkg/middleware"
 	"mail/internal/pkg/session"
 
 	migrate "github.com/rubenv/sql-migrate"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 
-	userHand "mail/internal/pkg/auth/delivery/http"
+	userRepo "mail/internal/microservice/user/repository"
+	userUc "mail/internal/microservice/user/usecase"
+	authHand "mail/internal/pkg/auth/delivery/http"
 	sessionRepo "mail/internal/pkg/auth/repository"
 	sessionUc "mail/internal/pkg/auth/usecase"
 	emailHand "mail/internal/pkg/email/delivery/http"
 	emailRepo "mail/internal/pkg/email/repository"
 	emailUc "mail/internal/pkg/email/usecase"
+	userHand "mail/internal/pkg/user/delivery/http"
 
 	_ "mail/docs"
 )
@@ -53,10 +54,11 @@ func main() {
 	LoggerAcces := initializeLogger()
 
 	sessionsManager := initializeSessionsManager(db)
+	authHandler := initializeAuthHandler(db, sessionsManager)
 	emailHandler := initializeEmailHandler(db, sessionsManager)
 	userHandler := initializeUserHandler(db, sessionsManager)
 
-	router := setupRouter(userHandler, emailHandler, LoggerAcces)
+	router := setupRouter(authHandler, userHandler, emailHandler, LoggerAcces)
 
 	startServer(router)
 }
@@ -110,6 +112,16 @@ func initializeSessionsManager(db *sql.DB) *session.SessionsManager {
 	return sessionsManager
 }
 
+func initializeAuthHandler(db *sql.DB, sessionsManager *session.SessionsManager) *authHand.AuthHandler {
+	userRepository := userRepo.NewUserRepository(sqlx.NewDb(db, "pgx"))
+	userUseCase := userUc.NewUserUseCase(userRepository)
+
+	return &authHand.AuthHandler{
+		UserUseCase: userUseCase,
+		Sessions:    sessionsManager,
+	}
+}
+
 func initializeEmailHandler(db *sql.DB, sessionsManager *session.SessionsManager) *emailHand.EmailHandler {
 	emailRepository := emailRepo.NewEmailRepository(sqlx.NewDb(db, "pgx"))
 	emailUseCase := emailUc.NewEmailUseCase(emailRepository)
@@ -143,10 +155,10 @@ func initializeLogger() *middleware.Logger {
 	return LoggerAcces
 }
 
-func setupRouter(userHandler *userHand.UserHandler, emailHandler *emailHand.EmailHandler, logger *middleware.Logger) http.Handler {
+func setupRouter(authHandler *authHand.AuthHandler, userHandler *userHand.UserHandler, emailHandler *emailHand.EmailHandler, logger *middleware.Logger) http.Handler {
 	router := mux.NewRouter()
 
-	auth := setupAuthRouter(userHandler, emailHandler, logger)
+	auth := setupAuthRouter(authHandler, userHandler, emailHandler, logger)
 	router.PathPrefix("/api/v1/auth").Handler(auth)
 
 	logRouter := setupLogRouter(emailHandler, userHandler, logger)
@@ -161,13 +173,13 @@ func setupRouter(userHandler *userHand.UserHandler, emailHandler *emailHand.Emai
 	return logger.AccessLogMiddleware(router)
 }
 
-func setupAuthRouter(userHandler *userHand.UserHandler, emailHandler *emailHand.EmailHandler, logger *middleware.Logger) http.Handler {
+func setupAuthRouter(authHandler *authHand.AuthHandler, userHandler *userHand.UserHandler, emailHandler *emailHand.EmailHandler, logger *middleware.Logger) http.Handler {
 	auth := mux.NewRouter().PathPrefix("/api/v1/auth").Subrouter()
 	auth.Use(logger.AccessLogMiddleware, middleware.PanicMiddleware)
 
-	auth.HandleFunc("/login", userHandler.Login).Methods("POST", "OPTIONS")
-	auth.HandleFunc("/signup", userHandler.Signup).Methods("POST", "OPTIONS")
-	auth.HandleFunc("/logout", userHandler.Logout).Methods("POST", "OPTIONS")
+	auth.HandleFunc("/login", authHandler.Login).Methods("POST", "OPTIONS")
+	auth.HandleFunc("/signup", authHandler.Signup).Methods("POST", "OPTIONS")
+	auth.HandleFunc("/logout", authHandler.Logout).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/sendOther", emailHandler.SendFromAnotherDomain).Methods("POST", "OPTIONS")
 
 	return auth

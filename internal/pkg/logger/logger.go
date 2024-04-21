@@ -12,10 +12,12 @@ import (
 	_ "time/tzdata"
 )
 
+// LogrusLogger provides a structure for logging using Logrus.
 type LogrusLogger struct {
 	LogrusLogger *logrus.Logger
 }
 
+// Formatter defines the formatting of logs.
 type Formatter struct {
 	LogFormat     string
 	ForceColors   bool
@@ -71,23 +73,8 @@ func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
 	return []byte(output), nil
 }
 
+// InitializationBdLog initializes the logger to work with the database.
 func InitializationBdLog(f *os.File) *LogrusLogger {
-	//log := new(LogrusLogger)
-	/*log := &logrus.Logger{
-		Out:   io.MultiWriter(f, os.Stdout),
-		Level: logrus.InfoLevel,
-		Formatter: &Formatter{
-			LogFormat:     "[%lvl%]: %time% - %msg% requestID=%requestID% work_time=%work_time% mode=%mode% query=%query% arguments=%args%\n",
-			ForceColors:   true,
-			ColorInfo:     color.New(color.FgBlue),
-			ColorWarning:  color.New(color.FgYellow),
-			ColorError:    color.New(color.FgRed),
-			ColorCritical: color.New(color.BgRed, color.FgWhite),
-			ColorDefault:  color.New(color.FgWhite),
-		},
-	}
-
-	return log*/
 	log := new(LogrusLogger)
 	log.LogrusLogger = &logrus.Logger{
 		Out:   io.MultiWriter(f, os.Stdout),
@@ -106,6 +93,7 @@ func InitializationBdLog(f *os.File) *LogrusLogger {
 	return log
 }
 
+// InitializationAccesLog initializes the logger for accessing resources.
 func InitializationAccesLog(f *os.File) *LogrusLogger {
 	log := new(LogrusLogger)
 	log.LogrusLogger = &logrus.Logger{
@@ -125,12 +113,14 @@ func InitializationAccesLog(f *os.File) *LogrusLogger {
 	return log
 }
 
+// InitializationEmptyLog initializes an empty logger Logrus.
 func InitializationEmptyLog() *LogrusLogger {
 	log := new(LogrusLogger)
 	log.LogrusLogger = &logrus.Logger{}
 	return log
 }
 
+// DbLog logs information about database requests.
 func (log *LogrusLogger) DbLog(query, requestID string, start time.Time, err *error, args []interface{}) {
 	resArgs := "{ "
 	for _, a := range args {
@@ -152,6 +142,7 @@ func (log *LogrusLogger) DbLog(query, requestID string, start time.Time, err *er
 	}
 }
 
+// DbLogTest logs test information about database requests.
 func DbLogTest(query, requestID string, start time.Time, err *error, args []interface{}) {
 	resArgs := "{ "
 	for _, a := range args {
@@ -171,4 +162,22 @@ func DbLogTest(query, requestID string, start time.Time, err *error, args []inte
 	} else {
 		en.Info("StatusOK")
 	}
+}
+
+// GetRequestIDString converts the request ID Value to a string.
+func GetRequestIDString(requestIDValue interface{}) string {
+	if requestIDValue != nil {
+		requestIDString, ok := requestIDValue.(string)
+		if !ok {
+			requestIDInterface, ok := requestIDValue.(interface{})
+			if ok {
+				requestIDString = fmt.Sprintf("%v", requestIDInterface)
+				requestIDString = strings.Trim(requestIDString, "[]")
+			}
+		}
+
+		return requestIDString
+	}
+
+	return ""
 }

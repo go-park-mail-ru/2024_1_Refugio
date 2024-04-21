@@ -102,12 +102,14 @@ func (r *UserRepository) GetAll(offset, limit int, ctx context.Context) ([]*doma
 func (r *UserRepository) GetByID(id uint32, ctx context.Context) (*domain.User, error) {
 	query := "SELECT * FROM profile WHERE id = $1"
 
-	args := []interface{}{id}
-	start := time.Now()
-
 	var userModelDb database.User
 	err := r.DB.Get(&userModelDb, query, id)
-	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).(string), start, &err, args)
+
+	args := []interface{}{id}
+	start := time.Now()
+	requestIDValue := ctx.Value(requestIDContextKey)
+	requestIDValue = logger.GetRequestIDString(requestIDValue)
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, requestIDValue.(string), start, &err, args)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

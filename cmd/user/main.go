@@ -7,13 +7,15 @@ import (
 	"github.com/jmoiron/sqlx"
 	"google.golang.org/grpc"
 	"log"
+	"net"
+	"time"
+
 	"mail/internal/microservice/interceptors"
 	"mail/internal/microservice/user/proto"
+
 	userRepo "mail/internal/microservice/user/repository"
 	grpcUser "mail/internal/microservice/user/server"
 	userUc "mail/internal/microservice/user/usecase"
-	"net"
-	"time"
 )
 
 func main() {
@@ -76,7 +78,7 @@ func startServer(userGrpc *grpcUser.UserServer) {
 
 	proto.RegisterUserServiceServer(grpcServer, userGrpc)
 
-	fmt.Printf("The server is running on http://0.0.0.0:8001\n")
+	fmt.Printf("The server is running\n")
 
 	err = grpcServer.Serve(listen)
 	if err != nil {
