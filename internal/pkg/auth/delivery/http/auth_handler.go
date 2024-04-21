@@ -11,8 +11,8 @@ import (
 	api "mail/internal/models/delivery_models"
 	response "mail/internal/models/response"
 	domainSession "mail/internal/pkg/session/interface"
-	"mail/internal/pkg/util/sanitize"
-	validUtil "mail/internal/pkg/util/validators"
+	"mail/internal/pkg/utils/sanitize"
+	validUtil "mail/internal/pkg/utils/validators"
 )
 
 var (

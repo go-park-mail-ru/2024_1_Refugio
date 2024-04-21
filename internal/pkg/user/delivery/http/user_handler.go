@@ -19,9 +19,9 @@ import (
 	"mail/internal/models/microservice_ports"
 	response "mail/internal/models/response"
 	domainSession "mail/internal/pkg/session/interface"
-	"mail/internal/pkg/util/connect_microservice"
-	"mail/internal/pkg/util/generate_filename"
-	"mail/internal/pkg/util/sanitize"
+	"mail/internal/pkg/utils/connect_microservice"
+	"mail/internal/pkg/utils/generate_filename"
+	"mail/internal/pkg/utils/sanitize"
 )
 
 var (
