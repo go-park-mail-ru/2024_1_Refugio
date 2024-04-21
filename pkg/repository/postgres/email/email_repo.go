@@ -30,8 +30,13 @@ func NewEmailRepository(db *sqlx.DB) *EmailRepository {
 
 func (r *EmailRepository) Add(emailModelCore *domain.Email, requestID string) (int64, *domain.Email, error) {
 	query := `
+<<<<<<< HEAD
+		INSERT INTO email (topic, text, date_of_dispatch, sender_email, recipient_email, read_status, deleted_status, draft_status, reply_to_email_id, flag) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
+=======
 		INSERT INTO email (topic, text, date_of_dispatch, /*photoid,*/ sender_email, recipient_email, read_status, deleted_status, draft_status, reply_to_email_id, flag) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
+>>>>>>> develop
 		RETURNING id
 	`
 
@@ -91,11 +96,11 @@ func (r *EmailRepository) FindEmail(login, requestID string) error {
 
 func (r *EmailRepository) GetAllIncoming(login, requestID string, offset, limit int) ([]*domain.Email, error) {
 	query := `
-		SELECT email.id, email.topic, email.text, email.date_of_dispatch, email.sender_email, email.recipient_email, email.read_status, email.deleted_status, email.draft_status, email.reply_to_email_id, email.flag, profile.avatar_id
-		FROM email
-		JOIN profile ON email.sender_email = profile.login
-		WHERE sender_email = $1
-		ORDER BY date_of_dispatch DESC
+		SELECT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.read_status, e.deleted_status, e.draft_status, e.reply_to_email_id, e.flag, profile.avatar_id
+		FROM email e
+		LEFT JOIN profile ON e.sender_email = profile.login
+		WHERE e.recipient_email = $1
+		ORDER BY date_of_dispatch ASC
 	`
 	/*query := `
 		SELECT * FROM email
@@ -134,11 +139,11 @@ func (r *EmailRepository) GetAllIncoming(login, requestID string, offset, limit 
 
 func (r *EmailRepository) GetAllSent(login, requestID string, offset, limit int) ([]*domain.Email, error) {
 	query := `
-		SELECT email.id, email.topic, email.text, email.date_of_dispatch, email.sender_email, email.recipient_email, email.read_status, email.deleted_status, email.draft_status, email.reply_to_email_id, email.flag, profile.avatar_id
-		FROM email
-		JOIN profile ON email.sender_email = profile.login
-		WHERE sender_email = $1
-		ORDER BY date_of_dispatch DESC
+		SELECT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.read_status, e.deleted_status, e.draft_status, e.reply_to_email_id, e.flag, profile.avatar_id
+		FROM email e
+		LEFT JOIN profile ON e.recipient_email = profile.login
+		WHERE e.sender_email = $1
+		ORDER BY date_of_dispatch ASC
 	`
 	/*query := `
 		SELECT * FROM email
@@ -178,8 +183,19 @@ func (r *EmailRepository) GetAllSent(login, requestID string, offset, limit int)
 
 func (r *EmailRepository) GetByID(id uint64, login, requestID string) (*domain.Email, error) {
 	query := `
-		SELECT * FROM email WHERE id = $1 AND (recipient_email = $2 OR sender_email = $2)
+		SELECT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.read_status, e.deleted_status, e.draft_status, e.reply_to_email_id, e.flag,
+			CASE
+		WHEN profile IS NULL THEN NULL
+		ELSE profile.avatar_id
+		END AS avatar_id
+		FROM email e
+		LEFT JOIN profile ON (e.sender_email = profile.login AND e.recipient_email = $2)
+		OR (e.recipient_email = profile.login AND e.sender_email = $2)
+		WHERE e.id = $1;
 	`
+	/*query := `
+		SELECT * FROM email WHERE id = $1 AND (recipient_email = $2 OR sender_email = $2)
+	`*/
 	args := []interface{}{id, login}
 
 	var emailModelDb database.Email
