@@ -193,7 +193,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 
 	newEmail.Topic = sanitizeString(newEmail.Topic)
 	newEmail.Text = sanitizeString(newEmail.Text)
-	newEmail.PhotoID = sanitizeString(newEmail.PhotoID)
+	newEmail.AvatarID = sanitizeString(newEmail.AvatarID)
 	newEmail.SenderEmail = sanitizeString(newEmail.SenderEmail)
 	newEmail.RecipientEmail = sanitizeString(newEmail.RecipientEmail)
 
@@ -307,7 +307,7 @@ func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	updatedEmail.Topic = sanitizeString(updatedEmail.Topic)
 	updatedEmail.Text = sanitizeString(updatedEmail.Text)
-	updatedEmail.PhotoID = sanitizeString(updatedEmail.PhotoID)
+	updatedEmail.AvatarID = sanitizeString(updatedEmail.AvatarID)
 	updatedEmail.RecipientEmail = sanitizeString(updatedEmail.RecipientEmail)
 	updatedEmail.SenderEmail = sanitizeString(updatedEmail.SenderEmail)
 

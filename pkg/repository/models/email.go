@@ -17,3 +17,6 @@ type Email struct {
 	SenderEmail    string      `db:"sender_email"`      // SenderEmail is the email of the sender user
 	RecipientEmail string      `db:"recipient_email"`   // RecipientEmail is the email of the recipient user
 }
+
+//SenderPhotoID    string      `db:"sender_email"`      // SenderPhotoID is the link to the photo attached to the email, if any.
+//RecipientPhotoID string      `db:"recipient_email"`   // RecipientPhotoID is the link to the photo attached to the email, if any.

@@ -30,10 +30,21 @@ func NewEmailRepository(db *sqlx.DB) *EmailRepository {
 
 func (r *EmailRepository) Add(emailModelCore *domain.Email, requestID string) (int64, *domain.Email, error) {
 	query := `
+<<<<<<< HEAD
 		INSERT INTO email (topic, text, date_of_dispatch, sender_email, recipient_email, read_status, deleted_status, draft_status, reply_to_email_id, flag) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
+=======
+		INSERT INTO email (topic, text, date_of_dispatch, /*photoid,*/ sender_email, recipient_email, read_status, deleted_status, draft_status, reply_to_email_id, flag) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
+>>>>>>> develop
 		RETURNING id
 	`
+
+	/*query := `
+		INSERT INTO profile_email (profile_id, email_id)
+		VALUES ((SELECT id FROM profile WHERE login=$1), $3), ((SELECT id FROM profile WHERE login=$2), $3)
+	`*/
+
 	emailModelDb := converters.EmailConvertCoreInDb(*emailModelCore)
 	format := "2006/01/02 15:04:05"
 	args := []interface{}{emailModelDb.Topic, emailModelDb.Text, time.Now().Format(format), emailModelDb.SenderEmail, emailModelDb.RecipientEmail, emailModelDb.ReadStatus, emailModelDb.Deleted, emailModelDb.DraftStatus, emailModelDb.ReplyToEmailID, emailModelDb.Flag}
