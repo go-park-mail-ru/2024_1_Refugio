@@ -1,8 +1,8 @@
 package delivery_converters
 
 import (
+	sessionCore "mail/internal/microservice/models/domain_models"
 	sessionApi "mail/internal/models/delivery_models"
-	sessionCore "mail/internal/models/domain_models"
 )
 
 // SessionConvertCoreInApi converts a session model from the core package to the API representation.

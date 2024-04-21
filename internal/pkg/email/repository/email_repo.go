@@ -6,9 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/jmoiron/sqlx"
-	domain "mail/internal/models/domain_models"
-	converters "mail/internal/models/repository_converters"
-	database "mail/internal/models/repository_models"
+	domain "mail/internal/microservice/models/domain_models"
+	converters "mail/internal/microservice/models/repository_converters"
+	"mail/internal/microservice/models/repository_models"
 	"mail/internal/pkg/logger"
 	"time"
 )
@@ -70,7 +70,7 @@ func (r *EmailRepository) AddProfileEmail(email_id int64, sender, recipient stri
 func (r *EmailRepository) FindEmail(login string, ctx context.Context) error {
 	query := "SELECT * FROM profile WHERE login = $1"
 	args := []interface{}{login}
-	var userModelDb database.User
+	var userModelDb repository_models.User
 	start := time.Now()
 
 	err := r.DB.Get(&userModelDb, query, login)
@@ -89,7 +89,7 @@ func (r *EmailRepository) GetAllIncoming(login string, offset, limit int, ctx co
 		WHERE recipient_email = $1
 		ORDER BY date_of_dispatch ASC
 	`
-	emailsModelDb := []database.Email{}
+	emailsModelDb := []repository_models.Email{}
 
 	var err error
 	start := time.Now()
@@ -125,7 +125,7 @@ func (r *EmailRepository) GetAllSent(login string, offset, limit int, ctx contex
 		WHERE sender_email = $1
 		ORDER BY date_of_dispatch ASC
 	`
-	emailsModelDb := []database.Email{}
+	emailsModelDb := []repository_models.Email{}
 
 	var err error
 	start := time.Now()
@@ -162,7 +162,7 @@ func (r *EmailRepository) GetByID(id uint64, login string, ctx context.Context) 
 	`
 	args := []interface{}{id, login}
 
-	var emailModelDb database.Email
+	var emailModelDb repository_models.Email
 	start := time.Now()
 	err := r.DB.Get(&emailModelDb, query, int(id), login)
 	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).(string), start, &err, args)

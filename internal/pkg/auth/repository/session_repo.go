@@ -3,17 +3,17 @@ package repository
 import (
 	"context"
 	"fmt"
+	domain "mail/internal/microservice/models/domain_models"
+	converters "mail/internal/microservice/models/repository_converters"
+	database "mail/internal/microservice/models/repository_models"
 	"mail/internal/pkg/logger"
 	"math/rand"
 	"time"
 
 	"github.com/jmoiron/sqlx"
-
-	converters "mail/internal/models/repository_converters"
-
-	domain "mail/internal/models/domain_models"
-	database "mail/internal/models/repository_models"
 )
+
+var requestIDContextKey interface{} = "requestID"
 
 // SessionRepository represents a PostgreSQL implementation of the SessionRepository interface.
 type SessionRepository struct {

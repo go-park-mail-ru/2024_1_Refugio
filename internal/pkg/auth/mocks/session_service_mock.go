@@ -6,7 +6,7 @@ package mocks
 
 import (
 	context "context"
-	domain_models "mail/internal/models/domain_models"
+	"mail/internal/microservice/models/domain_models"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"

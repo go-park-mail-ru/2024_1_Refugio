@@ -8,7 +8,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
-	domain "mail/internal/models/domain_models"
+	domain "mail/internal/microservice/models/domain_models"
 	"mail/internal/pkg/logger"
 	"os"
 	"testing"

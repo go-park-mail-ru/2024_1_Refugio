@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	domain "mail/internal/microservice/models/domain_models"
 	mock "mail/internal/pkg/auth/mocks"
 	"mail/internal/pkg/logger"
 	"os"
 	"testing"
-
-	domain "mail/internal/models/domain_models"
 )
 
 func GetCTX() context.Context {

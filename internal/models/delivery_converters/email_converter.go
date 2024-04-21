@@ -1,8 +1,8 @@
 package delivery_converters
 
 import (
+	emailCore "mail/internal/microservice/models/domain_models"
 	emailApi "mail/internal/models/delivery_models"
-	emailCore "mail/internal/models/domain_models"
 )
 
 // EmailConvertCoreInApi converts an email model from the core package to the API representation.

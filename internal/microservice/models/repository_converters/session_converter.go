@@ -1,8 +1,8 @@
 package repository_converters
 
 import (
-	sessionCore "mail/internal/models/domain_models"
-	sessionDb "mail/internal/models/repository_models"
+	sessionCore "mail/internal/microservice/models/domain_models"
+	sessionDb "mail/internal/microservice/models/repository_models"
 )
 
 // SessionConvertDbInCore converts a session model from database representation to core domain representation.

@@ -2,7 +2,7 @@ package usecase
 
 import (
 	"context"
-	domain "mail/internal/models/domain_models"
+	domain "mail/internal/microservice/models/domain_models"
 	repository "mail/internal/pkg/auth/interface"
 )
 

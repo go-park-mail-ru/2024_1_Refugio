@@ -9,26 +9,27 @@ import "google/protobuf/timestamp.proto";
 // protoc --go_out=. --go-grpc_out=. --go-grpc_opt=paths=source_relative --go_opt=paths=source_relative *.proto
 
 service UserService {
-  rpc GetUserById(UserId) returns(User) {}
+  rpc GetUser(UserId) returns(User) {}
   rpc DeleteUserById(UserId) returns(Status) {}
   rpc UpdateUser(User) returns(User) {}
 }
 
 message UserId {
-  int64 id = 1;
+  uint32 id = 1;
 }
 
 message User {
-  int64 id = 1;
+  uint32 id = 1;
   string firstname = 2;
   string surname = 3;
   string patronymic = 4;
   string gender = 5;
   google.protobuf.Timestamp birthday = 6;
   string login = 7;
-  string avatar = 8;
-  string phone_number = 9;
-  string description = 10;
+  string password = 8;
+  string avatar = 9;
+  string phone_number = 10;
+  string description = 11;
 }
 
 message Status {

@@ -4,7 +4,7 @@ package _interface
 
 import (
 	"context"
-	domain "mail/internal/models/domain_models"
+	domain "mail/internal/microservice/models/domain_models"
 )
 
 // UserRepository represents the interface for working with users.

@@ -1,7 +1,7 @@
 package repository_models
 
 import (
-	domain "mail/internal/models/domain_models"
+	domain "mail/internal/microservice/models/domain_models"
 	"time"
 )
 

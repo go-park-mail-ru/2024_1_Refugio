@@ -3,8 +3,8 @@ package session_test
 import (
 	"errors"
 	"fmt"
+	domain "mail/internal/microservice/models/domain_models"
 	converters "mail/internal/models/delivery_converters"
-	domain "mail/internal/models/domain_models"
 	mock "mail/internal/pkg/auth/mocks"
 	"mail/internal/pkg/logger"
 	session "mail/internal/pkg/session"

@@ -2,6 +2,8 @@ package repository
 
 import (
 	"database/sql"
+	domain "mail/internal/microservice/models/domain_models"
+	"mail/internal/microservice/user/repository"
 	"regexp"
 
 	//"database/sql"
@@ -10,7 +12,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
-	domain "mail/internal/models/domain_models"
 	"time"
 
 	//"regexp"
@@ -39,7 +40,7 @@ func TestCreateSession(t *testing.T) {
 		DB: sqlx.NewDb(mockDB, "sqlmock"),
 	}
 
-	ctx := GetCTX()
+	ctx := repository.GetCTX()
 
 	t.Run("Success", func(t *testing.T) {
 		ID := "10101010"
@@ -90,7 +91,7 @@ func TestGetSessionByID(t *testing.T) {
 		DB: sqlx.NewDb(mockDB, "sqlmock"),
 	}
 
-	ctx := GetCTX()
+	ctx := repository.GetCTX()
 
 	t.Run("Success", func(t *testing.T) {
 		sessionID := "10101010"
@@ -147,7 +148,7 @@ func TestDeleteSessionByID(t *testing.T) {
 		DB: sqlx.NewDb(mockDB, "sqlmock"),
 	}
 
-	ctx := GetCTX()
+	ctx := repository.GetCTX()
 
 	t.Run("Success", func(t *testing.T) {
 		sessionID := "10101010"
@@ -190,7 +191,7 @@ func TestDeleteExpiredSessions(t *testing.T) {
 		DB: sqlx.NewDb(mockDB, "sqlmock"),
 	}
 
-	ctx := GetCTX()
+	ctx := repository.GetCTX()
 
 	t.Run("Success", func(t *testing.T) {
 		queryPattern := regexp.QuoteMeta(`DELETE FROM session WHERE creation_date + life_time * interval '1 second' < now()`)
@@ -229,7 +230,7 @@ func TestGetLoginBySessionID(t *testing.T) {
 		DB: sqlx.NewDb(mockDB, "sqlmock"),
 	}
 
-	ctx := GetCTX()
+	ctx := repository.GetCTX()
 
 	t.Run("Success", func(t *testing.T) {
 		sessionID := "10101010"

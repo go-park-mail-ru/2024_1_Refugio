@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	userRepo "mail/internal/microservice/user/repository"
+	userUc "mail/internal/microservice/user/usecase"
 	"mail/internal/pkg/logger"
 	"net/http"
 	"os"
@@ -26,9 +28,7 @@ import (
 
 	userHand "mail/internal/pkg/auth/delivery/http"
 	sessionRepo "mail/internal/pkg/auth/repository"
-	userRepo "mail/internal/pkg/auth/repository"
 	sessionUc "mail/internal/pkg/auth/usecase"
-	userUc "mail/internal/pkg/auth/usecase"
 	emailHand "mail/internal/pkg/email/delivery/http"
 	emailRepo "mail/internal/pkg/email/repository"
 	emailUc "mail/internal/pkg/email/usecase"

@@ -2,7 +2,7 @@ package _interface
 
 import (
 	"context"
-	emailCore "mail/internal/models/domain_models"
+	emailCore "mail/internal/microservice/models/domain_models"
 )
 
 // EmailUseCase represents the use case for working with emails.

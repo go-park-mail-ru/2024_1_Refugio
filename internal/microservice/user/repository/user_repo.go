@@ -8,14 +8,12 @@ import (
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	"golang.org/x/crypto/bcrypt"
+	domain "mail/internal/microservice/models/domain_models"
+	converters "mail/internal/microservice/models/repository_converters"
+	database "mail/internal/microservice/models/repository_models"
 	"mail/internal/pkg/logger"
 	"math/rand"
 	"time"
-
-	converters "mail/internal/models/repository_converters"
-
-	domain "mail/internal/models/domain_models"
-	database "mail/internal/models/repository_models"
 )
 
 var requestIDContextKey interface{} = "requestID"

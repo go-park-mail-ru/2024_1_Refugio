@@ -3,8 +3,8 @@ package usecase
 import (
 	"context"
 	"fmt"
-	domain "mail/internal/models/domain_models"
-	repository "mail/internal/pkg/auth/interface"
+	"mail/internal/microservice/models/domain_models"
+	repository "mail/internal/microservice/user/interface"
 	"strings"
 )
 
@@ -21,22 +21,22 @@ func NewUserUseCase(repo repository.UserRepository) *UserUseCase {
 }
 
 // GetAllUsers returns all users.
-func (uc *UserUseCase) GetAllUsers(ctx context.Context) ([]*domain.User, error) {
+func (uc *UserUseCase) GetAllUsers(ctx context.Context) ([]*domain_models.User, error) {
 	return uc.repo.GetAll(0, 0, ctx)
 }
 
 // GetUserByID returns the user by its ID.
-func (uc *UserUseCase) GetUserByID(id uint32, ctx context.Context) (*domain.User, error) {
+func (uc *UserUseCase) GetUserByID(id uint32, ctx context.Context) (*domain_models.User, error) {
 	return uc.repo.GetByID(id, ctx)
 }
 
 // GetUserByLogin returns the user by login.
-func (uc *UserUseCase) GetUserByLogin(login, password string, ctx context.Context) (*domain.User, error) {
+func (uc *UserUseCase) GetUserByLogin(login, password string, ctx context.Context) (*domain_models.User, error) {
 	return uc.repo.GetUserByLogin(login, password, ctx)
 }
 
 // CreateUser creates a new user.
-func (uc *UserUseCase) CreateUser(user *domain.User, ctx context.Context) (*domain.User, error) {
+func (uc *UserUseCase) CreateUser(user *domain_models.User, ctx context.Context) (*domain_models.User, error) {
 	return uc.repo.Add(user, ctx)
 }
 
@@ -57,7 +57,7 @@ func (uc *UserUseCase) IsLoginUnique(login string, ctx context.Context) (bool, e
 }
 
 // UpdateUser updates user data based on the provided ID.
-func (uc *UserUseCase) UpdateUser(userNew *domain.User, ctx context.Context) (*domain.User, error) {
+func (uc *UserUseCase) UpdateUser(userNew *domain_models.User, ctx context.Context) (*domain_models.User, error) {
 	userOld, err := uc.repo.GetByID(userNew.ID, ctx)
 	if err != nil {
 		return nil, err
@@ -72,7 +72,7 @@ func (uc *UserUseCase) UpdateUser(userNew *domain.User, ctx context.Context) (*d
 	if strings.TrimSpace(userNew.Patronymic) != "" && userNew.Patronymic != userOld.Patronymic {
 		userOld.Patronymic = userNew.Patronymic
 	}
-	if domain.IsValidGender(userNew.Gender) && userNew.Gender != userOld.Gender {
+	if domain_models.IsValidGender(userNew.Gender) && userNew.Gender != userOld.Gender {
 		userOld.Gender = userNew.Gender
 	}
 	if !userNew.Birthday.Equal(userOld.Birthday) {

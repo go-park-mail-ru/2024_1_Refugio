@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/microcosm-cc/bluemonday"
+	"google.golang.org/grpc"
 	"io"
+	"log"
+	domain "mail/internal/microservice/models/domain_models"
+	"mail/internal/microservice/user/interface"
+	"mail/internal/microservice/user/proto"
 	converters "mail/internal/models/delivery_converters"
 	api "mail/internal/models/delivery_models"
-	domain "mail/internal/models/domain_models"
 	response "mail/internal/models/response"
-	_interface "mail/internal/pkg/auth/interface"
 	domainSession "mail/internal/pkg/session/interface"
 	"math/rand"
 	"net/http"
@@ -29,8 +32,9 @@ var (
 
 // UserHandler handles user-related HTTP requests.
 type UserHandler struct {
-	UserUseCase _interface.UserUseCase
-	Sessions    domainSession.SessionsManager
+	UserUseCase  _interface.UserUseCase
+	Sessions     domainSession.SessionsManager
+	MicroService proto.UserServiceClient
 }
 
 // InitializationUserHandler initializes the user handler with the provided user handler.
@@ -195,6 +199,21 @@ func (uh *UserHandler) GetUserBySession(w http.ResponseWriter, r *http.Request) 
 		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
+
+	conn, err := grpc.Dial("localhost:8001", grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("Failed to dial gRPC server: %v", err)
+	}
+	defer conn.Close()
+
+	userServiceClient := proto.NewUserServiceClient(conn)
+
+	userData2, err := userServiceClient.GetUser(r.Context(), &proto.UserId{Id: sessionUser.UserID})
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+	fmt.Println(userData2)
 
 	userData.Login = sanitizeString(strings.TrimSpace(userData.Login))
 	userData.FirstName = sanitizeString(strings.TrimSpace(userData.FirstName))

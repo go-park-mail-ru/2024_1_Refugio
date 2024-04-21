@@ -1,8 +1,8 @@
 package delivery_converters
 
 import (
+	domain "mail/internal/microservice/models/domain_models"
 	api "mail/internal/models/delivery_models"
-	domain "mail/internal/models/domain_models"
 )
 
 // UserConvertCoreInApi converts a user model from the domain package to the API representation.

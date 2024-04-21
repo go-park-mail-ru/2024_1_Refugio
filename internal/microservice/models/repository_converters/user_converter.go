@@ -1,8 +1,8 @@
 package repository_converters
 
 import (
-	domain "mail/internal/models/domain_models"
-	database "mail/internal/models/repository_models"
+	domain "mail/internal/microservice/models/domain_models"
+	database "mail/internal/microservice/models/repository_models"
 )
 
 // UserConvertDbInCore converts a user model from database representation to core domain representation.

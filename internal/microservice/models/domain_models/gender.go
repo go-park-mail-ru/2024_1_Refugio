@@ -17,3 +17,16 @@ func IsValidGender(gender UserGender) bool {
 		return false
 	}
 }
+
+func GetGender(gender UserGender) string {
+	switch gender {
+	case Male:
+		return "Male"
+	case Female:
+		return "Female"
+	case Other:
+		return "Other"
+	default:
+		return ""
+	}
+}
