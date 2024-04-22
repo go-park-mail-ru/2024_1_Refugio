@@ -5,7 +5,7 @@ import (
 	"fmt"
 	converters "mail/internal/models/delivery_converters"
 	api "mail/internal/models/delivery_models"
-	domain "mail/internal/pkg/auth/interface"
+	domain "mail/internal/pkg/session/interface"
 	"net/http"
 	"time"
 )

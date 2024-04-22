@@ -11,7 +11,6 @@ import (
 	"strconv"
 
 	"mail/internal/microservice/models/proto_converters"
-	"mail/internal/microservice/user/interface"
 	"mail/internal/microservice/user/proto"
 	converters "mail/internal/models/delivery_converters"
 	api "mail/internal/models/delivery_models"
@@ -30,7 +29,6 @@ var (
 
 // UserHandler handles user-related HTTP requests.
 type UserHandler struct {
-	UserUseCase  _interface.UserUseCase
 	Sessions     domainSession.SessionsManager
 	MicroService proto.UserServiceClient
 }
@@ -191,7 +189,7 @@ func (uh *UserHandler) DeleteUserData(w http.ResponseWriter, r *http.Request) {
 		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
-	if !deleted.DeleteStatus {
+	if !deleted.Status {
 		response.HandleError(w, http.StatusInternalServerError, "Failed to delete user data")
 		return
 	}
@@ -312,7 +310,7 @@ func (uh *UserHandler) DeleteUserAvatar(w http.ResponseWriter, r *http.Request) 
 		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
-	if !deleted.DeleteStatus {
+	if !deleted.Status {
 		response.HandleError(w, http.StatusInternalServerError, "Failed to delete user avatar")
 		return
 	}

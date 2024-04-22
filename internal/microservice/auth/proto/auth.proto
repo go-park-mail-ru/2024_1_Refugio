@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+option go_package = "./;proto";
+
+package proto;
+
+import "google/protobuf/timestamp.proto";
+
+// protoc --go_out=. --go-grpc_out=. --go-grpc_opt=paths=source_relative --go_opt=paths=source_relative *.proto
+
+service AuthService {
+  rpc Login(UserLogin) returns(StatusLogin) {}
+  rpc Signup(User) returns(StatusSignup) {}
+  rpc Logout(Session) returns(Empty) {}
+}
+
+message UserLogin {
+  string login = 1;
+  string password = 2;
+}
+
+message StatusLogin {
+  bool login_status = 1;
+}
+
+message User {
+  string firstname = 2;
+  string surname = 3;
+  string patronymic = 4;
+  string gender = 5;
+  google.protobuf.Timestamp birthday = 6;
+  string login = 7;
+  string password = 8;
+  string avatar = 9;
+  string phone_number = 10;
+  string description = 11;
+}
+
+message StatusSignup {
+  bool signup_status = 1;
+}
+
+message Session {
+  string session_id = 1;
+}
+
+message Empty {
+
+}

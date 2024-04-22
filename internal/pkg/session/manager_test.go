@@ -5,9 +5,9 @@ import (
 	"fmt"
 	domain "mail/internal/microservice/models/domain_models"
 	converters "mail/internal/models/delivery_converters"
-	mock "mail/internal/pkg/auth/mocks"
 	"mail/internal/pkg/logger"
 	session "mail/internal/pkg/session"
+	mock "mail/internal/pkg/session/mocks"
 	"net/http/httptest"
 	"os"
 
