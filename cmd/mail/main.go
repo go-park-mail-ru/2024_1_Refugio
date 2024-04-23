@@ -15,7 +15,6 @@ import (
 
 	"github.com/gorilla/mux"
 	_ "github.com/jackc/pgx/stdlib"
-	"github.com/jmoiron/sqlx"
 	"github.com/kataras/requestid"
 	"github.com/rs/cors"
 
@@ -30,8 +29,6 @@ import (
 	session_proto "mail/internal/microservice/session/proto"
 	authHand "mail/internal/pkg/auth/delivery/http"
 	emailHand "mail/internal/pkg/email/delivery/http"
-	emailRepo "mail/internal/pkg/email/repository"
-	emailUc "mail/internal/pkg/email/usecase"
 	userHand "mail/internal/pkg/user/delivery/http"
 
 	_ "mail/docs"
@@ -55,7 +52,7 @@ func main() {
 
 	sessionsManager := initializeSessionsManager()
 	authHandler := initializeAuthHandler(sessionsManager)
-	emailHandler := initializeEmailHandler(db, sessionsManager)
+	emailHandler := initializeEmailHandler(sessionsManager)
 	userHandler := initializeUserHandler(sessionsManager)
 
 	router := setupRouter(authHandler, userHandler, emailHandler, loggerAccess)
@@ -116,13 +113,10 @@ func initializeAuthHandler(sessionsManager *session.SessionsManager) *authHand.A
 	}
 }
 
-func initializeEmailHandler(db *sql.DB, sessionsManager *session.SessionsManager) *emailHand.EmailHandler {
-	emailRepository := emailRepo.NewEmailRepository(sqlx.NewDb(db, "pgx"))
-	emailUseCase := emailUc.NewEmailUseCase(emailRepository)
+func initializeEmailHandler(sessionsManager *session.SessionsManager) *emailHand.EmailHandler {
 
 	return &emailHand.EmailHandler{
-		EmailUseCase: emailUseCase,
-		Sessions:     sessionsManager,
+		Sessions: sessionsManager,
 	}
 }
 

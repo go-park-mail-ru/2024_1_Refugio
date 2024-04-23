@@ -8,19 +8,19 @@ import (
 // EmailRepository represents the interface for working with emails.
 type EmailRepository interface {
 	// GetAll returns all emails incoming from the storage.
-	GetAllIncoming(login string, offset, limit int, ctx context.Context) ([]*domain.Email, error)
+	GetAllIncoming(login string, offset, limit int64, ctx context.Context) ([]*domain.Email, error)
 
 	// GetAll returns all emails sent from the storage.
-	GetAllSent(login string, offset, limit int, ctx context.Context) ([]*domain.Email, error)
+	GetAllSent(login string, offset, limit int64, ctx context.Context) ([]*domain.Email, error)
 
 	// GetByID returns the email by its unique identifier.
 	GetByID(id uint64, login string, ctx context.Context) (*domain.Email, error)
 
 	// Add adds a new email to the storage and returns its assigned unique identifier.
-	Add(email *domain.Email, ctx context.Context) (int64, *domain.Email, error)
+	Add(email *domain.Email, ctx context.Context) (uint64, *domain.Email, error)
 
 	// Add adds a new profile_email
-	AddProfileEmail(email_id int64, sender, recipient string, ctx context.Context) error
+	AddProfileEmail(email_id uint64, sender, recipient string, ctx context.Context) error
 
 	// Update updates the information of an email in the storage based on the provided new email.
 	Update(newEmail *domain.Email, ctx context.Context) (bool, error)
