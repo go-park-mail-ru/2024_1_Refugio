@@ -5,7 +5,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"google.golang.org/grpc/metadata"
 	"log"
+	"mail/internal/models/microservice_ports"
 	"net/http"
 	"os"
 	"time"
@@ -20,15 +22,13 @@ import (
 	"mail/internal/pkg/logger"
 	"mail/internal/pkg/middleware"
 	"mail/internal/pkg/session"
+	"mail/internal/pkg/utils/connect_microservice"
 
 	migrate "github.com/rubenv/sql-migrate"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 
-	userRepo "mail/internal/microservice/user/repository"
-	userUc "mail/internal/microservice/user/usecase"
+	session_proto "mail/internal/microservice/session/proto"
 	authHand "mail/internal/pkg/auth/delivery/http"
-	sessionRepo "mail/internal/pkg/auth/repository"
-	sessionUc "mail/internal/pkg/auth/usecase"
 	emailHand "mail/internal/pkg/email/delivery/http"
 	emailRepo "mail/internal/pkg/email/repository"
 	emailUc "mail/internal/pkg/email/usecase"
@@ -51,14 +51,14 @@ func main() {
 
 	migrateDatabase(db)
 
-	LoggerAcces := initializeLogger()
+	loggerAccess := initializeLogger()
 
-	sessionsManager := initializeSessionsManager(db)
-	authHandler := initializeAuthHandler(db, sessionsManager)
+	sessionsManager := initializeSessionsManager()
+	authHandler := initializeAuthHandler(sessionsManager)
 	emailHandler := initializeEmailHandler(db, sessionsManager)
-	userHandler := initializeUserHandler(db, sessionsManager)
+	userHandler := initializeUserHandler(sessionsManager)
 
-	router := setupRouter(authHandler, userHandler, emailHandler, LoggerAcces)
+	router := setupRouter(authHandler, userHandler, emailHandler, loggerAccess)
 
 	startServer(router)
 }
@@ -101,24 +101,18 @@ func migrateDatabase(db *sql.DB) {
 	}
 }
 
-func initializeSessionsManager(db *sql.DB) *session.SessionsManager {
-	sessionRepository := sessionRepo.NewSessionRepository(sqlx.NewDb(db, "pgx"))
-	sessionUsaCase := sessionUc.NewSessionUseCase(sessionRepository)
-	sessionsManager := session.NewSessionsManager(sessionUsaCase)
+func initializeSessionsManager() *session.SessionsManager {
+	sessionsManager := session.NewSessionsManager()
 	session.InitializationGlobalSeaaionManager(sessionsManager)
 
-	StartSessionCleaner(sessionUsaCase, 24*time.Hour)
+	StartSessionCleaner(24 * time.Hour)
 
 	return sessionsManager
 }
 
-func initializeAuthHandler(db *sql.DB, sessionsManager *session.SessionsManager) *authHand.AuthHandler {
-	userRepository := userRepo.NewUserRepository(sqlx.NewDb(db, "pgx"))
-	userUseCase := userUc.NewUserUseCase(userRepository)
-
+func initializeAuthHandler(sessionsManager *session.SessionsManager) *authHand.AuthHandler {
 	return &authHand.AuthHandler{
-		UserUseCase: userUseCase,
-		Sessions:    sessionsManager,
+		Sessions: sessionsManager,
 	}
 }
 
@@ -132,13 +126,9 @@ func initializeEmailHandler(db *sql.DB, sessionsManager *session.SessionsManager
 	}
 }
 
-func initializeUserHandler(db *sql.DB, sessionsManager *session.SessionsManager) *userHand.UserHandler {
-	userRepository := userRepo.NewUserRepository(sqlx.NewDb(db, "pgx"))
-	userUseCase := userUc.NewUserUseCase(userRepository)
-
+func initializeUserHandler(sessionsManager *session.SessionsManager) *userHand.UserHandler {
 	return &userHand.UserHandler{
-		UserUseCase: userUseCase,
-		Sessions:    sessionsManager,
+		Sessions: sessionsManager,
 	}
 }
 
@@ -158,7 +148,7 @@ func initializeLogger() *middleware.Logger {
 func setupRouter(authHandler *authHand.AuthHandler, userHandler *userHand.UserHandler, emailHandler *emailHand.EmailHandler, logger *middleware.Logger) http.Handler {
 	router := mux.NewRouter()
 
-	auth := setupAuthRouter(authHandler, userHandler, emailHandler, logger)
+	auth := setupAuthRouter(authHandler, emailHandler, logger)
 	router.PathPrefix("/api/v1/auth").Handler(auth)
 
 	logRouter := setupLogRouter(emailHandler, userHandler, logger)
@@ -173,7 +163,7 @@ func setupRouter(authHandler *authHand.AuthHandler, userHandler *userHand.UserHa
 	return logger.AccessLogMiddleware(router)
 }
 
-func setupAuthRouter(authHandler *authHand.AuthHandler, userHandler *userHand.UserHandler, emailHandler *emailHand.EmailHandler, logger *middleware.Logger) http.Handler {
+func setupAuthRouter(authHandler *authHand.AuthHandler, emailHandler *emailHand.EmailHandler, logger *middleware.Logger) http.Handler {
 	auth := mux.NewRouter().PathPrefix("/api/v1/auth").Subrouter()
 	auth.Use(logger.AccessLogMiddleware, middleware.PanicMiddleware)
 
@@ -226,7 +216,7 @@ func startServer(router http.Handler) {
 	}
 }
 
-func StartSessionCleaner(sessionCleaner *sessionUc.SessionUseCase, interval time.Duration) {
+func StartSessionCleaner(interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	go func() {
 		for {
@@ -241,10 +231,27 @@ func StartSessionCleaner(sessionCleaner *sessionUc.SessionUseCase, interval time
 				c := context.WithValue(context.Background(), "logger", logger.InitializationBdLog(f))
 				ctx := context.WithValue(c, "requestID", "DeleteExpiredSessionsNULL")
 
-				err = sessionCleaner.CleanupExpiredSessions(ctx)
+				conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.SessionService))
+				if err != nil {
+					fmt.Printf("connection fail")
+					conn.Close()
+					return
+				}
+
+				sessionServiceClient := session_proto.NewSessionServiceClient(conn)
+				req, err := sessionServiceClient.CleanupExpiredSessions(
+					metadata.NewOutgoingContext(ctx,
+						metadata.New(map[string]string{"requestID": ctx.Value("requestID").(string)})),
+					&session_proto.CleanupExpiredSessionsRequest{},
+				)
 				if err != nil {
 					fmt.Printf("Error cleaning expired sessions: %v\n", err)
+					conn.Close()
+					return
 				}
+				fmt.Println(req)
+
+				conn.Close()
 			}
 		}
 	}()
