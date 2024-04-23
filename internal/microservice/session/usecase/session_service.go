@@ -3,7 +3,7 @@ package usecase
 import (
 	"context"
 	domain "mail/internal/microservice/models/domain_models"
-	repository "mail/internal/pkg/session/interface"
+	repository "mail/internal/microservice/session/interface"
 )
 
 // SessionUseCase is a concrete implementation of the SessionUseCase interface.

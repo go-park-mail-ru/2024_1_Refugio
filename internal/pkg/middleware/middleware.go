@@ -62,7 +62,7 @@ func (log *Logger) AccessLogMiddleware(next http.Handler) http.Handler {
 		}
 		defer f.Close()
 
-		c := context.WithValue(r.Context(), "logger", logger.InitializationBdLog(f))
+		c := context.WithValue(r.Context(), "logger" /*logger.InitializationBdLog(f)*/, "logger")
 		ctx := context.WithValue(c, "requestID", id)
 		req := r.WithContext(ctx)
 

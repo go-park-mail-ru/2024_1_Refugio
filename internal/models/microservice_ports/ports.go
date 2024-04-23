@@ -3,9 +3,10 @@ package microservice_ports
 type MicroServicePorts string
 
 const (
-	UserService  MicroServicePorts = "8001"
-	EmailService MicroServicePorts = "8002"
-	AuthService  MicroServicePorts = "8003"
+	UserService    MicroServicePorts = "8001"
+	EmailService   MicroServicePorts = "8002"
+	SessionService MicroServicePorts = "8003"
+	AuthService    MicroServicePorts = "8004"
 )
 
 // GetPorts returns the port number associated with a MicroServicePorts enum value.
@@ -15,8 +16,10 @@ func GetPorts(gender MicroServicePorts) string {
 		return "8001"
 	case EmailService:
 		return "8002"
-	case AuthService:
+	case SessionService:
 		return "8003"
+	case AuthService:
+		return "8004"
 	default:
 		return ""
 	}

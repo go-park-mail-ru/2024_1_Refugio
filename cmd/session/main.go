@@ -11,11 +11,11 @@ import (
 	"time"
 
 	"mail/internal/microservice/interceptors"
-	"mail/internal/microservice/user/proto"
+	"mail/internal/microservice/session/proto"
 
-	userRepo "mail/internal/microservice/user/repository"
-	grpcUser "mail/internal/microservice/user/server"
-	userUc "mail/internal/microservice/user/usecase"
+	sessionRepo "mail/internal/microservice/session/repository"
+	grpcSession "mail/internal/microservice/session/server"
+	sessionUc "mail/internal/microservice/session/usecase"
 )
 
 func main() {
@@ -24,9 +24,9 @@ func main() {
 	db := initializeDatabase()
 	defer db.Close()
 
-	userGrpc := initializeUser(db)
+	sessionGrpc := initializeSession(db)
 
-	startServer(userGrpc)
+	startServer(sessionGrpc)
 }
 
 func settingTime() {
@@ -56,17 +56,17 @@ func initializeDatabase() *sql.DB {
 	return db
 }
 
-func initializeUser(db *sql.DB) *grpcUser.UserServer {
-	userRepository := userRepo.NewUserRepository(sqlx.NewDb(db, "pgx"))
-	userUseCase := userUc.NewUserUseCase(userRepository)
+func initializeSession(db *sql.DB) *grpcSession.SessionServer {
+	sessionRepository := sessionRepo.NewSessionRepository(sqlx.NewDb(db, "pgx"))
+	sessionUseCase := sessionUc.NewSessionUseCase(sessionRepository)
 
-	return grpcUser.NewUserServer(userUseCase)
+	return grpcSession.NewSessionServer(sessionUseCase)
 }
 
-func startServer(userGrpc *grpcUser.UserServer) {
-	listen, err := net.Listen("tcp", ":8001")
+func startServer(sessionGrpc *grpcSession.SessionServer) {
+	listen, err := net.Listen("tcp", ":8003")
 	if err != nil {
-		log.Fatalf("Cannot listen port: %s. Err: %s", "8001", err.Error())
+		log.Fatalf("Cannot listen port: %s. Err: %s", "8003", err.Error())
 	}
 
 	opts := []grpc.ServerOption{
@@ -76,12 +76,12 @@ func startServer(userGrpc *grpcUser.UserServer) {
 	}
 	grpcServer := grpc.NewServer(opts...)
 
-	proto.RegisterUserServiceServer(grpcServer, userGrpc)
+	proto.RegisterSessionServiceServer(grpcServer, sessionGrpc)
 
-	fmt.Printf("The server is running in port 8001\n")
+	fmt.Printf("The server is running in port 8003\n")
 
 	err = grpcServer.Serve(listen)
 	if err != nil {
-		log.Fatalf("Cannot listen port: %s. Err: %s", "8001", err.Error())
+		log.Fatalf("Cannot listen port: %s. Err: %s", "8003", err.Error())
 	}
 }

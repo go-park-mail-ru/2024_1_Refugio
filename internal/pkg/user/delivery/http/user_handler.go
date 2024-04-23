@@ -29,8 +29,7 @@ var (
 
 // UserHandler handles user-related HTTP requests.
 type UserHandler struct {
-	Sessions     domainSession.SessionsManager
-	MicroService proto.UserServiceClient
+	Sessions domainSession.SessionsManager
 }
 
 // InitializationUserHandler initializes the user handler with the provided user handler.

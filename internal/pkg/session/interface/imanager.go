@@ -9,6 +9,9 @@ import (
 
 // SessionsManager represents the interface for managing user sessions.
 type SessionsManager interface {
+	// SetSession set the session in the request.
+	SetSession(sessionId string, w http.ResponseWriter, r *http.Request, ctx context.Context) error
+
 	// GetSession retrieves the session from the request and sanitizes it.
 	GetSession(r *http.Request, ctx context.Context) *api.Session
 

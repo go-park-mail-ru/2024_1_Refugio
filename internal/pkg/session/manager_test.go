@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 	domain "mail/internal/microservice/models/domain_models"
+	mock "mail/internal/microservice/session/mocks"
 	converters "mail/internal/models/delivery_converters"
 	"mail/internal/pkg/logger"
 	session "mail/internal/pkg/session"
-	mock "mail/internal/pkg/session/mocks"
 	"net/http/httptest"
 	"os"
 

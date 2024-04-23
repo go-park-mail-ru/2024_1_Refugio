@@ -6,17 +6,17 @@ import (
 	"strings"
 
 	converters "mail/internal/microservice/models/proto_converters"
+	usecase "mail/internal/microservice/user/interface"
 	"mail/internal/microservice/user/proto"
-	"mail/internal/microservice/user/usecase"
 	"mail/internal/pkg/utils/sanitize"
 )
 
 type UserServer struct {
 	proto.UnimplementedUserServiceServer
-	UserUseCase *usecase.UserUseCase
+	UserUseCase usecase.UserUseCase
 }
 
-func NewUserServer(userUseCase *usecase.UserUseCase) *UserServer {
+func NewUserServer(userUseCase usecase.UserUseCase) *UserServer {
 	return &UserServer{UserUseCase: userUseCase}
 }
 
@@ -154,4 +154,24 @@ func (us *UserServer) DeleteUserAvatar(ctx context.Context, input *proto.UserId)
 	}
 
 	return &proto.Status{Status: true}, nil
+}
+
+// CreateUser creates user.
+func (us *UserServer) CreateUser(ctx context.Context, input *proto.User) (*proto.User, error) {
+	userDomain := converters.UserConvertProtoInCore(*input)
+
+	userDomain.Login = sanitize.SanitizeString(userDomain.Login)
+	userDomain.FirstName = sanitize.SanitizeString(userDomain.FirstName)
+	userDomain.Surname = sanitize.SanitizeString(userDomain.Surname)
+	userDomain.Patronymic = sanitize.SanitizeString(userDomain.Patronymic)
+	userDomain.AvatarID = sanitize.SanitizeString(userDomain.AvatarID)
+	userDomain.PhoneNumber = sanitize.SanitizeString(userDomain.PhoneNumber)
+	userDomain.Description = sanitize.SanitizeString(userDomain.Description)
+
+	user, err := us.UserUseCase.CreateUser(userDomain, ctx)
+	if err != nil {
+		return nil, fmt.Errorf("user with login %s create fail", userDomain.Login)
+	}
+
+	return converters.UserConvertCoreInProto(*user), nil
 }

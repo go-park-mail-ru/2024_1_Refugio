@@ -17,6 +17,7 @@ service UserService {
   rpc UpdateUser(User) returns(User) {}
   rpc UploadUserAvatar(UserAvatar) returns(Empty) {}
   rpc DeleteUserAvatar(UserId) returns(Status) {}
+  rpc CreateUser(User) returns(User) {}
 }
 
 message UserId {
