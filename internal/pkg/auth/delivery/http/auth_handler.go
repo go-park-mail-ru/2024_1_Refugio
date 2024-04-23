@@ -2,16 +2,19 @@ package http
 
 import (
 	"encoding/json"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"net/http"
 
+	"mail/internal/models/microservice_ports"
+	"mail/internal/pkg/utils/connect_microservice"
+	"mail/internal/pkg/utils/sanitize"
+
+	auth_proto "mail/internal/microservice/auth/proto"
 	domain "mail/internal/microservice/models/domain_models"
-	"mail/internal/microservice/user/interface"
-	"mail/internal/microservice/user/proto"
-	converters "mail/internal/models/delivery_converters"
 	api "mail/internal/models/delivery_models"
 	response "mail/internal/models/response"
 	domainSession "mail/internal/pkg/session/interface"
-	"mail/internal/pkg/utils/sanitize"
 	validUtil "mail/internal/pkg/utils/validators"
 )
 
@@ -22,9 +25,7 @@ var (
 
 // AuthHandler handles user-related HTTP requests.
 type AuthHandler struct {
-	UserUseCase  _interface.UserUseCase
-	Sessions     domainSession.SessionsManager
-	MicroService proto.UserServiceClient
+	Sessions domainSession.SessionsManager
 }
 
 // InitializationAuthHandler initializes the user handler with the provided user handler.
@@ -65,13 +66,25 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ourUser, err := ah.UserUseCase.GetUserByLogin(credentials.Login, credentials.Password, r.Context())
+	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.AuthService))
 	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "connection fail")
+		return
+	}
+	defer conn.Close()
+
+	authServiceClient := auth_proto.NewAuthServiceClient(conn)
+	sessionId, errStatus := authServiceClient.Login(
+		metadata.NewOutgoingContext(r.Context(),
+			metadata.New(map[string]string{"requestID": r.Context().Value("requestID").(string)})),
+		&auth_proto.LoginRequest{Login: credentials.Login, Password: credentials.Password},
+	)
+	if errStatus != nil {
 		response.HandleError(w, http.StatusUnauthorized, "Login failed")
 		return
 	}
 
-	_, er := ah.Sessions.Create(w, ourUser.ID, r.Context())
+	er := ah.Sessions.SetSession(sessionId.SessionId, w, r, r.Context())
 	if er != nil {
 		response.HandleError(w, http.StatusInternalServerError, "Failed to create session")
 		return
@@ -118,14 +131,30 @@ func (ah *AuthHandler) Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	loginUnique, _ := ah.UserUseCase.IsLoginUnique(newUser.Login, r.Context())
-	if !loginUnique {
-		response.HandleError(w, http.StatusBadRequest, "Such a login already exists")
+	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.AuthService))
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "connection fail")
 		return
 	}
+	defer conn.Close()
 
-	_, er := ah.UserUseCase.CreateUser(converters.UserConvertApiInCore(newUser), r.Context())
-	if er != nil {
+	authServiceClient := auth_proto.NewAuthServiceClient(conn)
+	_, errStatus := authServiceClient.Signup(
+		metadata.NewOutgoingContext(r.Context(),
+			metadata.New(map[string]string{"requestID": r.Context().Value("requestID").(string)})),
+		&auth_proto.SignupRequest{Login: newUser.Login,
+			Password:    newUser.Password,
+			Firstname:   newUser.FirstName,
+			Surname:     newUser.Surname,
+			Patronymic:  newUser.Patronymic,
+			Birthday:    timestamppb.New(newUser.Birthday),
+			Gender:      domain.GetGender(newUser.Gender),
+			Avatar:      newUser.AvatarID,
+			Description: newUser.Description,
+			PhoneNumber: newUser.PhoneNumber,
+		},
+	)
+	if errStatus != nil {
 		response.HandleError(w, http.StatusInternalServerError, "Failed to add user")
 		return
 	}

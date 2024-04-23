@@ -6,7 +6,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	domain "mail/internal/microservice/models/domain_models"
-	mock "mail/internal/pkg/auth/mocks"
+	mock "mail/internal/microservice/session/mocks"
 	"mail/internal/pkg/logger"
 	"os"
 	"testing"

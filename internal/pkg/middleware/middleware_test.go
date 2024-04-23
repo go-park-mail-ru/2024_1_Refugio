@@ -9,7 +9,7 @@ import (
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 	domain "mail/internal/microservice/models/domain_models"
-	mock "mail/internal/pkg/auth/mocks"
+	mock "mail/internal/microservice/session/mocks"
 	"mail/internal/pkg/logger"
 	"mail/internal/pkg/session"
 	"net/http"
