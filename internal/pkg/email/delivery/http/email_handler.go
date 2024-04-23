@@ -4,6 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/microcosm-cc/bluemonday"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	emailUsecase "mail/internal/microservice/email/interface"
+	"mail/internal/microservice/email/proto"
+	"mail/internal/microservice/models/proto_converters"
+	"mail/internal/models/microservice_ports"
+	"mail/internal/pkg/utils/connect_microservice"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -11,8 +18,7 @@ import (
 	converters "mail/internal/models/delivery_converters"
 
 	emailApi "mail/internal/models/delivery_models"
-	response "mail/internal/models/response"
-	emailUsecase "mail/internal/pkg/email/interface"
+	"mail/internal/models/response"
 	domainSession "mail/internal/pkg/session/interface"
 
 	"github.com/gorilla/mux"
@@ -60,14 +66,27 @@ func (h *EmailHandler) Incoming(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	emails, err := h.EmailUseCase.GetAllEmailsIncoming(login, 0, 0, r.Context())
+	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.EmailService))
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+	defer conn.Close()
+
+	emailServiceClient := proto.NewEmailServiceClient(conn)
+	emailDataProto, err := emailServiceClient.GetAllIncoming(
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		&proto.LoginOffsetLimit{Login: login, Offset: 0, Limit: 0},
+	)
 	if err != nil {
 		response.HandleError(w, http.StatusNotFound, fmt.Sprintf("DB error: %s", err.Error()))
 		return
 	}
 
-	emailsApi := make([]*emailApi.Email, 0, len(emails))
-	for _, email := range emails {
+	emailsCore := proto_converters.EmailsConvertProtoInCore(emailDataProto)
+
+	emailsApi := make([]*emailApi.Email, 0, len(emailsCore))
+	for _, email := range emailsCore {
 		emailsApi = append(emailsApi, converters.EmailConvertCoreInApi(*email))
 	}
 
@@ -98,14 +117,27 @@ func (h *EmailHandler) Sent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	emails, err := h.EmailUseCase.GetAllEmailsSent(login, 0, 0, r.Context())
+	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.EmailService))
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+	defer conn.Close()
+
+	emailServiceClient := proto.NewEmailServiceClient(conn)
+	emailDataProto, err := emailServiceClient.GetAllSent(
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		&proto.LoginOffsetLimit{Login: login, Offset: 0, Limit: 0},
+	)
 	if err != nil {
 		response.HandleError(w, http.StatusNotFound, fmt.Sprintf("DB error: %s", err.Error()))
 		return
 	}
 
-	emailsApi := make([]*emailApi.Email, 0, len(emails))
-	for _, email := range emails {
+	emailsCore := proto_converters.EmailsConvertProtoInCore(emailDataProto)
+
+	emailsApi := make([]*emailApi.Email, 0, len(emailsCore))
+	for _, email := range emailsCore {
 		emailsApi = append(emailsApi, converters.EmailConvertCoreInApi(*email))
 	}
 
@@ -144,13 +176,25 @@ func (h *EmailHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	email, err := h.EmailUseCase.GetEmailByID(id, login, r.Context())
+	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.EmailService))
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+	defer conn.Close()
+
+	emailServiceClient := proto.NewEmailServiceClient(conn)
+	emailDataProto, err := emailServiceClient.GetEmailByID(
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		&proto.EmailIdAndLogin{Id: id, Login: login},
+	)
 	if err != nil {
 		response.HandleError(w, http.StatusNotFound, "Email not found")
 		return
 	}
+	emailData := proto_converters.EmailConvertProtoInCore(*emailDataProto)
 
-	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*email)})
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*emailData)})
 }
 
 // Send adds a new email message.
@@ -199,19 +243,48 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		email_id, email, err := h.EmailUseCase.CreateEmail(converters.EmailConvertApiInCore(newEmail), r.Context())
+		conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.EmailService))
+		if err != nil {
+			response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+			return
+		}
+		defer conn.Close()
+
+		emailServiceClient := proto.NewEmailServiceClient(conn)
+		emailDataProto, err := emailServiceClient.CreateEmail(
+			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+			&proto.Email{
+				Id:             newEmail.ID,
+				Topic:          newEmail.Topic,
+				Text:           newEmail.Text,
+				PhotoID:        newEmail.PhotoID,
+				ReadStatus:     newEmail.ReadStatus,
+				Flag:           newEmail.Flag,
+				Deleted:        newEmail.Deleted,
+				DateOfDispatch: timestamppb.New(newEmail.DateOfDispatch),
+				ReplyToEmailID: newEmail.ReplyToEmailID,
+				DraftStatus:    newEmail.DraftStatus,
+				SenderEmail:    newEmail.SenderEmail,
+				RecipientEmail: newEmail.RecipientEmail,
+			},
+		)
+		if err != nil {
+			response.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
+			return
+		}
+		emailData := proto_converters.EmailConvertProtoInCore(*emailDataProto.Email)
+		emailData.ID = emailDataProto.Id
+
+		_, err = emailServiceClient.CreateProfileEmail(
+			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+			&proto.IdSenderRecipient{Id: emailData.ID, Sender: emailData.SenderEmail, Recipient: emailData.RecipientEmail},
+		)
 		if err != nil {
 			response.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
 			return
 		}
 
-		err = h.EmailUseCase.CreateProfileEmail(email_id, sender, recipient, r.Context())
-		if err != nil {
-			response.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
-			return
-		}
-
-		response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*email)})
+		response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*emailData)})
 		return
 	case isValidMailhubFormat(sender) == true && isValidMailhubFormat(recipient) == false:
 		/*email_id, email, err := h.EmailUseCase.CreateEmail(converters.EmailConvertApiInCore(newEmail))
@@ -245,14 +318,6 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 		response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*email)})
 		return
 	}
-
-	/*email, err := h.EmailUseCase.CreateEmail(converters.EmailConvertApiInCore(newEmail))
-	if err != nil {
-		delivery.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
-		return
-	}
-
-	delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*email)})*/
 }
 
 // Update updates an existing email message.
@@ -301,13 +366,37 @@ func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	okSuccess, err := h.EmailUseCase.UpdateEmail(converters.EmailConvertApiInCore(updatedEmail), r.Context())
+	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.EmailService))
 	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+	defer conn.Close()
+
+	emailServiceClient := proto.NewEmailServiceClient(conn)
+	emailDataProto, err := emailServiceClient.UpdateEmail(
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		&proto.Email{
+			Id:             updatedEmail.ID,
+			Topic:          updatedEmail.Topic,
+			Text:           updatedEmail.Text,
+			PhotoID:        updatedEmail.PhotoID,
+			ReadStatus:     updatedEmail.ReadStatus,
+			Flag:           updatedEmail.Flag,
+			Deleted:        updatedEmail.Deleted,
+			DateOfDispatch: timestamppb.New(updatedEmail.DateOfDispatch),
+			ReplyToEmailID: updatedEmail.ReplyToEmailID,
+			DraftStatus:    updatedEmail.DraftStatus,
+			SenderEmail:    updatedEmail.SenderEmail,
+			RecipientEmail: updatedEmail.RecipientEmail,
+		},
+	)
+	if err != nil || !emailDataProto.Status {
 		response.HandleError(w, http.StatusInternalServerError, "Failed to update email message")
 		return
 	}
 
-	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": okSuccess})
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": emailDataProto.Status})
 }
 
 // Delete deletes an email message.
@@ -342,13 +431,24 @@ func (h *EmailHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	okSuccess, err := h.EmailUseCase.DeleteEmail(id, login, r.Context())
+	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.EmailService))
 	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+	defer conn.Close()
+
+	emailServiceClient := proto.NewEmailServiceClient(conn)
+	emailDataProto, err := emailServiceClient.DeleteEmail(
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		&proto.LoginWithID{Id: id, Login: login},
+	)
+	if err != nil || !emailDataProto.Status {
 		response.HandleError(w, http.StatusInternalServerError, "Failed to delete email message")
 		return
 	}
 
-	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": okSuccess})
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": emailDataProto.Status})
 }
 
 func (h *EmailHandler) SendFromAnotherDomain(w http.ResponseWriter, r *http.Request) {

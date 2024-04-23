@@ -2,8 +2,8 @@ package usecase
 
 import (
 	"context"
+	repository "mail/internal/microservice/email/interface"
 	domain "mail/internal/microservice/models/domain_models"
-	repository "mail/internal/pkg/email/interface"
 )
 
 // EmailUseCase represents the use case for working with emails.
@@ -19,12 +19,12 @@ func NewEmailUseCase(repo repository.EmailRepository) *EmailUseCase {
 }
 
 // GetAllEmails returns all emails incoming.
-func (uc *EmailUseCase) GetAllEmailsIncoming(login string, offset, limit int, ctx context.Context) ([]*domain.Email, error) {
+func (uc *EmailUseCase) GetAllEmailsIncoming(login string, offset, limit int64, ctx context.Context) ([]*domain.Email, error) {
 	return uc.repo.GetAllIncoming(login, offset, limit, ctx)
 }
 
 // GetAllEmails returns all emails sent.
-func (uc *EmailUseCase) GetAllEmailsSent(login string, offset, limit int, ctx context.Context) ([]*domain.Email, error) {
+func (uc *EmailUseCase) GetAllEmailsSent(login string, offset, limit int64, ctx context.Context) ([]*domain.Email, error) {
 	return uc.repo.GetAllSent(login, offset, limit, ctx)
 }
 
@@ -34,12 +34,12 @@ func (uc *EmailUseCase) GetEmailByID(id uint64, login string, ctx context.Contex
 }
 
 // CreateEmail creates a new email.
-func (uc *EmailUseCase) CreateEmail(newEmail *domain.Email, ctx context.Context) (int64, *domain.Email, error) {
+func (uc *EmailUseCase) CreateEmail(newEmail *domain.Email, ctx context.Context) (uint64, *domain.Email, error) {
 	return uc.repo.Add(newEmail, ctx)
 }
 
 // CreateProfileEmail creates a new profile_email
-func (uc *EmailUseCase) CreateProfileEmail(email_id int64, sender, recipient string, ctx context.Context) error {
+func (uc *EmailUseCase) CreateProfileEmail(email_id uint64, sender, recipient string, ctx context.Context) error {
 	return uc.repo.AddProfileEmail(email_id, sender, recipient, ctx)
 }
 
