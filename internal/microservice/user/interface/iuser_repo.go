@@ -26,4 +26,10 @@ type UserRepository interface {
 
 	// Delete removes the user from the storage by its unique identifier.
 	Delete(id uint32, ctx context.Context) (bool, error)
+
+	// AddAvatar adds a new user avatar to the repository and associates it with the profile.
+	AddAvatar(id uint32, fileID, fileType string, ctx context.Context) (bool, error)
+
+	// DeleteAvatarByUserID deletes a user's photo and an entry from the file table by its ID in one request.
+	DeleteAvatarByUserID(userID uint32, ctx context.Context) error
 }

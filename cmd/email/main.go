@@ -78,7 +78,7 @@ func startServer(emailGrpc *grpcEmail.EmailServer) {
 
 	proto.RegisterEmailServiceServer(grpcServer, emailGrpc)
 
-	fmt.Printf("The server is running\n")
+	fmt.Printf("The server is running  in port 8002\n")
 
 	err = grpcServer.Serve(listen)
 	if err != nil {

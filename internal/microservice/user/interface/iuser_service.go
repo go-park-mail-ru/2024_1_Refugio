@@ -27,9 +27,12 @@ type UserUseCase interface {
 	// UpdateUser updates user data based on the provided ID.
 	UpdateUser(userNew *domain.User, ctx context.Context) (*domain.User, error)
 
-	// DeleteUserAvatar updates user avatar based on the provided ID.
-	DeleteUserAvatar(userNew *domain.User, ctx context.Context) (*domain.User, error)
-
 	// DeleteUserByID deletes the user with the given ID.
 	DeleteUserByID(id uint32, ctx context.Context) (bool, error)
+
+	// AddAvatar adds a new user avatar.
+	AddAvatar(id uint32, fileID string, ctx context.Context) (bool, error)
+
+	// DeleteAvatarByUserID deletes a user's photo.
+	DeleteAvatarByUserID(userID uint32, ctx context.Context) error
 }

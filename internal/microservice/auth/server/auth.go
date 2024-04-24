@@ -51,7 +51,7 @@ func (as *AuthServer) Login(ctx context.Context, input *proto.LoginRequest) (*pr
 	user, errLogin := userServiceClient.GetUserByLogin(
 		metadata.NewOutgoingContext(ctx,
 			metadata.New(map[string]string{"requestID": value[0]})),
-		&user_proto.UserLogin{Login: input.Login, Password: input.Password},
+		&user_proto.GetUserByLoginRequest{Login: input.Login, Password: input.Password},
 	)
 	if errLogin != nil {
 		return &proto.LoginReply{LoginStatus: false}, fmt.Errorf("login failed")
@@ -67,7 +67,7 @@ func (as *AuthServer) Login(ctx context.Context, input *proto.LoginRequest) (*pr
 	session, errStatus := sessionServiceClient.CreateSession(
 		metadata.NewOutgoingContext(ctx,
 			metadata.New(map[string]string{"requestID": value[0]})),
-		&session_proto.CreateSessionRequest{Session: &session_proto.Session{UserId: user.Id,
+		&session_proto.CreateSessionRequest{Session: &session_proto.Session{UserId: user.User.Id,
 			Device:   "",
 			LifeTime: 60 * 60 * 24},
 		},
@@ -114,7 +114,7 @@ func (as *AuthServer) Signup(ctx context.Context, input *proto.SignupRequest) (*
 	_, errLogin := userServiceClient.IsLoginUnique(
 		metadata.NewOutgoingContext(ctx,
 			metadata.New(map[string]string{"requestID": value[0]})),
-		&user_proto.Login{Login: input.Login},
+		&user_proto.IsLoginUniqueRequest{Login: input.Login},
 	)
 	if errLogin != nil {
 		return nil, fmt.Errorf("such a login already exists")
@@ -123,7 +123,8 @@ func (as *AuthServer) Signup(ctx context.Context, input *proto.SignupRequest) (*
 	_, errCreate := userServiceClient.CreateUser(
 		metadata.NewOutgoingContext(ctx,
 			metadata.New(map[string]string{"requestID": value[0]})),
-		&user_proto.User{Login: input.Login,
+		&user_proto.CreateUserRequest{User: &user_proto.User{
+			Login:       input.Login,
 			Password:    input.Password,
 			Firstname:   input.Firstname,
 			Surname:     input.Surname,
@@ -132,7 +133,8 @@ func (as *AuthServer) Signup(ctx context.Context, input *proto.SignupRequest) (*
 			Gender:      input.Gender,
 			Avatar:      input.Avatar,
 			PhoneNumber: input.PhoneNumber,
-			Description: input.Description},
+			Description: input.Description,
+		}},
 	)
 	if errCreate != nil {
 		return nil, fmt.Errorf("failed to add user")

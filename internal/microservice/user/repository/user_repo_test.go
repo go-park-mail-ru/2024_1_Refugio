@@ -18,7 +18,7 @@ import (
 func GetCTX() context.Context {
 	requestID := "testID"
 
-	f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	f, err := os.OpenFile("logTest.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		fmt.Println("Failed to create logfile" + "log.txt")
 	}
@@ -181,7 +181,7 @@ func TestAddUser(t *testing.T) {
 		}
 
 		mock.ExpectExec(`INSERT INTO profile`).
-			WithArgs(user.Login, user.Password, user.FirstName, user.Surname, user.Patronymic, user.Gender, user.Birthday, sqlmock.AnyArg(), user.AvatarID, user.PhoneNumber, user.Description).
+			WithArgs(user.Login, user.Password, user.FirstName, user.Surname, user.Patronymic, user.Gender, user.Birthday, sqlmock.AnyArg(), user.PhoneNumber, user.Description).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		createUser, err := repo.Add(user, ctx)
@@ -204,12 +204,13 @@ func TestAddUser(t *testing.T) {
 		}
 
 		mock.ExpectExec(`INSERT INTO profile`).
-			WithArgs(user.Login, user.Password, user.FirstName, user.Surname, user.Patronymic, user.Gender, user.Birthday, sqlmock.AnyArg(), user.AvatarID, user.PhoneNumber, user.Description).
+			WithArgs(user.Login, user.Password, user.FirstName, user.Surname, user.Patronymic, user.Gender, user.Birthday, sqlmock.AnyArg(), user.PhoneNumber, user.Description).
 			WillReturnError(fmt.Errorf("failed to insert user"))
 
+		var userFail *domain.User
 		userRes, err := repo.Add(user, ctx)
 		assert.Error(t, err)
-		assert.Equal(t, &domain.User{}, userRes)
+		assert.Equal(t, userFail, userRes)
 	})
 }
 
@@ -243,7 +244,7 @@ func TestUpdateUser(t *testing.T) {
 		}
 
 		mock.ExpectExec(`UPDATE profile`).
-			WithArgs(newUser.FirstName, newUser.Surname, newUser.Patronymic, newUser.Gender, newUser.Birthday, newUser.AvatarID, newUser.PhoneNumber, newUser.Description, newUser.ID).
+			WithArgs(newUser.FirstName, newUser.Surname, newUser.Patronymic, newUser.Gender, newUser.Birthday, newUser.PhoneNumber, newUser.Description, newUser.ID).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
 		updated, err := repo.Update(newUser, ctx)
@@ -266,7 +267,7 @@ func TestUpdateUser(t *testing.T) {
 		}
 
 		mock.ExpectExec(`UPDATE profile`).
-			WithArgs(newUser.FirstName, newUser.Surname, newUser.Patronymic, newUser.Gender, newUser.Birthday, newUser.AvatarID, newUser.PhoneNumber, newUser.Description, newUser.ID).
+			WithArgs(newUser.FirstName, newUser.Surname, newUser.Patronymic, newUser.Gender, newUser.Birthday, newUser.PhoneNumber, newUser.Description, newUser.ID).
 			WillReturnResult(sqlmock.NewResult(0, 0))
 
 		updated, err := repo.Update(newUser, ctx)
@@ -289,7 +290,7 @@ func TestUpdateUser(t *testing.T) {
 		}
 
 		mock.ExpectExec(`UPDATE profile`).
-			WithArgs(newUser.FirstName, newUser.Surname, newUser.Patronymic, newUser.Gender, newUser.Birthday, newUser.AvatarID, newUser.PhoneNumber, newUser.Description, newUser.ID).
+			WithArgs(newUser.FirstName, newUser.Surname, newUser.Patronymic, newUser.Gender, newUser.Birthday, newUser.PhoneNumber, newUser.Description, newUser.ID).
 			WillReturnError(fmt.Errorf("database error"))
 
 		updated, err := repo.Update(newUser, ctx)
