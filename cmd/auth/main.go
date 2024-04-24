@@ -6,6 +6,7 @@ import (
 	"google.golang.org/grpc"
 	"log"
 	"net"
+	"os"
 	"time"
 
 	"mail/internal/microservice/auth/proto"
@@ -19,7 +20,9 @@ func main() {
 
 	authGrpc := initializeSession()
 
-	startServer(authGrpc)
+	loggerInterceptorAccess := initializationInterceptorLogger()
+
+	startServer(authGrpc, loggerInterceptorAccess)
 }
 
 func settingTime() {
@@ -35,7 +38,20 @@ func initializeSession() *grpcAuth.AuthServer {
 	return grpcAuth.NewAuthServer()
 }
 
-func startServer(authGrpc *grpcAuth.AuthServer) {
+func initializationInterceptorLogger() *interceptors.Logger {
+	f, err := os.OpenFile("logInterEmail.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		fmt.Println("Failed to create logfile" + "log.txt")
+	}
+
+	LogrusAcces := interceptors.InitializationAccessLogInterceptor(f)
+	LoggerAcces := new(interceptors.Logger)
+	LoggerAcces.Logger = LogrusAcces
+
+	return LoggerAcces
+}
+
+func startServer(authGrpc *grpcAuth.AuthServer, interceptorsLogger *interceptors.Logger) {
 	listen, err := net.Listen("tcp", ":8004")
 	if err != nil {
 		log.Fatalf("Cannot listen port: %s. Err: %s", "8004", err.Error())
@@ -43,6 +59,7 @@ func startServer(authGrpc *grpcAuth.AuthServer) {
 
 	opts := []grpc.ServerOption{
 		grpc.ChainUnaryInterceptor(
+			interceptorsLogger.AccessLogInterceptor,
 			interceptors.PanicRecoveryWithoutLoggerInterceptor,
 		),
 	}
