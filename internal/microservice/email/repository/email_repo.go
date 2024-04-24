@@ -9,7 +9,6 @@ import (
 	domain "mail/internal/microservice/models/domain_models"
 	converters "mail/internal/microservice/models/repository_converters"
 	"mail/internal/microservice/models/repository_models"
-	"mail/internal/pkg/logger"
 	"time"
 )
 
@@ -69,12 +68,12 @@ func (r *EmailRepository) AddProfileEmail(email_id uint64, sender, recipient str
 
 func (r *EmailRepository) FindEmail(login string, ctx context.Context) error {
 	query := "SELECT * FROM profile WHERE login = $1"
-	args := []interface{}{login}
+	//args := []interface{}{login}
 	var userModelDb repository_models.User
-	start := time.Now()
+	//start := time.Now()
 
 	err := r.DB.Get(&userModelDb, query, login)
-	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).(string), start, &err, args)
+	//defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).(string), start, &err, args)
 
 	if err != nil {
 		return fmt.Errorf("user with login = %v not found", login)
@@ -150,6 +149,78 @@ func (r *EmailRepository) GetAllSent(login string, offset, limit int64, ctx cont
 	var emailsModelCore []*domain.Email
 	for _, e := range emailsModelDb {
 		e.ReadStatus = true
+		emailsModelCore = append(emailsModelCore, converters.EmailConvertDbInCore(e))
+	}
+
+	return emailsModelCore, nil
+}
+
+func (r *EmailRepository) GetAllDraft(login string, offset, limit int64, ctx context.Context) ([]*domain.Email, error) {
+	query := `
+		SELECT * FROM email
+		WHERE sender_email = $1 AND draft_status = true
+		ORDER BY date_of_dispatch ASC
+	`
+	emailsModelDb := []repository_models.Email{}
+
+	var err error
+	//start := time.Now()
+	//args := []interface{}{}
+	if offset >= 0 && limit > 0 {
+		query += " OFFSET $2 LIMIT $3"
+		//args = []interface{}{login, offset, limit}
+		err = r.DB.Select(&emailsModelDb, query, login, offset, limit)
+	} else {
+		//args = []interface{}{login}
+		err = r.DB.Select(&emailsModelDb, query, login)
+	}
+	//defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).(string), start, &err, args)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("DB no have emails")
+		}
+		return nil, err
+	}
+
+	var emailsModelCore []*domain.Email
+	for _, e := range emailsModelDb {
+		emailsModelCore = append(emailsModelCore, converters.EmailConvertDbInCore(e))
+	}
+
+	return emailsModelCore, nil
+}
+
+func (r *EmailRepository) GetAllSpam(login string, offset, limit int64, ctx context.Context) ([]*domain.Email, error) {
+	query := `
+		SELECT * FROM email
+		WHERE sender_email = $1 AND draft_status = true
+		ORDER BY date_of_dispatch ASC
+	`
+	emailsModelDb := []repository_models.Email{}
+
+	var err error
+	//start := time.Now()
+	//args := []interface{}{}
+	if offset >= 0 && limit > 0 {
+		query += " OFFSET $2 LIMIT $3"
+		//args = []interface{}{login, offset, limit}
+		err = r.DB.Select(&emailsModelDb, query, login, offset, limit)
+	} else {
+		//args = []interface{}{login}
+		err = r.DB.Select(&emailsModelDb, query, login)
+	}
+	//defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).(string), start, &err, args)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("DB no have emails")
+		}
+		return nil, err
+	}
+
+	var emailsModelCore []*domain.Email
+	for _, e := range emailsModelDb {
 		emailsModelCore = append(emailsModelCore, converters.EmailConvertDbInCore(e))
 	}
 

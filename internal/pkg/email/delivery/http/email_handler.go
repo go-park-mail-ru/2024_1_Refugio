@@ -12,7 +12,6 @@ import (
 	"mail/internal/models/microservice_ports"
 	"mail/internal/pkg/utils/connect_microservice"
 	"net/http"
-	"regexp"
 	"strconv"
 
 	converters "mail/internal/models/delivery_converters"
@@ -20,6 +19,7 @@ import (
 	emailApi "mail/internal/models/delivery_models"
 	"mail/internal/models/response"
 	domainSession "mail/internal/pkg/session/interface"
+	"mail/internal/pkg/utils/validators"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
@@ -56,13 +56,13 @@ func sanitizeString(str string) string {
 func (h *EmailHandler) Incoming(w http.ResponseWriter, r *http.Request) {
 	login, err := h.Sessions.GetLoginBySession(r, r.Context())
 	if err != nil {
-		response.HandleError(w, http.StatusBadRequest, "Bad sender session")
+		response.HandleError(w, http.StatusBadRequest, "Bad user session")
 		return
 	}
 
 	err = h.Sessions.CheckLogin(login, r, r.Context())
 	if err != nil {
-		response.HandleError(w, http.StatusBadRequest, "Bad sender login")
+		response.HandleError(w, http.StatusBadRequest, "Bad user login")
 		return
 	}
 
@@ -107,13 +107,13 @@ func (h *EmailHandler) Incoming(w http.ResponseWriter, r *http.Request) {
 func (h *EmailHandler) Sent(w http.ResponseWriter, r *http.Request) {
 	login, err := h.Sessions.GetLoginBySession(r, r.Context())
 	if err != nil {
-		response.HandleError(w, http.StatusBadRequest, "Bad sender session")
+		response.HandleError(w, http.StatusBadRequest, "Bad user session")
 		return
 	}
 
 	err = h.Sessions.CheckLogin(login, r, r.Context())
 	if err != nil {
-		response.HandleError(w, http.StatusBadRequest, "Bad sender login")
+		response.HandleError(w, http.StatusBadRequest, "Bad user login")
 		return
 	}
 
@@ -230,16 +230,10 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 	recipient := newEmail.RecipientEmail
 
 	switch {
-	case isValidMailhubFormat(sender) && isValidMailhubFormat(recipient):
+	case validators.IsValidEmailFormat(sender) && validators.IsValidEmailFormat(recipient):
 		err = h.Sessions.CheckLogin(sender, r, r.Context())
 		if err != nil {
 			response.HandleError(w, http.StatusBadRequest, "Bad sender login")
-			return
-		}
-
-		err = h.EmailUseCase.CheckRecipientEmail(recipient, r.Context())
-		if err != nil {
-			response.HandleError(w, http.StatusBadRequest, "Bad login")
 			return
 		}
 
@@ -251,6 +245,15 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 		defer conn.Close()
 
 		emailServiceClient := proto.NewEmailServiceClient(conn)
+		_, err = emailServiceClient.CheckRecipientEmail(
+			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+			&proto.Recipient{Recipient: recipient},
+		)
+		if err != nil {
+			response.HandleError(w, http.StatusBadRequest, "Bad login")
+			return
+		}
+
 		emailDataProto, err := emailServiceClient.CreateEmail(
 			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 			&proto.Email{
@@ -286,7 +289,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 
 		response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*emailData)})
 		return
-	case isValidMailhubFormat(sender) == true && isValidMailhubFormat(recipient) == false:
+	case validators.IsValidEmailFormat(sender) == true && validators.IsValidEmailFormat(recipient) == false:
 		/*email_id, email, err := h.EmailUseCase.CreateEmail(converters.EmailConvertApiInCore(newEmail))
 		if err != nil {
 			delivery.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
@@ -296,26 +299,58 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 		delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*email)})*/
 		response.HandleSuccess(w, http.StatusBadRequest, "An error occurred in the recipient's domain. You cannot send messages to other email services. Make sure that the recipient's domain ends with @mailhub.su")
 		return
-	case isValidMailhubFormat(sender) == false && isValidMailhubFormat(recipient) == true:
-		err = h.EmailUseCase.CheckRecipientEmail(recipient, r.Context())
+	case validators.IsValidEmailFormat(sender) == false && validators.IsValidEmailFormat(recipient) == true:
+		conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.EmailService))
+		if err != nil {
+			response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+			return
+		}
+		defer conn.Close()
+
+		emailServiceClient := proto.NewEmailServiceClient(conn)
+		_, err = emailServiceClient.CheckRecipientEmail(
+			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+			&proto.Recipient{Recipient: recipient},
+		)
 		if err != nil {
 			response.HandleError(w, http.StatusBadRequest, "Bad login")
 			return
 		}
 
-		email_id, email, err := h.EmailUseCase.CreateEmail(converters.EmailConvertApiInCore(newEmail), r.Context())
+		emailDataProto, err := emailServiceClient.CreateEmail(
+			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+			&proto.Email{
+				Id:             newEmail.ID,
+				Topic:          newEmail.Topic,
+				Text:           newEmail.Text,
+				PhotoID:        newEmail.PhotoID,
+				ReadStatus:     newEmail.ReadStatus,
+				Flag:           newEmail.Flag,
+				Deleted:        newEmail.Deleted,
+				DateOfDispatch: timestamppb.New(newEmail.DateOfDispatch),
+				ReplyToEmailID: newEmail.ReplyToEmailID,
+				DraftStatus:    newEmail.DraftStatus,
+				SenderEmail:    newEmail.SenderEmail,
+				RecipientEmail: newEmail.RecipientEmail,
+			},
+		)
+		if err != nil {
+			response.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
+			return
+		}
+		emailData := proto_converters.EmailConvertProtoInCore(*emailDataProto.Email)
+		emailData.ID = emailDataProto.Id
+
+		_, err = emailServiceClient.CreateProfileEmail(
+			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+			&proto.IdSenderRecipient{Id: emailData.ID, Sender: emailData.SenderEmail, Recipient: emailData.RecipientEmail},
+		)
 		if err != nil {
 			response.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
 			return
 		}
 
-		err = h.EmailUseCase.CreateProfileEmail(email_id, sender, recipient, r.Context())
-		if err != nil {
-			response.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
-			return
-		}
-
-		response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*email)})
+		response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*emailData)})
 		return
 	}
 }
@@ -451,11 +486,108 @@ func (h *EmailHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": emailDataProto.Status})
 }
 
-func (h *EmailHandler) SendFromAnotherDomain(w http.ResponseWriter, r *http.Request) {
-	h.Send(w, r)
+// Draft displays the list of email messages.
+// @Summary Display the list of email messages
+// @Description Get a list of all email messages
+// @Tags emails
+// @Produce json
+// @Param X-Csrf-Token header string true "CSRF Token"
+// @Success 200 {object} response.Response "List of all email messages"
+// @Failure 401 {object} response.Response "Not Authorized"
+// @Failure 404 {object} response.Response "DB error"
+// @Failure 500 {object} response.Response "JSON encoding error"
+// @Router /api/v1/emails/draft [get]
+func (h *EmailHandler) Draft(w http.ResponseWriter, r *http.Request) {
+	login, err := h.Sessions.GetLoginBySession(r, r.Context())
+	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Bad user session")
+		return
+	}
+
+	err = h.Sessions.CheckLogin(login, r, r.Context())
+	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Bad user login")
+		return
+	}
+
+	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.EmailService))
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+	defer conn.Close()
+
+	emailServiceClient := proto.NewEmailServiceClient(conn)
+	emailDataProto, err := emailServiceClient.GetDraftEmails(
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		&proto.LoginOffsetLimit{Login: login, Offset: 0, Limit: 0},
+	)
+	if err != nil {
+		response.HandleError(w, http.StatusNotFound, fmt.Sprintf("DB error: %s", err.Error()))
+		return
+	}
+
+	emailsCore := proto_converters.EmailsConvertProtoInCore(emailDataProto)
+
+	emailsApi := make([]*emailApi.Email, 0, len(emailsCore))
+	for _, email := range emailsCore {
+		emailsApi = append(emailsApi, converters.EmailConvertCoreInApi(*email))
+	}
+
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"emails": emailsApi})
 }
 
-func isValidMailhubFormat(email string) bool {
-	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@mailhub\.su$`)
-	return emailRegex.MatchString(email)
+// Spam displays the list of email messages.
+// @Summary Display the list of email messages
+// @Description Get a list of all email messages
+// @Tags emails
+// @Produce json
+// @Param X-Csrf-Token header string true "CSRF Token"
+// @Success 200 {object} response.Response "List of all email messages"
+// @Failure 401 {object} response.Response "Not Authorized"
+// @Failure 404 {object} response.Response "DB error"
+// @Failure 500 {object} response.Response "JSON encoding error"
+// @Router /api/v1/emails/spam [get]
+func (h *EmailHandler) Spam(w http.ResponseWriter, r *http.Request) {
+	login, err := h.Sessions.GetLoginBySession(r, r.Context())
+	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Bad user session")
+		return
+	}
+
+	err = h.Sessions.CheckLogin(login, r, r.Context())
+	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Bad user login")
+		return
+	}
+
+	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.EmailService))
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+	defer conn.Close()
+
+	emailServiceClient := proto.NewEmailServiceClient(conn)
+	emailDataProto, err := emailServiceClient.GetSpamEmails(
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		&proto.LoginOffsetLimit{Login: login, Offset: 0, Limit: 0},
+	)
+	if err != nil {
+		response.HandleError(w, http.StatusNotFound, fmt.Sprintf("DB error: %s", err.Error()))
+		return
+	}
+
+	emailsCore := proto_converters.EmailsConvertProtoInCore(emailDataProto)
+
+	emailsApi := make([]*emailApi.Email, 0, len(emailsCore))
+	for _, email := range emailsCore {
+		emailsApi = append(emailsApi, converters.EmailConvertCoreInApi(*email))
+	}
+
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"emails": emailsApi})
+}
+
+func (h *EmailHandler) SendFromAnotherDomain(w http.ResponseWriter, r *http.Request) {
+	h.Send(w, r)
 }

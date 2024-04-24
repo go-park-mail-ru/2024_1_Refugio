@@ -18,14 +18,24 @@ func NewEmailUseCase(repo repository.EmailRepository) *EmailUseCase {
 	}
 }
 
-// GetAllEmails returns all emails incoming.
+// GetAllEmailsIncoming returns all emails incoming.
 func (uc *EmailUseCase) GetAllEmailsIncoming(login string, offset, limit int64, ctx context.Context) ([]*domain.Email, error) {
 	return uc.repo.GetAllIncoming(login, offset, limit, ctx)
 }
 
-// GetAllEmails returns all emails sent.
+// GetAllEmailsSent returns all emails sent.
 func (uc *EmailUseCase) GetAllEmailsSent(login string, offset, limit int64, ctx context.Context) ([]*domain.Email, error) {
 	return uc.repo.GetAllSent(login, offset, limit, ctx)
+}
+
+// GetDraftEmails returns all draft emails.
+func (uc *EmailUseCase) GetAllDraftEmails(login string, offset, limit int64, ctx context.Context) ([]*domain.Email, error) {
+	return uc.repo.GetAllSpam(login, offset, limit, ctx)
+}
+
+// GetAllSpamEmails returns all draft emails.
+func (uc *EmailUseCase) GetAllSpamEmails(login string, offset, limit int64, ctx context.Context) ([]*domain.Email, error) {
+	return uc.repo.GetAllDraft(login, offset, limit, ctx)
 }
 
 // GetEmailByID returns the email by its ID.

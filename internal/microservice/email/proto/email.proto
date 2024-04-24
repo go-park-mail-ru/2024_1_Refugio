@@ -11,6 +11,8 @@ import "google/protobuf/timestamp.proto";
 service EmailService {
   rpc GetAllIncoming(LoginOffsetLimit) returns(Emails) {}
   rpc GetAllSent(LoginOffsetLimit) returns(Emails) {}
+  rpc GetDraftEmails(LoginOffsetLimit) returns(Emails) {}
+  rpc GetSpamEmails(LoginOffsetLimit) returns(Emails) {}
   rpc GetEmailByID(EmailIdAndLogin) returns(Email) {}
   rpc CreateEmail(Email) returns(EmailWithID) {}
   rpc CreateProfileEmail(IdSenderRecipient) returns(EmptyEmail) {}

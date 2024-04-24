@@ -72,6 +72,46 @@ func (es *EmailServer) GetAllSent(ctx context.Context, input *proto.LoginOffsetL
 	return emailProto, nil
 }
 
+func (es *EmailServer) GetDraftEmails(ctx context.Context, input *proto.LoginOffsetLimit) (*proto.Emails, error) {
+	if input.Login == "" {
+		return nil, fmt.Errorf("invalid email login: %s", input.Login)
+	}
+
+	emailsCore, err := es.EmailUseCase.GetAllDraftEmails(input.Login, input.Offset, input.Limit, ctx)
+	if err != nil {
+		return nil, fmt.Errorf("email not found")
+	}
+
+	emailsProto := make([]*proto.Email, len(emailsCore))
+	for i, e := range emailsCore {
+		emailsProto[i] = converters.EmailConvertCoreInProto(*e)
+	}
+
+	emailProto := new(proto.Emails)
+	emailProto.Emails = emailsProto
+	return emailProto, nil
+}
+
+func (es *EmailServer) GetSpamEmails(ctx context.Context, input *proto.LoginOffsetLimit) (*proto.Emails, error) {
+	if input.Login == "" {
+		return nil, fmt.Errorf("invalid email login: %s", input.Login)
+	}
+
+	emailsCore, err := es.EmailUseCase.GetAllSpamEmails(input.Login, input.Offset, input.Limit, ctx)
+	if err != nil {
+		return nil, fmt.Errorf("email not found")
+	}
+
+	emailsProto := make([]*proto.Email, len(emailsCore))
+	for i, e := range emailsCore {
+		emailsProto[i] = converters.EmailConvertCoreInProto(*e)
+	}
+
+	emailProto := new(proto.Emails)
+	emailProto.Emails = emailsProto
+	return emailProto, nil
+}
+
 func (es *EmailServer) CreateEmail(ctx context.Context, input *proto.Email) (*proto.EmailWithID, error) {
 	if input == nil {
 		return nil, fmt.Errorf("invalid email format: %s", input)
@@ -125,6 +165,21 @@ func (es *EmailServer) CreateProfileEmail(ctx context.Context, input *proto.IdSe
 	if err != nil {
 		return nil, fmt.Errorf("sender, recipient or id not found")
 	}
+
+	emailEmpty := new(proto.EmptyEmail)
+	return emailEmpty, nil
+}
+
+func (es *EmailServer) CheckRecipientEmail(ctx context.Context, input *proto.Recipient) (*proto.EmptyEmail, error) {
+	if input.Recipient == "" {
+		return nil, fmt.Errorf("invalid recipient login: %s", input.Recipient)
+	}
+
+	err := es.EmailUseCase.CheckRecipientEmail(input.Recipient, ctx)
+	if err != nil {
+		return nil, fmt.Errorf("Recipient login not found")
+	}
+
 	emailEmpty := new(proto.EmptyEmail)
 	return emailEmpty, nil
 }
