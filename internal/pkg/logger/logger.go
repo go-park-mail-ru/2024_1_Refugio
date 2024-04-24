@@ -122,34 +122,13 @@ func InitializationEmptyLog() *LogrusLogger {
 
 // DbLog logs information about database requests.
 func (log *LogrusLogger) DbLog(query, requestID string, start time.Time, err *error, args []interface{}) {
+	requestID = GetRequestIDString(requestID)
 	resArgs := "{ "
 	for _, a := range args {
 		resArgs += fmt.Sprintf("%#v, ", a)
 	}
 	resArgs += "}"
 	en := log.LogrusLogger.WithFields(logrus.Fields{
-		"work_time": time.Since(start),
-		"requestID": requestID,
-		"mode":      "[db_log]",
-		"query":     query,
-		"args":      resArgs,
-	})
-
-	if *err != nil {
-		en.Error("StatusServerError")
-	} else {
-		en.Info("StatusOK")
-	}
-}
-
-// DbLogTest logs test information about database requests.
-func DbLogTest(query, requestID string, start time.Time, err *error, args []interface{}) {
-	resArgs := "{ "
-	for _, a := range args {
-		resArgs += fmt.Sprintf("%#v, ", a)
-	}
-	resArgs += "}"
-	en := logrus.WithFields(logrus.Fields{
 		"work_time": time.Since(start),
 		"requestID": requestID,
 		"mode":      "[db_log]",

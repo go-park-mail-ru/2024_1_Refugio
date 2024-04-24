@@ -35,7 +35,7 @@ func (uc *EmailUseCase) GetAllDraftEmails(login string, offset, limit int64, ctx
 
 // GetAllSpamEmails returns all draft emails.
 func (uc *EmailUseCase) GetAllSpamEmails(login string, offset, limit int64, ctx context.Context) ([]*domain.Email, error) {
-	return uc.repo.GetAllDraft(login, offset, limit, ctx)
+	return uc.repo.GetAllSpam(login, offset, limit, ctx)
 }
 
 // GetEmailByID returns the email by its ID.
