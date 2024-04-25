@@ -48,14 +48,14 @@ func main() {
 
 	migrateDatabase(db)
 
-	loggerAccess := initializeLogger()
+	loggerMiddlewareAccess := initializeMiddlewareLogger()
 
 	sessionsManager := initializeSessionsManager()
 	authHandler := initializeAuthHandler(sessionsManager)
 	emailHandler := initializeEmailHandler(sessionsManager)
 	userHandler := initializeUserHandler(sessionsManager)
 
-	router := setupRouter(authHandler, userHandler, emailHandler, loggerAccess)
+	router := setupRouter(authHandler, userHandler, emailHandler, loggerMiddlewareAccess)
 
 	startServer(router)
 }
@@ -126,12 +126,12 @@ func initializeUserHandler(sessionsManager *session.SessionsManager) *userHand.U
 	}
 }
 
-func initializeLogger() *middleware.Logger {
+func initializeMiddlewareLogger() *middleware.Logger {
 	f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		fmt.Println("Failed to create logfile" + "log.txt")
 	}
-	defer f.Close()
+
 	LogrusAcces := logger.InitializationAccesLog(f)
 	LoggerAcces := new(middleware.Logger)
 	LoggerAcces.Logger = LogrusAcces
