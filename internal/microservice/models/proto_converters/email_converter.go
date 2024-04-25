@@ -18,6 +18,7 @@ func EmailConvertCoreInProto(emailModelCore domain.Email) *grpc.Email {
 		DateOfDispatch: timestamppb.New(emailModelCore.DateOfDispatch),
 		ReplyToEmailID: emailModelCore.ReplyToEmailID,
 		DraftStatus:    emailModelCore.DraftStatus,
+		SpamStatus:     emailModelCore.SpamStatus,
 		SenderEmail:    emailModelCore.SenderEmail,
 		RecipientEmail: emailModelCore.RecipientEmail,
 	}
@@ -35,6 +36,7 @@ func EmailConvertProtoInCore(emailModelProto grpc.Email) *domain.Email {
 		DateOfDispatch: emailModelProto.DateOfDispatch.AsTime(),
 		ReplyToEmailID: emailModelProto.ReplyToEmailID,
 		DraftStatus:    emailModelProto.DraftStatus,
+		SpamStatus:     emailModelProto.SpamStatus,
 		SenderEmail:    emailModelProto.SenderEmail,
 		RecipientEmail: emailModelProto.RecipientEmail,
 	}

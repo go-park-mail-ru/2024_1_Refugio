@@ -14,6 +14,7 @@ type Email struct {
 	DateOfDispatch time.Time `json:"dateOfDispatch,omitempty"` // DateOfDispatch is the date when the email was sent.
 	ReplyToEmailID uint64    `json:"replyToEmailId,omitempty"` // ReplyToEmailID is the ID of the email to which a reply can be sent.
 	DraftStatus    bool      `json:"draftStatus"`              // DraftStatus indicates whether the email is a draft.
+	SpamStatus     bool      `json:"spamStatus"`               // SpamStatus indicates whether the email is a spam
 	SenderEmail    string    `json:"senderEmail"`              // SenderEmail is the email of the sender user
 	RecipientEmail string    `json:"recipientEmail"`           // RecipientEmail is the email of the recipient user
 }

@@ -882,6 +882,10 @@
                     "description": "SenderEmail is the Email of the sender user",
                     "type": "string"
                 },
+                "spamStatus": {
+                    "description": "SpamStatus indicates whether the email is a spam",
+                    "type": "boolean"
+                },
                 "text": {
                     "description": "Text is the body of the email.",
                     "type": "string"

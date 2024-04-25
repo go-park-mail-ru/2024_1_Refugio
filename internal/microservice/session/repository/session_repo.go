@@ -50,13 +50,13 @@ func (repo *SessionRepository) CreateSession(userID uint32, device string, lifeT
 	creationDate := time.Now()
 
 	start := time.Now()
-	_, err := repo.DB.Exec(query, ID, userID, device, creationDate, lifeTime, csrfToken)
+	_, err := repo.DB.Exec(query, ID, userID, creationDate, device, lifeTime, csrfToken)
 
-	args := []interface{}{ID, userID, device, creationDate, lifeTime, csrfToken}
+	args := []interface{}{ID, userID, creationDate, device, lifeTime, csrfToken}
 	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
 
 	if err != nil {
-		return "", fmt.Errorf("failed to create session: %v", err)
+		return "", fmt.Errorf("failed to create a session: %v", err)
 	}
 
 	return ID, nil

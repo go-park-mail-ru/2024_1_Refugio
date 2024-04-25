@@ -47,8 +47,9 @@ message Email {
   google.protobuf.Timestamp dateOfDispatch = 8;
   uint64 replyToEmailID = 9;
   bool draftStatus = 10;
-  string senderEmail = 11;
-  string recipientEmail = 12;
+  bool spamStatus = 11;
+  string senderEmail = 12;
+  string recipientEmail = 13;
 }
 
 message EmailWithID {
