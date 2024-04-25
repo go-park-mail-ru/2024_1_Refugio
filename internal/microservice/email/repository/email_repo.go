@@ -48,13 +48,11 @@ func (r *EmailRepository) Add(emailModelCore *domain.Email, ctx context.Context)
 	var id uint64
 	start := time.Now()
 
-	// Вставка email
 	err := r.DB.QueryRow(insertEmailQuery, emailModelDb.Topic, emailModelDb.Text, time.Now().Format(format), emailModelDb.SenderEmail, emailModelDb.RecipientEmail, emailModelDb.ReadStatus, emailModelDb.Deleted, emailModelDb.DraftStatus, emailModelCore.SpamStatus, emailModelDb.ReplyToEmailID, emailModelDb.Flag).Scan(&id)
 	if err != nil {
 		return 0, &domain.Email{}, fmt.Errorf("failed to add email: %v", err)
 	}
 
-	// Вставка связанных файлов
 	_, err = r.DB.Exec(insertEmailFileQuery, id, emailModelDb.SenderEmail)
 	if err != nil {
 		return 0, &domain.Email{}, fmt.Errorf("failed to add email file: %v", err)
