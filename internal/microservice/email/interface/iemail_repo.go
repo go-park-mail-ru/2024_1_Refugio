@@ -7,11 +7,17 @@ import (
 
 // EmailRepository represents the interface for working with emails.
 type EmailRepository interface {
-	// GetAll returns all emails incoming from the storage.
+	// GetAllIncoming returns all emails incoming from the storage.
 	GetAllIncoming(login string, offset, limit int64, ctx context.Context) ([]*domain.Email, error)
 
-	// GetAll returns all emails sent from the storage.
+	// GetAllSent returns all emails sent from the storage.
 	GetAllSent(login string, offset, limit int64, ctx context.Context) ([]*domain.Email, error)
+
+	// GetAllDraft returns all draft emails from the storage.
+	GetAllDraft(login string, offset, limit int64, ctx context.Context) ([]*domain.Email, error)
+
+	// GetAllSpam returns all draft emails from the storage.
+	GetAllSpam(login string, offset, limit int64, ctx context.Context) ([]*domain.Email, error)
 
 	// GetByID returns the email by its unique identifier.
 	GetByID(id uint64, login string, ctx context.Context) (*domain.Email, error)

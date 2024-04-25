@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS email (
     isRead BOOLEAN NOT NULL,
     isDeleted BOOLEAN NOT NULL,
     isDraft BOOLEAN NOT NULL,
+    isSpam BOOLEAN NOT NULL,
     reply_to_email_id INTEGER REFERENCES email(id) ON DELETE NO ACTION DEFAULT NULL,
     is_important BOOLEAN NOT NULL
 );

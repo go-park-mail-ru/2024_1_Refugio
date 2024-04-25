@@ -49,12 +49,11 @@ func (repo *SessionRepository) CreateSession(userID uint32, device string, lifeT
 	csrfToken := SessionGenerateRandomID()
 	creationDate := time.Now()
 
-	_, err := repo.DB.Exec(query, ID, userID, creationDate, device, lifeTime, csrfToken)
-
 	start := time.Now()
-	args := []interface{}{ID, userID, creationDate, device, lifeTime, csrfToken}
-	requestIDValue := logger.GetRequestIDString(ctx.Value(requestIDContextKey))
-	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, requestIDValue, start, &err, args)
+	_, err := repo.DB.Exec(query, ID, userID, device, creationDate, lifeTime, csrfToken)
+
+	args := []interface{}{ID, userID, device, creationDate, lifeTime, csrfToken}
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
 
 	if err != nil {
 		return "", fmt.Errorf("failed to create session: %v", err)
@@ -68,12 +67,12 @@ func (repo *SessionRepository) GetSessionByID(sessionID string, ctx context.Cont
 	query := `SELECT * FROM session WHERE id = $1`
 
 	var session database.Session
-	err := repo.DB.Get(&session, query, sessionID)
 
 	start := time.Now()
+	err := repo.DB.Get(&session, query, sessionID)
+
 	args := []interface{}{sessionID}
-	requestIDValue := logger.GetRequestIDString(ctx.Value(requestIDContextKey))
-	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, requestIDValue, start, &err, args)
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get session: %v", err)
@@ -91,12 +90,11 @@ func (repo *SessionRepository) GetLoginBySessionID(sessionID string, ctx context
 	`
 
 	var login string
+	start := time.Now()
 	err := repo.DB.Get(&login, query, sessionID)
 
-	start := time.Now()
 	args := []interface{}{sessionID}
-	requestIDValue := logger.GetRequestIDString(ctx.Value(requestIDContextKey))
-	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, requestIDValue, start, &err, args)
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
 
 	if err != nil {
 		return "", fmt.Errorf("failed to get session: %v", err)
@@ -109,12 +107,11 @@ func (repo *SessionRepository) GetLoginBySessionID(sessionID string, ctx context
 func (repo *SessionRepository) DeleteSessionByID(sessionID string, ctx context.Context) error {
 	query := "DELETE FROM session WHERE id = $1"
 
+	start := time.Now()
 	_, err := repo.DB.Exec(query, sessionID)
 
-	start := time.Now()
 	args := []interface{}{sessionID}
-	requestIDValue := logger.GetRequestIDString(ctx.Value(requestIDContextKey))
-	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, requestIDValue, start, &err, args)
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
 
 	if err != nil {
 		return fmt.Errorf("failed to delete session: %v", err)
@@ -127,12 +124,11 @@ func (repo *SessionRepository) DeleteSessionByID(sessionID string, ctx context.C
 func (repo *SessionRepository) DeleteExpiredSessions(ctx context.Context) error {
 	query := "DELETE FROM session WHERE creation_date + life_time * interval '1 second' < now()"
 
+	start := time.Now()
 	_, err := repo.DB.Exec(query)
 
-	start := time.Now()
 	args := []interface{}{}
-	requestIDValue := logger.GetRequestIDString(ctx.Value(requestIDContextKey))
-	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, requestIDValue, start, &err, args)
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
 
 	if err != nil {
 		return fmt.Errorf("failed to delete expired sessions: %v", err)

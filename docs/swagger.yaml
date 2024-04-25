@@ -337,6 +337,37 @@ paths:
       summary: Update an email message
       tags:
       - emails
+  /api/v1/emails/draft:
+    get:
+      description: Get a list of all email messages
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of all email messages
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: DB error
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: JSON encoding error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Display the list of email messages
+      tags:
+      - emails
   /api/v1/emails/incoming:
     get:
       description: Get a list of all email messages
@@ -369,6 +400,37 @@ paths:
       tags:
       - emails
   /api/v1/emails/sent:
+    get:
+      description: Get a list of all email messages
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of all email messages
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: DB error
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: JSON encoding error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Display the list of email messages
+      tags:
+      - emails
+  /api/v1/emails/spam:
     get:
       description: Get a list of all email messages
       parameters:
