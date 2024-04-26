@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/mux"
 	"google.golang.org/grpc/metadata"
 	"io"
@@ -231,6 +232,7 @@ func (uh *UserHandler) UploadUserAvatar(w http.ResponseWriter, r *http.Request) 
 	fileExt := filepath.Ext(handler.Filename)
 	uniqueFileName := generate_filename.GenerateUniqueFileName(fileExt)
 	outFile, err := os.Create("./avatars/" + uniqueFileName)
+	fmt.Println(err)
 	if err != nil {
 		response.HandleError(w, http.StatusInternalServerError, "Error creating file")
 		return

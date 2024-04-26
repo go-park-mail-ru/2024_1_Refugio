@@ -1,6 +1,6 @@
 .idea
-avatars/*
-!avatars/.gitkeep
+#avatars/*
+#!avatars/.gitkeep
 .DS_Store
 MessageSMTP/*
 log.txt
