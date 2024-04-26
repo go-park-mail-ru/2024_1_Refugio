@@ -81,6 +81,6 @@ func PanicRecoveryWithoutLoggerInterceptor(ctx context.Context, req interface{},
 			)
 		}
 	}()
-	
+
 	return handler(ctx, req)
 }
