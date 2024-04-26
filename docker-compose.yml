@@ -37,14 +37,14 @@ services:
       context: ./internal/smtp_server
       dockerfile: Dockerfile
     ports:
-      - "25:587"
+      - "8082:587"
     networks:
       - deploy-guide-dev
 
   auth:
     container_name: auth
     build:
-      context: ./internal/auth
+      context: .
       dockerfile: ./cmd/auth/Dockerfile
     ports:
       - "8004:8004"
@@ -56,7 +56,7 @@ services:
   email:
     container_name: email
     build:
-      context: ./internal/email
+      context: .
       dockerfile: ./cmd/email/Dockerfile
     ports:
       - "8002:8002"
@@ -68,7 +68,7 @@ services:
   session:
     container_name: session
     build:
-      context: ./internal/session
+      context: .
       dockerfile: ./cmd/session/Dockerfile
     ports:
       - "8003:8003"
@@ -80,7 +80,7 @@ services:
   user:
     container_name: user
     build:
-      context: ./internal/user
+      context: .
       dockerfile: ./cmd/user/Dockerfile
     ports:
       - "8001:8001"
