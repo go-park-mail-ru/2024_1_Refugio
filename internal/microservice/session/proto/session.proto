@@ -11,6 +11,7 @@ import "google/protobuf/timestamp.proto";
 service SessionService {
   rpc GetSession(GetSessionRequest) returns(GetSessionReply) {}
   rpc GetLoginBySession(GetLoginBySessionRequest) returns(GetLoginBySessionReply) {}
+  rpc GetProfileIDBySession(GetLoginBySessionRequest) returns(GetProfileIDBySessionReply) {}
   rpc CreateSession(CreateSessionRequest) returns(CreateSessionReply) {}
   rpc DeleteSession(DeleteSessionRequest) returns(DeleteSessionReply) {}
   rpc CleanupExpiredSessions(CleanupExpiredSessionsRequest) returns(CleanupExpiredSessionsReply) {}
@@ -39,6 +40,10 @@ message GetLoginBySessionRequest {
 
 message GetLoginBySessionReply {
   string login = 1;
+}
+
+message GetProfileIDBySessionReply {
+  uint32 id = 1;
 }
 
 message CreateSessionRequest {

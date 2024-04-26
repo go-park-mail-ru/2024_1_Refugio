@@ -33,6 +33,11 @@ func (uc *SessionUseCase) GetLogin(sessionID string, ctx context.Context) (strin
 	return uc.sessionRepo.GetLoginBySessionID(sessionID, ctx)
 }
 
+// GetProfileID retrieves the login associated with the provided session ID.
+func (uc *SessionUseCase) GetProfileID(sessionID string, ctx context.Context) (uint32, error) {
+	return uc.sessionRepo.GetProfileIDBySessionID(sessionID, ctx)
+}
+
 // DeleteSession terminates a session identified by its ID.
 func (uc *SessionUseCase) DeleteSession(sessionID string, ctx context.Context) error {
 	return uc.sessionRepo.DeleteSessionByID(sessionID, ctx)

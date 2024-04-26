@@ -29,6 +29,7 @@ import (
 	session_proto "mail/internal/microservice/session/proto"
 	authHand "mail/internal/pkg/auth/delivery/http"
 	emailHand "mail/internal/pkg/email/delivery/http"
+	folderHand "mail/internal/pkg/folder/delivery/http"
 	userHand "mail/internal/pkg/user/delivery/http"
 
 	_ "mail/docs"
@@ -54,8 +55,9 @@ func main() {
 	authHandler := initializeAuthHandler(sessionsManager)
 	emailHandler := initializeEmailHandler(sessionsManager)
 	userHandler := initializeUserHandler(sessionsManager)
+	folderHandler := initializeFolderHandler(sessionsManager)
 
-	router := setupRouter(authHandler, userHandler, emailHandler, loggerMiddlewareAccess)
+	router := setupRouter(authHandler, userHandler, emailHandler, folderHandler, loggerMiddlewareAccess)
 
 	startServer(router)
 }
@@ -126,6 +128,12 @@ func initializeUserHandler(sessionsManager *session.SessionsManager) *userHand.U
 	}
 }
 
+func initializeFolderHandler(sessionsManager *session.SessionsManager) *folderHand.FolderHandler {
+	return &folderHand.FolderHandler{
+		Sessions: sessionsManager,
+	}
+}
+
 func initializeMiddlewareLogger() *middleware.Logger {
 	f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
@@ -139,13 +147,13 @@ func initializeMiddlewareLogger() *middleware.Logger {
 	return LoggerAcces
 }
 
-func setupRouter(authHandler *authHand.AuthHandler, userHandler *userHand.UserHandler, emailHandler *emailHand.EmailHandler, logger *middleware.Logger) http.Handler {
+func setupRouter(authHandler *authHand.AuthHandler, userHandler *userHand.UserHandler, emailHandler *emailHand.EmailHandler, folderHandler *folderHand.FolderHandler, logger *middleware.Logger) http.Handler {
 	router := mux.NewRouter()
 
 	auth := setupAuthRouter(authHandler, emailHandler, logger)
 	router.PathPrefix("/api/v1/auth").Handler(auth)
 
-	logRouter := setupLogRouter(emailHandler, userHandler, logger)
+	logRouter := setupLogRouter(emailHandler, userHandler, folderHandler, logger)
 	router.PathPrefix("/api/v1").Handler(logRouter)
 
 	staticDir := "/media/"
@@ -169,7 +177,7 @@ func setupAuthRouter(authHandler *authHand.AuthHandler, emailHandler *emailHand.
 	return auth
 }
 
-func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.UserHandler, logger *middleware.Logger) http.Handler {
+func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.UserHandler, folderHandler *folderHand.FolderHandler, logger *middleware.Logger) http.Handler {
 	logRouter := mux.NewRouter().PathPrefix("/api/v1").Subrouter()
 	logRouter.Use(logger.AccessLogMiddleware, middleware.PanicMiddleware, middleware.AuthMiddleware)
 
@@ -187,6 +195,7 @@ func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.
 	logRouter.HandleFunc("/email/update/{id}", emailHandler.Update).Methods("PUT", "OPTIONS")
 	logRouter.HandleFunc("/email/delete/{id}", emailHandler.Delete).Methods("DELETE", "OPTIONS")
 	logRouter.HandleFunc("/email/send", emailHandler.Send).Methods("POST", "OPTIONS")
+	logRouter.HandleFunc("/folder/add", folderHandler.Add).Methods("POST", "OPTIONS")
 
 	return logRouter
 }

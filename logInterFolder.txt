@@ -1,0 +1,3 @@
+[[34mINFO[0m]: 2024-04-26 15:42:44 - StatusOK requestID=9af902a2-2f44-448f-96a2-10f6822c8d81 work_time=33.316µs user-agent=grpc-go/1.63.2 FullMethod=/proto.FolderService/CreateFolder mode=[interceptor_log]
+[[34mINFO[0m]: 2024-04-26 16:01:59 - StatusOK requestID=8d677365-d8ca-444a-9506-ff5626d85072 work_time=23.959984445s user-agent=grpc-go/1.63.2 FullMethod=/proto.FolderService/CreateFolder mode=[interceptor_log]
+[[34mINFO[0m]: 2024-04-26 16:16:13 - StatusOK requestID=42fb9bd3-e1a5-4b84-8d3b-1b6304ad754d work_time=11.342350119s user-agent=grpc-go/1.63.2 FullMethod=/proto.FolderService/CreateFolder mode=[interceptor_log]

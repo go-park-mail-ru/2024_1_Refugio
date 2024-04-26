@@ -48,6 +48,18 @@ definitions:
       error:
         type: string
     type: object
+  response.FolderSwag:
+    properties:
+      id:
+        description: ID he unique ID of the folder in the database.
+        type: integer
+      name:
+        description: Name the name of the folder.
+        type: string
+      profileId:
+        description: ProfileId the unique identifier of the user who owns the folder.
+        type: integer
+    type: object
   response.Response:
     properties:
       body: {}
@@ -464,6 +476,45 @@ paths:
       summary: Display the list of email messages
       tags:
       - emails
+  /api/v1/folder/add:
+    post:
+      consumes:
+      - application/json
+      description: Add a new folder message to the system
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      - description: Folder message in JSON format
+        in: body
+        name: folder
+        required: true
+        schema:
+          $ref: '#/definitions/response.FolderSwag'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ID of the send folder message
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad JSON in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to add folder message
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Add a new folder message
+      tags:
+      - folders
   /api/v1/user/avatar/delete:
     delete:
       consumes:
