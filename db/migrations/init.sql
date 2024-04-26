@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS email (
 CREATE TABLE IF NOT EXISTS email_file (
     id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     email_id INT REFERENCES email(id) ON DELETE CASCADE,
-    file_id INT REFERENCES file(id) ON DELETE CASCADE UNIQUE
+    file_id INT REFERENCES file(id) ON DELETE CASCADE
 );
 
 -- Создание таблицы письма пользователя (profile_email)
@@ -89,14 +89,20 @@ CREATE TABLE IF NOT EXISTS settings (
     language TEXT CHECK (LENGTH(language) <= 50)
 );
 
+-- Вставка начальных данных в таблицу file
+INSERT INTO file
+(file_id, file_type)
+VALUES
+    ('', 'PHOTO'), ('', 'PHOTO'), ('', 'PHOTO');
+
 -- Вставка начальных данных в таблицу users
 INSERT INTO profile
-(login, password_hash, firstname, surname, patronymic, gender, birthday, registration_date, phone_number, description)
+(login, password_hash, firstname, surname, patronymic, gender, birthday, registration_date, phone_number, description, avatar_id)
 VALUES
-    ('sergey@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Sergey', 'Fedasov', 'Aleksandrovich', 'Male', '2003-08-20', NOW(), '+77777777777', 'Description'),
-    ('ivan@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Ivan', 'Karpov', 'Aleksandrovich', 'Male', '2003-10-17', NOW(), '+79697045539', 'Description'),
-    ('max@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Maxim', 'Frelich', 'Aleksandrovich', 'Male', '2003-08-20', NOW(), '+79099099090', 'Description')
-    ON CONFLICT (login) DO NOTHING;
+    ('sergey@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Sergey', 'Fedasov', 'Aleksandrovich', 'Male', '2003-08-20', NOW(), '+77777777777', 'Description', 1),
+    ('ivan@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Ivan', 'Karpov', 'Aleksandrovich', 'Male', '2003-10-17', NOW(), '+79697045539', 'Description', 2),
+    ('max@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Maxim', 'Frelich', 'Aleksandrovich', 'Male', '2003-08-20', NOW(), '+79099099090', 'Description', 3)
+ON CONFLICT (login) DO NOTHING;
 
 -- Вставка начальных данных в таблицу email
 INSERT INTO email
@@ -114,3 +120,9 @@ INSERT INTO profile_email
 (profile_id, email_id)
 VALUES
     (1, 1), (2, 1), (1, 2), (3, 2), (2, 3), (3, 3), (3, 4), (1, 4), (3, 5), (2, 5), (1, 6), (2, 6);
+
+-- Вставка начальных данных в таблицу email_file
+INSERT INTO email_file
+(email_id, file_id)
+VALUES
+    (1, 2), (2, 3), (3, 3), (4, 1), (5, 2), (6, 2);

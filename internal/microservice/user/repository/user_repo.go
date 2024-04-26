@@ -197,6 +197,16 @@ func (r *UserRepository) Add(userModelCore *domain.User, ctx context.Context) (*
 		return nil, fmt.Errorf("user with login %s fail", userModelDb.Login)
 	}
 
+	user, err := r.GetUserByLogin(userModelCore.Login, userModelCore.Password, ctx)
+	if err != nil {
+		return nil, fmt.Errorf("user with login %s not found", userModelCore.Login)
+	}
+
+	_, errAva := r.InitAvatar(user.ID, "", "PHOTO", ctx)
+	if errAva != nil {
+		return nil, fmt.Errorf("user avatar fail")
+	}
+
 	return userModelCore, nil
 }
 
@@ -290,6 +300,78 @@ func (r *UserRepository) Delete(id uint32, ctx context.Context) (bool, error) {
 
 // AddAvatar adds a new user avatar to the repository and associates it with the profile.
 func (r *UserRepository) AddAvatar(id uint32, fileID, fileType string, ctx context.Context) (bool, error) {
+	/*query := `
+	    WITH inserted_file AS (
+	      INSERT INTO file (file_id, file_type)
+	      VALUES ($1, $2)
+	      RETURNING id
+	    )
+	    UPDATE profile
+	    SET avatar_id = (SELECT id FROM inserted_file)
+	    WHERE id = $3;
+	`*/
+
+	query := `
+		UPDATE file
+		SET file_id = $1
+		FROM profile
+		WHERE file.id = profile.avatar_id
+		AND profile.id = $2
+	`
+
+	_, err := r.DB.ExecContext(ctx, query, fileID, id)
+
+	start := time.Now()
+	args := []interface{}{fileID, fileType, id}
+	requestIDValue := logger.GetRequestIDString(ctx.Value(requestIDContextKey))
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, requestIDValue, start, &err, args)
+
+	if err != nil {
+		return false, fmt.Errorf("failed to add user avatar: %v", err)
+	}
+
+	return true, nil
+}
+
+// DeleteAvatarByUserID deletes a user's photo and an entry from the file table by its ID in one request.
+func (r *UserRepository) DeleteAvatarByUserID(userID uint32, ctx context.Context) error {
+	/*query := `
+	    WITH deleted_file AS (
+	      DELETE FROM file
+	      WHERE id = (
+	        SELECT avatar_id FROM profile
+	        WHERE id = $1
+	      )
+	      RETURNING id
+	    )
+	    UPDATE profile
+	    SET avatar_id = NULL
+	    WHERE id = $1;
+	`*/
+
+	query := `
+		UPDATE file
+		SET file_id = ''
+		FROM profile
+		WHERE file.id = profile.avatar_id
+		AND profile.id = $2
+	`
+
+	_, err := r.DB.ExecContext(ctx, query, userID)
+
+	start := time.Now()
+	args := []interface{}{userID}
+	requestIDValue := logger.GetRequestIDString(ctx.Value(requestIDContextKey))
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, requestIDValue, start, &err, args)
+
+	if err != nil {
+		return fmt.Errorf("failed to delete user avatar and file: %v", err)
+	}
+
+	return nil
+}
+
+func (r *UserRepository) InitAvatar(id uint32, fileID, fileType string, ctx context.Context) (bool, error) {
 	query := `
         WITH inserted_file AS (
           INSERT INTO file (file_id, file_type)
@@ -313,34 +395,4 @@ func (r *UserRepository) AddAvatar(id uint32, fileID, fileType string, ctx conte
 	}
 
 	return true, nil
-}
-
-// DeleteAvatarByUserID deletes a user's photo and an entry from the file table by its ID in one request.
-func (r *UserRepository) DeleteAvatarByUserID(userID uint32, ctx context.Context) error {
-	query := `
-        WITH deleted_file AS (
-          DELETE FROM file
-          WHERE id = (
-            SELECT avatar_id FROM profile
-            WHERE id = $1
-          )
-          RETURNING id
-        )
-        UPDATE profile
-        SET avatar_id = NULL
-        WHERE id = $1;
-    `
-
-	_, err := r.DB.ExecContext(ctx, query, userID)
-
-	start := time.Now()
-	args := []interface{}{userID}
-	requestIDValue := logger.GetRequestIDString(ctx.Value(requestIDContextKey))
-	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, requestIDValue, start, &err, args)
-
-	if err != nil {
-		return fmt.Errorf("failed to delete user avatar and file: %v", err)
-	}
-
-	return nil
 }
