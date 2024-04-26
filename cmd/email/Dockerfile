@@ -4,7 +4,7 @@ WORKDIR /go/src/app
 
 COPY . .
 
-RUN go build -o main ./cmd/mail
+RUN go build -o main ./cmd/email
 
 EXPOSE 8002
 
