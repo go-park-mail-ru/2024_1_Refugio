@@ -90,3 +90,45 @@ func (h *FolderHandler) Add(w http.ResponseWriter, r *http.Request) {
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"folder": converters.FolderConvertCoreInApi(*folderData)})
 	return
 }
+
+// GetAll get all folders.
+// @Summary GetAll get all folders
+// @Description GetAll folders users
+// @Tags folders
+// @Produce json
+// @Param X-Csrf-Token header string true "CSRF Token"
+// @Success 200 {object} response.Response "ID of the send folder message"
+// @Failure 400 {object} response.Response "Bad JSON in request"
+// @Failure 401 {object} response.Response "Not Authorized"
+// @Failure 500 {object} response.Response "Failed to get all folders"
+// @Router /api/v1/folder/all [get]
+func (h *FolderHandler) GetAll(w http.ResponseWriter, r *http.Request) {
+	profileId, err := h.Sessions.GetProfileIDBySessionID(r, r.Context())
+
+	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.FolderService))
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+	defer conn.Close()
+
+	folderServiceClient := proto.NewFolderServiceClient(conn)
+	folderDataProto, err := folderServiceClient.GetAllFolders(
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		&proto.GetAllFoldersData{Id: profileId, Offset: 0, Limit: 0},
+	)
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Failed to get all folders")
+		return
+	}
+
+	foldersCore := proto_converters.FoldersConvertProtoInCore(folderDataProto)
+
+	foldersApi := make([]*folderApi.Folder, 0, len(foldersCore))
+	for _, folder := range foldersCore {
+		foldersApi = append(foldersApi, converters.FolderConvertCoreInApi(*folder))
+	}
+
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"folders": foldersApi})
+	return
+}

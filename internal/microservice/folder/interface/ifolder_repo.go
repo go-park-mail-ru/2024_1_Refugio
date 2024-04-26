@@ -5,8 +5,11 @@ import (
 	domain "mail/internal/microservice/models/domain_models"
 )
 
-// EmailRepository represents the interface for working with emails.
+// FolderRepository represents the interface for working with folders.
 type FolderRepository interface {
-	// Add adds a new email to the storage and returns its assigned unique identifier.
-	CreateFolder(email *domain.Folder, ctx context.Context) (uint64, *domain.Folder, error)
+	// CreateFolder adds a new folder to the storage and returns its assigned unique identifier.
+	CreateFolder(folder *domain.Folder, ctx context.Context) (uint32, *domain.Folder, error)
+
+	// GetAll get list folder user.
+	GetAll(profileID uint32, offset, limit int64, ctx context.Context) ([]*domain.Folder, error)
 }

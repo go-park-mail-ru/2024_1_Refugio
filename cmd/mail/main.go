@@ -196,6 +196,7 @@ func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.
 	logRouter.HandleFunc("/email/delete/{id}", emailHandler.Delete).Methods("DELETE", "OPTIONS")
 	logRouter.HandleFunc("/email/send", emailHandler.Send).Methods("POST", "OPTIONS")
 	logRouter.HandleFunc("/folder/add", folderHandler.Add).Methods("POST", "OPTIONS")
+	logRouter.HandleFunc("/folder/all", folderHandler.GetAll).Methods("GET", "OPTIONS")
 
 	return logRouter
 }

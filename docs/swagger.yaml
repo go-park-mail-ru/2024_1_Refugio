@@ -50,15 +50,9 @@ definitions:
     type: object
   response.FolderSwag:
     properties:
-      id:
-        description: ID he unique ID of the folder in the database.
-        type: integer
       name:
         description: Name the name of the folder.
         type: string
-      profileId:
-        description: ProfileId the unique identifier of the user who owns the folder.
-        type: integer
     type: object
   response.Response:
     properties:
@@ -513,6 +507,37 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       summary: Add a new folder message
+      tags:
+      - folders
+  /api/v1/folder/all:
+    get:
+      description: GetAll folders users
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ID of the send folder message
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad JSON in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to get all folders
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: GetAll get all folders
       tags:
       - folders
   /api/v1/user/avatar/delete:

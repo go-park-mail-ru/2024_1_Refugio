@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type FolderServiceClient interface {
 	CreateFolder(ctx context.Context, in *Folder, opts ...grpc.CallOption) (*FolderWithID, error)
+	GetAllFolders(ctx context.Context, in *GetAllFoldersData, opts ...grpc.CallOption) (*Folders, error)
 }
 
 type folderServiceClient struct {
@@ -42,11 +43,21 @@ func (c *folderServiceClient) CreateFolder(ctx context.Context, in *Folder, opts
 	return out, nil
 }
 
+func (c *folderServiceClient) GetAllFolders(ctx context.Context, in *GetAllFoldersData, opts ...grpc.CallOption) (*Folders, error) {
+	out := new(Folders)
+	err := c.cc.Invoke(ctx, "/proto.FolderService/GetAllFolders", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FolderServiceServer is the server API for FolderService service.
 // All implementations must embed UnimplementedFolderServiceServer
 // for forward compatibility
 type FolderServiceServer interface {
 	CreateFolder(context.Context, *Folder) (*FolderWithID, error)
+	GetAllFolders(context.Context, *GetAllFoldersData) (*Folders, error)
 	mustEmbedUnimplementedFolderServiceServer()
 }
 
@@ -56,6 +67,9 @@ type UnimplementedFolderServiceServer struct {
 
 func (UnimplementedFolderServiceServer) CreateFolder(context.Context, *Folder) (*FolderWithID, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateFolder not implemented")
+}
+func (UnimplementedFolderServiceServer) GetAllFolders(context.Context, *GetAllFoldersData) (*Folders, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAllFolders not implemented")
 }
 func (UnimplementedFolderServiceServer) mustEmbedUnimplementedFolderServiceServer() {}
 
@@ -88,6 +102,24 @@ func _FolderService_CreateFolder_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FolderService_GetAllFolders_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAllFoldersData)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FolderServiceServer).GetAllFolders(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.FolderService/GetAllFolders",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FolderServiceServer).GetAllFolders(ctx, req.(*GetAllFoldersData))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // FolderService_ServiceDesc is the grpc.ServiceDesc for FolderService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -98,6 +130,10 @@ var FolderService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateFolder",
 			Handler:    _FolderService_CreateFolder_Handler,
+		},
+		{
+			MethodName: "GetAllFolders",
+			Handler:    _FolderService_GetAllFolders_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

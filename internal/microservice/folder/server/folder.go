@@ -32,3 +32,27 @@ func (es *FolderServer) CreateFolder(ctx context.Context, input *proto.Folder) (
 	folderWithId.Folder = converters.FolderConvertCoreInProto(*folder)
 	return folderWithId, nil
 }
+
+func (es *FolderServer) GetAllFolders(ctx context.Context, input *proto.GetAllFoldersData) (*proto.Folders, error) {
+	if input == nil {
+		return nil, fmt.Errorf("invalid folder format: %s", input)
+	}
+
+	if input.Id == 0 {
+		return nil, fmt.Errorf("invalid profileID = %s", input.Id)
+	}
+
+	foldersCore, err := es.FolderUseCase.GetAllFolders(input.Id, input.Offset, input.Limit, ctx)
+	if err != nil {
+		return nil, fmt.Errorf("folder not found")
+	}
+
+	foldersProto := make([]*proto.Folder, len(foldersCore))
+	for i, f := range foldersCore {
+		foldersProto[i] = converters.FolderConvertCoreInProto(*f)
+	}
+
+	folderProto := new(proto.Folders)
+	folderProto.Folders = foldersProto
+	return folderProto, nil
+}

@@ -8,5 +8,5 @@ import (
 // FolderUseCase represents the use case for working with folders.
 type FolderUseCase interface {
 	// CreateFolder creates a new folder.
-	CreateFolder(newFolder *folderCore.Folder, ctx context.Context) (uint64, *folderCore.Folder, error)
+	CreateFolder(newFolder *folderCore.Folder, ctx context.Context) (uint32, *folderCore.Folder, error)
 }

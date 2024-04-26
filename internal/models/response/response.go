@@ -72,8 +72,7 @@ type EmailSwag struct {
 }
 
 type FolderSwag struct {
-	ID   uint64 `json:"id,omitempty"` // ID he unique ID of the folder in the database.
-	Name string `json:"name"`         // Name the name of the folder.
+	Name string `json:"name"` // Name the name of the folder.
 }
 
 type UserGenderSwag string

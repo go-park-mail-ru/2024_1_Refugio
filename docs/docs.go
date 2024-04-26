@@ -613,6 +613,53 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/folder/all": {
+            "get": {
+                "description": "GetAll folders users",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "folders"
+                ],
+                "summary": "GetAll get all folders",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ID of the send folder message",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad JSON in request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get all folders",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/user/avatar/delete": {
             "delete": {
                 "description": "Handles requests to delete user avatar.",
@@ -972,17 +1019,9 @@ const docTemplate = `{
         "response.FolderSwag": {
             "type": "object",
             "properties": {
-                "id": {
-                    "description": "ID he unique ID of the folder in the database.",
-                    "type": "integer"
-                },
                 "name": {
                     "description": "Name the name of the folder.",
                     "type": "string"
-                },
-                "profileId": {
-                    "description": "ProfileId the unique identifier of the user who owns the folder.",
-                    "type": "integer"
                 }
             }
         },

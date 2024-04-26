@@ -8,6 +8,7 @@ package proto;
 
 service FolderService {
   rpc CreateFolder(Folder) returns(FolderWithID) {}
+  rpc GetAllFolders(GetAllFoldersData) returns(Folders) {}
 }
 
 message Folder {
@@ -22,9 +23,15 @@ message Folders {
 
 message FolderWithID {
   Folder folder = 1;
-  uint64 id = 2;
+  uint32 id = 2;
 }
 
 message FolderBool {
   bool status = 1;
+}
+
+message GetAllFoldersData {
+  uint32 id = 1;
+  int64 limit = 2;
+  int64 offset = 3;
 }
