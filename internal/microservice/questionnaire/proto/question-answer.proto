@@ -25,6 +25,7 @@ message Answer {
   uint32 question_id = 2;
   string login = 3;
   uint32 mark = 4;
+  string text = 5;
 }
 
 message Statistic {

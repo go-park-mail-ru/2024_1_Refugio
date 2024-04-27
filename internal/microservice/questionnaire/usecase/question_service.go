@@ -63,12 +63,31 @@ func CalculatingStatistics(answers []*domain.Answer) ([]*domain.Statistics, erro
 
 	var questionsID = make([]uint32, maxQuestionId+1)
 	var sumMark = make([]uint32, maxQuestionId+1)
+	var textID = make([]string, maxQuestionId+1)
+
+	for _, a := range answers {
+		sumMark[a.QuestionID] += a.Mark
+		questionsID[a.QuestionID] += 1
+		textID[a.QuestionID] = a.Text
+	}
 
 	var statistics = make([]*domain.Statistics, maxQuestionId)
-	for i, a := range answers {
+	for i := 0; i < int(maxQuestionId); i++ {
+		if questionsID[i+1] == 0 {
+			continue
+		}
 		statistics[i] = new(domain.Statistics)
 		statistics[i].Average = sumMark[i+1] / questionsID[i+1]
-		statistics[i].Text = a.Text
+		statistics[i].Text = textID[i+1]
+	}
+
+	emptyStatistics := new(domain.Statistics)
+	var newStatistics []*domain.Statistics
+	for _, s := range statistics {
+		if s == emptyStatistics {
+			continue
+		}
+		newStatistics = append(newStatistics, s)
 	}
 
 	return statistics, nil
