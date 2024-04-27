@@ -6,7 +6,7 @@ import (
 )
 
 // EmailRepository represents the interface for working with emails.
-type QuestionRepository interface {
+type QuestionAnswerRepository interface {
 	GetAllQuestions(ctx context.Context) ([]*domain.Question, error)
 
 	GetAllAnswers(ctx context.Context) ([]*domain.Answer, error)

@@ -6,4 +6,5 @@ type Answer struct {
 	QuestionID uint32
 	Login      string
 	Mark       uint32
+	Text       string
 }

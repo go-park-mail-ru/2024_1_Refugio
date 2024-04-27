@@ -4,15 +4,19 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/jackc/pgx/stdlib"
+	"github.com/jmoiron/sqlx"
 	"google.golang.org/grpc"
 	"log"
+	questionnaireRepo "mail/internal/microservice/questionnaire/repository"
+	grpcQuestionnaire "mail/internal/microservice/questionnaire/server"
+	questionnaireUc "mail/internal/microservice/questionnaire/usecase"
 	"net"
 	"os"
 	"time"
 
 	migrate "github.com/rubenv/sql-migrate"
-	"mail/internal/microservice/email/proto"
 	"mail/internal/microservice/interceptors"
+	"mail/internal/microservice/questionnaire/proto"
 )
 
 func main() {
@@ -23,9 +27,11 @@ func main() {
 
 	migrateDatabase(db)
 
+	questionGrpc := initializeQuestion(db)
+
 	loggerInterceptorAccess := initializationInterceptorLogger()
 
-	startServer(loggerInterceptorAccess)
+	startServer(questionGrpc, loggerInterceptorAccess)
 }
 
 func settingTime() {
@@ -55,6 +61,13 @@ func initializeDatabase() *sql.DB {
 	return db
 }
 
+func initializeQuestion(db *sql.DB) *grpcQuestionnaire.QuestionAnswerServer {
+	questionnaireRepository := questionnaireRepo.NewQuestionRepository(sqlx.NewDb(db, "pgx"))
+	questionnaireUseCase := questionnaireUc.NewQuestionAnswerUseCase(questionnaireRepository)
+
+	return grpcQuestionnaire.NewQestionAnswerServer(questionnaireUseCase)
+}
+
 func migrateDatabase(db *sql.DB) {
 	migrations := &migrate.FileMigrationSource{
 		Dir: ".",
@@ -79,7 +92,7 @@ func initializationInterceptorLogger() *interceptors.Logger {
 	return LoggerAcces
 }
 
-func startServer(interceptorsLogger *interceptors.Logger) {
+func startServer(questionnaireGrpc *grpcQuestionnaire.QuestionAnswerServer, interceptorsLogger *interceptors.Logger) {
 	listen, err := net.Listen("tcp", ":8006")
 	if err != nil {
 		log.Fatalf("Cannot listen port: %s. Err: %s", "8006", err.Error())
@@ -93,7 +106,7 @@ func startServer(interceptorsLogger *interceptors.Logger) {
 	}
 	grpcServer := grpc.NewServer(opts...)
 
-	proto.RegisterEmailServiceServer(grpcServer, nil)
+	proto.RegisterQuestionServiceServer(grpcServer, questionnaireGrpc)
 
 	fmt.Printf("The server is running  in port 8006\n")
 

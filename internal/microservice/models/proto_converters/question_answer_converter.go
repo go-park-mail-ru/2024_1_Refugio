@@ -40,3 +40,10 @@ func AnswerConvertProtoInCore(answerModelProto grpc.Answer) *domain.Answer {
 		Mark:       answerModelProto.Mark,
 	}
 }
+
+func StatisticConvertCoreInProto(statisticModelCore domain.Statistics) *grpc.Statistic {
+	return &grpc.Statistic{
+		Text:    statisticModelCore.Text,
+		Average: statisticModelCore.Average,
+	}
+}
