@@ -1075,6 +1075,9 @@ const docTemplate = `{
                 },
                 "question_id": {
                     "type": "integer"
+                },
+                "text": {
+                    "type": "string"
                 }
             }
         },

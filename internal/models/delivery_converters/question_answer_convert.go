@@ -7,19 +7,21 @@ import (
 
 func QuestionConvertCoreInApi(questionModelCore core.Question) *api.Question {
 	return &api.Question{
-		ID:      questionModelCore.ID,
-		Text:    questionModelCore.Text,
-		MinText: questionModelCore.MinResult,
-		MaxText: questionModelCore.MaxResult,
+		ID:          questionModelCore.ID,
+		Text:        questionModelCore.Text,
+		MinText:     questionModelCore.MinResult,
+		MaxText:     questionModelCore.MaxResult,
+		DopQuestion: questionModelCore.DopQuestion,
 	}
 }
 
 func QuestionConvertApiInCore(questionModelApi api.Question) *core.Question {
 	return &core.Question{
-		ID:        questionModelApi.ID,
-		Text:      questionModelApi.Text,
-		MinResult: questionModelApi.MinText,
-		MaxResult: questionModelApi.MaxText,
+		ID:          questionModelApi.ID,
+		Text:        questionModelApi.Text,
+		MinResult:   questionModelApi.MinText,
+		MaxResult:   questionModelApi.MaxText,
+		DopQuestion: questionModelApi.DopQuestion,
 	}
 }
 
@@ -29,6 +31,7 @@ func AnswerConvertCoreInApi(answerModelCore core.Answer) *api.Answer {
 		QuestionId: answerModelCore.QuestionID,
 		Login:      answerModelCore.Login,
 		Mark:       answerModelCore.Mark,
+		Text:       answerModelCore.Text,
 	}
 }
 
@@ -38,5 +41,6 @@ func AnswerConvertApiInCore(answerModelApi api.Answer) *core.Answer {
 		QuestionID: answerModelApi.QuestionId,
 		Login:      answerModelApi.Login,
 		Mark:       answerModelApi.Mark,
+		Text:       answerModelApi.Text,
 	}
 }

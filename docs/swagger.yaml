@@ -10,6 +10,8 @@ definitions:
         type: integer
       question_id:
         type: integer
+      text:
+        type: string
     type: object
   response.EmailSwag:
     properties:

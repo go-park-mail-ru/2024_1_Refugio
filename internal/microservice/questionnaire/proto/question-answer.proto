@@ -18,6 +18,7 @@ message Question {
   string text = 2;
   string min_text = 3;
   string max_text = 4;
+  string dop_question = 5;
 }
 
 message Answer {
