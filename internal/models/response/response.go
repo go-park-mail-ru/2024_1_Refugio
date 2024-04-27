@@ -80,10 +80,11 @@ const (
 )
 
 type QuestionSwag struct {
-	ID      uint32 `json:"id,omitempty"`
-	Text    string `json:"text,omitempty"`
-	MinText string `json:"min_text,omitempty"`
-	MaxText string `json:"max_text,omitempty"`
+	ID          uint32 `json:"id,omitempty"`
+	Text        string `json:"text,omitempty"`
+	MinText     string `json:"min_text,omitempty"`
+	MaxText     string `json:"max_text,omitempty"`
+	DopQuestion string `json:"dop_question,omitempty"`
 }
 
 type AnswerSwag struct {

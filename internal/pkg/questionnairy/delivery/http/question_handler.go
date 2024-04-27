@@ -99,6 +99,7 @@ func (qh *QuestionHandler) AddQuestion(w http.ResponseWriter, r *http.Request) {
 	newQuestion.Text = sanitize.SanitizeString(newQuestion.Text)
 	newQuestion.MinText = sanitize.SanitizeString(newQuestion.MinText)
 	newQuestion.MaxText = sanitize.SanitizeString(newQuestion.MaxText)
+	newQuestion.DopQuestion = sanitize.SanitizeString(newQuestion.DopQuestion)
 
 	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.QuestionService))
 	if err != nil {

@@ -1149,6 +1149,9 @@ const docTemplate = `{
         "response.QuestionSwag": {
             "type": "object",
             "properties": {
+                "dop_question": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
