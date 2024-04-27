@@ -1,0 +1,8 @@
+[[34mINFO[0m]: 2024-04-27 16:50:51 - StatusOK requestID=a166c915-8e66-4387-b3ad-0b178704ca01 work_time=65.652133ms user-agent=grpc-go/1.63.2 FullMethod=/proto.UserService/GetUserByLogin mode=[interceptor_log]
+[[34mINFO[0m]: 2024-04-27 16:50:51 - StatusOK requestID=a166c915-8e66-4387-b3ad-0b178704ca01 work_time=3.348052ms user-agent=grpc-go/1.63.2 FullMethod=/proto.SessionService/CreateSession mode=[interceptor_log]
+[[34mINFO[0m]: 2024-04-27 16:50:51 - StatusOK requestID=a166c915-8e66-4387-b3ad-0b178704ca01 work_time=76.784477ms user-agent=grpc-go/1.63.2 FullMethod=/proto.AuthService/Login mode=[interceptor_log]
+[[34mINFO[0m]: 2024-04-27 16:50:51 - StatusOK requestID=a166c915-8e66-4387-b3ad-0b178704ca01 work_time=718.262µs user-agent=grpc-go/1.63.2 FullMethod=/proto.SessionService/GetSession mode=[interceptor_log]
+[[34mINFO[0m]: 2024-04-27 16:51:00 - StatusOK requestID=926f05f6-c32a-4afa-9ca4-d32cbcdc3827 work_time=725.134µs user-agent=grpc-go/1.63.2 FullMethod=/proto.SessionService/GetSession mode=[interceptor_log]
+[[34mINFO[0m]: 2024-04-27 16:51:00 - StatusOK requestID=926f05f6-c32a-4afa-9ca4-d32cbcdc3827 work_time=1.204841ms user-agent=grpc-go/1.63.2 FullMethod=/proto.QuestionService/GetQuestions mode=[interceptor_log]
+[[34mINFO[0m]: 2024-04-27 16:51:21 - StatusOK requestID=de718758-0519-421b-bf47-bb41c28a6d5a work_time=10.684624ms user-agent=grpc-go/1.63.2 FullMethod=/proto.SessionService/GetSession mode=[interceptor_log]
+[[34mINFO[0m]: 2024-04-27 16:51:21 - StatusOK requestID=de718758-0519-421b-bf47-bb41c28a6d5a work_time=1.520628ms user-agent=grpc-go/1.63.2 FullMethod=/proto.QuestionService/GetStatistic mode=[interceptor_log]
