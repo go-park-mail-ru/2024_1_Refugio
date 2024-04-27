@@ -81,14 +81,13 @@ func CalculatingStatistics(answers []*domain.Answer) ([]*domain.Statistics, erro
 		statistics[i].Text = textID[i+1]
 	}
 
-	emptyStatistics := new(domain.Statistics)
 	var newStatistics []*domain.Statistics
 	for _, s := range statistics {
-		if s == emptyStatistics {
+		if s == nil {
 			continue
 		}
 		newStatistics = append(newStatistics, s)
 	}
 
-	return statistics, nil
+	return newStatistics, nil
 }

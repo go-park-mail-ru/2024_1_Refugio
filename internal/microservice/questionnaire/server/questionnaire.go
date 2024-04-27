@@ -44,6 +44,9 @@ func (es *QuestionAnswerServer) GetStatistic(ctx context.Context, input *proto.G
 
 	statisticsProto := make([]*proto.Statistic, len(statisticsCore))
 	for i, s := range statisticsCore {
+		if s == nil {
+			continue
+		}
 		statisticsProto[i] = converters.StatisticConvertCoreInProto(*s)
 	}
 
