@@ -28,7 +28,8 @@ message Answer {
 }
 
 message Statistic {
-  uint32 average = 1;
+  string text = 1;
+  uint32 average = 2;
 }
 
 message GetQuestionsRequest {
@@ -56,11 +57,11 @@ message AddAnswerReply {
 }
 
 message GetStatisticRequest {
-  string login = 1;
+
 }
 
 message GetStatisticReply {
-  bool status = 1;
+  repeated Statistic statistics = 1;
 }
 
 
