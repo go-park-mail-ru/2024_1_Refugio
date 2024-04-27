@@ -85,8 +85,8 @@ func (r *QuestionAnswerRepository) GetAllAnswers(ctx context.Context) ([]*domain
 
 func (r *QuestionAnswerRepository) AddQuestion(newQuestion *domain.Question, ctx context.Context) (bool, error) {
 	insertQuestionQuery := `
-		INSERT INTO question (text, min_text, max_text)
-		VALUES ($1, $2, $3)
+		INSERT INTO question (text, min_text, max_text, dop_question)
+		VALUES ($1, $2, $3, $4)
 		RETURNING id
 	`
 
@@ -94,12 +94,12 @@ func (r *QuestionAnswerRepository) AddQuestion(newQuestion *domain.Question, ctx
 
 	var id uint64
 	start := time.Now()
-	err := r.DB.QueryRow(insertQuestionQuery, questionModelDb.Text, questionModelDb.MinResult, questionModelDb.MaxResult).Scan(&id)
+	err := r.DB.QueryRow(insertQuestionQuery, questionModelDb.Text, questionModelDb.MinResult, questionModelDb.MaxResult, questionModelDb.DopQuestion).Scan(&id)
 	if err != nil {
 		return false, fmt.Errorf("failed to add question: %v", err)
 	}
 
-	args := []interface{}{questionModelDb.Text, questionModelDb.MinResult, questionModelDb.MaxResult}
+	args := []interface{}{questionModelDb.Text, questionModelDb.MinResult, questionModelDb.MaxResult, questionModelDb.DopQuestion}
 	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(insertQuestionQuery, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
 
 	return true, nil
