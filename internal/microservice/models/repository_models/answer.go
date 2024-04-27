@@ -5,4 +5,5 @@ type Answer struct {
 	QuestionID uint32 `db:"question_id"`
 	Login      string `db:"login"`
 	Mark       uint32 `db:"mark"`
+	Text       string `db:"text"`
 }

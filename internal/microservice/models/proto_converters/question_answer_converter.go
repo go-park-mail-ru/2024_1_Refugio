@@ -29,6 +29,7 @@ func AnswerConvertCoreInProto(answerModelCore domain.Answer) *grpc.Answer {
 		QuestionId: answerModelCore.QuestionID,
 		Login:      answerModelCore.Login,
 		Mark:       answerModelCore.Mark,
+		Text:       answerModelCore.Text,
 	}
 }
 
@@ -38,6 +39,7 @@ func AnswerConvertProtoInCore(answerModelProto grpc.Answer) *domain.Answer {
 		QuestionID: answerModelProto.QuestionId,
 		Login:      answerModelProto.Login,
 		Mark:       answerModelProto.Mark,
+		Text:       answerModelProto.Text,
 	}
 }
 

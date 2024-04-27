@@ -25,11 +25,12 @@ message Answer {
   uint32 question_id = 2;
   string login = 3;
   uint32 mark = 4;
+  string text = 5;
 }
 
 message Statistic {
   string text = 1;
-  uint32 average = 2;
+  float average = 2;
 }
 
 message GetQuestionsRequest {

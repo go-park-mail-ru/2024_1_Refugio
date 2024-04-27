@@ -54,7 +54,9 @@ func (r *QuestionAnswerRepository) GetAllQuestions(ctx context.Context) ([]*doma
 
 func (r *QuestionAnswerRepository) GetAllAnswers(ctx context.Context) ([]*domain.Answer, error) {
 	query := `
-		SELECT answer.id, answer.question_id, answer.login, answer.mark FROM answer
+		SELECT answer.id, answer.question_id, answer.login, answer.mark, question.text 
+		FROM answer
+		LEFT JOIN question ON question.id = answer.question_id
 	`
 
 	answersModelDb := []repository_models.Answer{}
