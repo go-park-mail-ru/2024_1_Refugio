@@ -33,6 +33,7 @@ type QuestionHandler struct {
 // @Tags question
 // @Accept json
 // @Produce json
+// @Param X-Csrf-Token header string true "CSRF Token"
 // @Success 200 {object} response.Response "Get questions successful"
 // @Failure 400 {object} response.ErrorResponse "Invalid request body"
 // @Failure 401 {object} response.ErrorResponse "Unauthorized"
@@ -53,7 +54,7 @@ func (qh *QuestionHandler) GetAllQuestions(w http.ResponseWriter, r *http.Reques
 		&question_proto.GetQuestionsRequest{},
 	)
 	if errStatus != nil {
-		response.HandleError(w, http.StatusUnauthorized, "Login failed")
+		response.HandleError(w, http.StatusInternalServerError, "Get questions failed")
 		return
 	}
 
@@ -76,6 +77,7 @@ func (qh *QuestionHandler) GetAllQuestions(w http.ResponseWriter, r *http.Reques
 // @Tags question
 // @Accept json
 // @Produce json
+// @Param X-Csrf-Token header string true "CSRF Token"
 // @Param question body response.QuestionSwag true "Question message in JSON format"
 // @Success 200 {object} response.Response "Add question successful"
 // @Failure 400 {object} response.ErrorResponse "Invalid request body"
@@ -108,7 +110,7 @@ func (qh *QuestionHandler) AddQuestion(w http.ResponseWriter, r *http.Request) {
 		&question_proto.AddQuestionRequest{Question: proto_converters.QuestionConvertCoreInProto(*question)},
 	)
 	if errStatus != nil {
-		response.HandleError(w, http.StatusUnauthorized, "Login failed")
+		response.HandleError(w, http.StatusInternalServerError, "Add question failed")
 		return
 	}
 
@@ -121,6 +123,7 @@ func (qh *QuestionHandler) AddQuestion(w http.ResponseWriter, r *http.Request) {
 // @Tags question
 // @Accept json
 // @Produce json
+// @Param X-Csrf-Token header string true "CSRF Token"
 // @Param question body response.AnswerSwag true "Answer message in JSON format"
 // @Success 200 {object} response.Response "Add answer successful"
 // @Failure 400 {object} response.ErrorResponse "Invalid request body"
@@ -153,7 +156,7 @@ func (qh *QuestionHandler) AddAnswer(w http.ResponseWriter, r *http.Request) {
 		&question_proto.AddAnswerRequest{Answer: proto_converters.AnswerConvertCoreInProto(*answer)},
 	)
 	if errStatus != nil {
-		response.HandleError(w, http.StatusUnauthorized, "Login failed")
+		response.HandleError(w, http.StatusInternalServerError, "Add answer failed")
 		return
 	}
 
@@ -166,6 +169,7 @@ func (qh *QuestionHandler) AddAnswer(w http.ResponseWriter, r *http.Request) {
 // @Tags question
 // @Accept json
 // @Produce json
+// @Param X-Csrf-Token header string true "CSRF Token"
 // @Success 200 {object} response.Response "Get statistics successful"
 // @Failure 400 {object} response.ErrorResponse "Invalid request body"
 // @Failure 401 {object} response.ErrorResponse "Unauthorized"
@@ -186,9 +190,9 @@ func (qh *QuestionHandler) GetStatistics(w http.ResponseWriter, r *http.Request)
 		&question_proto.GetStatisticRequest{},
 	)
 	if errStatus != nil {
-		response.HandleError(w, http.StatusUnauthorized, "Login failed")
+		response.HandleError(w, http.StatusInternalServerError, "Statistics failed")
 		return
 	}
 
-	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"statistic": statisticsProto.Status})
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"statistic": statisticsProto.Statistics})
 }

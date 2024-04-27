@@ -30,6 +30,13 @@ const docTemplate = `{
                 "summary": "Add answer",
                 "parameters": [
                     {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
                         "description": "Answer message in JSON format",
                         "name": "question",
                         "in": "body",
@@ -619,6 +626,15 @@ const docTemplate = `{
                     "question"
                 ],
                 "summary": "Get questions",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Get questions successful",
@@ -659,6 +675,13 @@ const docTemplate = `{
                 ],
                 "summary": "Add question",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "description": "Question message in JSON format",
                         "name": "question",
@@ -710,6 +733,15 @@ const docTemplate = `{
                     "question"
                 ],
                 "summary": "Get statistics",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Get statistics successful",
