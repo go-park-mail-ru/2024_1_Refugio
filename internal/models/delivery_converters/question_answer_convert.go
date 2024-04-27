@@ -29,6 +29,7 @@ func AnswerConvertCoreInApi(answerModelCore core.Answer) *api.Answer {
 		QuestionId: answerModelCore.QuestionID,
 		Login:      answerModelCore.Login,
 		Mark:       answerModelCore.Mark,
+		Text:       answerModelCore.Text,
 	}
 }
 
@@ -38,5 +39,6 @@ func AnswerConvertApiInCore(answerModelApi api.Answer) *core.Answer {
 		QuestionID: answerModelApi.QuestionId,
 		Login:      answerModelApi.Login,
 		Mark:       answerModelApi.Mark,
+		Text:       answerModelApi.Text,
 	}
 }

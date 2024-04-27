@@ -107,8 +107,8 @@ func (r *QuestionAnswerRepository) AddQuestion(newQuestion *domain.Question, ctx
 
 func (r *QuestionAnswerRepository) AddAnswer(newAnswer *domain.Answer, ctx context.Context) (bool, error) {
 	insertAnswerQuery := `
-		INSERT INTO answer (question_id, login, mark)
-		VALUES ($1, $2, $3)
+		INSERT INTO answer (question_id, login, mark, text)
+		VALUES ($1, $2, $3, $4)
 		RETURNING id
 	`
 
@@ -116,12 +116,12 @@ func (r *QuestionAnswerRepository) AddAnswer(newAnswer *domain.Answer, ctx conte
 
 	var id uint64
 	start := time.Now()
-	err := r.DB.QueryRow(insertAnswerQuery, answerModelDb.QuestionID, answerModelDb.Login, answerModelDb.Mark).Scan(&id)
+	err := r.DB.QueryRow(insertAnswerQuery, answerModelDb.QuestionID, answerModelDb.Login, answerModelDb.Mark, answerModelDb.Text).Scan(&id)
 	if err != nil {
 		return false, fmt.Errorf("failed to add answer: %v", err)
 	}
 
-	args := []interface{}{answerModelDb.QuestionID, answerModelDb.Login, answerModelDb.Mark}
+	args := []interface{}{answerModelDb.QuestionID, answerModelDb.Login, answerModelDb.Mark, answerModelDb.Text}
 	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(insertAnswerQuery, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
 
 	return true, nil

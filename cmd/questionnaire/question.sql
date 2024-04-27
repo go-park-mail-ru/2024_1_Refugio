@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS answer (
     id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     question_id INTEGER REFERENCES question(id) ON DELETE CASCADE,
     login TEXT NOT NULL CHECK (LENGTH(login) <= 50),
-    mark INTEGER NOT NULL DEFAULT 0
+    mark INTEGER NOT NULL DEFAULT 0,
+    text TEXT CHECK (LENGTH(text) <= 200) DEFAULT ''
 );
 
 -- Вставка начальных данных в таблицу question
