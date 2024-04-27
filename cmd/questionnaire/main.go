@@ -45,7 +45,7 @@ func settingTime() {
 
 func initializeDatabase() *sql.DB {
 	// dsn := "user=postgres dbname=Question password=postgres host=localhost port=5432 sslmode=disable"
-	dsn := "user=postgres dbname=Mail password=postgres host=89.208.223.140 port=5433 sslmode=disable"
+	dsn := "user=postgres dbname=Question password=postgres host=89.208.223.140 port=5433 sslmode=disable"
 	db, err := sql.Open("pgx", dsn)
 	if err != nil {
 		log.Fatalln("Can't parse config", err)
