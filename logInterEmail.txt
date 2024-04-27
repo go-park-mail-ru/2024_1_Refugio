@@ -61,3 +61,7 @@
 [[34mINFO[0m]: 2024-04-26 18:08:45 - StatusOK requestID=cb158432-0981-4fef-9825-37b746d55e5f work_time=741.555µs user-agent=grpc-go/1.63.2 FullMethod=/proto.SessionService/GetLoginBySession mode=[interceptor_log]
 [[34mINFO[0m]: 2024-04-26 18:08:45 - StatusOK requestID=cb158432-0981-4fef-9825-37b746d55e5f work_time=710.056µs user-agent=grpc-go/1.63.2 FullMethod=/proto.SessionService/GetLoginBySession mode=[interceptor_log]
 [[34mINFO[0m]: 2024-04-26 18:08:45 - StatusOK requestID=cb158432-0981-4fef-9825-37b746d55e5f work_time=1.771023ms user-agent=grpc-go/1.63.2 FullMethod=/proto.EmailService/GetEmailByID mode=[interceptor_log]
+[[34mINFO[0m]: 2024-04-27 14:47:35 - StatusOK requestID=9835dd68-ee69-4bd3-8ec0-b2cb39e55216 work_time=137.554334ms user-agent=grpc-go/1.63.2 FullMethod=/proto.UserService/GetUserByLogin mode=[interceptor_log]
+[[34mINFO[0m]: 2024-04-27 14:47:35 - StatusOK requestID=9835dd68-ee69-4bd3-8ec0-b2cb39e55216 work_time=2.627763ms user-agent=grpc-go/1.63.2 FullMethod=/proto.SessionService/CreateSession mode=[interceptor_log]
+[[34mINFO[0m]: 2024-04-27 14:47:35 - StatusOK requestID=9835dd68-ee69-4bd3-8ec0-b2cb39e55216 work_time=155.366836ms user-agent=grpc-go/1.63.2 FullMethod=/proto.AuthService/Login mode=[interceptor_log]
+[[34mINFO[0m]: 2024-04-27 14:47:35 - StatusOK requestID=9835dd68-ee69-4bd3-8ec0-b2cb39e55216 work_time=822.184µs user-agent=grpc-go/1.63.2 FullMethod=/proto.SessionService/GetSession mode=[interceptor_log]

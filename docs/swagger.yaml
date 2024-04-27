@@ -464,6 +464,33 @@ paths:
       summary: Display the list of email messages
       tags:
       - emails
+  /api/v1/questions:
+    get:
+      consumes:
+      - application/json
+      description: Get Handles questions.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login successful
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Invalid credentials
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to create session
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Get questions
+      tags:
+      - question
   /api/v1/user/avatar/delete:
     delete:
       consumes:
