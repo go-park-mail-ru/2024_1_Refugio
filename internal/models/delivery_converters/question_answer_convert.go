@@ -26,8 +26,8 @@ func QuestionConvertApiInCore(questionModelApi api.Question) *core.Question {
 func AnswerConvertCoreInApi(answerModelCore core.Answer) *api.Answer {
 	return &api.Answer{
 		ID:         answerModelCore.ID,
-		QuestionId: answerModelCore.QuestionId,
-		Login:      answerModelCore.LoginUser,
+		QuestionId: answerModelCore.QuestionID,
+		Login:      answerModelCore.Login,
 		Mark:       answerModelCore.Mark,
 	}
 }
@@ -35,8 +35,8 @@ func AnswerConvertCoreInApi(answerModelCore core.Answer) *api.Answer {
 func AnswerConvertApiInCore(answerModelApi api.Answer) *core.Answer {
 	return &core.Answer{
 		ID:         answerModelApi.ID,
-		QuestionId: answerModelApi.QuestionId,
-		LoginUser:  answerModelApi.Login,
+		QuestionID: answerModelApi.QuestionId,
+		Login:      answerModelApi.Login,
 		Mark:       answerModelApi.Mark,
 	}
 }

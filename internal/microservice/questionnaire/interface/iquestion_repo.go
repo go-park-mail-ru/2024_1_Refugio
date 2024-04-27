@@ -9,11 +9,9 @@ import (
 type QuestionRepository interface {
 	GetAllQuestions(ctx context.Context) ([]*domain.Question, error)
 
-	/*
-		AddQuestion(newQuestion *domain.Question, ctx context.Context) (bool, error)
+	GetAllAnswers(ctx context.Context) ([]*domain.Answer, error)
 
-		GetAllAnswers(ctx context.Context) ([]*domain.Answer, error)
+	AddQuestion(newQuestion *domain.Question, ctx context.Context) (bool, error)
 
-		AddAnswer(newAnswer *domain.Answer, ctx context.Context) (bool, error)
-	*/
+	AddAnswer(newAnswer *domain.Answer, ctx context.Context) (bool, error)
 }

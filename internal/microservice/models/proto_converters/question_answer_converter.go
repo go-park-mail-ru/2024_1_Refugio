@@ -26,8 +26,8 @@ func QuestionConvertProtoInCore(questionModelProto grpc.Question) *domain.Questi
 func AnswerConvertCoreInProto(answerModelCore domain.Answer) *grpc.Answer {
 	return &grpc.Answer{
 		Id:         answerModelCore.ID,
-		QuestionId: answerModelCore.QuestionId,
-		Login:      answerModelCore.LoginUser,
+		QuestionId: answerModelCore.QuestionID,
+		Login:      answerModelCore.Login,
 		Mark:       answerModelCore.Mark,
 	}
 }
@@ -35,8 +35,8 @@ func AnswerConvertCoreInProto(answerModelCore domain.Answer) *grpc.Answer {
 func AnswerConvertProtoInCore(answerModelProto grpc.Answer) *domain.Answer {
 	return &domain.Answer{
 		ID:         answerModelProto.Id,
-		QuestionId: answerModelProto.QuestionId,
-		LoginUser:  answerModelProto.Login,
+		QuestionID: answerModelProto.QuestionId,
+		Login:      answerModelProto.Login,
 		Mark:       answerModelProto.Mark,
 	}
 }
