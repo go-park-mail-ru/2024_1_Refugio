@@ -6,16 +6,15 @@ import (
 	"github.com/gorilla/schema"
 	"github.com/microcosm-cc/bluemonday"
 	"google.golang.org/grpc/metadata"
+	folderUsecase "mail/internal/microservice/folder/interface"
 	"mail/internal/microservice/folder/proto"
 	"mail/internal/microservice/models/proto_converters"
 	converters "mail/internal/models/delivery_converters"
-	"mail/internal/models/microservice_ports"
-	"mail/internal/pkg/utils/connect_microservice"
-
-	folderUsecase "mail/internal/microservice/folder/interface"
 	folderApi "mail/internal/models/delivery_models"
+	"mail/internal/models/microservice_ports"
 	"mail/internal/models/response"
 	domainSession "mail/internal/pkg/session/interface"
+	"mail/internal/pkg/utils/connect_microservice"
 	"net/http"
 )
 
@@ -132,3 +131,54 @@ func (h *FolderHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"folders": foldersApi})
 	return
 }
+
+/*
+// Delete folder a user.
+// @Summary Delete folder a user
+// @Description Delete folder a user
+// @Tags folders
+// @Produce json
+// @Param id path integer true "ID of the folder"
+// @Param X-Csrf-Token header string true "CSRF Token"
+// @Success 200 {object} response.Response "Deletion success status"
+// @Failure 400 {object} response.Response "Bad id"
+// @Failure 401 {object} response.Response "Not Authorized"
+// @Failure 500 {object} response.Response "Failed to delete folder"
+// @Router /api/v1/folder/delete/{id} [delete]
+func (h *FolderHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.ParseUint(vars["id"], 10, 64)
+	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Bad id in request")
+		return
+	}
+
+	profileId, err := h.Sessions.GetProfileIDBySessionID(r, r.Context())
+
+	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.FolderService))
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+	defer conn.Close()
+
+	folderServiceClient := proto.NewFolderServiceClient(conn)
+	folderDataProto, err := folderServiceClient.GetAllFolders(
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		&proto.GetAllFoldersData{Id: profileId, Offset: 0, Limit: 0},
+	)
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Failed to get all folders")
+		return
+	}
+
+	foldersCore := proto_converters.FoldersConvertProtoInCore(folderDataProto)
+
+	foldersApi := make([]*folderApi.Folder, 0, len(foldersCore))
+	for _, folder := range foldersCore {
+		foldersApi = append(foldersApi, converters.FolderConvertCoreInApi(*folder))
+	}
+
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"folders": foldersApi})
+	return
+}*/
