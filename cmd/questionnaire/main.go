@@ -4,19 +4,15 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/jackc/pgx/stdlib"
-	"github.com/jmoiron/sqlx"
 	"google.golang.org/grpc"
 	"log"
 	"net"
 	"os"
 	"time"
 
+	migrate "github.com/rubenv/sql-migrate"
+	"mail/internal/microservice/email/proto"
 	"mail/internal/microservice/interceptors"
-	"mail/internal/microservice/session/proto"
-
-	sessionRepo "mail/internal/microservice/session/repository"
-	grpcSession "mail/internal/microservice/session/server"
-	sessionUc "mail/internal/microservice/session/usecase"
 )
 
 func main() {
@@ -25,11 +21,11 @@ func main() {
 	db := initializeDatabase()
 	defer db.Close()
 
-	sessionGrpc := initializeSession(db)
+	migrateDatabase(db)
 
 	loggerInterceptorAccess := initializationInterceptorLogger()
 
-	startServer(sessionGrpc, loggerInterceptorAccess)
+	startServer(loggerInterceptorAccess)
 }
 
 func settingTime() {
@@ -42,7 +38,7 @@ func settingTime() {
 }
 
 func initializeDatabase() *sql.DB {
-	dsn := "user=postgres dbname=Mail password=postgres host=localhost port=5432 sslmode=disable"
+	dsn := "user=postgres dbname=Question password=postgres host=localhost port=5432 sslmode=disable"
 	// dsn := "user=postgres dbname=Mail password=postgres host=89.208.223.140 port=5432 sslmode=disable"
 	db, err := sql.Open("pgx", dsn)
 	if err != nil {
@@ -59,11 +55,15 @@ func initializeDatabase() *sql.DB {
 	return db
 }
 
-func initializeSession(db *sql.DB) *grpcSession.SessionServer {
-	sessionRepository := sessionRepo.NewSessionRepository(sqlx.NewDb(db, "pgx"))
-	sessionUseCase := sessionUc.NewSessionUseCase(sessionRepository)
+func migrateDatabase(db *sql.DB) {
+	migrations := &migrate.FileMigrationSource{
+		Dir: ".",
+	}
 
-	return grpcSession.NewSessionServer(sessionUseCase)
+	_, errMigration := migrate.Exec(db, "postgres", migrations, migrate.Up)
+	if errMigration != nil {
+		log.Fatalf("Failed to apply migrations: %v", errMigration)
+	}
 }
 
 func initializationInterceptorLogger() *interceptors.Logger {
@@ -79,10 +79,10 @@ func initializationInterceptorLogger() *interceptors.Logger {
 	return LoggerAcces
 }
 
-func startServer(sessionGrpc *grpcSession.SessionServer, interceptorsLogger *interceptors.Logger) {
-	listen, err := net.Listen("tcp", ":8003")
+func startServer(interceptorsLogger *interceptors.Logger) {
+	listen, err := net.Listen("tcp", ":8006")
 	if err != nil {
-		log.Fatalf("Cannot listen port: %s. Err: %s", "8003", err.Error())
+		log.Fatalf("Cannot listen port: %s. Err: %s", "8006", err.Error())
 	}
 
 	opts := []grpc.ServerOption{
@@ -93,12 +93,12 @@ func startServer(sessionGrpc *grpcSession.SessionServer, interceptorsLogger *int
 	}
 	grpcServer := grpc.NewServer(opts...)
 
-	proto.RegisterSessionServiceServer(grpcServer, sessionGrpc)
+	proto.RegisterEmailServiceServer(grpcServer, nil)
 
-	fmt.Printf("The server is running in port 8003\n")
+	fmt.Printf("The server is running  in port 8006\n")
 
 	err = grpcServer.Serve(listen)
 	if err != nil {
-		log.Fatalf("Cannot listen port: %s. Err: %s", "8003", err.Error())
+		log.Fatalf("Cannot listen port: %s. Err: %s", "8006", err.Error())
 	}
 }
