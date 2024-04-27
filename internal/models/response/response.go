@@ -78,3 +78,17 @@ const (
 	Female UserGenderSwag = "Female"
 	Other  UserGenderSwag = "Other"
 )
+
+type QuestionSwag struct {
+	ID      uint32 `json:"id,omitempty"`
+	Text    string `json:"text,omitempty"`
+	MinText string `json:"min_text,omitempty"`
+	MaxText string `json:"max_text,omitempty"`
+}
+
+type AnswerSwag struct {
+	ID         uint32 `json:"id,omitempty"`
+	QuestionId uint32 `json:"question_id,omitempty"`
+	Login      string `json:"login,omitempty"`
+	Mark       uint32 `json:"mark,omitempty"`
+}
