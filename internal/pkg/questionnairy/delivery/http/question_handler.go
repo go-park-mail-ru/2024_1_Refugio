@@ -148,6 +148,7 @@ func (qh *QuestionHandler) AddAnswer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	newAnswer.Login = sanitize.SanitizeString(newAnswer.Login)
+	newAnswer.Text = sanitize.SanitizeString(newAnswer.Text)
 
 	if validators.IsValidEmailFormat(newAnswer.Login) {
 		response.HandleError(w, http.StatusInternalServerError, "Login failed")
