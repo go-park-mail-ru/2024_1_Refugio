@@ -15,6 +15,8 @@ import (
 	"net/http"
 
 	"mail/internal/pkg/utils/connect_microservice"
+	"mail/internal/pkg/utils/sanitize"
+	"mail/internal/pkg/utils/validators"
 )
 
 var (
@@ -94,6 +96,10 @@ func (qh *QuestionHandler) AddQuestion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	newQuestion.Text = sanitize.SanitizeString(newQuestion.Text)
+	newQuestion.MinText = sanitize.SanitizeString(newQuestion.MinText)
+	newQuestion.MaxText = sanitize.SanitizeString(newQuestion.MaxText)
+
 	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.QuestionService))
 	if err != nil {
 		response.HandleError(w, http.StatusInternalServerError, "connection fail")
@@ -137,6 +143,13 @@ func (qh *QuestionHandler) AddAnswer(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&newAnswer)
 	if err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
+		return
+	}
+
+	newAnswer.Login = sanitize.SanitizeString(newAnswer.Login)
+
+	if validators.IsValidEmailFormat(newAnswer.Login) {
+		response.HandleError(w, http.StatusInternalServerError, "Login failed")
 		return
 	}
 
