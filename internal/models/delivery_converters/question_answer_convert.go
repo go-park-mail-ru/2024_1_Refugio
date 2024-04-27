@@ -5,18 +5,38 @@ import (
 	api "mail/internal/models/delivery_models"
 )
 
-func QuestionConvertCoreInApi(questionModelDb core.Session) *api.Question {
-	return &api.Question{}
+func QuestionConvertCoreInApi(questionModelCore core.Question) *api.Question {
+	return &api.Question{
+		ID:      questionModelCore.ID,
+		Text:    questionModelCore.Text,
+		MinText: questionModelCore.MinResult,
+		MaxText: questionModelCore.MaxResult,
+	}
 }
 
-func QuestionConvertApiInCore(questionModelApi api.Question) *core.Session {
-	return &core.Session{}
+func QuestionConvertApiInCore(questionModelApi api.Question) *core.Question {
+	return &core.Question{
+		ID:        questionModelApi.ID,
+		Text:      questionModelApi.Text,
+		MinResult: questionModelApi.MinText,
+		MaxResult: questionModelApi.MaxText,
+	}
 }
 
-func AnswerConvertCoreInApi(answerModelDb core.Session) *api.Answer {
-	return &api.Answer{}
+func AnswerConvertCoreInApi(answerModelCore core.Answer) *api.Answer {
+	return &api.Answer{
+		ID:         answerModelCore.ID,
+		QuestionId: answerModelCore.QuestionId,
+		Login:      answerModelCore.LoginUser,
+		Mark:       answerModelCore.Mark,
+	}
 }
 
-func AnswerConvertApiInCore(answerModelApi api.Answer) *core.Session {
-	return &core.Session{}
+func AnswerConvertApiInCore(answerModelApi api.Answer) *core.Answer {
+	return &core.Answer{
+		ID:         answerModelApi.ID,
+		QuestionId: answerModelApi.QuestionId,
+		LoginUser:  answerModelApi.Login,
+		Mark:       answerModelApi.Mark,
+	}
 }

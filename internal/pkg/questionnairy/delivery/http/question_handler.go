@@ -2,8 +2,9 @@ package http
 
 import (
 	"google.golang.org/grpc/metadata"
-	auth_proto "mail/internal/microservice/auth/proto"
+	domain "mail/internal/microservice/models/domain_models"
 	"mail/internal/microservice/models/proto_converters"
+	question_proto "mail/internal/microservice/questionnaire/proto"
 	converters "mail/internal/models/delivery_converters"
 	api "mail/internal/models/delivery_models"
 	"mail/internal/models/microservice_ports"
@@ -43,18 +44,22 @@ func (qh *QuestionHandler) GetAllQuestions(w http.ResponseWriter, r *http.Reques
 	}
 	defer conn.Close()
 
-	authServiceClient := auth_proto.NewAuthServiceClient(conn)
-	questionProto, errStatus := authServiceClient.Login(
+	questionServiceClient := question_proto.NewQuestionServiceClient(conn)
+	questionProto, errStatus := questionServiceClient.GetQuestions(
 		metadata.NewOutgoingContext(r.Context(),
 			metadata.New(map[string]string{"requestID": r.Context().Value("requestID").(string)})),
-		&auth_proto.LoginRequest{},
+		&question_proto.GetQuestionsRequest{},
 	)
 	if errStatus != nil {
 		response.HandleError(w, http.StatusUnauthorized, "Login failed")
 		return
 	}
 
-	questionsCore := proto_converters.EmailsConvertProtoInCore(questionProto)
+	questionsCore := make([]*domain.Question, 0, len(questionProto.Questions))
+	for _, question := range questionProto.Questions {
+		questionsCore = append(questionsCore, proto_converters.QuestionConvertProtoInCore(*question))
+	}
+
 	questionsApi := make([]*api.Question, 0, len(questionsCore))
 	for _, question := range questionsCore {
 		questionsApi = append(questionsApi, converters.QuestionConvertCoreInApi(*question))
