@@ -13,6 +13,12 @@ type EmailUseCase interface {
 	// GetAllEmailsSent returns all emails sent.
 	GetAllEmailsSent(login string, offset, limit int64, ctx context.Context) ([]*emailCore.Email, error)
 
+	// GetAllDraftEmails returns all Draft emails
+	GetAllDraftEmails(login string, offset, limit int64, ctx context.Context) ([]*emailCore.Email, error)
+
+	// GetAllSpamEmails returns all Draft emails
+	GetAllSpamEmails(login string, offset, limit int64, ctx context.Context) ([]*emailCore.Email, error)
+
 	// GetEmailByID returns the email by its ID.
 	GetEmailByID(id uint64, login string, ctx context.Context) (*emailCore.Email, error)
 

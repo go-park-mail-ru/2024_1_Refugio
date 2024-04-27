@@ -38,7 +38,7 @@ import (
 // @version 1.0
 // @description API server for mail
 
-// @host localhost:8080
+// @host mailhub.su
 // @BasePath /
 func main() {
 	settingTime()
@@ -48,14 +48,14 @@ func main() {
 
 	migrateDatabase(db)
 
-	loggerAccess := initializeLogger()
+	loggerMiddlewareAccess := initializeMiddlewareLogger()
 
 	sessionsManager := initializeSessionsManager()
 	authHandler := initializeAuthHandler(sessionsManager)
 	emailHandler := initializeEmailHandler(sessionsManager)
 	userHandler := initializeUserHandler(sessionsManager)
 
-	router := setupRouter(authHandler, userHandler, emailHandler, loggerAccess)
+	router := setupRouter(authHandler, userHandler, emailHandler, loggerMiddlewareAccess)
 
 	startServer(router)
 }
@@ -70,8 +70,8 @@ func settingTime() {
 }
 
 func initializeDatabase() *sql.DB {
-	dsn := "user=postgres dbname=Mail password=postgres host=localhost port=5432 sslmode=disable"
-	// dsn := "user=postgres dbname=Mail password=postgres host=89.208.223.140 port=5432 sslmode=disable"
+	// dsn := "user=postgres dbname=Mail password=postgres host=localhost port=5432 sslmode=disable"
+	dsn := "user=postgres dbname=Mail password=postgres host=89.208.223.140 port=5432 sslmode=disable"
 	db, err := sql.Open("pgx", dsn)
 	if err != nil {
 		log.Fatalln("Can't parse config", err)
@@ -126,12 +126,12 @@ func initializeUserHandler(sessionsManager *session.SessionsManager) *userHand.U
 	}
 }
 
-func initializeLogger() *middleware.Logger {
+func initializeMiddlewareLogger() *middleware.Logger {
 	f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		fmt.Println("Failed to create logfile" + "log.txt")
 	}
-	defer f.Close()
+
 	LogrusAcces := logger.InitializationAccesLog(f)
 	LoggerAcces := new(middleware.Logger)
 	LoggerAcces.Logger = LogrusAcces
@@ -181,6 +181,8 @@ func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.
 	logRouter.HandleFunc("/user/avatar/delete", userHandler.DeleteUserAvatar).Methods("DELETE", "OPTIONS")
 	logRouter.HandleFunc("/emails/incoming", emailHandler.Incoming).Methods("GET", "OPTIONS")
 	logRouter.HandleFunc("/emails/sent", emailHandler.Sent).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/emails/draft", emailHandler.Draft).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/emails/spam", emailHandler.Spam).Methods("GET", "OPTIONS")
 	logRouter.HandleFunc("/email/{id}", emailHandler.GetByID).Methods("GET", "OPTIONS")
 	logRouter.HandleFunc("/email/update/{id}", emailHandler.Update).Methods("PUT", "OPTIONS")
 	logRouter.HandleFunc("/email/delete/{id}", emailHandler.Delete).Methods("DELETE", "OPTIONS")

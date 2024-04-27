@@ -15,8 +15,8 @@ type User struct {
 	Birthday         time.Time         `db:"birthday"`          // Birthday stores the birthdate of the user.
 	RegistrationDate time.Time         `db:"registration_date"` // RegistrationDate stores the date when the user registered.
 	Login            string            `db:"login"`             // Login is the username used for authentication.
-	Password         string            `db:"password"`          // Password is the hashed password of the user.
-	AvatarID         string            `db:"avatar_id"`         // AvatarID stores the identifier of the user's avatar image.
+	Password         string            `db:"password_hash"`     // Password is the hashed password of the user.
+	AvatarID         *string           `db:"avatar_id"`         // AvatarID stores the identifier of the user's avatar image.
 	PhoneNumber      string            `db:"phone_number"`      // PhoneNumber stores the phone number of the user.
 	Description      string            `db:"description"`       // Description stores additional information about the user.
 }

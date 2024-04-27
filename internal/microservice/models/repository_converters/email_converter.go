@@ -15,17 +15,23 @@ func EmailConvertDbInCore(emailModelDb database.Email) *domain.Email {
 		ReplyToEmailID = uint64(emailModelDb.ReplyToEmailID.(int64))
 	}
 
+	var avatar string
+	if emailModelDb.PhotoID != nil {
+		avatar = *emailModelDb.PhotoID
+	}
+
 	return &domain.Email{
 		ID:             emailModelDb.ID,
 		Topic:          emailModelDb.Topic,
 		Text:           emailModelDb.Text,
-		PhotoID:        emailModelDb.PhotoID,
+		PhotoID:        avatar,
 		ReadStatus:     emailModelDb.ReadStatus,
 		Flag:           emailModelDb.Flag,
 		Deleted:        emailModelDb.Deleted,
 		DateOfDispatch: emailModelDb.DateOfDispatch,
 		ReplyToEmailID: ReplyToEmailID,
 		DraftStatus:    emailModelDb.DraftStatus,
+		SpamStatus:     emailModelDb.SpamStatus,
 		SenderEmail:    emailModelDb.SenderEmail,
 		RecipientEmail: emailModelDb.RecipientEmail,
 	}
@@ -37,13 +43,14 @@ func EmailConvertCoreInDb(emailModelCore domain.Email) *database.Email {
 		ID:             emailModelCore.ID,
 		Topic:          emailModelCore.Topic,
 		Text:           emailModelCore.Text,
-		PhotoID:        emailModelCore.PhotoID,
+		PhotoID:        &emailModelCore.PhotoID,
 		ReadStatus:     emailModelCore.ReadStatus,
 		Flag:           emailModelCore.Flag,
 		Deleted:        emailModelCore.Deleted,
 		DateOfDispatch: emailModelCore.DateOfDispatch,
 		ReplyToEmailID: nil,
 		DraftStatus:    emailModelCore.DraftStatus,
+		SpamStatus:     emailModelCore.SpamStatus,
 		SenderEmail:    emailModelCore.SenderEmail,
 		RecipientEmail: emailModelCore.RecipientEmail,
 	}

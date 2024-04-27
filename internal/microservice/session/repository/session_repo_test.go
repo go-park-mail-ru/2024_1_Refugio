@@ -1,22 +1,36 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
-	domain "mail/internal/microservice/models/domain_models"
-	"mail/internal/microservice/user/repository"
-	"regexp"
-
-	//"database/sql"
 	"fmt"
+	"mail/internal/pkg/logger"
+	"os"
+	"regexp"
+	"testing"
+	"time"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/golang/mock/gomock"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
-	"time"
 
-	//"regexp"
-	"testing"
+	domain "mail/internal/microservice/models/domain_models"
 )
+
+func GetCTX() context.Context {
+	requestID := "testID"
+
+	f, err := os.OpenFile("logTest.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		fmt.Println("Failed to create logfile" + "log.txt")
+	}
+	defer f.Close()
+
+	c := context.WithValue(context.Background(), "logger", logger.InitializationBdLog(f))
+	ctx := context.WithValue(c, "requestID", requestID)
+	return ctx
+}
 
 func TestCreateSession(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -40,7 +54,7 @@ func TestCreateSession(t *testing.T) {
 		DB: sqlx.NewDb(mockDB, "sqlmock"),
 	}
 
-	ctx := repository.GetCTX()
+	ctx := GetCTX()
 
 	t.Run("Success", func(t *testing.T) {
 		ID := "10101010"
@@ -49,7 +63,7 @@ func TestCreateSession(t *testing.T) {
 		lifeTime := 3600
 		csrfToken := "10101010"
 
-		mock.ExpectExec(`INSERT INTO session`).WithArgs(ID, userID, device, sqlmock.AnyArg(), lifeTime, csrfToken).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(`INSERT INTO session`).WithArgs(ID, userID, sqlmock.AnyArg(), device, lifeTime, csrfToken).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		sessionID, err := repo.CreateSession(userID, device, lifeTime, ctx)
 
@@ -64,7 +78,7 @@ func TestCreateSession(t *testing.T) {
 		lifeTime := 7200
 		csrfToken := "10101010"
 
-		mock.ExpectExec(`INSERT INTO session`).WithArgs(ID, userID, device, sqlmock.AnyArg(), lifeTime, csrfToken).WillReturnError(fmt.Errorf("failed to insert"))
+		mock.ExpectExec(`INSERT INTO session`).WithArgs(ID, userID, sqlmock.AnyArg(), device, lifeTime, csrfToken).WillReturnError(fmt.Errorf("failed to insert"))
 
 		sessionID, err := repo.CreateSession(userID, device, lifeTime, ctx)
 
@@ -91,7 +105,7 @@ func TestGetSessionByID(t *testing.T) {
 		DB: sqlx.NewDb(mockDB, "sqlmock"),
 	}
 
-	ctx := repository.GetCTX()
+	ctx := GetCTX()
 
 	t.Run("Success", func(t *testing.T) {
 		sessionID := "10101010"
@@ -148,7 +162,7 @@ func TestDeleteSessionByID(t *testing.T) {
 		DB: sqlx.NewDb(mockDB, "sqlmock"),
 	}
 
-	ctx := repository.GetCTX()
+	ctx := GetCTX()
 
 	t.Run("Success", func(t *testing.T) {
 		sessionID := "10101010"
@@ -191,7 +205,7 @@ func TestDeleteExpiredSessions(t *testing.T) {
 		DB: sqlx.NewDb(mockDB, "sqlmock"),
 	}
 
-	ctx := repository.GetCTX()
+	ctx := GetCTX()
 
 	t.Run("Success", func(t *testing.T) {
 		queryPattern := regexp.QuoteMeta(`DELETE FROM session WHERE creation_date + life_time * interval '1 second' < now()`)
@@ -230,7 +244,7 @@ func TestGetLoginBySessionID(t *testing.T) {
 		DB: sqlx.NewDb(mockDB, "sqlmock"),
 	}
 
-	ctx := repository.GetCTX()
+	ctx := GetCTX()
 
 	t.Run("Success", func(t *testing.T) {
 		sessionID := "10101010"

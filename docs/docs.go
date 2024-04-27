@@ -366,6 +366,53 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/emails/draft": {
+            "get": {
+                "description": "Get a list of all email messages",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "emails"
+                ],
+                "summary": "Display the list of email messages",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of all email messages",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "DB error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "JSON encoding error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/emails/incoming": {
             "get": {
                 "description": "Get a list of all email messages",
@@ -414,6 +461,53 @@ const docTemplate = `{
             }
         },
         "/api/v1/emails/sent": {
+            "get": {
+                "description": "Get a list of all email messages",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "emails"
+                ],
+                "summary": "Display the list of email messages",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of all email messages",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "DB error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "JSON encoding error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/emails/spam": {
             "get": {
                 "description": "Get a list of all email messages",
                 "produces": [
@@ -794,6 +888,10 @@ const docTemplate = `{
                     "description": "SenderEmail is the Email of the sender user",
                     "type": "string"
                 },
+                "spamStatus": {
+                    "description": "SpamStatus indicates whether the email is a spam",
+                    "type": "boolean"
+                },
                 "text": {
                     "description": "Text is the body of the email.",
                     "type": "string"
@@ -893,7 +991,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8080",
+	Host:             "mailhub.su",
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "API Mail",

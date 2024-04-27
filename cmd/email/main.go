@@ -9,6 +9,7 @@ import (
 	"log"
 	grpcEmail "mail/internal/microservice/email/server"
 	"net"
+	"os"
 	"time"
 
 	"mail/internal/microservice/email/proto"
@@ -26,7 +27,9 @@ func main() {
 
 	emailGrpc := initializeEmail(db)
 
-	startServer(emailGrpc)
+	loggerInterceptorAccess := initializationInterceptorLogger()
+
+	startServer(emailGrpc, loggerInterceptorAccess)
 }
 
 func settingTime() {
@@ -39,8 +42,8 @@ func settingTime() {
 }
 
 func initializeDatabase() *sql.DB {
-	dsn := "user=postgres dbname=Mail password=postgres host=localhost port=5432 sslmode=disable"
-	// dsn := "user=postgres dbname=Mail password=postgres host=89.208.223.140 port=5432 sslmode=disable"
+	// dsn := "user=postgres dbname=Mail password=postgres host=localhost port=5432 sslmode=disable"
+	dsn := "user=postgres dbname=Mail password=postgres host=89.208.223.140 port=5432 sslmode=disable"
 	db, err := sql.Open("pgx", dsn)
 	if err != nil {
 		log.Fatalln("Can't parse config", err)
@@ -56,6 +59,19 @@ func initializeDatabase() *sql.DB {
 	return db
 }
 
+func initializationInterceptorLogger() *interceptors.Logger {
+	f, err := os.OpenFile("logInterEmail.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		fmt.Println("Failed to create logfile" + "log.txt")
+	}
+
+	LogrusAcces := interceptors.InitializationAccessLogInterceptor(f)
+	LoggerAcces := new(interceptors.Logger)
+	LoggerAcces.Logger = LogrusAcces
+
+	return LoggerAcces
+}
+
 func initializeEmail(db *sql.DB) *grpcEmail.EmailServer {
 	emailRepository := emailRepo.NewEmailRepository(sqlx.NewDb(db, "pgx"))
 	emailUseCase := emailUc.NewEmailUseCase(emailRepository)
@@ -63,7 +79,7 @@ func initializeEmail(db *sql.DB) *grpcEmail.EmailServer {
 	return grpcEmail.NewEmailServer(emailUseCase)
 }
 
-func startServer(emailGrpc *grpcEmail.EmailServer) {
+func startServer(emailGrpc *grpcEmail.EmailServer, interceptorsLogger *interceptors.Logger) {
 	listen, err := net.Listen("tcp", ":8002")
 	if err != nil {
 		log.Fatalf("Cannot listen port: %s. Err: %s", "8002", err.Error())
@@ -71,6 +87,7 @@ func startServer(emailGrpc *grpcEmail.EmailServer) {
 
 	opts := []grpc.ServerOption{
 		grpc.ChainUnaryInterceptor(
+			interceptorsLogger.AccessLogInterceptor,
 			interceptors.PanicRecoveryInterceptor,
 		),
 	}
@@ -78,7 +95,7 @@ func startServer(emailGrpc *grpcEmail.EmailServer) {
 
 	proto.RegisterEmailServiceServer(grpcServer, emailGrpc)
 
-	fmt.Printf("The server is running\n")
+	fmt.Printf("The server is running  in port 8002\n")
 
 	err = grpcServer.Serve(listen)
 	if err != nil {

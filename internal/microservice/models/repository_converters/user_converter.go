@@ -7,6 +7,11 @@ import (
 
 // UserConvertDbInCore converts a user model from database representation to core domain representation.
 func UserConvertDbInCore(userModelDb database.User) *domain.User {
+	avatar := ""
+	if userModelDb.AvatarID != nil {
+		avatar = *userModelDb.AvatarID
+	}
+
 	return &domain.User{
 		ID:          userModelDb.ID,
 		Login:       userModelDb.Login,
@@ -15,7 +20,7 @@ func UserConvertDbInCore(userModelDb database.User) *domain.User {
 		Patronymic:  userModelDb.Patronymic,
 		Gender:      userModelDb.Gender,
 		Birthday:    userModelDb.Birthday,
-		AvatarID:    userModelDb.AvatarID,
+		AvatarID:    avatar,
 		PhoneNumber: userModelDb.PhoneNumber,
 		Description: userModelDb.Description,
 	}
@@ -32,7 +37,7 @@ func UserConvertCoreInDb(userModelCore domain.User) *database.User {
 		Patronymic:  userModelCore.Patronymic,
 		Gender:      userModelCore.Gender,
 		Birthday:    userModelCore.Birthday,
-		AvatarID:    userModelCore.AvatarID,
+		AvatarID:    &userModelCore.AvatarID,
 		PhoneNumber: userModelCore.PhoneNumber,
 		Description: userModelCore.Description,
 	}

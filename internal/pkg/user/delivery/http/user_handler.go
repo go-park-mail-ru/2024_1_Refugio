@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/mux"
 	"google.golang.org/grpc/metadata"
 	"io"
@@ -76,13 +77,13 @@ func (uh *UserHandler) GetUserBySession(w http.ResponseWriter, r *http.Request) 
 	userDataProto, err := userServiceClient.GetUser(
 		metadata.NewOutgoingContext(r.Context(),
 			metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
-		&proto.UserId{Id: sessionUser.UserID},
+		&proto.GetUserRequest{Id: sessionUser.UserID},
 	)
 	if err != nil {
 		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
-	userData := proto_converters.UserConvertProtoInCore(*userDataProto)
+	userData := proto_converters.UserConvertProtoInCore(*userDataProto.User)
 
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"user": converters.UserConvertCoreInApi(*userData)})
 }
@@ -133,13 +134,13 @@ func (uh *UserHandler) UpdateUserData(w http.ResponseWriter, r *http.Request) {
 	userUpdateProto, err := userServiceClient.UpdateUser(
 		metadata.NewOutgoingContext(r.Context(),
 			metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
-		proto_converters.UserConvertCoreInProto(*converters.UserConvertApiInCore(updatedUser)),
+		&proto.UpdateUserRequest{User: proto_converters.UserConvertCoreInProto(*converters.UserConvertApiInCore(updatedUser))},
 	)
 	if err != nil {
 		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
-	userUpdated := proto_converters.UserConvertProtoInCore(*userUpdateProto)
+	userUpdated := proto_converters.UserConvertProtoInCore(*userUpdateProto.User)
 
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"user": converters.UserConvertCoreInApi(*userUpdated)})
 }
@@ -182,7 +183,7 @@ func (uh *UserHandler) DeleteUserData(w http.ResponseWriter, r *http.Request) {
 	deleted, err := userServiceClient.DeleteUserById(
 		metadata.NewOutgoingContext(r.Context(),
 			metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
-		&proto.UserId{Id: sessionUser.UserID},
+		&proto.DeleteUserByIdRequest{Id: sessionUser.UserID},
 	)
 	if err != nil {
 		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
@@ -231,6 +232,7 @@ func (uh *UserHandler) UploadUserAvatar(w http.ResponseWriter, r *http.Request) 
 	fileExt := filepath.Ext(handler.Filename)
 	uniqueFileName := generate_filename.GenerateUniqueFileName(fileExt)
 	outFile, err := os.Create("./avatars/" + uniqueFileName)
+	fmt.Println(err)
 	if err != nil {
 		response.HandleError(w, http.StatusInternalServerError, "Error creating file")
 		return
@@ -253,21 +255,11 @@ func (uh *UserHandler) UploadUserAvatar(w http.ResponseWriter, r *http.Request) 
 	defer conn.Close()
 
 	userServiceClient := proto.NewUserServiceClient(conn)
-	userDataProto, err := userServiceClient.GetUser(
-		metadata.NewOutgoingContext(r.Context(),
-			metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
-		&proto.UserId{Id: sessionUser.UserID},
-	)
-	if err != nil {
-		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
-		return
-	}
-
-	userDataProto.Avatar = "https://mailhub.su/media/" + uniqueFileName
+	avatar := "https://mailhub.su/media/" + uniqueFileName
 	_, errAvatar := userServiceClient.UploadUserAvatar(
 		metadata.NewOutgoingContext(r.Context(),
 			metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
-		&proto.UserAvatar{Id: userDataProto.Id, Avatar: userDataProto.Avatar},
+		&proto.UploadUserAvatarRequest{Id: sessionUser.UserID, Avatar: avatar},
 	)
 	if errAvatar != nil {
 		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
@@ -303,7 +295,7 @@ func (uh *UserHandler) DeleteUserAvatar(w http.ResponseWriter, r *http.Request) 
 	deleted, err := userServiceClient.DeleteUserAvatar(
 		metadata.NewOutgoingContext(r.Context(),
 			metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
-		&proto.UserId{Id: sessionUser.UserID},
+		&proto.DeleteUserAvatarRequest{Id: sessionUser.UserID},
 	)
 	if err != nil {
 		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")

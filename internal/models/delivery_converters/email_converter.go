@@ -18,6 +18,7 @@ func EmailConvertCoreInApi(emailModelDb emailCore.Email) *emailApi.Email {
 		DateOfDispatch: emailModelDb.DateOfDispatch,
 		ReplyToEmailID: emailModelDb.ReplyToEmailID,
 		DraftStatus:    emailModelDb.DraftStatus,
+		SpamStatus:     emailModelDb.SpamStatus,
 		SenderEmail:    emailModelDb.SenderEmail,
 		RecipientEmail: emailModelDb.RecipientEmail,
 	}
@@ -36,6 +37,7 @@ func EmailConvertApiInCore(emailModelApi emailApi.Email) *emailCore.Email {
 		DateOfDispatch: emailModelApi.DateOfDispatch,
 		ReplyToEmailID: emailModelApi.ReplyToEmailID,
 		DraftStatus:    emailModelApi.DraftStatus,
+		SpamStatus:     emailModelApi.SpamStatus,
 		SenderEmail:    emailModelApi.SenderEmail,
 		RecipientEmail: emailModelApi.RecipientEmail,
 	}

@@ -34,15 +34,15 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserServiceClient interface {
-	GetUsers(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Users, error)
-	GetUser(ctx context.Context, in *UserId, opts ...grpc.CallOption) (*User, error)
-	GetUserByLogin(ctx context.Context, in *UserLogin, opts ...grpc.CallOption) (*User, error)
-	IsLoginUnique(ctx context.Context, in *Login, opts ...grpc.CallOption) (*Status, error)
-	DeleteUserById(ctx context.Context, in *UserId, opts ...grpc.CallOption) (*Status, error)
-	UpdateUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*User, error)
-	UploadUserAvatar(ctx context.Context, in *UserAvatar, opts ...grpc.CallOption) (*Empty, error)
-	DeleteUserAvatar(ctx context.Context, in *UserId, opts ...grpc.CallOption) (*Status, error)
-	CreateUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*User, error)
+	GetUsers(ctx context.Context, in *GetUsersRequest, opts ...grpc.CallOption) (*GetUsersReply, error)
+	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserReply, error)
+	GetUserByLogin(ctx context.Context, in *GetUserByLoginRequest, opts ...grpc.CallOption) (*GetUserByLoginReply, error)
+	IsLoginUnique(ctx context.Context, in *IsLoginUniqueRequest, opts ...grpc.CallOption) (*IsLoginUniqueReply, error)
+	DeleteUserById(ctx context.Context, in *DeleteUserByIdRequest, opts ...grpc.CallOption) (*DeleteUserByIdReply, error)
+	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserReply, error)
+	UploadUserAvatar(ctx context.Context, in *UploadUserAvatarRequest, opts ...grpc.CallOption) (*UploadUserAvatarReply, error)
+	DeleteUserAvatar(ctx context.Context, in *DeleteUserAvatarRequest, opts ...grpc.CallOption) (*DeleteUserAvatarReply, error)
+	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserReply, error)
 }
 
 type userServiceClient struct {
@@ -53,8 +53,8 @@ func NewUserServiceClient(cc grpc.ClientConnInterface) UserServiceClient {
 	return &userServiceClient{cc}
 }
 
-func (c *userServiceClient) GetUsers(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Users, error) {
-	out := new(Users)
+func (c *userServiceClient) GetUsers(ctx context.Context, in *GetUsersRequest, opts ...grpc.CallOption) (*GetUsersReply, error) {
+	out := new(GetUsersReply)
 	err := c.cc.Invoke(ctx, UserService_GetUsers_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -62,8 +62,8 @@ func (c *userServiceClient) GetUsers(ctx context.Context, in *Empty, opts ...grp
 	return out, nil
 }
 
-func (c *userServiceClient) GetUser(ctx context.Context, in *UserId, opts ...grpc.CallOption) (*User, error) {
-	out := new(User)
+func (c *userServiceClient) GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserReply, error) {
+	out := new(GetUserReply)
 	err := c.cc.Invoke(ctx, UserService_GetUser_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -71,8 +71,8 @@ func (c *userServiceClient) GetUser(ctx context.Context, in *UserId, opts ...grp
 	return out, nil
 }
 
-func (c *userServiceClient) GetUserByLogin(ctx context.Context, in *UserLogin, opts ...grpc.CallOption) (*User, error) {
-	out := new(User)
+func (c *userServiceClient) GetUserByLogin(ctx context.Context, in *GetUserByLoginRequest, opts ...grpc.CallOption) (*GetUserByLoginReply, error) {
+	out := new(GetUserByLoginReply)
 	err := c.cc.Invoke(ctx, UserService_GetUserByLogin_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -80,8 +80,8 @@ func (c *userServiceClient) GetUserByLogin(ctx context.Context, in *UserLogin, o
 	return out, nil
 }
 
-func (c *userServiceClient) IsLoginUnique(ctx context.Context, in *Login, opts ...grpc.CallOption) (*Status, error) {
-	out := new(Status)
+func (c *userServiceClient) IsLoginUnique(ctx context.Context, in *IsLoginUniqueRequest, opts ...grpc.CallOption) (*IsLoginUniqueReply, error) {
+	out := new(IsLoginUniqueReply)
 	err := c.cc.Invoke(ctx, UserService_IsLoginUnique_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -89,8 +89,8 @@ func (c *userServiceClient) IsLoginUnique(ctx context.Context, in *Login, opts .
 	return out, nil
 }
 
-func (c *userServiceClient) DeleteUserById(ctx context.Context, in *UserId, opts ...grpc.CallOption) (*Status, error) {
-	out := new(Status)
+func (c *userServiceClient) DeleteUserById(ctx context.Context, in *DeleteUserByIdRequest, opts ...grpc.CallOption) (*DeleteUserByIdReply, error) {
+	out := new(DeleteUserByIdReply)
 	err := c.cc.Invoke(ctx, UserService_DeleteUserById_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -98,8 +98,8 @@ func (c *userServiceClient) DeleteUserById(ctx context.Context, in *UserId, opts
 	return out, nil
 }
 
-func (c *userServiceClient) UpdateUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*User, error) {
-	out := new(User)
+func (c *userServiceClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserReply, error) {
+	out := new(UpdateUserReply)
 	err := c.cc.Invoke(ctx, UserService_UpdateUser_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -107,8 +107,8 @@ func (c *userServiceClient) UpdateUser(ctx context.Context, in *User, opts ...gr
 	return out, nil
 }
 
-func (c *userServiceClient) UploadUserAvatar(ctx context.Context, in *UserAvatar, opts ...grpc.CallOption) (*Empty, error) {
-	out := new(Empty)
+func (c *userServiceClient) UploadUserAvatar(ctx context.Context, in *UploadUserAvatarRequest, opts ...grpc.CallOption) (*UploadUserAvatarReply, error) {
+	out := new(UploadUserAvatarReply)
 	err := c.cc.Invoke(ctx, UserService_UploadUserAvatar_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -116,8 +116,8 @@ func (c *userServiceClient) UploadUserAvatar(ctx context.Context, in *UserAvatar
 	return out, nil
 }
 
-func (c *userServiceClient) DeleteUserAvatar(ctx context.Context, in *UserId, opts ...grpc.CallOption) (*Status, error) {
-	out := new(Status)
+func (c *userServiceClient) DeleteUserAvatar(ctx context.Context, in *DeleteUserAvatarRequest, opts ...grpc.CallOption) (*DeleteUserAvatarReply, error) {
+	out := new(DeleteUserAvatarReply)
 	err := c.cc.Invoke(ctx, UserService_DeleteUserAvatar_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -125,8 +125,8 @@ func (c *userServiceClient) DeleteUserAvatar(ctx context.Context, in *UserId, op
 	return out, nil
 }
 
-func (c *userServiceClient) CreateUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*User, error) {
-	out := new(User)
+func (c *userServiceClient) CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserReply, error) {
+	out := new(CreateUserReply)
 	err := c.cc.Invoke(ctx, UserService_CreateUser_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -138,15 +138,15 @@ func (c *userServiceClient) CreateUser(ctx context.Context, in *User, opts ...gr
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility
 type UserServiceServer interface {
-	GetUsers(context.Context, *Empty) (*Users, error)
-	GetUser(context.Context, *UserId) (*User, error)
-	GetUserByLogin(context.Context, *UserLogin) (*User, error)
-	IsLoginUnique(context.Context, *Login) (*Status, error)
-	DeleteUserById(context.Context, *UserId) (*Status, error)
-	UpdateUser(context.Context, *User) (*User, error)
-	UploadUserAvatar(context.Context, *UserAvatar) (*Empty, error)
-	DeleteUserAvatar(context.Context, *UserId) (*Status, error)
-	CreateUser(context.Context, *User) (*User, error)
+	GetUsers(context.Context, *GetUsersRequest) (*GetUsersReply, error)
+	GetUser(context.Context, *GetUserRequest) (*GetUserReply, error)
+	GetUserByLogin(context.Context, *GetUserByLoginRequest) (*GetUserByLoginReply, error)
+	IsLoginUnique(context.Context, *IsLoginUniqueRequest) (*IsLoginUniqueReply, error)
+	DeleteUserById(context.Context, *DeleteUserByIdRequest) (*DeleteUserByIdReply, error)
+	UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserReply, error)
+	UploadUserAvatar(context.Context, *UploadUserAvatarRequest) (*UploadUserAvatarReply, error)
+	DeleteUserAvatar(context.Context, *DeleteUserAvatarRequest) (*DeleteUserAvatarReply, error)
+	CreateUser(context.Context, *CreateUserRequest) (*CreateUserReply, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -154,31 +154,31 @@ type UserServiceServer interface {
 type UnimplementedUserServiceServer struct {
 }
 
-func (UnimplementedUserServiceServer) GetUsers(context.Context, *Empty) (*Users, error) {
+func (UnimplementedUserServiceServer) GetUsers(context.Context, *GetUsersRequest) (*GetUsersReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUsers not implemented")
 }
-func (UnimplementedUserServiceServer) GetUser(context.Context, *UserId) (*User, error) {
+func (UnimplementedUserServiceServer) GetUser(context.Context, *GetUserRequest) (*GetUserReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
 }
-func (UnimplementedUserServiceServer) GetUserByLogin(context.Context, *UserLogin) (*User, error) {
+func (UnimplementedUserServiceServer) GetUserByLogin(context.Context, *GetUserByLoginRequest) (*GetUserByLoginReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserByLogin not implemented")
 }
-func (UnimplementedUserServiceServer) IsLoginUnique(context.Context, *Login) (*Status, error) {
+func (UnimplementedUserServiceServer) IsLoginUnique(context.Context, *IsLoginUniqueRequest) (*IsLoginUniqueReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IsLoginUnique not implemented")
 }
-func (UnimplementedUserServiceServer) DeleteUserById(context.Context, *UserId) (*Status, error) {
+func (UnimplementedUserServiceServer) DeleteUserById(context.Context, *DeleteUserByIdRequest) (*DeleteUserByIdReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteUserById not implemented")
 }
-func (UnimplementedUserServiceServer) UpdateUser(context.Context, *User) (*User, error) {
+func (UnimplementedUserServiceServer) UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
 }
-func (UnimplementedUserServiceServer) UploadUserAvatar(context.Context, *UserAvatar) (*Empty, error) {
+func (UnimplementedUserServiceServer) UploadUserAvatar(context.Context, *UploadUserAvatarRequest) (*UploadUserAvatarReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UploadUserAvatar not implemented")
 }
-func (UnimplementedUserServiceServer) DeleteUserAvatar(context.Context, *UserId) (*Status, error) {
+func (UnimplementedUserServiceServer) DeleteUserAvatar(context.Context, *DeleteUserAvatarRequest) (*DeleteUserAvatarReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteUserAvatar not implemented")
 }
-func (UnimplementedUserServiceServer) CreateUser(context.Context, *User) (*User, error) {
+func (UnimplementedUserServiceServer) CreateUser(context.Context, *CreateUserRequest) (*CreateUserReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateUser not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
@@ -195,7 +195,7 @@ func RegisterUserServiceServer(s grpc.ServiceRegistrar, srv UserServiceServer) {
 }
 
 func _UserService_GetUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Empty)
+	in := new(GetUsersRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -207,13 +207,13 @@ func _UserService_GetUsers_Handler(srv interface{}, ctx context.Context, dec fun
 		FullMethod: UserService_GetUsers_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).GetUsers(ctx, req.(*Empty))
+		return srv.(UserServiceServer).GetUsers(ctx, req.(*GetUsersRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _UserService_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UserId)
+	in := new(GetUserRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -225,13 +225,13 @@ func _UserService_GetUser_Handler(srv interface{}, ctx context.Context, dec func
 		FullMethod: UserService_GetUser_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).GetUser(ctx, req.(*UserId))
+		return srv.(UserServiceServer).GetUser(ctx, req.(*GetUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _UserService_GetUserByLogin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UserLogin)
+	in := new(GetUserByLoginRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -243,13 +243,13 @@ func _UserService_GetUserByLogin_Handler(srv interface{}, ctx context.Context, d
 		FullMethod: UserService_GetUserByLogin_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).GetUserByLogin(ctx, req.(*UserLogin))
+		return srv.(UserServiceServer).GetUserByLogin(ctx, req.(*GetUserByLoginRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _UserService_IsLoginUnique_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Login)
+	in := new(IsLoginUniqueRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -261,13 +261,13 @@ func _UserService_IsLoginUnique_Handler(srv interface{}, ctx context.Context, de
 		FullMethod: UserService_IsLoginUnique_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).IsLoginUnique(ctx, req.(*Login))
+		return srv.(UserServiceServer).IsLoginUnique(ctx, req.(*IsLoginUniqueRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _UserService_DeleteUserById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UserId)
+	in := new(DeleteUserByIdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -279,13 +279,13 @@ func _UserService_DeleteUserById_Handler(srv interface{}, ctx context.Context, d
 		FullMethod: UserService_DeleteUserById_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).DeleteUserById(ctx, req.(*UserId))
+		return srv.(UserServiceServer).DeleteUserById(ctx, req.(*DeleteUserByIdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _UserService_UpdateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(User)
+	in := new(UpdateUserRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -297,13 +297,13 @@ func _UserService_UpdateUser_Handler(srv interface{}, ctx context.Context, dec f
 		FullMethod: UserService_UpdateUser_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).UpdateUser(ctx, req.(*User))
+		return srv.(UserServiceServer).UpdateUser(ctx, req.(*UpdateUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _UserService_UploadUserAvatar_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UserAvatar)
+	in := new(UploadUserAvatarRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -315,13 +315,13 @@ func _UserService_UploadUserAvatar_Handler(srv interface{}, ctx context.Context,
 		FullMethod: UserService_UploadUserAvatar_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).UploadUserAvatar(ctx, req.(*UserAvatar))
+		return srv.(UserServiceServer).UploadUserAvatar(ctx, req.(*UploadUserAvatarRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _UserService_DeleteUserAvatar_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UserId)
+	in := new(DeleteUserAvatarRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -333,13 +333,13 @@ func _UserService_DeleteUserAvatar_Handler(srv interface{}, ctx context.Context,
 		FullMethod: UserService_DeleteUserAvatar_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).DeleteUserAvatar(ctx, req.(*UserId))
+		return srv.(UserServiceServer).DeleteUserAvatar(ctx, req.(*DeleteUserAvatarRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _UserService_CreateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(User)
+	in := new(CreateUserRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -351,7 +351,7 @@ func _UserService_CreateUser_Handler(srv interface{}, ctx context.Context, dec f
 		FullMethod: UserService_CreateUser_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).CreateUser(ctx, req.(*User))
+		return srv.(UserServiceServer).CreateUser(ctx, req.(*CreateUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

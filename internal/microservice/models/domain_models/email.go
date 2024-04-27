@@ -14,6 +14,7 @@ type Email struct {
 	DateOfDispatch time.Time // DateOfDispatch is the date when the email was sent.
 	ReplyToEmailID uint64    // ReplyToEmailID is the ID of the email to which a reply can be sent.
 	DraftStatus    bool      // DraftStatus indicates whether the email is a draft.
+	SpamStatus     bool      // SpamStatus indicates whether the email is a spam
 	SenderEmail    string    // SenderEmail is the email of the sender user
 	RecipientEmail string    // RecipientEmail is the email of the recipient user
 }
