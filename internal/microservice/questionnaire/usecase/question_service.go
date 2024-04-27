@@ -5,6 +5,7 @@ import (
 	"errors"
 	domain "mail/internal/microservice/models/domain_models"
 	repository "mail/internal/microservice/questionnaire/interface"
+	"math"
 )
 
 // QuestionAnswerUseCase represents the use case for working questionnaire.
@@ -77,7 +78,8 @@ func CalculatingStatistics(answers []*domain.Answer) ([]*domain.Statistics, erro
 			continue
 		}
 		statistics[i] = new(domain.Statistics)
-		statistics[i].Average = sumMark[i+1] / questionsID[i+1]
+		f := float64(float32(sumMark[i+1]) / float32(questionsID[i+1]))
+		statistics[i].Average = float32(math.Round(float64(f)*100) / 100)
 		statistics[i].Text = textID[i+1]
 	}
 

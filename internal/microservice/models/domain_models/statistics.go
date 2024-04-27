@@ -3,5 +3,5 @@ package domain_models
 // Statistics represents the information.
 type Statistics struct {
 	Text    string
-	Average uint32
+	Average float32
 }

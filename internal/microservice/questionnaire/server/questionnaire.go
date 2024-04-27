@@ -36,7 +36,6 @@ func (es *QuestionAnswerServer) GetQuestions(ctx context.Context, input *proto.G
 }
 
 func (es *QuestionAnswerServer) GetStatistic(ctx context.Context, input *proto.GetStatisticRequest) (*proto.GetStatisticReply, error) {
-
 	statisticsCore, err := es.QuestionAnswerUseCase.GetStatistics(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("statistics not found")

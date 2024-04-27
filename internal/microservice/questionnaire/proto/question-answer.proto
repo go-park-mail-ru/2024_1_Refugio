@@ -30,7 +30,7 @@ message Answer {
 
 message Statistic {
   string text = 1;
-  uint32 average = 2;
+  float average = 2;
 }
 
 message GetQuestionsRequest {

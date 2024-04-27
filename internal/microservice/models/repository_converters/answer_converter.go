@@ -11,6 +11,7 @@ func AnswerConvertDbInCore(answerModelDb database.Answer) *domain.Answer {
 		QuestionID: answerModelDb.QuestionID,
 		Login:      answerModelDb.Login,
 		Mark:       answerModelDb.Mark,
+		Text:       answerModelDb.Text,
 	}
 }
 
@@ -20,5 +21,6 @@ func AnswerConvertCoreInDb(answerModelDb domain.Answer) *database.Answer {
 		QuestionID: answerModelDb.QuestionID,
 		Login:      answerModelDb.Login,
 		Mark:       answerModelDb.Mark,
+		Text:       answerModelDb.Text,
 	}
 }
