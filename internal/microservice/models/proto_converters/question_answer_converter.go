@@ -7,19 +7,21 @@ import (
 
 func QuestionConvertCoreInProto(questionModelCore domain.Question) *grpc.Question {
 	return &grpc.Question{
-		Id:      questionModelCore.ID,
-		Text:    questionModelCore.Text,
-		MinText: questionModelCore.MinResult,
-		MaxText: questionModelCore.MaxResult,
+		Id:          questionModelCore.ID,
+		Text:        questionModelCore.Text,
+		MinText:     questionModelCore.MinResult,
+		MaxText:     questionModelCore.MaxResult,
+		DopQuestion: questionModelCore.DopQuestion,
 	}
 }
 
 func QuestionConvertProtoInCore(questionModelProto grpc.Question) *domain.Question {
 	return &domain.Question{
-		ID:        questionModelProto.Id,
-		Text:      questionModelProto.Text,
-		MinResult: questionModelProto.MinText,
-		MaxResult: questionModelProto.MaxText,
+		ID:          questionModelProto.Id,
+		Text:        questionModelProto.Text,
+		MinResult:   questionModelProto.MinText,
+		MaxResult:   questionModelProto.MaxText,
+		DopQuestion: questionModelProto.DopQuestion,
 	}
 }
 

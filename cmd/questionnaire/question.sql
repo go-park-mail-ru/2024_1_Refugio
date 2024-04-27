@@ -4,7 +4,8 @@ CREATE TABLE IF NOT EXISTS question (
     id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     text TEXT CHECK (LENGTH(text) <= 200),
     min_text TEXT CHECK (LENGTH(text) <= 200),
-    max_text TEXT CHECK (LENGTH(text) <= 200)
+    max_text TEXT CHECK (LENGTH(text) <= 200),
+    dop_question TEXT CHECK (LENGTH(dop_question) <= 200)
 );
 
 -- Создание таблицы ответов (answer)

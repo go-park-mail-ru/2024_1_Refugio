@@ -25,7 +25,7 @@ func NewQuestionRepository(db *sqlx.DB) *QuestionAnswerRepository {
 
 func (r *QuestionAnswerRepository) GetAllQuestions(ctx context.Context) ([]*domain.Question, error) {
 	query := `
-		SELECT question.id, question.text, question.min_text, question.max_text FROM question
+		SELECT question.id, question.text, question.min_text, question.max_text, question.dop_question FROM question
 	`
 
 	questionsModelDb := []repository_models.Question{}

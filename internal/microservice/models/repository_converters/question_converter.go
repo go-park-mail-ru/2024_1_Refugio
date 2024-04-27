@@ -7,18 +7,20 @@ import (
 
 func QuestionConvertDbInCore(questionModelDb database.Question) *domain.Question {
 	return &domain.Question{
-		ID:        questionModelDb.ID,
-		Text:      questionModelDb.Text,
-		MinResult: questionModelDb.MinResult,
-		MaxResult: questionModelDb.MaxResult,
+		ID:          questionModelDb.ID,
+		Text:        questionModelDb.Text,
+		MinResult:   questionModelDb.MinResult,
+		MaxResult:   questionModelDb.MaxResult,
+		DopQuestion: questionModelDb.DopQuestion,
 	}
 }
 
 func QuestionConvertCoreInDb(questionModelCore domain.Question) *database.Question {
 	return &database.Question{
-		ID:        questionModelCore.ID,
-		Text:      questionModelCore.Text,
-		MinResult: questionModelCore.MinResult,
-		MaxResult: questionModelCore.MaxResult,
+		ID:          questionModelCore.ID,
+		Text:        questionModelCore.Text,
+		MinResult:   questionModelCore.MinResult,
+		MaxResult:   questionModelCore.MaxResult,
+		DopQuestion: questionModelCore.DopQuestion,
 	}
 }
