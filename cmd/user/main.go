@@ -13,6 +13,7 @@ import (
 
 	"mail/internal/microservice/interceptors"
 	"mail/internal/microservice/user/proto"
+	"mail/internal/models/configs"
 
 	userRepo "mail/internal/microservice/user/repository"
 	grpcUser "mail/internal/microservice/user/server"
@@ -42,9 +43,7 @@ func settingTime() {
 }
 
 func initializeDatabase() *sql.DB {
-	dsn := "user=postgres dbname=Mail password=postgres host=localhost port=5432 sslmode=disable"
-	// dsn := "user=postgres dbname=Mail password=postgres host=89.208.223.140 port=5432 sslmode=disable"
-	db, err := sql.Open("pgx", dsn)
+	db, err := sql.Open("pgx", configs.DSN)
 	if err != nil {
 		log.Fatalln("Can't parse config", err)
 	}

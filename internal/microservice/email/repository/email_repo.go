@@ -367,20 +367,19 @@ func (r *EmailRepository) Update(newEmail *domain.Email, ctx context.Context) (b
         SET
             topic = $1, 
             text = $2, 
-            photoid = $3,
-            read_status = $4, 
-            deleted_status = $5, 
-            draft_status = $6, 
-            reply_to_email_id = $7, 
-            flag = $8
+            isread = $3, 
+            isdeleted = $4, 
+            isdraft = $5, 
+            reply_to_email_id = $6, 
+            is_important = $7
         WHERE
-            id = $9 AND sender_email = $10
+            id = $8 AND sender_email = $9
     `
 
 	start := time.Now()
-	result, err := r.DB.Exec(query, newEmailDb.Topic, newEmailDb.Text, newEmailDb.PhotoID, newEmailDb.ReadStatus, newEmailDb.Deleted, newEmailDb.DraftStatus, newEmailDb.ReplyToEmailID, newEmailDb.Flag, newEmailDb.ID, newEmailDb.SenderEmail)
+	result, err := r.DB.Exec(query, newEmailDb.Topic, newEmailDb.Text, newEmailDb.ReadStatus, newEmailDb.Deleted, newEmailDb.DraftStatus, newEmailDb.ReplyToEmailID, newEmailDb.Flag, newEmailDb.ID, newEmailDb.SenderEmail)
 
-	args := []interface{}{newEmailDb.Topic, newEmailDb.Text, newEmailDb.PhotoID, newEmailDb.ReadStatus, newEmailDb.Deleted, newEmailDb.DraftStatus, newEmailDb.ReplyToEmailID, newEmailDb.Flag, newEmailDb.ID, newEmailDb.RecipientEmail}
+	args := []interface{}{newEmailDb.Topic, newEmailDb.Text, newEmailDb.ReadStatus, newEmailDb.Deleted, newEmailDb.DraftStatus, newEmailDb.ReplyToEmailID, newEmailDb.Flag, newEmailDb.ID, newEmailDb.RecipientEmail}
 	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
 
 	if err != nil {

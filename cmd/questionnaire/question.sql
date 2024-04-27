@@ -4,15 +4,15 @@ CREATE TABLE IF NOT EXISTS question (
     id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     text TEXT CHECK (LENGTH(text) <= 200),
     min_text TEXT CHECK (LENGTH(text) <= 200),
-    max_text TEXT CHECK (LENGTH(text) <= 200),
+    max_text TEXT CHECK (LENGTH(text) <= 200)
 );
 
 -- Создание таблицы ответов (answer)
 CREATE TABLE IF NOT EXISTS answer (
     id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     question_id INTEGER REFERENCES question(id) ON DELETE CASCADE,
-    login TEXT NOT NULL UNIQUE CHECK (LENGTH(login) <= 50),
-    mark INTEGER NOT NULL DEFAULT,
+    login TEXT NOT NULL CHECK (LENGTH(login) <= 50),
+    mark INTEGER NOT NULL DEFAULT 0
 );
 
 -- Вставка начальных данных в таблицу question

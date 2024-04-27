@@ -57,7 +57,7 @@ func initializeDatabase() *sql.DB {
 
 func migrateDatabase(db *sql.DB) {
 	migrations := &migrate.FileMigrationSource{
-		Dir: ".",
+		Dir: "./cmd/questionnaire",
 	}
 
 	_, errMigration := migrate.Exec(db, "postgres", migrations, migrate.Up)
