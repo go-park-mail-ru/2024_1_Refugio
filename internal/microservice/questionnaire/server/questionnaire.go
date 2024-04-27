@@ -51,3 +51,33 @@ func (es *QuestionAnswerServer) GetStatistic(ctx context.Context, input *proto.G
 	statisticProto.Statistics = statisticsProto
 	return statisticProto, nil
 }
+
+func (es *QuestionAnswerServer) AddQuestion(ctx context.Context, input *proto.AddQuestionRequest) (*proto.AddQuestionReply, error) {
+	if input == nil {
+		return nil, fmt.Errorf("Question bad request")
+	}
+
+	status, err := es.QuestionAnswerUseCase.AddQuestion(converters.QuestionConvertProtoInCore(*input.Question), ctx)
+	statusProto := new(proto.AddQuestionReply)
+	statusProto.Status = status
+	if err != nil || !status {
+		return statusProto, fmt.Errorf("Question no add")
+	}
+
+	return statusProto, nil
+}
+
+func (es *QuestionAnswerServer) AddAnswer(ctx context.Context, input *proto.AddAnswerRequest) (*proto.AddAnswerReply, error) {
+	if input == nil {
+		return nil, fmt.Errorf("Answer bad request")
+	}
+
+	status, err := es.QuestionAnswerUseCase.AddAnswer(converters.AnswerConvertProtoInCore(*input.Answer), ctx)
+	statusProto := new(proto.AddAnswerReply)
+	statusProto.Status = status
+	if err != nil || !status {
+		return statusProto, fmt.Errorf("Answer no add")
+	}
+
+	return statusProto, nil
+}
