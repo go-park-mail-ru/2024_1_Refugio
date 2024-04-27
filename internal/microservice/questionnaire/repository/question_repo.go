@@ -23,7 +23,7 @@ func NewQuestionRepository(db *sqlx.DB) *QuestionAnswerRepository {
 	return &QuestionAnswerRepository{DB: db}
 }
 
-func (r *QuestionAnswerRepository) GetAllQuestions(ctx context.Context) ([]*domain.Email, error) {
+func (r *QuestionAnswerRepository) GetAllQuestions(ctx context.Context) ([]*domain.Question, error) {
 	query := `
 		SELECT question.id, question.text, question.min_text, question.max_text FROM question
 	`
@@ -49,43 +49,78 @@ func (r *QuestionAnswerRepository) GetAllQuestions(ctx context.Context) ([]*doma
 		questionsModelCore = append(questionsModelCore, converters.QuestionConvertDbInCore(e))
 	}
 
-	return emailsModelCore, nil
+	return questionsModelCore, nil
 }
 
-/*
-func (r *QuestionAnswerRepository) Add(newQuestion *domain.Question, ctx context.Context) (uint64, *domain.Email, error) {
-	insertEmailQuery := `
-		INSERT INTO email (topic, text, date_of_dispatch, sender_email, recipient_email, isRead, isDeleted, isDraft, isSpam, reply_to_email_id, is_important)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+func (r *QuestionAnswerRepository) GetAllAnswers(ctx context.Context) ([]*domain.Answer, error) {
+	query := `
+		SELECT answer.id, answer.question_id, answer.login, answer.mark FROM answer
+	`
+
+	answersModelDb := []repository_models.Answer{}
+
+	var err error
+	args := []interface{}{}
+	start := time.Now()
+	err = r.DB.Select(&answersModelDb, query)
+
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("DB no have answers")
+		}
+		return nil, err
+	}
+
+	var answersModelCore []*domain.Answer
+	for _, a := range answersModelDb {
+		answersModelCore = append(answersModelCore, converters.AnswerConvertDbInCore(a))
+	}
+
+	return answersModelCore, nil
+}
+
+func (r *QuestionAnswerRepository) AddQuestion(newQuestion *domain.Question, ctx context.Context) (bool, error) {
+	insertQuestionQuery := `
+		INSERT INTO question (text, min_text, max_text)
+		VALUES ($1, $2, $3)
 		RETURNING id
 	`
 
-	insertEmailFileQuery := `
-		INSERT INTO email_file (email_id, file_id)
-		SELECT $1, p.avatar_id
-		FROM profile p
-		WHERE p.login = $2
-	`
-
-	emailModelDb := converters.EmailConvertCoreInDb(*emailModelCore)
-	format := "2006/01/02 15:04:05"
+	questionModelDb := converters.QuestionConvertCoreInDb(*newQuestion)
 
 	var id uint64
 	start := time.Now()
-
-	err := r.DB.QueryRow(insertEmailQuery, emailModelDb.Topic, emailModelDb.Text, time.Now().Format(format), emailModelDb.SenderEmail, emailModelDb.RecipientEmail, emailModelDb.ReadStatus, emailModelDb.Deleted, emailModelDb.DraftStatus, emailModelCore.SpamStatus, emailModelDb.ReplyToEmailID, emailModelDb.Flag).Scan(&id)
+	err := r.DB.QueryRow(insertQuestionQuery, questionModelDb.Text, questionModelDb.MinResult, questionModelDb.MaxResult).Scan(&id)
 	if err != nil {
-		return 0, &domain.Email{}, fmt.Errorf("failed to add email: %v", err)
+		return false, fmt.Errorf("failed to add question: %v", err)
 	}
 
-	_, err = r.DB.Exec(insertEmailFileQuery, id, emailModelDb.SenderEmail)
-	if err != nil {
-		return 0, &domain.Email{}, fmt.Errorf("failed to add email file: %v", err)
-	}
+	args := []interface{}{questionModelDb.Text, questionModelDb.MinResult, questionModelDb.MaxResult}
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(insertQuestionQuery, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
 
-	args := []interface{}{emailModelDb.Topic, emailModelDb.Text, time.Now().Format(format), emailModelDb.SenderEmail, emailModelDb.RecipientEmail, emailModelDb.ReadStatus, emailModelDb.Deleted, emailModelDb.DraftStatus, emailModelDb.ReplyToEmailID, emailModelDb.Flag, emailModelDb.SenderEmail}
-	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(insertEmailQuery, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
-
-	return id, emailModelCore, nil
+	return true, nil
 }
-*/
+
+func (r *QuestionAnswerRepository) AddAnswer(newAnswer *domain.Answer, ctx context.Context) (bool, error) {
+	insertAnswerQuery := `
+		INSERT INTO answer (question_id, login, mark)
+		VALUES ($1, $2, $3)
+		RETURNING id
+	`
+
+	answerModelDb := converters.AnswerConvertCoreInDb(*newAnswer)
+
+	var id uint64
+	start := time.Now()
+	err := r.DB.QueryRow(insertAnswerQuery, answerModelDb.QuestionID, answerModelDb.Login, answerModelDb.Mark).Scan(&id)
+	if err != nil {
+		return false, fmt.Errorf("failed to add answer: %v", err)
+	}
+
+	args := []interface{}{answerModelDb.QuestionID, answerModelDb.Login, answerModelDb.Mark}
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(insertAnswerQuery, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
+
+	return true, nil
+}
