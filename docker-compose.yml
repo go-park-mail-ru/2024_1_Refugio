@@ -17,13 +17,13 @@ services:
     networks:
       - deploy-guide-dev
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - db_postgres_data:/var/lib/postgresql/data
 
   db_question:
     container_name: db_question
     image: postgres:16
     ports:
-      - "5433:5433"
+      - "5433:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -31,7 +31,7 @@ services:
     networks:
       - deploy-guide-dev
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - db_question_postgres_data:/var/lib/postgresql/data
 
   backend:
     container_name: backend
@@ -116,4 +116,5 @@ services:
       - db_question
 
 volumes:
-  postgres_data:
+  db_postgres_data:
+  db_question_postgres_data:
