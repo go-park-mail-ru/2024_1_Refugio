@@ -16,7 +16,6 @@ import (
 
 	"mail/internal/pkg/utils/connect_microservice"
 	"mail/internal/pkg/utils/sanitize"
-	"mail/internal/pkg/utils/validators"
 )
 
 var (
@@ -147,13 +146,14 @@ func (qh *QuestionHandler) AddAnswer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newAnswer.Login = sanitize.SanitizeString(newAnswer.Login)
 	newAnswer.Text = sanitize.SanitizeString(newAnswer.Text)
 
-	if validators.IsValidEmailFormat(newAnswer.Login) {
-		response.HandleError(w, http.StatusInternalServerError, "Login failed")
+	login, errLogin := qh.Sessions.GetLoginBySession(r, r.Context())
+	if errLogin != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Login fail")
 		return
 	}
+	newAnswer.Login = login
 
 	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.QuestionService))
 	if err != nil {
