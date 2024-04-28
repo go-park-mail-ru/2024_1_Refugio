@@ -4,11 +4,20 @@ option go_package = "./;proto";
 
 package proto;
 
+import "google/protobuf/timestamp.proto";
+
 // protoc --go_out=. --go-grpc_out=. --go-grpc_opt=paths=source_relative --go_opt=paths=source_relative *.proto
 
 service FolderService {
   rpc CreateFolder(Folder) returns(FolderWithID) {}
   rpc GetAllFolders(GetAllFoldersData) returns(Folders) {}
+  rpc UpdateFolder(Folder) returns(FolderStatus) {}
+  rpc DeleteFolder(DeleteFolderData) returns(FolderStatus) {}
+  rpc AddEmailInFolder(FolderEmail) returns(FolderEmailStatus) {}
+  rpc DeleteEmailInFolder(FolderEmail) returns(FolderEmailStatus) {}
+  rpc GetAllEmailsInFolder(GetAllEmailsInFolderData) returns(ObjectsEmail) {}
+  rpc CheckFolderProfile(FolderProfile) returns(FolderEmailStatus) {}
+  rpc CheckEmailProfile(EmailProfile) returns(FolderEmailStatus) {}
 }
 
 message Folder {
@@ -26,7 +35,7 @@ message FolderWithID {
   uint32 id = 2;
 }
 
-message FolderBool {
+message FolderStatus {
   bool status = 1;
 }
 
@@ -34,4 +43,55 @@ message GetAllFoldersData {
   uint32 id = 1;
   int64 limit = 2;
   int64 offset = 3;
+}
+
+message DeleteFolderData {
+  uint32 folderID = 1;
+  uint32 profileID = 2;
+}
+
+message FolderEmail {
+  uint32 folderID = 1;
+  uint32 emailID = 2;
+}
+
+message FolderEmailStatus {
+  bool status = 1;
+}
+
+message FolderProfile {
+  uint32 folderID = 1;
+  uint32 profileID = 2;
+}
+
+message GetAllEmailsInFolderData {
+  uint32 folderID = 1;
+  uint32 profileID = 2;
+  uint32 limit = 3;
+  uint32 offset = 4;
+}
+
+message EmailProfile {
+  uint32 emailID = 1;
+  uint32 profileID = 2;
+}
+
+message ObjectsEmail {
+  repeated ObjectEmail emails = 1;
+}
+
+message ObjectEmail {
+  uint64 id = 1;
+  string topic = 2;
+  string text = 3;
+  string photoID = 4;
+  bool readStatus = 5;
+  bool flag = 6;
+  bool deleted = 7;
+  google.protobuf.Timestamp dateOfDispatch = 8;
+  uint64 replyToEmailID = 9;
+  bool draftStatus = 10;
+  bool spamStatus = 11;
+  string senderEmail = 12;
+  string recipientEmail = 13;
 }

@@ -75,6 +75,11 @@ type FolderSwag struct {
 	Name string `json:"name"` // Name the name of the folder.
 }
 
+type FolderEmailSwag struct {
+	FolderID uint32 `json:"folderId"`
+	EmailID  uint32 `json:"emailId"`
+}
+
 type UserGenderSwag string
 
 const (
