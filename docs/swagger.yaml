@@ -1,6 +1,19 @@
 basePath: /
 definitions:
-  delivery.EmailSwag:
+  response.AnswerSwag:
+    properties:
+      id:
+        type: integer
+      login:
+        type: string
+      mark:
+        type: integer
+      question_id:
+        type: integer
+      text:
+        type: string
+    type: object
+  response.EmailSwag:
     properties:
       dateOfDispatch:
         description: DateOfDispatch is the date when the email was sent.
@@ -30,6 +43,9 @@ definitions:
       senderEmail:
         description: SenderEmail is the Email of the sender user
         type: string
+      spamStatus:
+        description: SpamStatus indicates whether the email is a spam
+        type: boolean
       text:
         description: Text is the body of the email.
         type: string
@@ -37,18 +53,54 @@ definitions:
         description: Topic is the subject of the email.
         type: string
     type: object
-  delivery.ErrorResponse:
+  response.ErrorResponse:
     properties:
       error:
         type: string
     type: object
-  delivery.Response:
+  response.FolderEmailSwag:
+    properties:
+      emailId:
+        type: integer
+      folderId:
+        type: integer
+    type: object
+  response.FolderSwag:
+    properties:
+      name:
+        description: Name the name of the folder.
+        type: string
+    type: object
+  response.QuestionSwag:
+    properties:
+      dop_question:
+        type: string
+      id:
+        type: integer
+      max_text:
+        type: string
+      min_text:
+        type: string
+      text:
+        type: string
+    type: object
+  response.Response:
     properties:
       body: {}
       status:
         type: integer
     type: object
-  delivery.UserSwag:
+  response.UserGenderSwag:
+    enum:
+    - Male
+    - Female
+    - Other
+    type: string
+    x-enum-varnames:
+    - Male
+    - Female
+    - Other
+  response.UserSwag:
     properties:
       avatar:
         description: AvatarID stores the identifier of the user's avatar image.
@@ -64,7 +116,7 @@ definitions:
         type: string
       gender:
         allOf:
-        - $ref: '#/definitions/models.UserGender'
+        - $ref: '#/definitions/response.UserGenderSwag'
         description: Gender stores the gender of the user.
       id:
         description: ID uniquely identifies the user.
@@ -85,16 +137,6 @@ definitions:
         description: Surname stores the last name of the user.
         type: string
     type: object
-  models.UserGender:
-    enum:
-    - Male
-    - Female
-    - Other
-    type: string
-    x-enum-varnames:
-    - Male
-    - Female
-    - Other
 host: localhost:8080
 info:
   contact: {}
@@ -102,38 +144,77 @@ info:
   title: API Mail
   version: "1.0"
 paths:
+  /api/v1/answers:
+    post:
+      consumes:
+      - application/json
+      description: Add Handles answer.
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      - description: Answer message in JSON format
+        in: body
+        name: question
+        required: true
+        schema:
+          $ref: '#/definitions/response.AnswerSwag'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Add answer successful
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to add answer
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Add answer
+      tags:
+      - question
   /api/v1/auth/login:
     post:
       consumes:
       - application/json
-      description: Handles user login.
+      description: Login Handles user.
       parameters:
       - description: User credentials for login
         in: body
         name: credentials
         required: true
         schema:
-          $ref: '#/definitions/delivery.UserSwag'
+          $ref: '#/definitions/response.UserSwag'
       produces:
       - application/json
       responses:
         "200":
           description: Login successful
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
         "400":
           description: Invalid request body
           schema:
-            $ref: '#/definitions/delivery.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Invalid credentials
           schema:
-            $ref: '#/definitions/delivery.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Failed to create session
           schema:
-            $ref: '#/definitions/delivery.ErrorResponse'
-      summary: User login
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Login User
       tags:
       - auth
   /api/v1/auth/logout:
@@ -145,7 +226,7 @@ paths:
         "200":
           description: Logout successful
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
       summary: User logout
       tags:
       - auth
@@ -160,22 +241,22 @@ paths:
         name: newUser
         required: true
         schema:
-          $ref: '#/definitions/delivery.UserSwag'
+          $ref: '#/definitions/response.UserSwag'
       produces:
       - application/json
       responses:
         "200":
           description: Signup successful
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
         "400":
           description: Invalid request body
           schema:
-            $ref: '#/definitions/delivery.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Failed to add user
           schema:
-            $ref: '#/definitions/delivery.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       summary: User signup
       tags:
       - auth
@@ -199,19 +280,19 @@ paths:
         "200":
           description: Email message data
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
         "400":
           description: Bad id in request
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
         "401":
           description: Not Authorized
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
         "404":
           description: Email not found
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
       summary: Get an email message by ID
       tags:
       - emails
@@ -235,19 +316,19 @@ paths:
         "200":
           description: Deletion success status
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
         "400":
           description: Bad id
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
         "401":
           description: Not Authorized
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
         "500":
           description: Failed to delete email message
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
       summary: Delete an email message
       tags:
       - emails
@@ -267,26 +348,26 @@ paths:
         name: email
         required: true
         schema:
-          $ref: '#/definitions/delivery.EmailSwag'
+          $ref: '#/definitions/response.EmailSwag'
       produces:
       - application/json
       responses:
         "200":
           description: ID of the send email message
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
         "400":
           description: Bad JSON in request
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
         "401":
           description: Not Authorized
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
         "500":
           description: Failed to add email message
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
       summary: Send a new email message
       tags:
       - emails
@@ -311,27 +392,58 @@ paths:
         name: email
         required: true
         schema:
-          $ref: '#/definitions/delivery.EmailSwag'
+          $ref: '#/definitions/response.EmailSwag'
       produces:
       - application/json
       responses:
         "200":
           description: Update success status
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
         "400":
           description: Bad id or Bad JSON
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
         "401":
           description: Not Authorized
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
         "500":
           description: Failed to update email message
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
       summary: Update an email message
+      tags:
+      - emails
+  /api/v1/emails/draft:
+    get:
+      description: Get a list of all email messages
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of all email messages
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: DB error
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: JSON encoding error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Display the list of email messages
       tags:
       - emails
   /api/v1/emails/incoming:
@@ -349,19 +461,19 @@ paths:
         "200":
           description: List of all email messages
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
         "401":
           description: Not Authorized
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
         "404":
           description: DB error
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
         "500":
           description: JSON encoding error
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
       summary: Display the list of email messages
       tags:
       - emails
@@ -380,22 +492,452 @@ paths:
         "200":
           description: List of all email messages
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
         "401":
           description: Not Authorized
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
         "404":
           description: DB error
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
         "500":
           description: JSON encoding error
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
       summary: Display the list of email messages
       tags:
       - emails
+  /api/v1/emails/spam:
+    get:
+      description: Get a list of all email messages
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of all email messages
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: DB error
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: JSON encoding error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Display the list of email messages
+      tags:
+      - emails
+  /api/v1/folder/add:
+    post:
+      consumes:
+      - application/json
+      description: Add a new folder message to the system
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      - description: Folder message in JSON format
+        in: body
+        name: folder
+        required: true
+        schema:
+          $ref: '#/definitions/response.FolderSwag'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ID of the send folder message
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad JSON in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to add folder message
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Add a new folder message
+      tags:
+      - folders
+  /api/v1/folder/add_email:
+    post:
+      consumes:
+      - application/json
+      description: AddEmailInFolder a new folder message to the system
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      - description: Folder message in JSON format
+        in: body
+        name: folder
+        required: true
+        schema:
+          $ref: '#/definitions/response.FolderEmailSwag'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ID of the send folder message
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad JSON in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to add folder message
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: AddEmailInFolder a new folder message
+      tags:
+      - folders
+  /api/v1/folder/all:
+    get:
+      description: GetAll folders users
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ID of the send folder message
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad JSON in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to get all folders
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: GetAll get all folders
+      tags:
+      - folders
+  /api/v1/folder/all_emails/{id}:
+    get:
+      description: GetAllEmailsInFolder emails in folder users
+      parameters:
+      - description: ID of the folder
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ID of the send folder message
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad JSON in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to get all emails in folder
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: GetAllEmailsInFolder get all emails in folder
+      tags:
+      - folders
+  /api/v1/folder/delete/{id}:
+    delete:
+      description: Delete folder a user
+      parameters:
+      - description: ID of the folder
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Deletion success status
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad id
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to delete folder
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Delete folder a user
+      tags:
+      - folders
+  /api/v1/folder/delete_email:
+    delete:
+      consumes:
+      - application/json
+      description: DeleteEmailInFolder a new folder message to the system
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      - description: Folder message in JSON format
+        in: body
+        name: folder
+        required: true
+        schema:
+          $ref: '#/definitions/response.FolderEmailSwag'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ID of the folder message
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad JSON in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to delete folder message
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: DeleteEmailInFolder a new folder message
+      tags:
+      - folders
+  /api/v1/folder/update/{id}:
+    put:
+      description: Update folder a user
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      - description: ID of the folder message
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Folder message in JSON format
+        in: body
+        name: folder
+        required: true
+        schema:
+          $ref: '#/definitions/response.FolderSwag'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Update success status
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad id
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to update folder
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Update folder a user
+      tags:
+      - folders
+  /api/v1/questions:
+    get:
+      consumes:
+      - application/json
+      description: Get Handles questions.
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Get questions successful
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to get questions
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Get questions
+      tags:
+      - question
+    post:
+      consumes:
+      - application/json
+      description: Add Handles question.
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      - description: Question message in JSON format
+        in: body
+        name: question
+        required: true
+        schema:
+          $ref: '#/definitions/response.QuestionSwag'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Add question successful
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to add question
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Add question
+      tags:
+      - question
+  /api/v1/statistics:
+    get:
+      consumes:
+      - application/json
+      description: Get Handles statistics.
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Get statistics successful
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to get statistics
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Get statistics
+      tags:
+      - question
+  /api/v1/user/avatar/delete:
+    delete:
+      consumes:
+      - application/json
+      description: Handles requests to delete user avatar.
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User avatar deleted successfully
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Invalid user ID
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Not authorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Delete user avatar
+      tags:
+      - users
   /api/v1/user/avatar/upload:
     post:
       consumes:
@@ -418,15 +960,15 @@ paths:
         "200":
           description: File uploaded and saved successfully
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
         "400":
           description: Error processing file or failed to get file
           schema:
-            $ref: '#/definitions/delivery.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/delivery.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       security:
       - ApiKeyAuth: []
       summary: Upload user avatar
@@ -454,19 +996,19 @@ paths:
         "200":
           description: User data deleted successfully
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
         "400":
           description: Invalid user ID
           schema:
-            $ref: '#/definitions/delivery.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Not authorized
           schema:
-            $ref: '#/definitions/delivery.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/delivery.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       summary: Delete user data
       tags:
       - users
@@ -485,15 +1027,15 @@ paths:
         "200":
           description: User details
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
         "401":
           description: Not Authorized
           schema:
-            $ref: '#/definitions/delivery.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/delivery.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       summary: Get user by session
       tags:
       - users
@@ -513,26 +1055,26 @@ paths:
         name: updatedUser
         required: true
         schema:
-          $ref: '#/definitions/delivery.UserSwag'
+          $ref: '#/definitions/response.UserSwag'
       produces:
       - application/json
       responses:
         "200":
           description: User data updated successfully
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
         "400":
           description: Invalid request body
           schema:
-            $ref: '#/definitions/delivery.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Not authorized
           schema:
-            $ref: '#/definitions/delivery.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/delivery.ErrorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       summary: Update user data
       tags:
       - users
@@ -545,11 +1087,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
         "401":
           description: Not Authorized
           schema:
-            $ref: '#/definitions/delivery.Response'
+            $ref: '#/definitions/response.Response'
       summary: Verify user authentication
       tags:
       - users

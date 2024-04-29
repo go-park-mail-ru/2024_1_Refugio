@@ -2,9 +2,12 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"google.golang.org/grpc/metadata"
 	"log"
+	"mail/internal/models/microservice_ports"
 	"net/http"
 	"os"
 	"time"
@@ -12,26 +15,24 @@ import (
 
 	"github.com/gorilla/mux"
 	_ "github.com/jackc/pgx/stdlib"
-	"github.com/jmoiron/sqlx"
 	"github.com/kataras/requestid"
 	"github.com/rs/cors"
 
-	"mail/pkg/delivery/middleware"
-	"mail/pkg/delivery/session"
-	"mail/pkg/domain/logger"
+	"mail/internal/models/configs"
+	"mail/internal/pkg/logger"
+	"mail/internal/pkg/middleware"
+	"mail/internal/pkg/session"
+	"mail/internal/pkg/utils/connect_microservice"
 
 	migrate "github.com/rubenv/sql-migrate"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 
-	authHand "mail/pkg/delivery/auth"
-	emailHand "mail/pkg/delivery/email"
-	userHand "mail/pkg/delivery/user"
-	emailRepo "mail/pkg/repository/postgres/email"
-	sessionRepo "mail/pkg/repository/postgres/session"
-	userRepo "mail/pkg/repository/postgres/user"
-	emailUc "mail/pkg/usecase/email"
-	sessionUc "mail/pkg/usecase/session"
-	userUc "mail/pkg/usecase/user"
+	session_proto "mail/internal/microservice/session/proto"
+	authHand "mail/internal/pkg/auth/delivery/http"
+	emailHand "mail/internal/pkg/email/delivery/http"
+	folderHand "mail/internal/pkg/folder/delivery/http"
+	questionHand "mail/internal/pkg/questionnairy/delivery/http"
+	userHand "mail/internal/pkg/user/delivery/http"
 
 	_ "mail/docs"
 )
@@ -50,20 +51,16 @@ func main() {
 
 	migrateDatabase(db)
 
-	sessionsManager := initializeSessionsManager(db)
-	authHandler := initializeAuthHandler(db, sessionsManager)
-	emailHandler := initializeEmailHandler(db, sessionsManager)
-	userHandler := initializeUserHandler(db, sessionsManager)
+	loggerMiddlewareAccess := initializeMiddlewareLogger()
 
-	f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		fmt.Println("Failed to create logfile" + "log.txt")
-	}
-	defer f.Close()
+	sessionsManager := initializeSessionsManager()
+	authHandler := initializeAuthHandler(sessionsManager)
+	emailHandler := initializeEmailHandler(sessionsManager)
+	userHandler := initializeUserHandler(sessionsManager)
+	questionHandler := initializeQuestionHandler(sessionsManager)
+	folderHandler := initializeFolderHandler(sessionsManager)
 
-	Logger := initializeLogger(f)
-
-	router := setupRouter(authHandler, emailHandler, userHandler, Logger)
+	router := setupRouter(authHandler, userHandler, emailHandler, folderHandler, questionHandler, loggerMiddlewareAccess)
 
 	startServer(router)
 }
@@ -78,9 +75,7 @@ func settingTime() {
 }
 
 func initializeDatabase() *sql.DB {
-	dsn := "user=postgres dbname=Mail password=postgres host=localhost port=5432 sslmode=disable"
-	// dsn := "user=postgres dbname=Mail password=postgres host=89.208.223.140 port=5432 sslmode=disable"
-	db, err := sql.Open("pgx", dsn)
+	db, err := sql.Open("pgx", configs.DSN)
 	if err != nil {
 		log.Fatalln("Can't parse config", err)
 	}
@@ -106,62 +101,66 @@ func migrateDatabase(db *sql.DB) {
 	}
 }
 
-func initializeSessionsManager(db *sql.DB) *session.SessionsManager {
-	sessionRepository := sessionRepo.NewSessionRepository(sqlx.NewDb(db, "pgx"))
-	sessionUsaCase := sessionUc.NewSessionUseCase(sessionRepository)
-	sessionsManager := session.NewSessionsManager(sessionUsaCase)
+func initializeSessionsManager() *session.SessionsManager {
+	sessionsManager := session.NewSessionsManager()
 	session.InitializationGlobalSeaaionManager(sessionsManager)
 
-	StartSessionCleaner(sessionUsaCase, 24*time.Hour)
+	StartSessionCleaner(24 * time.Hour)
 
 	return sessionsManager
 }
 
-func initializeAuthHandler(db *sql.DB, sessionsManager *session.SessionsManager) *authHand.AuthHandler {
-	userRepository := userRepo.NewUserRepository(sqlx.NewDb(db, "pgx"))
-	userUseCase := userUc.NewUserUseCase(userRepository)
-
+func initializeAuthHandler(sessionsManager *session.SessionsManager) *authHand.AuthHandler {
 	return &authHand.AuthHandler{
-		UserUseCase: userUseCase,
-		Sessions:    sessionsManager,
+		Sessions: sessionsManager,
 	}
 }
 
-func initializeEmailHandler(db *sql.DB, sessionsManager *session.SessionsManager) *emailHand.EmailHandler {
-	emailRepository := emailRepo.NewEmailRepository(sqlx.NewDb(db, "pgx"))
-	emailUseCase := emailUc.NewEmailUseCase(emailRepository)
+func initializeEmailHandler(sessionsManager *session.SessionsManager) *emailHand.EmailHandler {
 
 	return &emailHand.EmailHandler{
-		EmailUseCase: emailUseCase,
-		Sessions:     sessionsManager,
+		Sessions: sessionsManager,
 	}
 }
 
-func initializeUserHandler(db *sql.DB, sessionsManager *session.SessionsManager) *userHand.UserHandler {
-	userRepository := userRepo.NewUserRepository(sqlx.NewDb(db, "pgx"))
-	userUseCase := userUc.NewUserUseCase(userRepository)
-
+func initializeUserHandler(sessionsManager *session.SessionsManager) *userHand.UserHandler {
 	return &userHand.UserHandler{
-		UserUseCase: userUseCase,
-		Sessions:    sessionsManager,
+		Sessions: sessionsManager,
 	}
 }
 
-func initializeLogger(f *os.File) *middleware.Logger {
-	Logrus := logger.InitializationAccesLog(f)
-	Logger := new(middleware.Logger)
-	Logger.Logger = Logrus
-
-	return Logger
+func initializeQuestionHandler(sessionsManager *session.SessionsManager) *questionHand.QuestionHandler {
+	return &questionHand.QuestionHandler{
+		Sessions: sessionsManager,
+	}
 }
 
-func setupRouter(authHandler *authHand.AuthHandler, emailHandler *emailHand.EmailHandler, userHandler *userHand.UserHandler, logger *middleware.Logger) http.Handler {
+func initializeFolderHandler(sessionsManager *session.SessionsManager) *folderHand.FolderHandler {
+	return &folderHand.FolderHandler{
+		Sessions: sessionsManager,
+	}
+}
+
+func initializeMiddlewareLogger() *middleware.Logger {
+	f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		fmt.Println("Failed to create logfile" + "log.txt")
+	}
+
+	LogrusAcces := logger.InitializationAccesLog(f)
+	LoggerAcces := new(middleware.Logger)
+	LoggerAcces.Logger = LogrusAcces
+
+	return LoggerAcces
+}
+
+func setupRouter(authHandler *authHand.AuthHandler, userHandler *userHand.UserHandler, emailHandler *emailHand.EmailHandler, folderHandler *folderHand.FolderHandler, questionHandler *questionHand.QuestionHandler, logger *middleware.Logger) http.Handler {
 	router := mux.NewRouter()
 
 	auth := setupAuthRouter(authHandler, emailHandler, logger)
 	router.PathPrefix("/api/v1/auth").Handler(auth)
 
-	logRouter := setupLogRouter(emailHandler, userHandler, logger)
+	logRouter := setupLogRouter(emailHandler, userHandler, folderHandler, questionHandler, logger)
 	router.PathPrefix("/api/v1").Handler(logRouter)
 
 	staticDir := "/media/"
@@ -185,7 +184,7 @@ func setupAuthRouter(authHandler *authHand.AuthHandler, emailHandler *emailHand.
 	return auth
 }
 
-func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.UserHandler, logger *middleware.Logger) http.Handler {
+func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.UserHandler, folderHandler *folderHand.FolderHandler, questionHandler *questionHand.QuestionHandler, logger *middleware.Logger) http.Handler {
 	logRouter := mux.NewRouter().PathPrefix("/api/v1").Subrouter()
 	logRouter.Use(logger.AccessLogMiddleware, middleware.PanicMiddleware, middleware.AuthMiddleware)
 
@@ -194,12 +193,29 @@ func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.
 	logRouter.HandleFunc("/user/update", userHandler.UpdateUserData).Methods("PUT", "OPTIONS")
 	logRouter.HandleFunc("/user/delete/{id}", userHandler.DeleteUserData).Methods("DELETE", "OPTIONS")
 	logRouter.HandleFunc("/user/avatar/upload", userHandler.UploadUserAvatar).Methods("POST", "OPTIONS")
+	logRouter.HandleFunc("/user/avatar/delete", userHandler.DeleteUserAvatar).Methods("DELETE", "OPTIONS")
+
 	logRouter.HandleFunc("/emails/incoming", emailHandler.Incoming).Methods("GET", "OPTIONS")
 	logRouter.HandleFunc("/emails/sent", emailHandler.Sent).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/emails/draft", emailHandler.Draft).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/emails/spam", emailHandler.Spam).Methods("GET", "OPTIONS")
 	logRouter.HandleFunc("/email/{id}", emailHandler.GetByID).Methods("GET", "OPTIONS")
 	logRouter.HandleFunc("/email/update/{id}", emailHandler.Update).Methods("PUT", "OPTIONS")
 	logRouter.HandleFunc("/email/delete/{id}", emailHandler.Delete).Methods("DELETE", "OPTIONS")
 	logRouter.HandleFunc("/email/send", emailHandler.Send).Methods("POST", "OPTIONS")
+
+	logRouter.HandleFunc("/questions", questionHandler.GetAllQuestions).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/questions", questionHandler.AddQuestion).Methods("POST", "OPTIONS")
+	logRouter.HandleFunc("/answers", questionHandler.AddAnswer).Methods("POST", "OPTIONS")
+	logRouter.HandleFunc("/statistics", questionHandler.GetStatistics).Methods("GET", "OPTIONS")
+
+	logRouter.HandleFunc("/folder/add", folderHandler.Add).Methods("POST", "OPTIONS")
+	logRouter.HandleFunc("/folder/all", folderHandler.GetAll).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/folder/delete/{id}", folderHandler.Delete).Methods("DELETE", "OPTIONS")
+	logRouter.HandleFunc("/folder/update/{id}", folderHandler.Update).Methods("PUT", "OPTIONS")
+	logRouter.HandleFunc("/folder/add_email", folderHandler.AddEmailInFolder).Methods("POST", "OPTIONS")
+	logRouter.HandleFunc("/folder/delete_email", folderHandler.DeleteEmailInFolder).Methods("DELETE", "OPTIONS")
+	logRouter.HandleFunc("/folder/all_emails/{id}", folderHandler.GetAllEmailsInFolder).Methods("GET", "OPTIONS")
 
 	return logRouter
 }
@@ -228,16 +244,42 @@ func startServer(router http.Handler) {
 	}
 }
 
-func StartSessionCleaner(sessionCleaner *sessionUc.SessionUseCase, interval time.Duration) {
+func StartSessionCleaner(interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	go func() {
 		for {
 			select {
 			case <-ticker.C:
-				err := sessionCleaner.CleanupExpiredSessions()
+				f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+				if err != nil {
+					fmt.Println("Failed to create logfile" + "log.txt")
+				}
+				defer f.Close()
+
+				c := context.WithValue(context.Background(), "logger", logger.InitializationBdLog(f))
+				ctx := context.WithValue(c, "requestID", "DeleteExpiredSessionsNULL")
+
+				conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.SessionService))
+				if err != nil {
+					fmt.Printf("connection fail")
+					conn.Close()
+					return
+				}
+
+				sessionServiceClient := session_proto.NewSessionServiceClient(conn)
+				req, err := sessionServiceClient.CleanupExpiredSessions(
+					metadata.NewOutgoingContext(ctx,
+						metadata.New(map[string]string{"requestID": ctx.Value("requestID").(string)})),
+					&session_proto.CleanupExpiredSessionsRequest{},
+				)
 				if err != nil {
 					fmt.Printf("Error cleaning expired sessions: %v\n", err)
+					conn.Close()
+					return
 				}
+				fmt.Println(req)
+
+				conn.Close()
 			}
 		}
 	}()
