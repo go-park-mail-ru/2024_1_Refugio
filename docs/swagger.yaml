@@ -140,7 +140,7 @@ definitions:
         description: Surname stores the last name of the user.
         type: string
     type: object
-host: mailhub.su
+host: localhost:8080
 info:
   contact: {}
   description: API server for mail
