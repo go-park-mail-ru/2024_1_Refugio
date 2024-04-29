@@ -24,7 +24,7 @@ func EmailConvertDbInCore(emailModelDb database.Email) *domain.Email {
 		ID:             emailModelDb.ID,
 		Topic:          emailModelDb.Topic,
 		Text:           emailModelDb.Text,
-		PhotoID:        avatar,
+		AvatarID:       avatar,
 		ReadStatus:     emailModelDb.ReadStatus,
 		Flag:           emailModelDb.Flag,
 		Deleted:        emailModelDb.Deleted,
@@ -43,7 +43,7 @@ func EmailConvertCoreInDb(emailModelCore domain.Email) *database.Email {
 		ID:             emailModelCore.ID,
 		Topic:          emailModelCore.Topic,
 		Text:           emailModelCore.Text,
-		PhotoID:        &emailModelCore.PhotoID,
+		PhotoID:        &emailModelCore.AvatarID,
 		ReadStatus:     emailModelCore.ReadStatus,
 		Flag:           emailModelCore.Flag,
 		Deleted:        emailModelCore.Deleted,
@@ -57,6 +57,12 @@ func EmailConvertCoreInDb(emailModelCore domain.Email) *database.Email {
 
 	if emailModelCore.ReplyToEmailID != 0 {
 		emailDB.ReplyToEmailID = emailModelCore.ReplyToEmailID
+	}
+
+	if emailModelCore.AvatarID != "" {
+		var photoId *string
+		photoId = &emailModelCore.AvatarID
+		emailDB.PhotoID = photoId
 	}
 
 	return emailDB

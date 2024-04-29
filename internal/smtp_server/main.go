@@ -25,7 +25,28 @@ func main() {
 	}
 }
 
+/*func ListenAndServe(addr string, handler smtpd.Handler, authHandler smtpd.AuthHandler) error {
+	srv := &smtpd.Server{
+		Addr:         addr,
+		Handler:      handler,
+		Appname:      "MailHubSMTP",
+		Hostname:     "",
+		AuthHandler:  authHandler,
+		AuthRequired: true,
+	}
+	return srv.ListenAndServe()
+}
+
+func authHandler(remoteAddr net.Addr, mechanism string, username []byte, password []byte, shared []byte) (bool, error) {
+	return true, nil
+	//return string(username) == "valid" && string(password) == "password", nil
+}*/
+
 func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
+	if true {
+		return fmt.Errorf("domain in the login is not suitable")
+	}
+
 	msg, err := mail.ReadMessage(bytes.NewReader(data))
 	if err != nil {
 		log.Println("Error reading message:", err)

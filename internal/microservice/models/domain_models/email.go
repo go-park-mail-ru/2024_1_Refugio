@@ -7,7 +7,7 @@ type Email struct {
 	ID             uint64    // ID is the unique identifier of the email in the database.
 	Topic          string    // Topic is the subject of the email.
 	Text           string    // Text is the body of the email.
-	PhotoID        string    // PhotoID is the link to the photo attached to the email, if any.
+	AvatarID       string    // AvatarID avatar interlocutor.
 	ReadStatus     bool      // ReadStatus indicates whether the email has been read.
 	Flag           bool      // Flag is a flag, such as marking the email as a favorite.
 	Deleted        bool      // Deleted indicates whether the email has been deleted.
@@ -18,3 +18,6 @@ type Email struct {
 	SenderEmail    string    // SenderEmail is the email of the sender user
 	RecipientEmail string    // RecipientEmail is the email of the recipient user
 }
+
+//SenderPhotoID    string    // SenderPhotoID is the link to the photo attached to the email, if any.
+//RecipientPhotoID string    // RecipientPhotoID is the link to the photo attached to the email, if any.

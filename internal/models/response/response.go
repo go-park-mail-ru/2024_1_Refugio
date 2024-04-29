@@ -59,7 +59,6 @@ type EmailSwag struct {
 	ID             uint64    `json:"id,omitempty"`             // ID is the unique identifier of the email in the database.
 	Topic          string    `json:"topic"`                    // Topic is the subject of the email.
 	Text           string    `json:"text"`                     // Text is the body of the email.
-	PhotoID        string    `json:"photoId,omitempty"`        // PhotoID is the link to the photo attached to the email, if any.
 	ReadStatus     bool      `json:"readStatus"`               // ReadStatus indicates whether the email has been read.
 	Flag           bool      `json:"mark,omitempty"`           // Mark is a flag, such as marking the email as a favorite.
 	Deleted        bool      `json:"deleted"`                  // Deleted indicates whether the email has been deleted.
