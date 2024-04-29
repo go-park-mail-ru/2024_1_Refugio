@@ -24,6 +24,9 @@ type SessionsManager interface {
 	// GetLoginBySession retrieves the login associated with the session from the request.
 	GetLoginBySession(r *http.Request, ctx context.Context) (string, error)
 
+	// GetProfileIDBySessionID
+	GetProfileIDBySessionID(r *http.Request, ctx context.Context) (uint32, error)
+
 	// Create creates a new session for the user and sets the session ID cookie in the response.
 	Create(w http.ResponseWriter, userID uint32, ctx context.Context) (*api.Session, error)
 

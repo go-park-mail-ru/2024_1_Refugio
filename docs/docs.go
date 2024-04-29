@@ -613,6 +613,401 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/folder/add": {
+            "post": {
+                "description": "Add a new folder message to the system",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "folders"
+                ],
+                "summary": "Add a new folder message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Folder message in JSON format",
+                        "name": "folder",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/response.FolderSwag"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ID of the send folder message",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad JSON in request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to add folder message",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/folder/add_email": {
+            "post": {
+                "description": "AddEmailInFolder a new folder message to the system",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "folders"
+                ],
+                "summary": "AddEmailInFolder a new folder message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Folder message in JSON format",
+                        "name": "folder",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/response.FolderEmailSwag"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ID of the send folder message",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad JSON in request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to add folder message",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/folder/all": {
+            "get": {
+                "description": "GetAll folders users",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "folders"
+                ],
+                "summary": "GetAll get all folders",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ID of the send folder message",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad JSON in request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get all folders",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/folder/all_emails/{id}": {
+            "get": {
+                "description": "GetAllEmailsInFolder emails in folder users",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "folders"
+                ],
+                "summary": "GetAllEmailsInFolder get all emails in folder",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID of the folder",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ID of the send folder message",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad JSON in request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get all emails in folder",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/folder/delete/{id}": {
+            "delete": {
+                "description": "Delete folder a user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "folders"
+                ],
+                "summary": "Delete folder a user",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID of the folder",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deletion success status",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad id",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to delete folder",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/folder/delete_email": {
+            "delete": {
+                "description": "DeleteEmailInFolder a new folder message to the system",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "folders"
+                ],
+                "summary": "DeleteEmailInFolder a new folder message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Folder message in JSON format",
+                        "name": "folder",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/response.FolderEmailSwag"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ID of the folder message",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad JSON in request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to delete folder message",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/folder/update/{id}": {
+            "put": {
+                "description": "Update folder a user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "folders"
+                ],
+                "summary": "Update folder a user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID of the folder message",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Folder message in JSON format",
+                        "name": "folder",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/response.FolderSwag"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Update success status",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad id",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to update folder",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/questions": {
             "get": {
                 "description": "Get Handles questions.",
@@ -1142,6 +1537,26 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "error": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.FolderEmailSwag": {
+            "type": "object",
+            "properties": {
+                "emailId": {
+                    "type": "integer"
+                },
+                "folderId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "response.FolderSwag": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "description": "Name the name of the folder.",
                     "type": "string"
                 }
             }

@@ -61,6 +61,19 @@ definitions:
       error:
         type: string
     type: object
+  response.FolderEmailSwag:
+    properties:
+      emailId:
+        type: integer
+      folderId:
+        type: integer
+    type: object
+  response.FolderSwag:
+    properties:
+      name:
+        description: Name the name of the folder.
+        type: string
+    type: object
   response.QuestionSwag:
     properties:
       dop_question:
@@ -529,6 +542,268 @@ paths:
       summary: Display the list of email messages
       tags:
       - emails
+  /api/v1/folder/add:
+    post:
+      consumes:
+      - application/json
+      description: Add a new folder message to the system
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      - description: Folder message in JSON format
+        in: body
+        name: folder
+        required: true
+        schema:
+          $ref: '#/definitions/response.FolderSwag'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ID of the send folder message
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad JSON in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to add folder message
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Add a new folder message
+      tags:
+      - folders
+  /api/v1/folder/add_email:
+    post:
+      consumes:
+      - application/json
+      description: AddEmailInFolder a new folder message to the system
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      - description: Folder message in JSON format
+        in: body
+        name: folder
+        required: true
+        schema:
+          $ref: '#/definitions/response.FolderEmailSwag'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ID of the send folder message
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad JSON in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to add folder message
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: AddEmailInFolder a new folder message
+      tags:
+      - folders
+  /api/v1/folder/all:
+    get:
+      description: GetAll folders users
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ID of the send folder message
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad JSON in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to get all folders
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: GetAll get all folders
+      tags:
+      - folders
+  /api/v1/folder/all_emails/{id}:
+    get:
+      description: GetAllEmailsInFolder emails in folder users
+      parameters:
+      - description: ID of the folder
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ID of the send folder message
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad JSON in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to get all emails in folder
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: GetAllEmailsInFolder get all emails in folder
+      tags:
+      - folders
+  /api/v1/folder/delete/{id}:
+    delete:
+      description: Delete folder a user
+      parameters:
+      - description: ID of the folder
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Deletion success status
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad id
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to delete folder
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Delete folder a user
+      tags:
+      - folders
+  /api/v1/folder/delete_email:
+    delete:
+      consumes:
+      - application/json
+      description: DeleteEmailInFolder a new folder message to the system
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      - description: Folder message in JSON format
+        in: body
+        name: folder
+        required: true
+        schema:
+          $ref: '#/definitions/response.FolderEmailSwag'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ID of the folder message
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad JSON in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to delete folder message
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: DeleteEmailInFolder a new folder message
+      tags:
+      - folders
+  /api/v1/folder/update/{id}:
+    put:
+      description: Update folder a user
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      - description: ID of the folder message
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Folder message in JSON format
+        in: body
+        name: folder
+        required: true
+        schema:
+          $ref: '#/definitions/response.FolderSwag'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Update success status
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad id
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to update folder
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Update folder a user
+      tags:
+      - folders
   /api/v1/questions:
     get:
       consumes:

@@ -7,6 +7,7 @@ const (
 	EmailService    MicroServicePorts = "8002"
 	SessionService  MicroServicePorts = "8003"
 	AuthService     MicroServicePorts = "8004"
+	FolderService   MicroServicePorts = "8005"
 	QuestionService MicroServicePorts = "8006"
 )
 
@@ -21,6 +22,8 @@ func GetPorts(gender MicroServicePorts) string {
 		return "8003"
 	case AuthService:
 		return "8004"
+	case FolderService:
+		return "8005"
 	case QuestionService:
 		return "8006"
 	default:

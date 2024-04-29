@@ -18,6 +18,9 @@ type SessionRepository interface {
 	// GetLoginBySessionID retrieves the login associated with the given session ID.
 	GetLoginBySessionID(sessionID string, ctx context.Context) (string, error)
 
+	// GetProfileIDBySessionID
+	GetProfileIDBySessionID(sessionID string, ctx context.Context) (uint32, error)
+
 	// DeleteSessionByID deletes a session by its ID.
 	DeleteSessionByID(sessionID string, ctx context.Context) error
 
