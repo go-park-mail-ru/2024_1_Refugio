@@ -71,6 +71,15 @@ type EmailSwag struct {
 	RecipientEmail string    `json:"recipientEmail"`           // RecipientEmail is the Email of the recipient user
 }
 
+type FolderSwag struct {
+	Name string `json:"name"` // Name the name of the folder.
+}
+
+type FolderEmailSwag struct {
+	FolderID uint32 `json:"folderId"`
+	EmailID  uint32 `json:"emailId"`
+}
+
 type UserGenderSwag string
 
 const (

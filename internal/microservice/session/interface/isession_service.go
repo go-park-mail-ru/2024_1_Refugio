@@ -18,6 +18,9 @@ type SessionUseCase interface {
 	// GetLogin retrieves the login associated with the provided session ID.
 	GetLogin(sessionID string, ctx context.Context) (string, error)
 
+	// GetProfileID
+	GetProfileID(sessionID string, ctx context.Context) (uint32, error)
+
 	// DeleteSession terminates a session identified by its ID.
 	DeleteSession(sessionID string, ctx context.Context) error
 

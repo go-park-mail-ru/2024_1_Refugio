@@ -46,6 +46,20 @@ func (ss *SessionServer) GetLoginBySession(ctx context.Context, input *proto.Get
 	return &proto.GetLoginBySessionReply{Login: login}, nil
 }
 
+// GetProfileIDBySession retrieves the login associated with the session.
+func (ss *SessionServer) GetProfileIDBySession(ctx context.Context, input *proto.GetLoginBySessionRequest) (*proto.GetProfileIDBySessionReply, error) {
+	if validUtil.IsEmpty(input.SessionId) {
+		return nil, fmt.Errorf("session not found")
+	}
+
+	profileId, err := ss.SessionUseCase.GetProfileID(input.SessionId, ctx)
+	if err != nil {
+		return nil, fmt.Errorf("session not found")
+	}
+
+	return &proto.GetProfileIDBySessionReply{Id: profileId}, nil
+}
+
 // CreateSession creates a new session for the user.
 func (ss *SessionServer) CreateSession(ctx context.Context, input *proto.CreateSessionRequest) (*proto.CreateSessionReply, error) {
 	if input.Session.UserId < 0 {

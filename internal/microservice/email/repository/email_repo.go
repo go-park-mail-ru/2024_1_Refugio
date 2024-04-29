@@ -368,11 +368,11 @@ func (r *EmailRepository) Update(newEmail *domain.Email, ctx context.Context) (b
             topic = $1, 
             text = $2, 
             photoid = $3,
-            read_status = $4, 
-            deleted_status = $5, 
-            draft_status = $6, 
+            isRead = $4, 
+            isDeleted = $5, 
+            isDraft = $6, 
             reply_to_email_id = $7, 
-            flag = $8
+            is_important = $8
         WHERE
             id = $9 AND sender_email = $10
     `

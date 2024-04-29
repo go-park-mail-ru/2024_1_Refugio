@@ -103,6 +103,27 @@ func (repo *SessionRepository) GetLoginBySessionID(sessionID string, ctx context
 	return login, nil
 }
 
+// GetProfileIDBySessionID retrieves the login associated with the given session ID.
+func (repo *SessionRepository) GetProfileIDBySessionID(sessionID string, ctx context.Context) (uint32, error) {
+	query := `
+		SELECT profile_id FROM session
+		WHERE session.id = $1
+	`
+
+	var id uint32
+	start := time.Now()
+	err := repo.DB.Get(&id, query, sessionID)
+
+	args := []interface{}{sessionID}
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
+
+	if err != nil {
+		return 0, fmt.Errorf("failed to get session: %v", err)
+	}
+
+	return id, nil
+}
+
 // DeleteSessionByID deletes a session by its ID.
 func (repo *SessionRepository) DeleteSessionByID(sessionID string, ctx context.Context) error {
 	query := "DELETE FROM session WHERE id = $1"

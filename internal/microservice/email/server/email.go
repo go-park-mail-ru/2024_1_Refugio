@@ -130,10 +130,13 @@ func (es *EmailServer) UpdateEmail(ctx context.Context, input *proto.Email) (*pr
 	if input == nil {
 		return nil, fmt.Errorf("invalid email format: %s", input)
 	}
+
 	okStatus, err := es.EmailUseCase.UpdateEmail(converters.EmailConvertProtoInCore(*input), ctx)
+
 	if err != nil {
 		return nil, fmt.Errorf("email not found")
 	}
+
 	protoStatusEmail := new(proto.StatusEmail)
 	protoStatusEmail.Status = okStatus
 	return protoStatusEmail, nil

@@ -180,6 +180,28 @@ func (sm SessionsManager) GetLoginBySession(r *http.Request, ctx context.Context
 	return loginProto.Login, nil
 }
 
+func (sm SessionsManager) GetProfileIDBySessionID(r *http.Request, ctx context.Context) (uint32, error) {
+	sessionCookie, _ := r.Cookie("session_id")
+
+	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.SessionService))
+	if err != nil {
+		return 0, fmt.Errorf("connection fail")
+	}
+	defer conn.Close()
+
+	sessionServiceClient := session_proto.NewSessionServiceClient(conn)
+	idProto, errStatus := sessionServiceClient.GetProfileIDBySession(
+		metadata.NewOutgoingContext(ctx,
+			metadata.New(map[string]string{"requestID": ctx.Value("requestID").(string)})),
+		&session_proto.GetLoginBySessionRequest{SessionId: sessionCookie.Value},
+	)
+	if errStatus != nil {
+		return 0, errStatus
+	}
+
+	return idProto.Id, nil
+}
+
 // Create creates a new session for the user and sets the session ID cookie in the response.
 func (sm *SessionsManager) Create(w http.ResponseWriter, userID uint32, ctx context.Context) (*api.Session, error) {
 	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.SessionService))
