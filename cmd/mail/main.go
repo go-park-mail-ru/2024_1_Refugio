@@ -18,6 +18,7 @@ import (
 	"github.com/kataras/requestid"
 	"github.com/rs/cors"
 
+	"mail/internal/models/configs"
 	"mail/internal/pkg/logger"
 	"mail/internal/pkg/middleware"
 	"mail/internal/pkg/session"
@@ -30,6 +31,7 @@ import (
 	authHand "mail/internal/pkg/auth/delivery/http"
 	emailHand "mail/internal/pkg/email/delivery/http"
 	folderHand "mail/internal/pkg/folder/delivery/http"
+	questionHand "mail/internal/pkg/questionnairy/delivery/http"
 	userHand "mail/internal/pkg/user/delivery/http"
 
 	_ "mail/docs"
@@ -39,7 +41,7 @@ import (
 // @version 1.0
 // @description API server for mail
 
-// @host mailhub.su
+// @host localhost:8080
 // @BasePath /
 func main() {
 	settingTime()
@@ -55,9 +57,10 @@ func main() {
 	authHandler := initializeAuthHandler(sessionsManager)
 	emailHandler := initializeEmailHandler(sessionsManager)
 	userHandler := initializeUserHandler(sessionsManager)
+	questionHandler := initializeQuestionHandler(sessionsManager)
 	folderHandler := initializeFolderHandler(sessionsManager)
 
-	router := setupRouter(authHandler, userHandler, emailHandler, folderHandler, loggerMiddlewareAccess)
+	router := setupRouter(authHandler, userHandler, emailHandler, folderHandler, questionHandler, loggerMiddlewareAccess)
 
 	startServer(router)
 }
@@ -72,9 +75,7 @@ func settingTime() {
 }
 
 func initializeDatabase() *sql.DB {
-	// dsn := "user=postgres dbname=Mail password=postgres host=localhost port=5432 sslmode=disable"
-	dsn := "user=postgres dbname=Mail password=postgres host=89.208.223.140 port=5432 sslmode=disable"
-	db, err := sql.Open("pgx", dsn)
+	db, err := sql.Open("pgx", configs.DSN)
 	if err != nil {
 		log.Fatalln("Can't parse config", err)
 	}
@@ -128,6 +129,12 @@ func initializeUserHandler(sessionsManager *session.SessionsManager) *userHand.U
 	}
 }
 
+func initializeQuestionHandler(sessionsManager *session.SessionsManager) *questionHand.QuestionHandler {
+	return &questionHand.QuestionHandler{
+		Sessions: sessionsManager,
+	}
+}
+
 func initializeFolderHandler(sessionsManager *session.SessionsManager) *folderHand.FolderHandler {
 	return &folderHand.FolderHandler{
 		Sessions: sessionsManager,
@@ -147,13 +154,13 @@ func initializeMiddlewareLogger() *middleware.Logger {
 	return LoggerAcces
 }
 
-func setupRouter(authHandler *authHand.AuthHandler, userHandler *userHand.UserHandler, emailHandler *emailHand.EmailHandler, folderHandler *folderHand.FolderHandler, logger *middleware.Logger) http.Handler {
+func setupRouter(authHandler *authHand.AuthHandler, userHandler *userHand.UserHandler, emailHandler *emailHand.EmailHandler, folderHandler *folderHand.FolderHandler, questionHandler *questionHand.QuestionHandler, logger *middleware.Logger) http.Handler {
 	router := mux.NewRouter()
 
 	auth := setupAuthRouter(authHandler, emailHandler, logger)
 	router.PathPrefix("/api/v1/auth").Handler(auth)
 
-	logRouter := setupLogRouter(emailHandler, userHandler, folderHandler, logger)
+	logRouter := setupLogRouter(emailHandler, userHandler, folderHandler, questionHandler, logger)
 	router.PathPrefix("/api/v1").Handler(logRouter)
 
 	staticDir := "/media/"
@@ -177,7 +184,7 @@ func setupAuthRouter(authHandler *authHand.AuthHandler, emailHandler *emailHand.
 	return auth
 }
 
-func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.UserHandler, folderHandler *folderHand.FolderHandler, logger *middleware.Logger) http.Handler {
+func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.UserHandler, folderHandler *folderHand.FolderHandler, questionHandler *questionHand.QuestionHandler, logger *middleware.Logger) http.Handler {
 	logRouter := mux.NewRouter().PathPrefix("/api/v1").Subrouter()
 	logRouter.Use(logger.AccessLogMiddleware, middleware.PanicMiddleware, middleware.AuthMiddleware)
 
@@ -196,6 +203,11 @@ func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.
 	logRouter.HandleFunc("/email/update/{id}", emailHandler.Update).Methods("PUT", "OPTIONS")
 	logRouter.HandleFunc("/email/delete/{id}", emailHandler.Delete).Methods("DELETE", "OPTIONS")
 	logRouter.HandleFunc("/email/send", emailHandler.Send).Methods("POST", "OPTIONS")
+
+	logRouter.HandleFunc("/questions", questionHandler.GetAllQuestions).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/questions", questionHandler.AddQuestion).Methods("POST", "OPTIONS")
+	logRouter.HandleFunc("/answers", questionHandler.AddAnswer).Methods("POST", "OPTIONS")
+	logRouter.HandleFunc("/statistics", questionHandler.GetStatistics).Methods("GET", "OPTIONS")
 
 	logRouter.HandleFunc("/folder/add", folderHandler.Add).Methods("POST", "OPTIONS")
 	logRouter.HandleFunc("/folder/all", folderHandler.GetAll).Methods("GET", "OPTIONS")

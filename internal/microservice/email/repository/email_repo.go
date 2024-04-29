@@ -121,7 +121,7 @@ func (r *EmailRepository) GetAllIncoming(login string, offset, limit int64, ctx 
 		JOIN profile p ON pe.profile_id = (
 			SELECT id FROM profile WHERE login = $1
 		)
-		WHERE e.recipient_email = $1
+		WHERE e.recipient_email = $1 AND e.isSpam = false AND e.isDraft = false
 		ORDER BY e.date_of_dispatch DESC
 	`
 
@@ -175,7 +175,7 @@ func (r *EmailRepository) GetAllSent(login string, offset, limit int64, ctx cont
 		JOIN profile p ON pe.profile_id = (
 			SELECT id FROM profile WHERE login = $1
 		)
-		WHERE e.sender_email = $1
+		WHERE e.sender_email = $1 AND e.isSpam = false AND e.isDraft = false
 		ORDER BY e.date_of_dispatch DESC
 	`
 
@@ -367,20 +367,19 @@ func (r *EmailRepository) Update(newEmail *domain.Email, ctx context.Context) (b
         SET
             topic = $1, 
             text = $2, 
-            photoid = $3,
-            isRead = $4, 
-            isDeleted = $5, 
-            isDraft = $6, 
-            reply_to_email_id = $7, 
-            is_important = $8
+            isread = $3, 
+            isdeleted = $4, 
+            isdraft = $5, 
+            reply_to_email_id = $6, 
+            is_important = $7
         WHERE
-            id = $9 AND sender_email = $10
+            id = $8 AND sender_email = $9
     `
 
 	start := time.Now()
-	result, err := r.DB.Exec(query, newEmailDb.Topic, newEmailDb.Text, newEmailDb.PhotoID, newEmailDb.ReadStatus, newEmailDb.Deleted, newEmailDb.DraftStatus, newEmailDb.ReplyToEmailID, newEmailDb.Flag, newEmailDb.ID, newEmailDb.SenderEmail)
+	result, err := r.DB.Exec(query, newEmailDb.Topic, newEmailDb.Text, newEmailDb.ReadStatus, newEmailDb.Deleted, newEmailDb.DraftStatus, newEmailDb.ReplyToEmailID, newEmailDb.Flag, newEmailDb.ID, newEmailDb.SenderEmail)
 
-	args := []interface{}{newEmailDb.Topic, newEmailDb.Text, newEmailDb.PhotoID, newEmailDb.ReadStatus, newEmailDb.Deleted, newEmailDb.DraftStatus, newEmailDb.ReplyToEmailID, newEmailDb.Flag, newEmailDb.ID, newEmailDb.RecipientEmail}
+	args := []interface{}{newEmailDb.Topic, newEmailDb.Text, newEmailDb.ReadStatus, newEmailDb.Deleted, newEmailDb.DraftStatus, newEmailDb.ReplyToEmailID, newEmailDb.Flag, newEmailDb.ID, newEmailDb.RecipientEmail}
 	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
 
 	if err != nil {
