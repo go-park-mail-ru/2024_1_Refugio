@@ -103,6 +103,18 @@ services:
     depends_on:
       - db
 
+  folder:
+    container_name: folder
+    build:
+      context: .
+      dockerfile: ./cmd/folder/Dockerfile
+    ports:
+      - "8005:8005"
+    networks:
+      - deploy-guide-dev
+    depends_on:
+      - db
+
   questionnaire:
     container_name: questionnaire
     build:
