@@ -17,7 +17,21 @@ services:
     networks:
       - deploy-guide-dev
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - db_postgres_data:/var/lib/postgresql/data
+
+  db_question:
+    container_name: db_question
+    image: postgres:16
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: Question
+    networks:
+      - deploy-guide-dev
+    volumes:
+      - db_question_postgres_data:/var/lib/postgresql/data
 
   backend:
     container_name: backend
@@ -89,5 +103,18 @@ services:
     depends_on:
       - db
 
+  questionnaire:
+    container_name: questionnaire
+    build:
+      context: .
+      dockerfile: ./cmd/questionnaire/Dockerfile
+    ports:
+      - "8006:8006"
+    networks:
+      - deploy-guide-dev
+    depends_on:
+      - db_question
+
 volumes:
-  postgres_data:
+  db_postgres_data:
+  db_question_postgres_data:

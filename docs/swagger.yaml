@@ -1,5 +1,18 @@
 basePath: /
 definitions:
+  response.AnswerSwag:
+    properties:
+      id:
+        type: integer
+      login:
+        type: string
+      mark:
+        type: integer
+      question_id:
+        type: integer
+      text:
+        type: string
+    type: object
   response.EmailSwag:
     properties:
       dateOfDispatch:
@@ -46,6 +59,19 @@ definitions:
   response.ErrorResponse:
     properties:
       error:
+        type: string
+    type: object
+  response.QuestionSwag:
+    properties:
+      dop_question:
+        type: string
+      id:
+        type: integer
+      max_text:
+        type: string
+      min_text:
+        type: string
+      text:
         type: string
     type: object
   response.Response:
@@ -108,6 +134,45 @@ info:
   title: API Mail
   version: "1.0"
 paths:
+  /api/v1/answers:
+    post:
+      consumes:
+      - application/json
+      description: Add Handles answer.
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      - description: Answer message in JSON format
+        in: body
+        name: question
+        required: true
+        schema:
+          $ref: '#/definitions/response.AnswerSwag'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Add answer successful
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to add answer
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Add answer
+      tags:
+      - question
   /api/v1/auth/login:
     post:
       consumes:
@@ -464,6 +529,110 @@ paths:
       summary: Display the list of email messages
       tags:
       - emails
+  /api/v1/questions:
+    get:
+      consumes:
+      - application/json
+      description: Get Handles questions.
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Get questions successful
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to get questions
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Get questions
+      tags:
+      - question
+    post:
+      consumes:
+      - application/json
+      description: Add Handles question.
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      - description: Question message in JSON format
+        in: body
+        name: question
+        required: true
+        schema:
+          $ref: '#/definitions/response.QuestionSwag'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Add question successful
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to add question
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Add question
+      tags:
+      - question
+  /api/v1/statistics:
+    get:
+      consumes:
+      - application/json
+      description: Get Handles statistics.
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Get statistics successful
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to get statistics
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Get statistics
+      tags:
+      - question
   /api/v1/user/avatar/delete:
     delete:
       consumes:
