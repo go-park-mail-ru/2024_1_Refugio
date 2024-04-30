@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"google.golang.org/grpc"
 	"log"
+	"mail/cmd/configs"
 	"net"
 	"os"
 	"time"
@@ -15,8 +16,6 @@ import (
 
 	"mail/internal/microservice/interceptors"
 	"mail/internal/microservice/questionnaire/proto"
-	"mail/internal/models/configs"
-
 	questionnaireRepo "mail/internal/microservice/questionnaire/repository"
 	grpcQuestionnaire "mail/internal/microservice/questionnaire/server"
 	questionnaireUc "mail/internal/microservice/questionnaire/usecase"

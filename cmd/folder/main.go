@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"google.golang.org/grpc"
 	"log"
-	"mail/internal/models/configs"
+	"mail/cmd/configs"
 	"net"
 	"os"
 	"time"

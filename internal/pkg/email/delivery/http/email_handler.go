@@ -222,7 +222,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 
 	newEmail.Topic = sanitizeString(newEmail.Topic)
 	newEmail.Text = sanitizeString(newEmail.Text)
-	newEmail.AvatarID = sanitizeString(newEmail.AvatarID)
+	newEmail.PhotoID = sanitizeString(newEmail.PhotoID)
 	newEmail.SenderEmail = sanitizeString(newEmail.SenderEmail)
 	newEmail.RecipientEmail = sanitizeString(newEmail.RecipientEmail)
 
@@ -260,7 +260,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 				Id:             newEmail.ID,
 				Topic:          newEmail.Topic,
 				Text:           newEmail.Text,
-				PhotoID:        newEmail.AvatarID,
+				PhotoID:        newEmail.PhotoID,
 				ReadStatus:     newEmail.ReadStatus,
 				Flag:           newEmail.Flag,
 				Deleted:        newEmail.Deleted,
@@ -324,7 +324,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 				Id:             newEmail.ID,
 				Topic:          newEmail.Topic,
 				Text:           newEmail.Text,
-				PhotoID:        newEmail.AvatarID,
+				PhotoID:        newEmail.PhotoID,
 				ReadStatus:     newEmail.ReadStatus,
 				Flag:           newEmail.Flag,
 				Deleted:        newEmail.Deleted,
@@ -390,7 +390,7 @@ func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	updatedEmail.Topic = sanitizeString(updatedEmail.Topic)
 	updatedEmail.Text = sanitizeString(updatedEmail.Text)
-	updatedEmail.AvatarID = sanitizeString(updatedEmail.AvatarID)
+	updatedEmail.PhotoID = sanitizeString(updatedEmail.PhotoID)
 	updatedEmail.RecipientEmail = sanitizeString(updatedEmail.RecipientEmail)
 	updatedEmail.SenderEmail = sanitizeString(updatedEmail.SenderEmail)
 
@@ -417,7 +417,7 @@ func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) {
 			Id:             updatedEmail.ID,
 			Topic:          updatedEmail.Topic,
 			Text:           updatedEmail.Text,
-			PhotoID:        updatedEmail.AvatarID,
+			PhotoID:        updatedEmail.PhotoID,
 			ReadStatus:     updatedEmail.ReadStatus,
 			Flag:           updatedEmail.Flag,
 			Deleted:        updatedEmail.Deleted,

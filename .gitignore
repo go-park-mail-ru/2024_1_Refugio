@@ -2,7 +2,7 @@
 avatars/*
 !avatars/.gitkeep
 .DS_Store
-MessageSMTP/*
+message_smtp/*
 log.txt
 
 # Created by https://www.toptal.com/developers/gitignore/api/go

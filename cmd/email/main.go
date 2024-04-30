@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"google.golang.org/grpc"
 	"log"
+	"mail/cmd/configs"
 	"net"
 	"os"
 	"time"
@@ -13,12 +14,10 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"mail/internal/microservice/email/proto"
-	"mail/internal/microservice/interceptors"
-	"mail/internal/models/configs"
-
 	emailRepo "mail/internal/microservice/email/repository"
 	grpcEmail "mail/internal/microservice/email/server"
 	emailUc "mail/internal/microservice/email/usecase"
+	"mail/internal/microservice/interceptors"
 )
 
 func main() {

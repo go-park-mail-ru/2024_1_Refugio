@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"google.golang.org/grpc/metadata"
 	"log"
+	"mail/cmd/configs"
 	"net/http"
 	"os"
 	"time"
@@ -17,7 +18,6 @@ import (
 	"github.com/kataras/requestid"
 	"github.com/rs/cors"
 
-	"mail/internal/models/configs"
 	"mail/internal/models/microservice_ports"
 	"mail/internal/pkg/logger"
 	"mail/internal/pkg/middleware"
