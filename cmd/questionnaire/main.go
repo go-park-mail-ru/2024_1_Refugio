@@ -3,21 +3,23 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	_ "github.com/jackc/pgx/stdlib"
-	"github.com/jmoiron/sqlx"
 	"google.golang.org/grpc"
 	"log"
-	questionnaireRepo "mail/internal/microservice/questionnaire/repository"
-	grpcQuestionnaire "mail/internal/microservice/questionnaire/server"
-	questionnaireUc "mail/internal/microservice/questionnaire/usecase"
-	"mail/internal/models/configs"
 	"net"
 	"os"
 	"time"
 
+	_ "github.com/jackc/pgx/stdlib"
+	"github.com/jmoiron/sqlx"
 	migrate "github.com/rubenv/sql-migrate"
+
 	"mail/internal/microservice/interceptors"
 	"mail/internal/microservice/questionnaire/proto"
+	"mail/internal/models/configs"
+
+	questionnaireRepo "mail/internal/microservice/questionnaire/repository"
+	grpcQuestionnaire "mail/internal/microservice/questionnaire/server"
+	questionnaireUc "mail/internal/microservice/questionnaire/usecase"
 )
 
 func main() {
@@ -35,15 +37,17 @@ func main() {
 	startServer(questionGrpc, loggerInterceptorAccess)
 }
 
+// settingTime setting local time on server
 func settingTime() {
 	loc, err := time.LoadLocation("Europe/Moscow")
 	if err != nil {
-		fmt.Println("Error loc time")
+		fmt.Println("Error in location detection")
 	}
 
 	time.Local = loc
 }
 
+// initializeDatabase database initialization
 func initializeDatabase() *sql.DB {
 	db, err := sql.Open("pgx", configs.DSN_QUESTION)
 	if err != nil {
@@ -52,7 +56,7 @@ func initializeDatabase() *sql.DB {
 
 	err = db.Ping()
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln("Database is not available", err)
 	}
 
 	db.SetMaxOpenConns(10)
@@ -60,13 +64,7 @@ func initializeDatabase() *sql.DB {
 	return db
 }
 
-func initializeQuestion(db *sql.DB) *grpcQuestionnaire.QuestionAnswerServer {
-	questionnaireRepository := questionnaireRepo.NewQuestionRepository(sqlx.NewDb(db, "pgx"))
-	questionnaireUseCase := questionnaireUc.NewQuestionAnswerUseCase(questionnaireRepository)
-
-	return grpcQuestionnaire.NewQestionAnswerServer(questionnaireUseCase)
-}
-
+// migrateDatabase applying database migration
 func migrateDatabase(db *sql.DB) {
 	migrations := &migrate.FileMigrationSource{
 		Dir: "./cmd/questionnaire",
@@ -78,19 +76,29 @@ func migrateDatabase(db *sql.DB) {
 	}
 }
 
+// initializeQuestion initializing question server
+func initializeQuestion(db *sql.DB) *grpcQuestionnaire.QuestionAnswerServer {
+	questionnaireRepository := questionnaireRepo.NewQuestionRepository(sqlx.NewDb(db, "pgx"))
+	questionnaireUseCase := questionnaireUc.NewQuestionAnswerUseCase(questionnaireRepository)
+
+	return grpcQuestionnaire.NewQestionAnswerServer(questionnaireUseCase)
+}
+
+// initializationInterceptorLogger initializing logger
 func initializationInterceptorLogger() *interceptors.Logger {
 	f, err := os.OpenFile("logInterEmail.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		fmt.Println("Failed to create logfile" + "log.txt")
 	}
 
-	LogrusAcces := interceptors.InitializationAccessLogInterceptor(f)
-	LoggerAcces := new(interceptors.Logger)
-	LoggerAcces.Logger = LogrusAcces
+	logrusAccess := interceptors.InitializationAccessLogInterceptor(f)
+	loggerAccess := new(interceptors.Logger)
+	loggerAccess.Logger = logrusAccess
 
-	return LoggerAcces
+	return loggerAccess
 }
 
+// startServer starting server
 func startServer(questionnaireGrpc *grpcQuestionnaire.QuestionAnswerServer, interceptorsLogger *interceptors.Logger) {
 	listen, err := net.Listen("tcp", ":8006")
 	if err != nil {

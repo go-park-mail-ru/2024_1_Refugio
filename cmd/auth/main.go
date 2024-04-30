@@ -18,39 +18,43 @@ import (
 func main() {
 	settingTime()
 
-	authGrpc := initializeSession()
+	authGrpc := initializeAuth()
 
 	loggerInterceptorAccess := initializationInterceptorLogger()
 
 	startServer(authGrpc, loggerInterceptorAccess)
 }
 
+// settingTime setting local time on server
 func settingTime() {
 	loc, err := time.LoadLocation("Europe/Moscow")
 	if err != nil {
-		fmt.Println("Error loc time")
+		fmt.Println("Error in location detection")
 	}
 
 	time.Local = loc
 }
 
-func initializeSession() *grpcAuth.AuthServer {
+// initializeAuth initializing authorization server
+func initializeAuth() *grpcAuth.AuthServer {
 	return grpcAuth.NewAuthServer()
 }
 
+// initializationInterceptorLogger initializing logger
 func initializationInterceptorLogger() *interceptors.Logger {
 	f, err := os.OpenFile("logInterEmail.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		fmt.Println("Failed to create logfile" + "log.txt")
 	}
 
-	LogrusAcces := interceptors.InitializationAccessLogInterceptor(f)
-	LoggerAcces := new(interceptors.Logger)
-	LoggerAcces.Logger = LogrusAcces
+	logrusAccess := interceptors.InitializationAccessLogInterceptor(f)
+	loggerAccess := new(interceptors.Logger)
+	loggerAccess.Logger = logrusAccess
 
-	return LoggerAcces
+	return loggerAccess
 }
 
+// startServer starting server
 func startServer(authGrpc *grpcAuth.AuthServer, interceptorsLogger *interceptors.Logger) {
 	listen, err := net.Listen("tcp", ":8004")
 	if err != nil {

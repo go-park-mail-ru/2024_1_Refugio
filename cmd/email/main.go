@@ -3,20 +3,21 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	_ "github.com/jackc/pgx/stdlib"
-	"github.com/jmoiron/sqlx"
 	"google.golang.org/grpc"
 	"log"
-	grpcEmail "mail/internal/microservice/email/server"
 	"net"
 	"os"
 	"time"
+
+	_ "github.com/jackc/pgx/stdlib"
+	"github.com/jmoiron/sqlx"
 
 	"mail/internal/microservice/email/proto"
 	"mail/internal/microservice/interceptors"
 	"mail/internal/models/configs"
 
 	emailRepo "mail/internal/microservice/email/repository"
+	grpcEmail "mail/internal/microservice/email/server"
 	emailUc "mail/internal/microservice/email/usecase"
 )
 
@@ -33,15 +34,17 @@ func main() {
 	startServer(emailGrpc, loggerInterceptorAccess)
 }
 
+// settingTime setting local time on server
 func settingTime() {
 	loc, err := time.LoadLocation("Europe/Moscow")
 	if err != nil {
-		fmt.Println("Error loc time")
+		fmt.Println("Error in location detection")
 	}
 
 	time.Local = loc
 }
 
+// initializeDatabase database initialization
 func initializeDatabase() *sql.DB {
 	db, err := sql.Open("pgx", configs.DSN)
 	if err != nil {
@@ -50,7 +53,7 @@ func initializeDatabase() *sql.DB {
 
 	err = db.Ping()
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln("Database is not available", err)
 	}
 
 	db.SetMaxOpenConns(10)
@@ -58,19 +61,7 @@ func initializeDatabase() *sql.DB {
 	return db
 }
 
-func initializationInterceptorLogger() *interceptors.Logger {
-	f, err := os.OpenFile("logInterEmail.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		fmt.Println("Failed to create logfile" + "log.txt")
-	}
-
-	LogrusAcces := interceptors.InitializationAccessLogInterceptor(f)
-	LoggerAcces := new(interceptors.Logger)
-	LoggerAcces.Logger = LogrusAcces
-
-	return LoggerAcces
-}
-
+// initializeEmail initializing email server
 func initializeEmail(db *sql.DB) *grpcEmail.EmailServer {
 	emailRepository := emailRepo.NewEmailRepository(sqlx.NewDb(db, "pgx"))
 	emailUseCase := emailUc.NewEmailUseCase(emailRepository)
@@ -78,6 +69,21 @@ func initializeEmail(db *sql.DB) *grpcEmail.EmailServer {
 	return grpcEmail.NewEmailServer(emailUseCase)
 }
 
+// initializationInterceptorLogger initializing logger
+func initializationInterceptorLogger() *interceptors.Logger {
+	f, err := os.OpenFile("logInterEmail.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		fmt.Println("Failed to create logfile" + "log.txt")
+	}
+
+	logrusAccess := interceptors.InitializationAccessLogInterceptor(f)
+	loggerAccess := new(interceptors.Logger)
+	loggerAccess.Logger = logrusAccess
+
+	return loggerAccess
+}
+
+// startServer starting server
 func startServer(emailGrpc *grpcEmail.EmailServer, interceptorsLogger *interceptors.Logger) {
 	listen, err := net.Listen("tcp", ":8002")
 	if err != nil {

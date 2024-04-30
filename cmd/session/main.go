@@ -3,13 +3,14 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	_ "github.com/jackc/pgx/stdlib"
-	"github.com/jmoiron/sqlx"
 	"google.golang.org/grpc"
 	"log"
 	"net"
 	"os"
 	"time"
+
+	_ "github.com/jackc/pgx/stdlib"
+	"github.com/jmoiron/sqlx"
 
 	"mail/internal/microservice/interceptors"
 	"mail/internal/microservice/session/proto"
@@ -33,15 +34,17 @@ func main() {
 	startServer(sessionGrpc, loggerInterceptorAccess)
 }
 
+// settingTime setting local time on server
 func settingTime() {
 	loc, err := time.LoadLocation("Europe/Moscow")
 	if err != nil {
-		fmt.Println("Error loc time")
+		fmt.Println("Error in location detection")
 	}
 
 	time.Local = loc
 }
 
+// initializeDatabase database initialization
 func initializeDatabase() *sql.DB {
 	db, err := sql.Open("pgx", configs.DSN)
 	if err != nil {
@@ -50,7 +53,7 @@ func initializeDatabase() *sql.DB {
 
 	err = db.Ping()
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln("Database is not available", err)
 	}
 
 	db.SetMaxOpenConns(10)
@@ -58,6 +61,7 @@ func initializeDatabase() *sql.DB {
 	return db
 }
 
+// initializeSession initializing session server
 func initializeSession(db *sql.DB) *grpcSession.SessionServer {
 	sessionRepository := sessionRepo.NewSessionRepository(sqlx.NewDb(db, "pgx"))
 	sessionUseCase := sessionUc.NewSessionUseCase(sessionRepository)
@@ -65,19 +69,21 @@ func initializeSession(db *sql.DB) *grpcSession.SessionServer {
 	return grpcSession.NewSessionServer(sessionUseCase)
 }
 
+// initializationInterceptorLogger initializing logger
 func initializationInterceptorLogger() *interceptors.Logger {
 	f, err := os.OpenFile("logInterEmail.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		fmt.Println("Failed to create logfile" + "log.txt")
 	}
 
-	LogrusAcces := interceptors.InitializationAccessLogInterceptor(f)
-	LoggerAcces := new(interceptors.Logger)
-	LoggerAcces.Logger = LogrusAcces
+	logrusAccess := interceptors.InitializationAccessLogInterceptor(f)
+	loggerAccess := new(interceptors.Logger)
+	loggerAccess.Logger = logrusAccess
 
-	return LoggerAcces
+	return loggerAccess
 }
 
+// startServer starting server
 func startServer(sessionGrpc *grpcSession.SessionServer, interceptorsLogger *interceptors.Logger) {
 	listen, err := net.Listen("tcp", ":8003")
 	if err != nil {

@@ -3,20 +3,21 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	_ "github.com/jackc/pgx/stdlib"
-	"github.com/jmoiron/sqlx"
 	"google.golang.org/grpc"
 	"log"
-	grpcFolder "mail/internal/microservice/folder/server"
 	"mail/internal/models/configs"
 	"net"
 	"os"
 	"time"
 
+	_ "github.com/jackc/pgx/stdlib"
+	"github.com/jmoiron/sqlx"
+
 	"mail/internal/microservice/folder/proto"
 	"mail/internal/microservice/interceptors"
 
 	folderRepo "mail/internal/microservice/folder/repository"
+	grpcFolder "mail/internal/microservice/folder/server"
 	folderUc "mail/internal/microservice/folder/usecase"
 )
 
@@ -33,15 +34,17 @@ func main() {
 	startServer(folderGrpc, loggerInterceptorAccess)
 }
 
+// settingTime setting local time on server
 func settingTime() {
 	loc, err := time.LoadLocation("Europe/Moscow")
 	if err != nil {
-		fmt.Println("Error loc time")
+		fmt.Println("Error in location detection")
 	}
 
 	time.Local = loc
 }
 
+// initializeDatabase database initialization
 func initializeDatabase() *sql.DB {
 	db, err := sql.Open("pgx", configs.DSN)
 	if err != nil {
@@ -50,7 +53,7 @@ func initializeDatabase() *sql.DB {
 
 	err = db.Ping()
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln("Database is not available", err)
 	}
 
 	db.SetMaxOpenConns(10)
@@ -58,19 +61,7 @@ func initializeDatabase() *sql.DB {
 	return db
 }
 
-func initializationInterceptorLogger() *interceptors.Logger {
-	f, err := os.OpenFile("logInterFolder.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		fmt.Println("Failed to create logfile" + "log.txt")
-	}
-
-	LogrusAcces := interceptors.InitializationAccessLogInterceptor(f)
-	LoggerAcces := new(interceptors.Logger)
-	LoggerAcces.Logger = LogrusAcces
-
-	return LoggerAcces
-}
-
+// initializeFolder initializing folder server
 func initializeFolder(db *sql.DB) *grpcFolder.FolderServer {
 	folderRepository := folderRepo.NewFolderRepository(sqlx.NewDb(db, "pgx"))
 	folderUseCase := folderUc.NewFolderUseCase(folderRepository)
@@ -78,6 +69,21 @@ func initializeFolder(db *sql.DB) *grpcFolder.FolderServer {
 	return grpcFolder.NewFolderServer(folderUseCase)
 }
 
+// initializationInterceptorLogger initializing logger
+func initializationInterceptorLogger() *interceptors.Logger {
+	f, err := os.OpenFile("logInterFolder.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		fmt.Println("Failed to create logfile" + "log.txt")
+	}
+
+	logrusAccess := interceptors.InitializationAccessLogInterceptor(f)
+	loggerAccess := new(interceptors.Logger)
+	loggerAccess.Logger = logrusAccess
+
+	return loggerAccess
+}
+
+// startServer starting server
 func startServer(folderGrpc *grpcFolder.FolderServer, interceptorsLogger *interceptors.Logger) {
 	listen, err := net.Listen("tcp", ":8005")
 	if err != nil {

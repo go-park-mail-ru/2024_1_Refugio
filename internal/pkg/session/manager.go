@@ -25,8 +25,8 @@ var (
 type SessionsManager struct {
 }
 
-// InitializationGlobalSeaaionManager initializes the global session manager.
-func InitializationGlobalSeaaionManager(sessionManager *SessionsManager) {
+// InitializationGlobalSessionManager initializes the global session manager.
+func InitializationGlobalSessionManager(sessionManager *SessionsManager) {
 	GlobalSessionManager = sessionManager
 }
 
