@@ -1,0 +1,32 @@
+global:
+  scrape_interval: 30s
+  evaluation_interval: 10s
+
+scrape_configs:
+  - job_name: 'backend'
+    static_configs:
+      - targets: ['backend:8080']
+
+  - job_name: 'auth'
+    static_configs:
+      - targets: ['auth:8004']
+
+  - job_name: 'email'
+    static_configs:
+      - targets: ['email:8002']
+
+  - job_name: 'session'
+    static_configs:
+      - targets: ['session:8003']
+
+  - job_name: 'user'
+    static_configs:
+      - targets: ['user:8001']
+
+  - job_name: 'folder'
+    static_configs:
+      - targets: ['folder:8005']
+
+  - job_name: 'questionnaire'
+    static_configs:
+      - targets: ['questionnaire:8006']

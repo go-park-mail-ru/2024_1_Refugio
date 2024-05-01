@@ -1,0 +1,4 @@
+[[31mERROR[0m]: 2024-05-01 12:33:23 - StatusServerError requestID=5d0027ba-c0f6-4bce-862c-6ac1cc0989a8 work_time=1.618302ms user-agent=grpc-go/1.63.2 FullMethod=/proto.FolderService/CheckFolderProfile mode=[interceptor_log]
+[[34mINFO[0m]: 2024-05-01 12:33:28 - StatusOK requestID=35fdec06-aae4-4c69-b547-776afcefb302 work_time=1.399838ms user-agent=grpc-go/1.63.2 FullMethod=/proto.FolderService/CheckFolderProfile mode=[interceptor_log]
+[[34mINFO[0m]: 2024-05-01 12:33:28 - StatusOK requestID=35fdec06-aae4-4c69-b547-776afcefb302 work_time=791.726µs user-agent=grpc-go/1.63.2 FullMethod=/proto.FolderService/CheckEmailProfile mode=[interceptor_log]
+[[34mINFO[0m]: 2024-05-01 12:33:28 - StatusOK requestID=35fdec06-aae4-4c69-b547-776afcefb302 work_time=2.397806ms user-agent=grpc-go/1.63.2 FullMethod=/proto.FolderService/AddEmailInFolder mode=[interceptor_log]

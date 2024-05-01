@@ -5,9 +5,11 @@ import (
 	"fmt"
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jmoiron/sqlx"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"time"
 
@@ -95,6 +97,8 @@ func startServer(sessionGrpc *grpcSession.SessionServer, interceptorsLogger *int
 	proto.RegisterSessionServiceServer(grpcServer, sessionGrpc)
 
 	fmt.Printf("The server is running in port 8003\n")
+
+	http.Handle("/metrics", promhttp.Handler())
 
 	err = grpcServer.Serve(listen)
 	if err != nil {
