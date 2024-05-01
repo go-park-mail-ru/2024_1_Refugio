@@ -16,9 +16,11 @@ import (
 	"github.com/gorilla/mux"
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/kataras/requestid"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
 
 	"mail/internal/models/microservice_ports"
+	"mail/internal/monitoring"
 	"mail/internal/pkg/logger"
 	"mail/internal/pkg/middleware"
 	"mail/internal/pkg/session"
@@ -179,6 +181,8 @@ func setupRouter(authHandler *authHand.AuthHandler, userHandler *userHand.UserHa
 
 	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
+	logger.Metrics = monitoring.RegisterMonitoring(router)
+
 	return logger.AccessLogMiddleware(router)
 }
 
@@ -250,6 +254,8 @@ func startServer(router http.Handler) {
 	port := 8080
 	fmt.Printf("The server is running on http://localhost:%d\n", port)
 	fmt.Printf("Swagger is running on http://localhost:%d/swagger/index.html\n", port)
+
+	http.Handle("/metrics", promhttp.Handler())
 
 	err := http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", port), requestid.Handler(corsHandler))
 	if err != nil {

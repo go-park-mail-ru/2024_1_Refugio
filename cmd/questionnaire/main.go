@@ -7,15 +7,18 @@ import (
 	"log"
 	"mail/cmd/configs"
 	"net"
+	"net/http"
 	"os"
 	"time"
 
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jmoiron/sqlx"
-	migrate "github.com/rubenv/sql-migrate"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"mail/internal/microservice/interceptors"
 	"mail/internal/microservice/questionnaire/proto"
+
+	migrate "github.com/rubenv/sql-migrate"
 	questionnaireRepo "mail/internal/microservice/questionnaire/repository"
 	grpcQuestionnaire "mail/internal/microservice/questionnaire/server"
 	questionnaireUc "mail/internal/microservice/questionnaire/usecase"
@@ -115,6 +118,8 @@ func startServer(questionnaireGrpc *grpcQuestionnaire.QuestionAnswerServer, inte
 	proto.RegisterQuestionServiceServer(grpcServer, questionnaireGrpc)
 
 	fmt.Printf("The server is running  in port 8006\n")
+
+	http.Handle("/metrics", promhttp.Handler())
 
 	err = grpcServer.Serve(listen)
 	if err != nil {

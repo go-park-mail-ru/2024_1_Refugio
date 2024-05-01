@@ -7,14 +7,17 @@ import (
 	"log"
 	"mail/cmd/configs"
 	"net"
+	"net/http"
 	"os"
 	"time"
 
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jmoiron/sqlx"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"mail/internal/microservice/interceptors"
 	"mail/internal/microservice/session/proto"
+
 	sessionRepo "mail/internal/microservice/session/repository"
 	grpcSession "mail/internal/microservice/session/server"
 	sessionUc "mail/internal/microservice/session/usecase"
@@ -100,6 +103,8 @@ func startServer(sessionGrpc *grpcSession.SessionServer, interceptorsLogger *int
 	proto.RegisterSessionServiceServer(grpcServer, sessionGrpc)
 
 	fmt.Printf("The server is running in port 8003\n")
+
+	http.Handle("/metrics", promhttp.Handler())
 
 	err = grpcServer.Serve(listen)
 	if err != nil {
