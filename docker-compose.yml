@@ -9,7 +9,7 @@ services:
     container_name: db
     image: postgres:16
     ports:
-      - "5434:5432"
+      - "5432:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -51,7 +51,7 @@ services:
       context: ./internal/smtp_server
       dockerfile: Dockerfile
     ports:
-      - "587:587"
+      - "25:587"
     networks:
       - deploy-guide-dev
 
