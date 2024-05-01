@@ -37,7 +37,22 @@ func (uc *UserUseCase) GetUserByLogin(login, password string, ctx context.Contex
 
 // CreateUser creates a new user.
 func (uc *UserUseCase) CreateUser(user *domain_models.User, ctx context.Context) (*domain_models.User, error) {
-	return uc.repo.Add(user, ctx)
+	_, err := uc.repo.Add(user, ctx)
+	if err != nil {
+		return nil, fmt.Errorf("user with login %s not create", user.Login)
+	}
+
+	userByLogin, err := uc.repo.GetUserByLogin(user.Login, user.Password, ctx)
+	if err != nil {
+		return nil, fmt.Errorf("user with login %s not found", user.Login)
+	}
+
+	_, errAva := uc.repo.InitAvatar(userByLogin.ID, "", "PHOTO", ctx)
+	if errAva != nil {
+		return nil, fmt.Errorf("user avatar fail")
+	}
+
+	return userByLogin, nil
 }
 
 // IsLoginUnique checks if the provided login is unique among all users.

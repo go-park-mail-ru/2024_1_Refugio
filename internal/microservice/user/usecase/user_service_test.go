@@ -15,17 +15,16 @@ import (
 )
 
 func GetCTX() context.Context {
-	requestID := "testID"
-
-	f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	f, err := os.OpenFile("log_test.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		fmt.Println("Failed to create logfile" + "log.txt")
 	}
 	defer f.Close()
 
-	c := context.WithValue(context.Background(), "logger", logger.InitializationBdLog(f))
-	ctx := context.WithValue(c, "requestID", requestID)
-	return ctx
+	ctx := context.WithValue(context.Background(), "logger", logger.InitializationBdLog(f))
+	ctx2 := context.WithValue(ctx, "requestID", []string{"testID"})
+
+	return ctx2
 }
 
 func TestGetAllUsers_Success(t *testing.T) {

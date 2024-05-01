@@ -139,6 +139,21 @@ func (mr *MockUserRepositoryMockRecorder) GetUserByLogin(login, password, ctx in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByLogin", reflect.TypeOf((*MockUserRepository)(nil).GetUserByLogin), login, password, ctx)
 }
 
+// InitAvatar mocks base method.
+func (m *MockUserRepository) InitAvatar(id uint32, fileID, fileType string, ctx context.Context) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InitAvatar", id, fileID, fileType, ctx)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// InitAvatar indicates an expected call of InitAvatar.
+func (mr *MockUserRepositoryMockRecorder) InitAvatar(id, fileID, fileType, ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitAvatar", reflect.TypeOf((*MockUserRepository)(nil).InitAvatar), id, fileID, fileType, ctx)
+}
+
 // Update mocks base method.
 func (m *MockUserRepository) Update(newUser *domain_models.User, ctx context.Context) (bool, error) {
 	m.ctrl.T.Helper()

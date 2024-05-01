@@ -8,12 +8,14 @@ import (
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	"golang.org/x/crypto/bcrypt"
+	"math/rand"
+	"time"
+
+	"mail/internal/pkg/logger"
+
 	domain "mail/internal/microservice/models/domain_models"
 	converters "mail/internal/microservice/models/repository_converters"
 	database "mail/internal/microservice/models/repository_models"
-	"mail/internal/pkg/logger"
-	"math/rand"
-	"time"
 )
 
 var requestIDContextKey interface{} = "requestID"
@@ -76,6 +78,7 @@ func (r *UserRepository) GetAll(offset, limit int, ctx context.Context) ([]*doma
 	var userModelsDb []database.User
 	var err error
 	start := time.Now()
+
 	if offset >= 0 && limit > 0 {
 		query += " OFFSET $1 LIMIT $2"
 		err = r.DB.Select(&userModelsDb, query, offset, limit)
@@ -104,10 +107,11 @@ func (r *UserRepository) GetByID(id uint32, ctx context.Context) (*domain.User, 
         SELECT p.id, p.login, p.firstname, p.surname, p.patronymic, p.gender, p.birthday, f.file_id AS avatar, p.phone_number, p.description
         FROM profile p
         LEFT JOIN file f ON p.avatar_id = f.id
-        WHERE p.id = $1;
+        WHERE p.id = $1
     `
 
 	start := time.Now()
+
 	row := r.DB.QueryRowContext(ctx, query, id)
 
 	var userModelDb database.User
@@ -150,6 +154,7 @@ func (r *UserRepository) GetUserByLogin(login, password string, ctx context.Cont
 	var userModelDb database.User
 
 	start := time.Now()
+
 	err := r.DB.Get(&userModelDb, query, login)
 
 	args := []interface{}{login}
@@ -182,29 +187,19 @@ func (r *UserRepository) Add(userModelCore *domain.User, ctx context.Context) (*
 
 	password, status := HashPassword(userModelDb.Password)
 	if !status {
-		return nil, fmt.Errorf("user with login %s fail", userModelDb.Login)
+		return nil, fmt.Errorf("user with login %s not create", userModelDb.Login)
 	}
-
 	userModelDb.Password = password
 
 	start := time.Now()
+
 	_, err := r.DB.Exec(query, userModelDb.Login, userModelDb.Password, userModelDb.FirstName, userModelDb.Surname, userModelDb.Patronymic, userModelDb.Gender, userModelDb.Birthday, time.Now(), userModelDb.PhoneNumber, userModelDb.Description)
 
 	args := []interface{}{userModelDb.Login, userModelDb.FirstName, userModelDb.Surname, userModelDb.Patronymic, userModelDb.Gender, userModelDb.Birthday, time.Now(), userModelDb.PhoneNumber, userModelDb.Description}
 	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
 
 	if err != nil {
-		return nil, fmt.Errorf("user with login %s fail", userModelDb.Login)
-	}
-
-	user, err := r.GetUserByLogin(userModelCore.Login, userModelCore.Password, ctx)
-	if err != nil {
-		return nil, fmt.Errorf("user with login %s not found", userModelCore.Login)
-	}
-
-	_, errAva := r.InitAvatar(user.ID, "", "PHOTO", ctx)
-	if errAva != nil {
-		return nil, fmt.Errorf("user avatar fail")
+		return nil, fmt.Errorf("user with login %s not create", userModelDb.Login)
 	}
 
 	return userModelCore, nil
@@ -229,6 +224,7 @@ func (r *UserRepository) Update(newUserCore *domain.User, ctx context.Context) (
     `
 
 	start := time.Now()
+
 	result, err := r.DB.Exec(
 		query,
 		newUserDb.FirstName,
@@ -241,17 +237,7 @@ func (r *UserRepository) Update(newUserCore *domain.User, ctx context.Context) (
 		newUserDb.ID,
 	)
 
-	args := []interface{}{
-		newUserDb.FirstName,
-		newUserDb.Surname,
-		newUserDb.Patronymic,
-		newUserDb.Gender,
-		newUserDb.Birthday,
-		newUserDb.PhoneNumber,
-		newUserDb.Description,
-		newUserDb.ID,
-	}
-
+	args := []interface{}{newUserDb.FirstName, newUserDb.Surname, newUserDb.Patronymic, newUserDb.Gender, newUserDb.Birthday, newUserDb.PhoneNumber, newUserDb.Description, newUserDb.ID}
 	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
 
 	if err != nil {
@@ -276,6 +262,7 @@ func (r *UserRepository) Delete(id uint32, ctx context.Context) (bool, error) {
 	query := "DELETE FROM profile WHERE id = $1"
 
 	start := time.Now()
+
 	result, err := r.DB.Exec(query, id)
 
 	args := []interface{}{id}
@@ -300,17 +287,6 @@ func (r *UserRepository) Delete(id uint32, ctx context.Context) (bool, error) {
 
 // AddAvatar adds a new user avatar to the repository and associates it with the profile.
 func (r *UserRepository) AddAvatar(id uint32, fileID, fileType string, ctx context.Context) (bool, error) {
-	/*query := `
-	    WITH inserted_file AS (
-	      INSERT INTO file (file_id, file_type)
-	      VALUES ($1, $2)
-	      RETURNING id
-	    )
-	    UPDATE profile
-	    SET avatar_id = (SELECT id FROM inserted_file)
-	    WHERE id = $3;
-	`*/
-
 	query := `
 		UPDATE file
 		SET file_id = $1
@@ -319,12 +295,12 @@ func (r *UserRepository) AddAvatar(id uint32, fileID, fileType string, ctx conte
 		AND profile.id = $2
 	`
 
+	start := time.Now()
+
 	_, err := r.DB.ExecContext(ctx, query, fileID, id)
 
-	start := time.Now()
 	args := []interface{}{fileID, fileType, id}
-	requestIDValue := logger.GetRequestIDString(ctx.Value(requestIDContextKey))
-	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, requestIDValue, start, &err, args)
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
 
 	if err != nil {
 		return false, fmt.Errorf("failed to add user avatar: %v", err)
@@ -335,42 +311,29 @@ func (r *UserRepository) AddAvatar(id uint32, fileID, fileType string, ctx conte
 
 // DeleteAvatarByUserID deletes a user's photo and an entry from the file table by its ID in one request.
 func (r *UserRepository) DeleteAvatarByUserID(userID uint32, ctx context.Context) error {
-	/*query := `
-	    WITH deleted_file AS (
-	      DELETE FROM file
-	      WHERE id = (
-	        SELECT avatar_id FROM profile
-	        WHERE id = $1
-	      )
-	      RETURNING id
-	    )
-	    UPDATE profile
-	    SET avatar_id = NULL
-	    WHERE id = $1;
-	`*/
-
 	query := `
 		UPDATE file
 		SET file_id = ''
 		FROM profile
 		WHERE file.id = profile.avatar_id
-		AND profile.id = $2
+		AND profile.id = $1
 	`
+
+	start := time.Now()
 
 	_, err := r.DB.ExecContext(ctx, query, userID)
 
-	start := time.Now()
 	args := []interface{}{userID}
-	requestIDValue := logger.GetRequestIDString(ctx.Value(requestIDContextKey))
-	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, requestIDValue, start, &err, args)
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
 
 	if err != nil {
-		return fmt.Errorf("failed to delete user avatar and file: %v", err)
+		return fmt.Errorf("failed to delete user avatar: %v", err)
 	}
 
 	return nil
 }
 
+// InitAvatar initializes the user's avatar by updating the corresponding entry in the database.
 func (r *UserRepository) InitAvatar(id uint32, fileID, fileType string, ctx context.Context) (bool, error) {
 	query := `
         WITH inserted_file AS (
@@ -380,15 +343,15 @@ func (r *UserRepository) InitAvatar(id uint32, fileID, fileType string, ctx cont
         )
         UPDATE profile
         SET avatar_id = (SELECT id FROM inserted_file)
-        WHERE id = $3;
+        WHERE id = $3
     `
+
+	start := time.Now()
 
 	_, err := r.DB.ExecContext(ctx, query, fileID, fileType, id)
 
-	start := time.Now()
 	args := []interface{}{fileID, fileType, id}
-	requestIDValue := logger.GetRequestIDString(ctx.Value(requestIDContextKey))
-	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, requestIDValue, start, &err, args)
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
 
 	if err != nil {
 		return false, fmt.Errorf("failed to add user avatar: %v", err)
