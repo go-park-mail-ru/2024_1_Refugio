@@ -67,6 +67,19 @@ services:
     depends_on:
       - db
 
+  auth-vk:
+    container_name: auth-vk
+    build:
+      context: .
+      dockerfile: ./cmd/auth_vk/Dockerfile
+    ports:
+      - "8007:8007"
+    networks:
+      - deploy-guide-dev
+    depends_on:
+      - db
+
+
   email:
     container_name: email
     build:
