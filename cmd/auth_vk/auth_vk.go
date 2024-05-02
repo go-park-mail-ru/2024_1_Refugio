@@ -48,14 +48,14 @@ func main() {
 			return
 		}
 
-		fmt.Println("write code")
-
 		token, err := conf.Exchange(ctx, code)
 		if err != nil {
 			log.Println("cannot exchange", err)
 			w.Write([]byte("=("))
 			return
 		}
+
+		fmt.Println("TOKEN OK")
 
 		client := conf.Client(ctx, token)
 		resp, err := client.Get(fmt.Sprintf(API_URL, token.AccessToken))
