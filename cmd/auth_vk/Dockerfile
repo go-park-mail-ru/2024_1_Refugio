@@ -4,7 +4,7 @@ WORKDIR /go/src/app
 
 COPY . .
 
-RUN go build -o main ./cmd/auth-vk
+RUN go build -o main .
 
 EXPOSE 8007
 
