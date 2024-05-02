@@ -74,6 +74,7 @@ func main() {
 
 		data := &Response{}
 		json.Unmarshal(body, data)
+		fmt.Println("photo: ", data.Response[0].Photo, "first_name: ", data.Response[0].FirstName)
 
 		w.Write([]byte(`
 		<div>
