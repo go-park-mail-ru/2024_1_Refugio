@@ -15,7 +15,7 @@ const (
 	APP_ID     = "7065390"
 	APP_KEY    = "oz3r7Pyakfeg25JpJsQV"
 	APP_SECRET = "7162b87a7162b87a7162b87a50727a9715771627162b87a175122eadf7122b63122cc49"
-	API_URL    = "https://api.vk.com/method/users.get?fields=email,photo_50&access_token=%s&v=5.131"
+	API_URL    = "https://api.vk.com/method/users.get?fields=email,photo_max&access_token=%s&v=5.131"
 )
 
 type Response struct {
