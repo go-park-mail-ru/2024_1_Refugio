@@ -48,6 +48,7 @@ func main() {
 			return
 		}
 
+		fmt.Println("code: ", code)
 		token, err := conf.Exchange(ctx, code)
 		if err != nil {
 			log.Println("cannot exchange", err)
