@@ -30,7 +30,7 @@ var AUTH_URL = "https://oauth.vk.com/authorize?client_id=51916655&redirect_uri=h
 func main() {
 	http.HandleFunc("/auth-vk", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		code := r.FormValue("code")
+		code := r.URL.Query().Get("code") //r.FormValue("code")
 		fmt.Println("OK")
 		conf := oauth2.Config{
 			ClientID:     APP_ID,
