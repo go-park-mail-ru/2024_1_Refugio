@@ -48,6 +48,8 @@ func main() {
 			return
 		}
 
+		fmt.Println("write code")
+
 		token, err := conf.Exchange(ctx, code)
 		if err != nil {
 			log.Println("cannot exchange", err)
