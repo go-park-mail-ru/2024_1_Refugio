@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS profile (
     registration_date DATE NOT NULL DEFAULT CURRENT_DATE,
     avatar_id INTEGER REFERENCES file(id) ON DELETE NO ACTION DEFAULT NULL,
     phone_number TEXT CHECK (LENGTH(phone_number) <= 20),
-    description TEXT CHECK (LENGTH(description) <= 300)
+    description TEXT CHECK (LENGTH(description) <= 300),
+    vkid INTEGER DEFAULT 0
 );
 
 -- Создание таблицы сессий (session)

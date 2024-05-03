@@ -35,5 +35,6 @@ func UserConvertProtoInCore(userModelProto grpc.User) *domain.User {
 		AvatarID:    userModelProto.Avatar,
 		PhoneNumber: userModelProto.PhoneNumber,
 		Description: userModelProto.Description,
+		VKId:        userModelProto.VkId,
 	}
 }

@@ -157,6 +157,53 @@ paths:
       summary: Add answer
       tags:
       - question
+  /api/v1/auth/auth-vk/signupVK:
+    get:
+      consumes:
+      - application/json
+      description: Handles user signup VK.
+      parameters:
+      - description: invite_by value
+        in: query
+        name: invite_by
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Signup successful
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to add user
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: User signup VK
+      tags:
+      - auth-vk
+  /api/v1/auth/getAuthUrlVK:
+    get:
+      consumes:
+      - application/json
+      description: Handles user signup.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to get url
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: URL VK
+      tags:
+      - auth-vk
   /api/v1/auth/login:
     post:
       consumes:

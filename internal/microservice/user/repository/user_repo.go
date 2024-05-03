@@ -179,8 +179,8 @@ func (r *UserRepository) GetUserByLogin(login, password string, ctx context.Cont
 // Add adds a new user to the storage and returns its assigned unique identifier.
 func (r *UserRepository) Add(userModelCore *domain.User, ctx context.Context) (*domain.User, error) {
 	query := `
-		INSERT INTO profile (login, password_hash, firstname, surname, patronymic, gender, birthday, registration_date, phone_number, description)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+		INSERT INTO profile (login, password_hash, firstname, surname, patronymic, gender, birthday, registration_date, phone_number, description, vkId)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 	`
 
 	userModelDb := converters.UserConvertCoreInDb(*userModelCore)
@@ -193,9 +193,9 @@ func (r *UserRepository) Add(userModelCore *domain.User, ctx context.Context) (*
 
 	start := time.Now()
 
-	_, err := r.DB.Exec(query, userModelDb.Login, userModelDb.Password, userModelDb.FirstName, userModelDb.Surname, userModelDb.Patronymic, userModelDb.Gender, userModelDb.Birthday, time.Now(), userModelDb.PhoneNumber, userModelDb.Description)
+	_, err := r.DB.Exec(query, userModelDb.Login, userModelDb.Password, userModelDb.FirstName, userModelDb.Surname, userModelDb.Patronymic, userModelDb.Gender, userModelDb.Birthday, time.Now(), userModelDb.PhoneNumber, userModelDb.Description, userModelDb.VKId)
 
-	args := []interface{}{userModelDb.Login, userModelDb.FirstName, userModelDb.Surname, userModelDb.Patronymic, userModelDb.Gender, userModelDb.Birthday, time.Now(), userModelDb.PhoneNumber, userModelDb.Description}
+	args := []interface{}{userModelDb.Login, userModelDb.FirstName, userModelDb.Surname, userModelDb.Patronymic, userModelDb.Gender, userModelDb.Birthday, time.Now(), userModelDb.PhoneNumber, userModelDb.Description, userModelDb.VKId}
 	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
 
 	if err != nil {
@@ -358,4 +358,45 @@ func (r *UserRepository) InitAvatar(id uint32, fileID, fileType string, ctx cont
 	}
 
 	return true, nil
+}
+
+// GetByVKID returns the user by its unique identifier.
+func (r *UserRepository) GetByVKID(vkId uint32, ctx context.Context) (*domain.User, error) {
+	query := `
+        SELECT p.id, p.login, p.firstname, p.surname, p.patronymic, p.gender, p.birthday, f.file_id AS avatar, p.phone_number, p.description
+        FROM profile p
+        LEFT JOIN file f ON p.avatar_id = f.id
+        WHERE p.vkid = $1
+    `
+
+	start := time.Now()
+
+	row := r.DB.QueryRowContext(ctx, query, vkId)
+
+	var userModelDb database.User
+
+	err := row.Scan(
+		&userModelDb.ID,
+		&userModelDb.Login,
+		&userModelDb.FirstName,
+		&userModelDb.Surname,
+		&userModelDb.Patronymic,
+		&userModelDb.Gender,
+		&userModelDb.Birthday,
+		&userModelDb.AvatarID,
+		&userModelDb.PhoneNumber,
+		&userModelDb.Description,
+	)
+
+	args := []interface{}{vkId}
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("user with vkId %d not found", vkId)
+		}
+		return nil, err
+	}
+
+	return converters.UserConvertDbInCore(userModelDb), nil
 }
