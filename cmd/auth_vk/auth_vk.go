@@ -6,22 +6,27 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/vk"
+	"strconv"
 )
 
 const (
-	APP_ID     = "7065390"
-	APP_KEY    = "oz3r7Pyakfeg25JpJsQV"
-	APP_SECRET = "7162b87a7162b87a7162b87a50727a9715771627162b87a175122eadf7122b63122cc49"
-	API_URL    = "https://api.vk.com/method/users.get?fields=email,photo_max&access_token=%s&v=5.131"
+	APP_ID="51916655"
+	APP_KEY="oz3r7Pyakfeg25JpJsQV"
+	API_URL="https://api.vk.com/method/users.get?fields=id,photo_max,email,sex,bdate&access_token=%s&v=5.131"
 )
 
 type Response struct {
 	Response []struct {
-		FirstName string `json:"first_name"`
-		Photo     string `json:"photo_50"`
+		Id        int    `json:"id"`
+		Name      string `json:"first_name"`
+		Email     string `json:"email"`
+		Photo     string `json:"photo_max"`
+		Sex       int    `json:"sex"`
+		BirthDate string `json:"bdate"`
+		InvitedBy string `json:"invited_by"`
+		
+		LastName  string `json:"last_name"`
 	}
 }
 
@@ -30,13 +35,16 @@ var AUTH_URL = "https://oauth.vk.com/authorize?client_id=51916655&redirect_uri=h
 func main() {
 	http.HandleFunc("/auth-vk", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		code := r.URL.Query().Get("code") //r.FormValue("code")
-		fmt.Println("OK")
+		code := r.FormValue("code")
 		conf := oauth2.Config{
 			ClientID:     APP_ID,
 			ClientSecret: APP_KEY,
-			RedirectURL:  "http://localhost:8007/",
-			Endpoint:     vk.Endpoint,
+			RedirectURL:  "https://mailhub.su/auth-vk",
+			Endpoint: oauth2.Endpoint{
+				AuthURL:  "https://oauth.vk.com/authorize",
+				TokenURL: "https://oauth.vk.com/access_token",
+			},
+			Scopes: []string{"email"},
 		}
 
 		if code == "" {
@@ -48,8 +56,8 @@ func main() {
 			return
 		}
 
-		fmt.Println("code: ", code)
 		token, err := conf.Exchange(ctx, code)
+		fmt.Println("Token: ", token)
 		if err != nil {
 			log.Println("cannot exchange", err)
 			w.Write([]byte("=("))
@@ -77,14 +85,23 @@ func main() {
 
 		data := &Response{}
 		json.Unmarshal(body, data)
-		fmt.Println("photo: ", data.Response[0].Photo, "first_name: ", data.Response[0].FirstName)
-
+		fmt.Println("photo: ", data.Response[0].Photo, "first_name: ", data.Response[0].Name)
+		fmt.Println(r.Method)
 		w.Write([]byte(`
-		<div>
-			<img src="` + data.Response[0].Photo + `"/>
-			` + data.Response[0].FirstName + `
-		</div>
-		`))
+                <div>
+                        <img src="` + data.Response[0].Photo + `"/>
+                        <div>` + data.Response[0].Name + `</div>
+                        <div>` + data.Response[0].LastName + `</div>
+                        <div>` + strconv.Itoa(data.Response[0].Id) + `</div>
+                        <div>` + data.Response[0].Email + `</div>
+                        <div>` + strconv.Itoa(data.Response[0].Sex) + `</div>
+                        <div>` + data.Response[0].BirthDate + `</div>
+                        <div>` + data.Response[0].LastName + `</div>
+			<div>` + data.Response[0].InvitedBy + `</div>
+			<div>` + data.Response[0].InvitedBy + `</div>
+			<div>` + r.Method + `</div>
+                </div>
+                `))
 	})
 
 	http.ListenAndServe(":8007", nil)
