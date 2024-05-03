@@ -4,6 +4,7 @@ package _interface
 
 import (
 	"context"
+
 	domain "mail/internal/microservice/models/domain_models"
 )
 

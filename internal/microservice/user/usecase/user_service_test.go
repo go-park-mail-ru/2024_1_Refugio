@@ -4,14 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
-	domain "mail/internal/microservice/models/domain_models"
-	mock_repository "mail/internal/microservice/user/mocks"
-	"mail/internal/pkg/logger"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
+
+	"mail/internal/pkg/logger"
+
+	domain "mail/internal/microservice/models/domain_models"
+	mock_repository "mail/internal/microservice/user/mock"
 )
 
 func GetCTX() context.Context {
@@ -140,8 +143,10 @@ func TestCreateUser_Success(t *testing.T) {
 	useCase := NewUserUseCase(mockRepo)
 
 	ctx := GetCTX()
-	newUser := &domain.User{FirstName: "New User"}
+	newUser := &domain.User{FirstName: "New User", Login: "login", Password: "password"}
 	mockRepo.EXPECT().Add(newUser, ctx).Return(newUser, nil)
+	mockRepo.EXPECT().GetUserByLogin(newUser.Login, newUser.Password, ctx).Return(newUser, nil)
+	mockRepo.EXPECT().InitAvatar(newUser.ID, "", "PHOTO", ctx).Return(true, nil)
 
 	userRes, err := useCase.CreateUser(newUser, ctx)
 
@@ -156,13 +161,48 @@ func TestCreateUser_ErrorFromRepository(t *testing.T) {
 	mockRepo := mock_repository.NewMockUserRepository(ctrl)
 	useCase := NewUserUseCase(mockRepo)
 	ctx := GetCTX()
-	newUser := &domain.User{FirstName: "New User"}
-	mockRepo.EXPECT().Add(newUser, ctx).Return(newUser, errors.New("repository error"))
+	newUser := &domain.User{FirstName: "New User", Login: "login"}
+	mockRepo.EXPECT().Add(newUser, ctx).Return(nil, errors.New("repository error"))
 
 	userRes, err := useCase.CreateUser(newUser, ctx)
 
 	assert.Error(t, err)
-	assert.Equal(t, newUser, userRes)
+	assert.Nil(t, userRes)
+}
+
+func TestCreateUser_ErrorGetUserByLogin(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockUserRepository(ctrl)
+	useCase := NewUserUseCase(mockRepo)
+	ctx := GetCTX()
+	newUser := &domain.User{FirstName: "New User", Login: "login", Password: "password"}
+	mockRepo.EXPECT().Add(newUser, ctx).Return(newUser, nil)
+	mockRepo.EXPECT().GetUserByLogin(newUser.Login, newUser.Password, ctx).Return(nil, errors.New("repository error"))
+
+	userRes, err := useCase.CreateUser(newUser, ctx)
+
+	assert.Error(t, err)
+	assert.Nil(t, userRes)
+}
+
+func TestCreateUser_ErrorInitUserAvatar(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockUserRepository(ctrl)
+	useCase := NewUserUseCase(mockRepo)
+	ctx := GetCTX()
+	newUser := &domain.User{FirstName: "New User", Login: "login", Password: "password"}
+	mockRepo.EXPECT().Add(newUser, ctx).Return(newUser, nil)
+	mockRepo.EXPECT().GetUserByLogin(newUser.Login, newUser.Password, ctx).Return(newUser, nil)
+	mockRepo.EXPECT().InitAvatar(newUser.ID, "", "PHOTO", ctx).Return(false, errors.New("repository error"))
+
+	userRes, err := useCase.CreateUser(newUser, ctx)
+
+	assert.Error(t, err)
+	assert.Nil(t, userRes)
 }
 
 func TestIsLoginUnique_Success(t *testing.T) {
@@ -375,4 +415,70 @@ func TestDeleteUserByID_ErrorFromRepository(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.False(t, deleted)
+}
+
+func TestAddAvatar_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockUserRepository(ctrl)
+	useCase := NewUserUseCase(mockRepo)
+
+	ctx := GetCTX()
+	userID := uint32(1)
+	mockRepo.EXPECT().AddAvatar(userID, "", "PHOTO", ctx).Return(true, nil)
+
+	added, err := useCase.AddAvatar(userID, "", ctx)
+
+	assert.NoError(t, err)
+	assert.True(t, added)
+}
+
+func TestAddAvatar_ErrorFromRepository(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockUserRepository(ctrl)
+	useCase := NewUserUseCase(mockRepo)
+
+	ctx := GetCTX()
+	userID := uint32(1)
+	mockRepo.EXPECT().AddAvatar(userID, "", "PHOTO", ctx).Return(false, errors.New("repository error"))
+
+	added, err := useCase.AddAvatar(userID, "", ctx)
+
+	assert.Error(t, err)
+	assert.False(t, added)
+}
+
+func TestDeleteAvatarByUserID_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockUserRepository(ctrl)
+	useCase := NewUserUseCase(mockRepo)
+
+	ctx := GetCTX()
+	userID := uint32(1)
+	mockRepo.EXPECT().DeleteAvatarByUserID(userID, ctx).Return(nil)
+
+	err := useCase.DeleteAvatarByUserID(userID, ctx)
+
+	assert.NoError(t, err)
+}
+
+func TestDeleteAvatarByUserID_ErrorFromRepository(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockUserRepository(ctrl)
+	useCase := NewUserUseCase(mockRepo)
+
+	ctx := GetCTX()
+	userID := uint32(1)
+	mockRepo.EXPECT().DeleteAvatarByUserID(userID, ctx).Return(errors.New("repository error"))
+
+	err := useCase.DeleteAvatarByUserID(userID, ctx)
+
+	assert.Error(t, err)
 }

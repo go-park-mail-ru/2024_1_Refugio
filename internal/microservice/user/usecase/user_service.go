@@ -3,9 +3,11 @@ package usecase
 import (
 	"context"
 	"fmt"
-	"mail/internal/microservice/models/domain_models"
-	repository "mail/internal/microservice/user/interface"
 	"strings"
+
+	"mail/internal/microservice/models/domain_models"
+
+	repository "mail/internal/microservice/user/interface"
 )
 
 // UserUseCase represents the use case for working with users.
@@ -84,7 +86,7 @@ func (uc *UserUseCase) UpdateUser(userNew *domain_models.User, ctx context.Conte
 	if strings.TrimSpace(userNew.Surname) != "" && userNew.Surname != userOld.Surname {
 		userOld.Surname = userNew.Surname
 	}
-	if /*strings.TrimSpace(userNew.Patronymic) != "" &&*/ userNew.Patronymic != userOld.Patronymic {
+	if userNew.Patronymic != userOld.Patronymic {
 		userOld.Patronymic = userNew.Patronymic
 	}
 	if domain_models.IsValidGender(userNew.Gender) && userNew.Gender != userOld.Gender {
@@ -93,10 +95,10 @@ func (uc *UserUseCase) UpdateUser(userNew *domain_models.User, ctx context.Conte
 	if !userNew.Birthday.Equal(userOld.Birthday) {
 		userOld.Birthday = userNew.Birthday
 	}
-	if /*strings.TrimSpace(userNew.Description) != "" &&*/ userNew.Description != userOld.Description {
+	if userNew.Description != userOld.Description {
 		userOld.Description = userNew.Description
 	}
-	if /*strings.TrimSpace(userNew.PhoneNumber) != "" &&*/ userNew.PhoneNumber != userOld.PhoneNumber {
+	if userNew.PhoneNumber != userOld.PhoneNumber {
 		userOld.PhoneNumber = userNew.PhoneNumber
 	}
 

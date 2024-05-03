@@ -3,14 +3,16 @@ package repository
 import (
 	"context"
 	"fmt"
-	domain "mail/internal/microservice/models/domain_models"
-	converters "mail/internal/microservice/models/repository_converters"
-	database "mail/internal/microservice/models/repository_models"
-	"mail/internal/pkg/logger"
 	"math/rand"
 	"time"
 
 	"github.com/jmoiron/sqlx"
+
+	"mail/internal/pkg/logger"
+
+	domain "mail/internal/microservice/models/domain_models"
+	converters "mail/internal/microservice/models/repository_converters"
+	database "mail/internal/microservice/models/repository_models"
 )
 
 var requestIDContextKey interface{} = "requestID"
@@ -90,6 +92,7 @@ func (repo *SessionRepository) GetLoginBySessionID(sessionID string, ctx context
 	`
 
 	var login string
+
 	start := time.Now()
 	err := repo.DB.Get(&login, query, sessionID)
 
@@ -118,7 +121,7 @@ func (repo *SessionRepository) GetProfileIDBySessionID(sessionID string, ctx con
 	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
 
 	if err != nil {
-		return 0, fmt.Errorf("failed to get session: %v", err)
+		return 0, fmt.Errorf("failed to get user id: %v", err)
 	}
 
 	return id, nil

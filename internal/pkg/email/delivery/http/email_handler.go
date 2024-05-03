@@ -229,6 +229,11 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 	sender := newEmail.SenderEmail
 	recipient := newEmail.RecipientEmail
 
+	if validators.IsEmpty(newEmail.Text) || validators.IsEmpty(newEmail.SenderEmail) || validators.IsEmpty(newEmail.RecipientEmail) {
+		response.HandleError(w, http.StatusBadRequest, "Data is empty")
+		return
+	}
+
 	switch {
 	case validators.IsValidEmailFormat(sender) && validators.IsValidEmailFormat(recipient):
 		err = h.Sessions.CheckLogin(sender, r, r.Context())

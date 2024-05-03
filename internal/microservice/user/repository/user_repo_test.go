@@ -515,7 +515,7 @@ func TestDeleteAvatarByUserID(t *testing.T) {
 
 		err := repo.DeleteAvatarByUserID(userID, ctx)
 		assert.Error(t, err)
-		assert.EqualError(t, err, fmt.Sprintf("failed to delete user avatar and file: %v", "failed to delete avatar"))
+		assert.EqualError(t, err, fmt.Sprintf("failed to delete user avatar: %v", "failed to delete avatar"))
 	})
 }
 

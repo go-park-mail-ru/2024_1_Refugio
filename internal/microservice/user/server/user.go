@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"strings"
 
-	converters "mail/internal/microservice/models/proto_converters"
-	usecase "mail/internal/microservice/user/interface"
 	"mail/internal/microservice/user/proto"
 	"mail/internal/pkg/utils/sanitize"
+
+	domain "mail/internal/microservice/models/domain_models"
+	converters "mail/internal/microservice/models/proto_converters"
+	usecase "mail/internal/microservice/user/interface"
+	validUtil "mail/internal/pkg/utils/validators"
 )
 
 type UserServer struct {
@@ -24,7 +27,7 @@ func NewUserServer(userUseCase usecase.UserUseCase) *UserServer {
 func (us *UserServer) GetUsers(ctx context.Context, input *proto.GetUsersRequest) (*proto.GetUsersReply, error) {
 	users, err := us.UserUseCase.GetAllUsers(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("user not found")
+		return nil, fmt.Errorf("user not found: %v", err)
 	}
 
 	usersProto := make([]*proto.User, 0, len(users))
@@ -38,7 +41,7 @@ func (us *UserServer) GetUsers(ctx context.Context, input *proto.GetUsersRequest
 // GetUser retrieves information about a user by their identifier.
 func (us *UserServer) GetUser(ctx context.Context, input *proto.GetUserRequest) (*proto.GetUserReply, error) {
 	if input.Id <= 0 {
-		return nil, fmt.Errorf("invalid user id: %s", input.Id)
+		return nil, fmt.Errorf("invalid user id: %v", input.Id)
 	}
 
 	user, err := us.UserUseCase.GetUserByID(input.Id, ctx)
@@ -91,7 +94,7 @@ func (us *UserServer) UpdateUser(ctx context.Context, input *proto.UpdateUserReq
 
 	user, err := us.UserUseCase.UpdateUser(userDomain, ctx)
 	if err != nil {
-		return nil, fmt.Errorf("user with id %s update fail", userDomain.ID)
+		return nil, fmt.Errorf("user with id %v update fail", userDomain.ID)
 	}
 
 	return &proto.UpdateUserReply{User: converters.UserConvertCoreInProto(*user)}, nil
@@ -100,12 +103,12 @@ func (us *UserServer) UpdateUser(ctx context.Context, input *proto.UpdateUserReq
 // DeleteUserById deletes a user by their identifier.
 func (us *UserServer) DeleteUserById(ctx context.Context, input *proto.DeleteUserByIdRequest) (*proto.DeleteUserByIdReply, error) {
 	if input.Id <= 0 {
-		return nil, fmt.Errorf("invalid user id: %s", input.Id)
+		return nil, fmt.Errorf("invalid user id: %v", input.Id)
 	}
 
 	userStatus, err := us.UserUseCase.DeleteUserByID(input.Id, ctx)
 	if err != nil {
-		return nil, fmt.Errorf("user with id %s delete fail", input.Id)
+		return nil, fmt.Errorf("user with id %v delete fail", input.Id)
 	}
 
 	return &proto.DeleteUserByIdReply{Status: userStatus}, nil
@@ -114,7 +117,7 @@ func (us *UserServer) DeleteUserById(ctx context.Context, input *proto.DeleteUse
 // UploadUserAvatar uploads a user's avatar.
 func (us *UserServer) UploadUserAvatar(ctx context.Context, input *proto.UploadUserAvatarRequest) (*proto.UploadUserAvatarReply, error) {
 	if input.Id <= 0 {
-		return nil, fmt.Errorf("invalid user id: %s", input.Id)
+		return nil, fmt.Errorf("invalid user id: %v", input.Id)
 	}
 
 	input.Avatar = sanitize.SanitizeString(input.Avatar)
@@ -133,7 +136,7 @@ func (us *UserServer) UploadUserAvatar(ctx context.Context, input *proto.UploadU
 // DeleteUserAvatar deletes a user's avatar.
 func (us *UserServer) DeleteUserAvatar(ctx context.Context, input *proto.DeleteUserAvatarRequest) (*proto.DeleteUserAvatarReply, error) {
 	if input.Id <= 0 {
-		return nil, fmt.Errorf("invalid user id: %s", input.Id)
+		return nil, fmt.Errorf("invalid user id: %v", input.Id)
 	}
 
 	user, err := us.UserUseCase.GetUserByID(input.Id, ctx)
@@ -161,6 +164,14 @@ func (us *UserServer) CreateUser(ctx context.Context, input *proto.CreateUserReq
 	userDomain.AvatarID = sanitize.SanitizeString(userDomain.AvatarID)
 	userDomain.PhoneNumber = sanitize.SanitizeString(userDomain.PhoneNumber)
 	userDomain.Description = sanitize.SanitizeString(userDomain.Description)
+
+	if validUtil.IsEmpty(userDomain.Login) || validUtil.IsEmpty(userDomain.Password) || validUtil.IsEmpty(userDomain.FirstName) || validUtil.IsEmpty(userDomain.Surname) || !domain.IsValidGender(userDomain.Gender) {
+		return nil, fmt.Errorf("all fields must be filled in")
+	}
+
+	if !validUtil.IsValidEmailFormat(userDomain.Login) {
+		return nil, fmt.Errorf("domain in the login is not suitable")
+	}
 
 	user, err := us.UserUseCase.CreateUser(userDomain, ctx)
 	if err != nil {

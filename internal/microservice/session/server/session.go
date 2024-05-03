@@ -3,9 +3,11 @@ package server
 import (
 	"context"
 	"fmt"
+
 	"mail/internal/microservice/models/proto_converters"
-	usecase "mail/internal/microservice/session/interface"
 	"mail/internal/microservice/session/proto"
+
+	usecase "mail/internal/microservice/session/interface"
 	validUtil "mail/internal/pkg/utils/validators"
 )
 
@@ -62,11 +64,11 @@ func (ss *SessionServer) GetProfileIDBySession(ctx context.Context, input *proto
 
 // CreateSession creates a new session for the user.
 func (ss *SessionServer) CreateSession(ctx context.Context, input *proto.CreateSessionRequest) (*proto.CreateSessionReply, error) {
-	if input.Session.UserId < 0 {
+	if input.Session.UserId <= 0 {
 		return nil, fmt.Errorf("user id not found")
 	}
 
-	if input.Session.LifeTime < 0 {
+	if input.Session.LifeTime <= 0 {
 		return nil, fmt.Errorf("life time session error")
 	}
 
