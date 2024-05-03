@@ -138,10 +138,18 @@ func AuthVK(w http.ResponseWriter, r *http.Request) (*api.VKUser, int, error) {
 // @Failure 500 {object} response.ErrorResponse "Failed to add user"
 // @Router /api/v1/auth/auth-vk/signupVK [get]
 func (ah *OAuthHandler) SignupVK(w http.ResponseWriter, r *http.Request) {
-	newUser, status, err := AuthVK(w, r)
+	/*newUser, status, err := AuthVK(w, r)
 	if err != nil {
 		response.HandleError(w, status, err.Error())
 		return
+	}*/
+
+	newUser := &api.VKUser{
+		FirstName: "sergey",
+		Surname:   "fed",
+		Gender:    domain_models.Male,
+		VKId:      1234567,
+		Login:     "ferka@mailhub.su",
 	}
 
 	newUser.FirstName = sanitize.SanitizeString(newUser.FirstName)

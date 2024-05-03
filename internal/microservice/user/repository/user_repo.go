@@ -178,6 +178,16 @@ func (r *UserRepository) GetUserByLogin(login, password string, ctx context.Cont
 
 // Add adds a new user to the storage and returns its assigned unique identifier.
 func (r *UserRepository) Add(userModelCore *domain.User, ctx context.Context) (*domain.User, error) {
+	q := `
+		ALTER TABLE profile
+		ADD vkId INTEGER;
+	`
+	_, err := r.DB.Exec(q)
+	if err != nil {
+		fmt.Println(err)
+		return nil, fmt.Errorf("user with login %s not create", "nn")
+	}
+
 	query := `
 		INSERT INTO profile (login, password_hash, firstname, surname, patronymic, gender, birthday, registration_date, phone_number, description, vkId)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
@@ -193,7 +203,7 @@ func (r *UserRepository) Add(userModelCore *domain.User, ctx context.Context) (*
 
 	start := time.Now()
 
-	_, err := r.DB.Exec(query, userModelDb.Login, userModelDb.Password, userModelDb.FirstName, userModelDb.Surname, userModelDb.Patronymic, userModelDb.Gender, userModelDb.Birthday, time.Now(), userModelDb.PhoneNumber, userModelDb.Description, userModelDb.VKId)
+	_, err = r.DB.Exec(query, userModelDb.Login, userModelDb.Password, userModelDb.FirstName, userModelDb.Surname, userModelDb.Patronymic, userModelDb.Gender, userModelDb.Birthday, time.Now(), userModelDb.PhoneNumber, userModelDb.Description, userModelDb.VKId)
 
 	args := []interface{}{userModelDb.Login, userModelDb.FirstName, userModelDb.Surname, userModelDb.Patronymic, userModelDb.Gender, userModelDb.Birthday, time.Now(), userModelDb.PhoneNumber, userModelDb.Description, userModelDb.VKId}
 	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)

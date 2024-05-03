@@ -229,14 +229,11 @@ func (as *AuthServer) SignupVK(ctx context.Context, input *proto.SignupVKRequest
 		return nil, fmt.Errorf("such a login already exists")
 	}
 
-	userVk, errId := userServiceClient.GetUserByVKId(
+	userVk, _ := userServiceClient.GetUserByVKId(
 		metadata.NewOutgoingContext(ctx,
 			metadata.New(map[string]string{"requestID": value[0]})),
 		&user_proto.GetUserVKIdRequest{VkId: input.VkId},
 	)
-	if errId != nil {
-		return nil, fmt.Errorf("such a vkId already exists")
-	}
 	if userVk != nil {
 		return nil, fmt.Errorf("A user with this VKId has already been registered")
 	}
