@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"golang.org/x/oauth2"
 	"strconv"
 )
 
@@ -25,7 +26,6 @@ type Response struct {
 		Sex       int    `json:"sex"`
 		BirthDate string `json:"bdate"`
 		InvitedBy string `json:"invited_by"`
-
 		LastName string `json:"last_name"`
 	}
 }
@@ -86,7 +86,6 @@ func main() {
 		data := &Response{}
 		json.Unmarshal(body, data)
 		fmt.Println("photo: ", data.Response[0].Photo, "first_name: ", data.Response[0].Name)
-
 		w.Write([]byte(`
                 <div>
                         <img src="` + data.Response[0].Photo + `"/>
@@ -97,6 +96,7 @@ func main() {
                         <div>` + strconv.Itoa(data.Response[0].Sex) + `</div>
                         <div>` + data.Response[0].BirthDate + `</div>
                         <div>` + data.Response[0].LastName + `</div>
+			<div>` + data.Response[0].InvitedBy + `</div>
                 </div>
                 `))
 	})
