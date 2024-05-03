@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"golang.org/x/oauth2"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -11,9 +12,9 @@ import (
 )
 
 const (
-	APP_ID="51916655"
-	APP_KEY="oz3r7Pyakfeg25JpJsQV"
-	API_URL="https://api.vk.com/method/users.get?fields=id,photo_max,email,sex,bdate&access_token=%s&v=5.131"
+	APP_ID  = "51916655"
+	APP_KEY = "oz3r7Pyakfeg25JpJsQV"
+	API_URL = "https://api.vk.com/method/users.get?fields=id,photo_max,email,sex,bdate&access_token=%s&v=5.131"
 )
 
 type Response struct {
@@ -25,12 +26,11 @@ type Response struct {
 		Sex       int    `json:"sex"`
 		BirthDate string `json:"bdate"`
 		InvitedBy string `json:"invited_by"`
-		
-		LastName  string `json:"last_name"`
+		LastName string `json:"last_name"`
 	}
 }
 
-var AUTH_URL = "https://oauth.vk.com/authorize?client_id=51916655&redirect_uri=https://mailhub.su/auth-vk&response_type=code&scope=email"
+var AUTH_URL = "https://oauth.vk.com/authorize?client_id=51916655&redirect_uri=https://mailhub.su/auth/auth-vk&response_type=code&scope=email"
 
 func main() {
 	http.HandleFunc("/auth-vk", func(w http.ResponseWriter, r *http.Request) {
@@ -39,7 +39,7 @@ func main() {
 		conf := oauth2.Config{
 			ClientID:     APP_ID,
 			ClientSecret: APP_KEY,
-			RedirectURL:  "https://mailhub.su/auth-vk",
+			RedirectURL:  "https://mailhub.su/auth/auth-vk",
 			Endpoint: oauth2.Endpoint{
 				AuthURL:  "https://oauth.vk.com/authorize",
 				TokenURL: "https://oauth.vk.com/access_token",
@@ -49,10 +49,10 @@ func main() {
 
 		if code == "" {
 			w.Write([]byte(`
-				<div>
-					<a href="` + AUTH_URL + `">auth</a>
-				</div>
-			`))
+                                <div>
+                                        <a href="` + AUTH_URL + `">auth</a>
+                                </div>
+                        `))
 			return
 		}
 
@@ -86,7 +86,6 @@ func main() {
 		data := &Response{}
 		json.Unmarshal(body, data)
 		fmt.Println("photo: ", data.Response[0].Photo, "first_name: ", data.Response[0].Name)
-		fmt.Println(r.Method)
 		w.Write([]byte(`
                 <div>
                         <img src="` + data.Response[0].Photo + `"/>
@@ -98,8 +97,6 @@ func main() {
                         <div>` + data.Response[0].BirthDate + `</div>
                         <div>` + data.Response[0].LastName + `</div>
 			<div>` + data.Response[0].InvitedBy + `</div>
-			<div>` + data.Response[0].InvitedBy + `</div>
-			<div>` + r.Method + `</div>
                 </div>
                 `))
 	})
