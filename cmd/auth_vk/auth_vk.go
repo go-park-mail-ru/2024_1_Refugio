@@ -6,16 +6,9 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/vk"
-)
-
-const (
-	APP_ID     = "7065390"
-	APP_KEY    = "oz3r7Pyakfeg25JpJsQV"
-	APP_SECRET = "7162b87a7162b87a7162b87a50727a9715771627162b87a175122eadf7122b63122cc49"
-	API_URL    = "https://api.vk.com/method/users.get?fields=email,photo_max&access_token=%s&v=5.131"
 )
 
 type Response struct {
@@ -31,12 +24,14 @@ func main() {
 	http.HandleFunc("/auth-vk", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		code := r.URL.Query().Get("code") //r.FormValue("code")
-		fmt.Println("OK")
 		conf := oauth2.Config{
-			ClientID:     APP_ID,
-			ClientSecret: APP_KEY,
-			RedirectURL:  "http://localhost:8007/",
-			Endpoint:     vk.Endpoint,
+			ClientID:     os.Getenv("APP_ID"),
+			ClientSecret: os.Getenv("APP_KEY"),
+			RedirectURL:  os.Getenv("API_URL"),
+			Endpoint: oauth2.Endpoint{
+				AuthURL:  "https://oauth.vk.com/authorize",
+				TokenURL: "https://oauth.vk.com/access_token",
+			},
 		}
 
 		if code == "" {
@@ -48,7 +43,6 @@ func main() {
 			return
 		}
 
-		fmt.Println("code: ", code)
 		token, err := conf.Exchange(ctx, code)
 		if err != nil {
 			log.Println("cannot exchange", err)
@@ -59,7 +53,7 @@ func main() {
 		fmt.Println("TOKEN OK")
 
 		client := conf.Client(ctx, token)
-		resp, err := client.Get(fmt.Sprintf(API_URL, token.AccessToken))
+		resp, err := client.Get(fmt.Sprintf(os.Getenv("API_URL"), token.AccessToken))
 		if err != nil {
 			log.Println("cannot request data", err)
 			w.Write([]byte("=("))
