@@ -36,6 +36,9 @@ var (
 	mepVKIDToken                    = make(map[uint32]string)
 )
 
+// https://oauth.vk.com/authorize?client_id=51916655&redirect_uri=https://mailhub.su/testAuth/auth-vk/loginVK&response_type=code&scope=email
+// https://oauth.vk.com/authorize?client_id=51916655&redirect_uri=https://mailhub.su/testAuth/auth-vk/auth&response_type=code&scope=email
+
 type Response struct {
 	Response []struct {
 		VKId      int    `json:"id"`
