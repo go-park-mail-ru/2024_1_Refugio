@@ -176,7 +176,7 @@ func TestIsLoginUnique_InvalidLogin(t *testing.T) {
 	assert.Nil(t, reply)
 }
 
-/*func TestUpdateUser_Success(t *testing.T) {
+func TestUpdateUser_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -184,38 +184,27 @@ func TestIsLoginUnique_InvalidLogin(t *testing.T) {
 
 	server := NewUserServer(mockUserUseCase)
 
-	ctx := GetCTX()
+	ctx := context.Background()
 
-	inputUser := &proto.User{
-		Id:          1,
-		Login:       "john_doe",
-		Firstname:   "John",
-		Surname:     "Doe",
-		Patronymic:  "",
-		Avatar:      "avatar_123",
-		PhoneNumber: "123456789",
-		Description: "Some description",
-	}
+	mockUserUseCase.EXPECT().UpdateUser(gomock.Any(), ctx).Return(&domain_models.User{ID: 1, Login: "john_doe", FirstName: "John", Surname: "Doe", Gender: "male"}, nil)
 
-	expectedUser := &domain_models.User{
-		ID:          1,
-		Login:       "john_doe",
-		FirstName:   "John",
-		Surname:     "Doe",
-		Patronymic:  "",
-		AvatarID:    "avatar_123",
-		PhoneNumber: "123456789",
-		Description: "Some description",
-	}
-
-	mockUserUseCase.EXPECT().UpdateUser(expectedUser, ctx).Return(expectedUser, nil)
-
-	reply, err := server.UpdateUser(ctx, &proto.UpdateUserRequest{User: inputUser})
+	reply, err := server.UpdateUser(ctx, &proto.UpdateUserRequest{
+		User: &proto.User{
+			Id:          1,
+			Login:       "john_doe",
+			Firstname:   "John",
+			Surname:     "Doe",
+			Gender:      "male",
+			Avatar:      "avatar123.jpg",
+			PhoneNumber: "123456789",
+			Description: "Some description",
+		},
+	})
 
 	assert.NoError(t, err)
 	assert.NotNil(t, reply)
-	assert.Equal(t, inputUser, reply.User)
-}*/
+	assert.NotNil(t, reply.User)
+}
 
 func TestUpdateUser_UpdateFailed(t *testing.T) {
 	ctrl := gomock.NewController(t)

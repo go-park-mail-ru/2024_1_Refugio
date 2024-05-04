@@ -2,10 +2,12 @@ package proto_converters
 
 import (
 	"google.golang.org/protobuf/types/known/timestamppb"
+
 	domain "mail/internal/microservice/models/domain_models"
 	grpc "mail/internal/microservice/user/proto"
 )
 
+// UserConvertCoreInProto converts a user model from the application core to the gRPC format.
 func UserConvertCoreInProto(userModelCore domain.User) *grpc.User {
 	return &grpc.User{
 		Id:          userModelCore.ID,
@@ -22,6 +24,7 @@ func UserConvertCoreInProto(userModelCore domain.User) *grpc.User {
 	}
 }
 
+// UserConvertProtoInCore converts a user model from the gRPC format to the application core.
 func UserConvertProtoInCore(userModelProto grpc.User) *domain.User {
 	return &domain.User{
 		ID:          userModelProto.Id,

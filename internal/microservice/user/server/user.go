@@ -1,3 +1,5 @@
+//go:generate mockgen -source=./user.go -destination=../mock/user_mock.go -package=mock
+
 package server
 
 import (
@@ -14,11 +16,13 @@ import (
 	validUtil "mail/internal/pkg/utils/validators"
 )
 
+// UserServer handles RPC calls for the UserService.
 type UserServer struct {
 	proto.UnimplementedUserServiceServer
 	UserUseCase usecase.UserUseCase
 }
 
+// NewUserServer creates a new instance of UserServer.
 func NewUserServer(userUseCase usecase.UserUseCase) *UserServer {
 	return &UserServer{UserUseCase: userUseCase}
 }

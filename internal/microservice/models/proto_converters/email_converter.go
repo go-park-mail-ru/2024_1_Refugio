@@ -2,10 +2,12 @@ package proto_converters
 
 import (
 	"google.golang.org/protobuf/types/known/timestamppb"
+
 	grpc "mail/internal/microservice/email/proto"
 	domain "mail/internal/microservice/models/domain_models"
 )
 
+// EmailConvertCoreInProto converts an email model from the application core to the gRPC format.
 func EmailConvertCoreInProto(emailModelCore domain.Email) *grpc.Email {
 	return &grpc.Email{
 		Id:             emailModelCore.ID,
@@ -24,6 +26,7 @@ func EmailConvertCoreInProto(emailModelCore domain.Email) *grpc.Email {
 	}
 }
 
+// EmailConvertProtoInCore converts an email model from the gRPC format to the application core.
 func EmailConvertProtoInCore(emailModelProto grpc.Email) *domain.Email {
 	return &domain.Email{
 		ID:             emailModelProto.Id,
@@ -42,6 +45,7 @@ func EmailConvertProtoInCore(emailModelProto grpc.Email) *domain.Email {
 	}
 }
 
+// EmailsConvertProtoInCore converts a list of email models from the gRPC format to the application core.
 func EmailsConvertProtoInCore(emailModelProto *grpc.Emails) []*domain.Email {
 	emailsCore := make([]*domain.Email, 0, len(emailModelProto.Emails))
 	for _, email := range emailModelProto.Emails {

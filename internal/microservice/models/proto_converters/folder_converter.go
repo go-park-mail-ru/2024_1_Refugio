@@ -2,10 +2,12 @@ package proto_converters
 
 import (
 	"google.golang.org/protobuf/types/known/timestamppb"
+
 	grpc "mail/internal/microservice/folder/proto"
 	domain "mail/internal/microservice/models/domain_models"
 )
 
+// FolderConvertCoreInProto converts a folder model from the application core to the gRPC format.
 func FolderConvertCoreInProto(folderModelCore domain.Folder) *grpc.Folder {
 	return &grpc.Folder{
 		Id:        folderModelCore.ID,
@@ -14,6 +16,7 @@ func FolderConvertCoreInProto(folderModelCore domain.Folder) *grpc.Folder {
 	}
 }
 
+// FolderConvertProtoInCore converts a folder model from the gRPC format to the application core.
 func FolderConvertProtoInCore(folderModelProto grpc.Folder) *domain.Folder {
 	return &domain.Folder{
 		ID:        folderModelProto.Id,
@@ -22,6 +25,7 @@ func FolderConvertProtoInCore(folderModelProto grpc.Folder) *domain.Folder {
 	}
 }
 
+// FoldersConvertProtoInCore converts a list of folder models from the gRPC format to the application core.
 func FoldersConvertProtoInCore(folderModelProto *grpc.Folders) []*domain.Folder {
 	foldersCore := make([]*domain.Folder, 0, len(folderModelProto.Folders))
 	for _, folder := range folderModelProto.Folders {
@@ -30,6 +34,7 @@ func FoldersConvertProtoInCore(folderModelProto *grpc.Folders) []*domain.Folder 
 	return foldersCore
 }
 
+// ObjectEmailConvertProtoInCore converts an email model from the gRPC format to the application core.
 func ObjectEmailConvertProtoInCore(folderEmailModelProto grpc.ObjectEmail) *domain.Email {
 	return &domain.Email{
 		ID:             folderEmailModelProto.Id,
@@ -48,6 +53,7 @@ func ObjectEmailConvertProtoInCore(folderEmailModelProto grpc.ObjectEmail) *doma
 	}
 }
 
+// ObjectEmailConvertCoreInProto converts an email model from the application core to the gRPC format.
 func ObjectEmailConvertCoreInProto(folderEmailModelCore domain.Email) *grpc.ObjectEmail {
 	return &grpc.ObjectEmail{
 		Id:             folderEmailModelCore.ID,
@@ -66,6 +72,7 @@ func ObjectEmailConvertCoreInProto(folderEmailModelCore domain.Email) *grpc.Obje
 	}
 }
 
+// ObjectsEmailConvertProtoInCore converts a list of email models from the gRPC format to the application core.
 func ObjectsEmailConvertProtoInCore(folderEmailsModelProto *grpc.ObjectsEmail) []*domain.Email {
 	emailsCore := make([]*domain.Email, 0, len(folderEmailsModelProto.Emails))
 	for _, email := range folderEmailsModelProto.Emails {

@@ -2,10 +2,12 @@ package proto_converters
 
 import (
 	"google.golang.org/protobuf/types/known/timestamppb"
+
 	domain "mail/internal/microservice/models/domain_models"
 	grpc "mail/internal/microservice/session/proto"
 )
 
+// SessionConvertCoreInProto converts a session model from the application core to the gRPC format.
 func SessionConvertCoreInProto(sessionModelCore domain.Session) *grpc.Session {
 	return &grpc.Session{
 		SessionId:    sessionModelCore.ID,
@@ -17,6 +19,7 @@ func SessionConvertCoreInProto(sessionModelCore domain.Session) *grpc.Session {
 	}
 }
 
+// SessionConvertProtoInCore converts a session model from the gRPC format to the application core.
 func SessionConvertProtoInCore(sessionModelProto grpc.Session) *domain.Session {
 	return &domain.Session{
 		ID:           sessionModelProto.SessionId,

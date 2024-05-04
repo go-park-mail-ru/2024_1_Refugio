@@ -11,11 +11,13 @@ import (
 	validUtil "mail/internal/pkg/utils/validators"
 )
 
+// SessionServer handles RPC calls for the SessionService.
 type SessionServer struct {
 	proto.UnimplementedSessionServiceServer
 	SessionUseCase usecase.SessionUseCase
 }
 
+// NewSessionServer creates a new instance of SessionServer.
 func NewSessionServer(sessionUseCase usecase.SessionUseCase) *SessionServer {
 	return &SessionServer{SessionUseCase: sessionUseCase}
 }

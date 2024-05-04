@@ -18,6 +18,7 @@ import (
 	database "mail/internal/microservice/models/repository_models"
 )
 
+// requestIDContextKey is the context key for the request ID.
 var requestIDContextKey interface{} = "requestID"
 
 // UserRepository represents a repository for managing user data in the database.

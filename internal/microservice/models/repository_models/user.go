@@ -1,8 +1,9 @@
 package repository_models
 
 import (
-	domain "mail/internal/microservice/models/domain_models"
 	"time"
+
+	domain "mail/internal/microservice/models/domain_models"
 )
 
 // User represents information about a user.

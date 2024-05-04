@@ -15,6 +15,7 @@ import (
 	database "mail/internal/microservice/models/repository_models"
 )
 
+// requestIDContextKey is the context key for the request ID.
 var requestIDContextKey interface{} = "requestID"
 
 // SessionRepository represents a PostgreSQL implementation of the SessionRepository interface.

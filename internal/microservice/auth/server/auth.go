@@ -4,20 +4,24 @@ import (
 	"context"
 	"fmt"
 	"google.golang.org/grpc/metadata"
+
 	"mail/internal/microservice/auth/proto"
-	domain "mail/internal/microservice/models/domain_models"
-	session_proto "mail/internal/microservice/session/proto"
-	user_proto "mail/internal/microservice/user/proto"
 	"mail/internal/models/microservice_ports"
 	"mail/internal/pkg/utils/connect_microservice"
 	"mail/internal/pkg/utils/sanitize"
+
+	domain "mail/internal/microservice/models/domain_models"
+	session_proto "mail/internal/microservice/session/proto"
+	user_proto "mail/internal/microservice/user/proto"
 	validUtil "mail/internal/pkg/utils/validators"
 )
 
+// AuthServer handles RPC calls for the AuthService.
 type AuthServer struct {
 	proto.UnimplementedAuthServiceServer
 }
 
+// NewAuthServer creates a new instance of AuthServer.
 func NewAuthServer() *AuthServer {
 	return &AuthServer{}
 }
