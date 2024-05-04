@@ -1272,12 +1272,6 @@ const docTemplate = `{
                         "name": "code",
                         "in": "query",
                         "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "invite_by param",
-                        "name": "invite_by",
-                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -1852,7 +1846,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8080",
+	Host:             "mailhub.su",
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "API Mailhub",

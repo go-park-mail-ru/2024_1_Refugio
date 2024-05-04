@@ -6,7 +6,7 @@
         "contact": {},
         "version": "1.0"
     },
-    "host": "localhost:8080",
+    "host": "mailhub.su",
     "basePath": "/",
     "paths": {
         "/api/v1/answers": {
@@ -1266,12 +1266,6 @@
                         "name": "code",
                         "in": "query",
                         "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "invite_by param",
-                        "name": "invite_by",
-                        "in": "query"
                     }
                 ],
                 "responses": {

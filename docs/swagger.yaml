@@ -128,7 +128,7 @@ definitions:
       vkId:
         type: integer
     type: object
-host: localhost:8080
+host: mailhub.su
 info:
   contact: {}
   description: API server for mailhub
@@ -963,10 +963,6 @@ paths:
         in: query
         name: code
         required: true
-        type: string
-      - description: invite_by param
-        in: query
-        name: invite_by
         type: string
       produces:
       - application/json
