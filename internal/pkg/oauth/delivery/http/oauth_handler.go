@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"golang.org/x/oauth2"
@@ -13,6 +14,7 @@ import (
 	"mail/internal/pkg/utils/connect_microservice"
 	"mail/internal/pkg/utils/sanitize"
 	validUtil "mail/internal/pkg/utils/validators"
+	"math/rand"
 	"net/http"
 	"time"
 
@@ -29,7 +31,9 @@ var (
 	APP_ID                          = "51916655"
 	APP_KEY                         = "oz3r7Pyakfeg25JpJsQV"
 	API_URL                         = "https://api.vk.com/method/users.get?fields=id,photo_max,email,sex,bdate&access_token=%s&v=5.131"
-	REDIRECT_URL                    = "https://mailhub.su/auth/auth-vk"
+	REDIRECT_URL_SIGNUP             = "https://mailhub.su/testAuth/auth-vk/auth"
+	REDIRECT_URL_LOGIN              = "https://mailhub.su/testAuth/auth-vk/loginVK"
+	mepVKIDToken                    = make(map[uint32]string)
 )
 
 type Response struct {
@@ -53,7 +57,7 @@ func InitializationOAuthHandler(oauthHandler *OAuthHandler) {
 	OAHandler = oauthHandler
 }
 
-// GetAuthURLVK url auth vk.
+// GetSignUpURLVK url auth vk.
 // @Summary URL VK
 // @Description Handles user signup.
 // @Tags auth-vk
@@ -61,69 +65,60 @@ func InitializationOAuthHandler(oauthHandler *OAuthHandler) {
 // @Produce json
 // @Success 200 {object} response.Response "Successful"
 // @Failure 500 {object} response.ErrorResponse "Failed to get url"
-// @Router /api/v1/auth/getAuthUrlVK [get]
-func (ah *OAuthHandler) GetAuthURLVK(w http.ResponseWriter, r *http.Request) {
-	url := fmt.Sprintf(AUTH_URL, APP_ID, REDIRECT_URL)
+// @Router /api/v1/testAuth/auth-vk/getAuthUrlSignUpVK [get]
+func (ah *OAuthHandler) GetSignUpURLVK(w http.ResponseWriter, r *http.Request) {
+	url := fmt.Sprintf(AUTH_URL, APP_ID, REDIRECT_URL_SIGNUP)
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"AuthURL": url})
 }
 
-func AuthVK(w http.ResponseWriter, r *http.Request) (*api.VKUser, int, error) {
+// GetLoginURLVK url auth vk.
+// @Summary URL VK
+// @Description Handles user login.
+// @Tags auth-vk
+// @Accept json
+// @Produce json
+// @Success 200 {object} response.Response "Successful"
+// @Failure 500 {object} response.ErrorResponse "Failed to get url"
+// @Router /api/v1/testAuth/auth-vk/getAuthUrlLoginVK [get]
+func (ah *OAuthHandler) GetLoginURLVK(w http.ResponseWriter, r *http.Request) {
+	url := fmt.Sprintf(AUTH_URL, APP_ID, REDIRECT_URL_LOGIN)
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"AuthURL": url})
+}
+
+// AuthVK handles user auth VK.
+// @Summary User auth VK
+// @Description Handles user auth VK.
+// @Tags auth-vk
+// @Accept json
+// @Produce json
+// @Success 200 {object} response.Response "Auth successful"
+// @Failure 500 {object} response.ErrorResponse "Failed to auth user"
+// @Router /api/v1/testAuth/auth-vk/auth [get]
+func (ah *OAuthHandler) AuthVK(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("AuthVK")
 	ctx := r.Context()
 	code := r.FormValue("code")
-	conf := oauth2.Config{
-		ClientID:     APP_ID,
-		ClientSecret: APP_KEY,
-		RedirectURL:  REDIRECT_URL,
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  "https://oauth.vk.com/authorize",
-			TokenURL: "https://oauth.vk.com/access_token",
-		},
-		Scopes: []string{"email"},
-	}
+	conf := GetConfOauth2(REDIRECT_URL_SIGNUP)
 
 	if code == "" {
-		return nil, 400, fmt.Errorf("wrong code")
+		response.HandleError(w, http.StatusBadRequest, "wrong code")
+		return
 	}
 
-	token, err := conf.Exchange(ctx, code)
-	fmt.Println("Token: ", token)
+	vkUser, status, err := GetDataUser(*conf, code, ctx)
 	if err != nil {
-		return nil, 400, fmt.Errorf("cannot exchange")
+		response.HandleError(w, status, "failed get user data")
+		return
 	}
 
-	fmt.Println("TOKEN OK")
-
-	client := conf.Client(ctx, token)
-	resp, err := client.Get(fmt.Sprintf(API_URL, token.AccessToken))
-	if err != nil {
-		return nil, 400, fmt.Errorf("cannot request data")
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, 500, fmt.Errorf("cannot read buffer")
-	}
-
-	data := &Response{}
-	json.Unmarshal(body, data)
-
-	birthdayTime, err := time.Parse("2006-01-02", data.Response[0].BirthDate)
-	if err != nil {
-		return nil, 500, fmt.Errorf("bad BirthDate")
-	}
-
-	vkUser := &api.VKUser{
-		FirstName: data.Response[0].Name,
-		Surname:   data.Response[0].LastName,
-		Gender:    domain_models.GetGenderTypeInt(data.Response[0].Sex),
-		Birthday:  birthdayTime,
-		VKId:      uint32(data.Response[0].VKId),
-	}
+	randToken := make([]byte, 16)
+	rand.Read(randToken)
+	authToken := fmt.Sprintf("%x", randToken)
+	mepVKIDToken[vkUser.VKId] = authToken
+	w.Header().Set("AuthToken", authToken)
 
 	fmt.Println("name: ", vkUser.FirstName, ", surname: ", vkUser.Surname, ", gender: ", vkUser.Gender, ", vkId: ", vkUser.VKId)
-	return vkUser, 200, nil
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"VKUser": vkUser})
 }
 
 // SignupVK handles user signup VK.
@@ -132,24 +127,26 @@ func AuthVK(w http.ResponseWriter, r *http.Request) (*api.VKUser, int, error) {
 // @Tags auth-vk
 // @Accept json
 // @Produce json
-// @Param invite_by query string false "invite_by value"
+// @Param Auth-Token header string true "Auth Token"
+// @Param newUser body response.UserVKSwag true "New user details for signup"
 // @Success 200 {object} response.Response "Signup successful"
 // @Failure 400 {object} response.ErrorResponse "Invalid request body"
 // @Failure 500 {object} response.ErrorResponse "Failed to add user"
-// @Router /api/v1/auth/auth-vk/signupVK [get]
+// @Router /api/v1/testAuth/auth-vk/signupVK [post]
 func (ah *OAuthHandler) SignupVK(w http.ResponseWriter, r *http.Request) {
-	/*newUser, status, err := AuthVK(w, r)
+	var newUser api.VKUser
+	err := json.NewDecoder(r.Body).Decode(&newUser)
 	if err != nil {
-		response.HandleError(w, status, err.Error())
+		response.HandleError(w, http.StatusBadRequest, "Invalid request body")
 		return
-	}*/
+	}
 
-	newUser := &api.VKUser{
-		FirstName: "sergey",
-		Surname:   "fed",
-		Gender:    domain_models.Male,
-		VKId:      1234567,
-		Login:     "ferka@mailhub.su",
+	//mepVKIDToken[123] = "123"
+
+	authToken := r.Header.Get("Auth-Token")
+	if authToken != mepVKIDToken[newUser.VKId] {
+		response.HandleError(w, http.StatusBadRequest, "failed authToken")
+		return
 	}
 
 	newUser.FirstName = sanitize.SanitizeString(newUser.FirstName)
@@ -194,7 +191,6 @@ func (ah *OAuthHandler) SignupVK(w http.ResponseWriter, r *http.Request) {
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "Signup successful"})
 }
 
-/*
 // LoginVK handles user login.
 // @Summary LoginVK User
 // @Description LoginVK Handles user.
@@ -202,25 +198,32 @@ func (ah *OAuthHandler) SignupVK(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param code query string true "code from oauth"
-// @Param invite_by query string false "invite_by param"
 // @Success 200 {object} response.Response "Login successful"
 // @Failure 400 {object} response.ErrorResponse "Invalid request body"
 // @Failure 401 {object} response.ErrorResponse "Invalid credentials"
 // @Failure 500 {object} response.ErrorResponse "Failed to create session"
-// @Router /api/v1/auth/auth-vk/loginVK [get]
+// @Router /api/v1/testAuth/auth-vk/loginVK [get]
 func (ah *OAuthHandler) LoginVK(w http.ResponseWriter, r *http.Request) {
-		//userVK, status, err := AuthVK(w, r)
-		//if err != nil {
-		//	response.HandleError(w, status, err.Error())
-		//	return
-		//}
-	userVK := &api.VKUser{
-		FirstName: "sergey",
-		Surname:   "fed",
-		Gender:    domain_models.Male,
-		VKId:      23435456,
+	fmt.Println("LoginVK")
+	ctx := r.Context()
+	code := r.FormValue("code")
+	conf := GetConfOauth2(REDIRECT_URL_LOGIN)
+	if code == "" {
+		response.HandleError(w, http.StatusBadRequest, "wrong code")
+		return
 	}
 
+	userVK, status, err := GetDataUser(*conf, code, ctx)
+	if err != nil {
+		response.HandleError(w, status, "failed get user data")
+		return
+	}
+
+	/*
+		userVK := &api.VKUser{
+			VKId: 123,
+		}
+	*/
 	if userVK.VKId <= 0 {
 		response.HandleError(w, http.StatusBadRequest, "bad VKId")
 		return
@@ -252,4 +255,56 @@ func (ah *OAuthHandler) LoginVK(w http.ResponseWriter, r *http.Request) {
 
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "Login successful"})
 }
-*/
+
+func GetConfOauth2(redirectUrl string) *oauth2.Config {
+	return &oauth2.Config{
+		ClientID:     APP_ID,
+		ClientSecret: APP_KEY,
+		RedirectURL:  redirectUrl,
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  "https://oauth.vk.com/authorize",
+			TokenURL: "https://oauth.vk.com/access_token",
+		},
+		Scopes: []string{"email"},
+	}
+}
+
+func GetDataUser(conf oauth2.Config, code string, ctx context.Context) (*api.VKUser, int, error) {
+	token, err := conf.Exchange(ctx, code)
+	fmt.Println("Token: ", token)
+	if err != nil {
+		return &api.VKUser{}, 400, fmt.Errorf("cannot exchange")
+	}
+
+	fmt.Println("TOKEN OK")
+
+	client := conf.Client(ctx, token)
+	resp, err := client.Get(fmt.Sprintf(API_URL, token.AccessToken))
+	if err != nil {
+		return &api.VKUser{}, 400, fmt.Errorf("cannot request data")
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return &api.VKUser{}, 500, fmt.Errorf("cannot read buffer")
+	}
+
+	data := &Response{}
+	json.Unmarshal(body, data)
+
+	birthdayTime, err := time.Parse("2006-01-02", data.Response[0].BirthDate)
+	if err != nil {
+		return &api.VKUser{}, 500, fmt.Errorf("bad BirthDate")
+	}
+
+	vkUser := &api.VKUser{
+		FirstName: data.Response[0].Name,
+		Surname:   data.Response[0].LastName,
+		Gender:    domain_models.GetGenderTypeInt(data.Response[0].Sex),
+		Birthday:  birthdayTime,
+		VKId:      uint32(data.Response[0].VKId),
+	}
+
+	return vkUser, 200, nil
+}
