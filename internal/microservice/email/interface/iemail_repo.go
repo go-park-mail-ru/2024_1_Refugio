@@ -26,7 +26,7 @@ type EmailRepository interface {
 	// Add adds a new email to the storage and returns its assigned unique identifier.
 	Add(email *domain.Email, ctx context.Context) (uint64, *domain.Email, error)
 
-	// Add adds a new profile_email
+	// AddProfileEmail adds a new profile_email
 	AddProfileEmail(email_id uint64, sender, recipient string, ctx context.Context) error
 
 	AddProfileEmailMyself(email_id uint64, sender, recipient string, ctx context.Context) error

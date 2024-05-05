@@ -2,6 +2,11 @@
 ├── Dockerfile
 ├── README.md
 ├── avatars
+│   ├── 20240501_235049_13.jpeg
+│   ├── 20240505_153432_70.jpeg
+│   ├── 20240505_153438_251.jpeg
+│   ├── 20240505_153809_273.jpeg
+│   └── 20240505_153832_31.jpg
 ├── cmd
 │   ├── auth
 │   │   ├── Dockerfile
@@ -43,17 +48,21 @@
 ├── internal
 │   ├── microservice
 │   │   ├── auth
+│   │   │   ├── mock
+│   │   │   │   └── auth_grpc_mock.go
 │   │   │   ├── proto
 │   │   │   │   ├── auth.pb.go
 │   │   │   │   ├── auth.proto
 │   │   │   │   └── auth_grpc.pb.go
 │   │   │   └── server
-│   │   │       └── auth.go
+│   │   │       ├── auth.go
+│   │   │       ├── auth_test.go
+│   │   │       └── log_test.txt
 │   │   ├── email
 │   │   │   ├── interface
 │   │   │   │   ├── iemail_repo.go
 │   │   │   │   └── iemail_service.go
-│   │   │   ├── mocks
+│   │   │   ├── mock
 │   │   │   │   ├── email_repository_mock.go
 │   │   │   │   └── email_service_mock.go
 │   │   │   ├── proto
@@ -62,26 +71,39 @@
 │   │   │   │   └── email_grpc.pb.go
 │   │   │   ├── repository
 │   │   │   │   ├── email_repo.go
-│   │   │   │   └── email_repo_test.go
+│   │   │   │   ├── email_repo_test.go
+│   │   │   │   └── log_test.txt
 │   │   │   ├── server
-│   │   │   │   └── email.go
+│   │   │   │   ├── email.go
+│   │   │   │   ├── email_server_test.go
+│   │   │   │   └── log_test.txt
 │   │   │   └── usecase
-│   │   │       ├── emai_service_test.go
-│   │   │       └── email_service.go
+│   │   │       ├── email_service.go
+│   │   │       ├── email_service_test.go
+│   │   │       └── log_test.txt
 │   │   ├── folder
 │   │   │   ├── interface
 │   │   │   │   ├── ifolder_repo.go
 │   │   │   │   └── ifolder_service.go
+│   │   │   ├── mock
+│   │   │   │   ├── folder_repo_mock.go
+│   │   │   │   └── folder_service_mock.go
 │   │   │   ├── proto
 │   │   │   │   ├── folder.pb.go
 │   │   │   │   ├── folder.proto
 │   │   │   │   └── folder_grpc.pb.go
 │   │   │   ├── repository
-│   │   │   │   └── folder_repo.go
+│   │   │   │   ├── folder_repo.go
+│   │   │   │   ├── folder_repo_test.go
+│   │   │   │   └── log_test.txt
 │   │   │   ├── server
-│   │   │   │   └── folder.go
+│   │   │   │   ├── folder.go
+│   │   │   │   ├── folder_server_test.go
+│   │   │   │   └── log_test.txt
 │   │   │   └── usecase
-│   │   │       └── folder_service.go
+│   │   │       ├── folder_service.go
+│   │   │       ├── folder_service_test.go
+│   │   │       └── log_test.txt
 │   │   ├── interceptors
 │   │   │   ├── interceptors.go
 │   │   │   └── interceptorsLog.go
@@ -98,16 +120,24 @@
 │   │   │   │   └── user.go
 │   │   │   ├── proto_converters
 │   │   │   │   ├── email_converter.go
+│   │   │   │   ├── email_converter_test.go
 │   │   │   │   ├── folder_converter.go
+│   │   │   │   ├── folder_converter_test.go
 │   │   │   │   ├── question_answer_converter.go
-│   │   │   │   ├── session_converters.go
-│   │   │   │   └── user_converter.go
+│   │   │   │   ├── question_answer_converter_test.go
+│   │   │   │   ├── session_converter.go
+│   │   │   │   ├── session_converter_test.go
+│   │   │   │   ├── user_converter.go
+│   │   │   │   └── user_converter_test.go
 │   │   │   ├── repository_converters
 │   │   │   │   ├── answer_converter.go
+│   │   │   │   ├── answer_converter_test.go
 │   │   │   │   ├── email_converter.go
 │   │   │   │   ├── email_converter_test.go
-│   │   │   │   ├── folder_converters.go
+│   │   │   │   ├── folder_converter.go
+│   │   │   │   ├── folser_converter_test.go
 │   │   │   │   ├── question_converter.go
+│   │   │   │   ├── question_converter_test.go
 │   │   │   │   ├── session_converter.go
 │   │   │   │   ├── session_converter_test.go
 │   │   │   │   ├── user_converter.go
@@ -124,21 +154,32 @@
 │   │   │   ├── interface
 │   │   │   │   ├── iquestion_repo.go
 │   │   │   │   └── iquestion_service.go
+│   │   │   ├── mock
+│   │   │   │   ├── question-answer_grpc_mock.go
+│   │   │   │   ├── question_repository_mock.go
+│   │   │   │   └── question_service_mock.go
 │   │   │   ├── proto
 │   │   │   │   ├── question-answer.pb.go
 │   │   │   │   ├── question-answer.proto
 │   │   │   │   └── question-answer_grpc.pb.go
 │   │   │   ├── repository
-│   │   │   │   └── question_repo.go
+│   │   │   │   ├── log_test.txt
+│   │   │   │   ├── question_repo.go
+│   │   │   │   └── question_repo_test.go
 │   │   │   ├── server
-│   │   │   │   └── questionnaire.go
+│   │   │   │   ├── log_test.txt
+│   │   │   │   ├── questionnaire.go
+│   │   │   │   └── questionnaire_test.go
 │   │   │   └── usecase
-│   │   │       └── question_service.go
+│   │   │       ├── log_test.txt
+│   │   │       ├── question_service.go
+│   │   │       └── question_service_test.go
 │   │   ├── session
 │   │   │   ├── interface
 │   │   │   │   ├── isession_repo.go
 │   │   │   │   └── isession_service.go
-│   │   │   ├── mocks
+│   │   │   ├── mock
+│   │   │   │   ├── session_grpc_mock.go
 │   │   │   │   ├── session_repository_mock.go
 │   │   │   │   └── session_service_mock.go
 │   │   │   ├── proto
@@ -146,12 +187,15 @@
 │   │   │   │   ├── session.proto
 │   │   │   │   └── session_grpc.pb.go
 │   │   │   ├── repository
-│   │   │   │   ├── logTest.txt
+│   │   │   │   ├── log_test.txt
 │   │   │   │   ├── session_repo.go
 │   │   │   │   └── session_repo_test.go
 │   │   │   ├── server
-│   │   │   │   └── session.go
+│   │   │   │   ├── log_test.txt
+│   │   │   │   ├── session.go
+│   │   │   │   └── session_server_test.go
 │   │   │   └── usecase
+│   │   │       ├── log_test.txt
 │   │   │       ├── session_service.go
 │   │   │       └── session_service_test.go
 │   │   └── user
@@ -159,9 +203,7 @@
 │   │       │   ├── iuser_repo.go
 │   │       │   └── iuser_service.go
 │   │       ├── mock
-│   │       │   ├── user_repository_mock.go
-│   │       │   └── user_service_mock.go
-│   │       ├── mocks
+│   │       │   ├── user_grpc_mock.go
 │   │       │   ├── user_repository_mock.go
 │   │       │   └── user_service_mock.go
 │   │       ├── proto
@@ -169,12 +211,15 @@
 │   │       │   ├── user.proto
 │   │       │   └── user_grpc.pb.go
 │   │       ├── repository
-│   │       │   ├── logTest.txt
+│   │       │   ├── log_test.txt
 │   │       │   ├── user_repo.go
 │   │       │   └── user_repo_test.go
 │   │       ├── server
-│   │       │   └── user.go
+│   │       │   ├── log_test.txt
+│   │       │   ├── user.go
+│   │       │   └── user_server_test.go
 │   │       └── usecase
+│   │           ├── log_test.txt
 │   │           ├── user_service.go
 │   │           └── user_service_test.go
 │   ├── models
@@ -200,6 +245,8 @@
 │   │   │   └── ports.go
 │   │   └── response
 │   │       └── response.go
+│   ├── monitoring
+│   │   └── monitoring.go
 │   ├── pkg
 │   │   ├── auth
 │   │   │   └── delivery
@@ -230,7 +277,7 @@
 │   │   │   │   └── imanager.go
 │   │   │   ├── manager.go
 │   │   │   ├── manager_test.go
-│   │   │   └── mocks
+│   │   │   └── mock
 │   │   │       └── manager_mock.go
 │   │   ├── user
 │   │   │   └── delivery
@@ -241,11 +288,14 @@
 │   │       ├── connect_microservice
 │   │       │   └── connect.go
 │   │       ├── generate_filename
-│   │       │   └── generate_filename.go
+│   │       │   ├── generate_filename.go
+│   │       │   └── generate_filename_test.go
 │   │       ├── sanitize
-│   │       │   └── sanitize_string.go
+│   │       │   ├── sanitize_string.go
+│   │       │   └── sanitize_string_test.go
 │   │       └── validators
-│   │           └── validator.go
+│   │           ├── validator.go
+│   │           └── validator_test.go
 │   └── smtp_server
 │       ├── Dockerfile
 │       ├── docker-compose.yml
@@ -256,7 +306,10 @@
 ├── log.txt
 ├── logInterEmail.txt
 ├── logInterFolder.txt
-└── message_smtp
-    └── main.go
+├── message_smtp
+│   └── main.go
+└── monitoring
+    └── prometheus
+        └── prometheus.yml
 
-93 directories, 167 files
+98 directories, 215 files

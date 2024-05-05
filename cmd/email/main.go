@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"google.golang.org/grpc"
 	"log"
-	"mail/cmd/configs"
 	"net"
 	"net/http"
 	"os"
@@ -15,9 +14,11 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
+	"mail/cmd/configs"
 	"mail/internal/microservice/email/proto"
 	"mail/internal/microservice/interceptors"
 
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	emailRepo "mail/internal/microservice/email/repository"
 	grpcEmail "mail/internal/microservice/email/server"
 	emailUc "mail/internal/microservice/email/usecase"
@@ -92,11 +93,15 @@ func startServer(emailGrpc *grpcEmail.EmailServer, interceptorsLogger *intercept
 		log.Fatalf("Cannot listen port: %s. Err: %s", "8002", err.Error())
 	}
 
+	grpc_prometheus.EnableHandlingTimeHistogram()
+
 	opts := []grpc.ServerOption{
 		grpc.ChainUnaryInterceptor(
 			interceptorsLogger.AccessLogInterceptor,
 			interceptors.PanicRecoveryInterceptor,
+			grpc_prometheus.UnaryServerInterceptor,
 		),
+		grpc.StreamInterceptor(grpc_prometheus.StreamServerInterceptor),
 	}
 	grpcServer := grpc.NewServer(opts...)
 
@@ -104,7 +109,18 @@ func startServer(emailGrpc *grpcEmail.EmailServer, interceptorsLogger *intercept
 
 	fmt.Printf("The server is running  in port 8002\n")
 
+	grpc_prometheus.Register(grpcServer)
 	http.Handle("/metrics", promhttp.Handler())
+	httpServer := &http.Server{
+		Addr:    ":9092",
+		Handler: nil,
+	}
+
+	go func() {
+		if err := httpServer.ListenAndServe(); err != nil {
+			log.Printf("Failed to start Prometheus metrics server: %s\n", err)
+		}
+	}()
 
 	err = grpcServer.Serve(listen)
 	if err != nil {

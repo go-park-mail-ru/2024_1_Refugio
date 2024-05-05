@@ -28,7 +28,7 @@ func (uc *EmailUseCase) GetAllEmailsSent(login string, offset, limit int64, ctx 
 	return uc.repo.GetAllSent(login, offset, limit, ctx)
 }
 
-// GetDraftEmails returns all draft emails.
+// GetAllDraftEmails returns all draft emails.
 func (uc *EmailUseCase) GetAllDraftEmails(login string, offset, limit int64, ctx context.Context) ([]*domain.Email, error) {
 	return uc.repo.GetAllDraft(login, offset, limit, ctx)
 }

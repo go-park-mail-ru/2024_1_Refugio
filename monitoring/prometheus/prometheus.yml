@@ -13,23 +13,23 @@ scrape_configs:
 
   - job_name: 'email'
     static_configs:
-      - targets: ['email:8002']
+      - targets: ['email:9092']
 
   - job_name: 'session'
     static_configs:
-      - targets: ['session:8003']
+      - targets: ['session:9093']
 
   - job_name: 'user'
     static_configs:
-      - targets: ['user:8001']
+      - targets: ['user:9091']
 
   - job_name: 'folder'
     static_configs:
-      - targets: ['folder:8005']
+      - targets: ['folder:9095']
 
   - job_name: 'questionnaire'
     static_configs:
-      - targets: ['questionnaire:8006']
+      - targets: ['questionnaire:9096']
 
   - job_name: 'node exporter'
     static_configs:
