@@ -134,7 +134,7 @@ func (r *EmailRepository) FindEmail(login string, ctx context.Context) error {
 
 func (r *EmailRepository) GetAllIncoming(login string, offset, limit int64, ctx context.Context) ([]*domain.Email, error) {
 	query := `
-		SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+		SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
 		FROM email e
 		LEFT JOIN email_file ef ON e.id = ef.email_id
 		LEFT JOIN file f ON ef.file_id = f.id
@@ -179,7 +179,7 @@ func (r *EmailRepository) GetAllIncoming(login string, offset, limit int64, ctx 
 
 func (r *EmailRepository) GetAllSent(login string, offset, limit int64, ctx context.Context) ([]*domain.Email, error) {
 	query := `
-		SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+		SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
 		FROM email e
 		LEFT JOIN email_file ef ON e.id = ef.email_id
 		LEFT JOIN file f ON ef.file_id = f.id
@@ -225,7 +225,7 @@ func (r *EmailRepository) GetAllSent(login string, offset, limit int64, ctx cont
 
 func (r *EmailRepository) GetAllDraft(login string, offset, limit int64, ctx context.Context) ([]*domain.Email, error) {
 	query := `
-		SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+		SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
 		FROM email e
 		LEFT JOIN email_file ef ON e.id = ef.email_id
 		LEFT JOIN file f ON ef.file_id = f.id
@@ -270,7 +270,7 @@ func (r *EmailRepository) GetAllDraft(login string, offset, limit int64, ctx con
 
 func (r *EmailRepository) GetAllSpam(login string, offset, limit int64, ctx context.Context) ([]*domain.Email, error) {
 	query := `
-		SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+		SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
 		FROM email e
 		LEFT JOIN email_file ef ON e.id = ef.email_id
 		LEFT JOIN file f ON ef.file_id = f.id
@@ -315,7 +315,7 @@ func (r *EmailRepository) GetAllSpam(login string, offset, limit int64, ctx cont
 
 func (r *EmailRepository) GetByID(id uint64, login string, ctx context.Context) (*domain.Email, error) {
 	query := `
-		SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+		SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
 		FROM email e
 		LEFT JOIN email_file ef ON e.id = ef.email_id
 		LEFT JOIN file f ON ef.file_id = f.id
