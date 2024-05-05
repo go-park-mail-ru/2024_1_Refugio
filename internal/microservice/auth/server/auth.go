@@ -19,11 +19,16 @@ import (
 // AuthServer handles RPC calls for the AuthService.
 type AuthServer struct {
 	proto.UnimplementedAuthServiceServer
+	sessionServiceClient session_proto.SessionServiceClient
+	userServiceClient    user_proto.UserServiceClient
 }
 
 // NewAuthServer creates a new instance of AuthServer.
-func NewAuthServer() *AuthServer {
-	return &AuthServer{}
+func NewAuthServer(sessionClient session_proto.SessionServiceClient, userClient user_proto.UserServiceClient) *AuthServer {
+	return &AuthServer{
+		sessionServiceClient: sessionClient,
+		userServiceClient:    userClient,
+	}
 }
 
 // Login handles user login.
@@ -39,20 +44,13 @@ func (as *AuthServer) Login(ctx context.Context, input *proto.LoginRequest) (*pr
 		return nil, fmt.Errorf("domain in the login is not suitable")
 	}
 
-	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.UserService))
-	if err != nil {
-		return nil, fmt.Errorf("invalid connection")
-	}
-	defer conn.Close()
-
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("metadata error")
 	}
 	value := md.Get("requestID")
 
-	userServiceClient := user_proto.NewUserServiceClient(conn)
-	user, errLogin := userServiceClient.GetUserByLogin(
+	user, errLogin := as.userServiceClient.GetUserByLogin(
 		metadata.NewOutgoingContext(ctx,
 			metadata.New(map[string]string{"requestID": value[0]})),
 		&user_proto.GetUserByLoginRequest{Login: input.Login, Password: input.Password},
@@ -61,14 +59,7 @@ func (as *AuthServer) Login(ctx context.Context, input *proto.LoginRequest) (*pr
 		return &proto.LoginReply{LoginStatus: false}, fmt.Errorf("login failed")
 	}
 
-	conn2, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.SessionService))
-	if err != nil {
-		return nil, fmt.Errorf("invalid connection")
-	}
-	defer conn2.Close()
-
-	sessionServiceClient := session_proto.NewSessionServiceClient(conn2)
-	session, errStatus := sessionServiceClient.CreateSession(
+	session, errStatus := as.sessionServiceClient.CreateSession(
 		metadata.NewOutgoingContext(ctx,
 			metadata.New(map[string]string{"requestID": value[0]})),
 		&session_proto.CreateSessionRequest{Session: &session_proto.Session{UserId: user.User.Id,

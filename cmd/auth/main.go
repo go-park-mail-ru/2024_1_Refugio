@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	_ "github.com/jackc/pgx/stdlib"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 	"log"
 	"net"
@@ -11,16 +9,37 @@ import (
 	"os"
 	"time"
 
+	_ "github.com/jackc/pgx/stdlib"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"mail/internal/microservice/auth/proto"
 	"mail/internal/microservice/interceptors"
+	"mail/internal/models/microservice_ports"
+	"mail/internal/pkg/utils/connect_microservice"
 
 	grpcAuth "mail/internal/microservice/auth/server"
+	session_proto "mail/internal/microservice/session/proto"
+	user_proto "mail/internal/microservice/user/proto"
 )
 
 func main() {
 	settingTime()
 
-	authGrpc := initializeAuth()
+	sessionServiceConn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.SessionService))
+	if err != nil {
+		log.Fatalf("connection with microservice session fail")
+	}
+	defer sessionServiceConn.Close()
+	sessionServiceClient := session_proto.NewSessionServiceClient(sessionServiceConn)
+
+	userServiceConn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.UserService))
+	if err != nil {
+		log.Fatalf("connection with microservice user fail")
+	}
+	defer userServiceConn.Close()
+	userServiceClient := user_proto.NewUserServiceClient(userServiceConn)
+
+	authGrpc := initializeAuth(sessionServiceClient, userServiceClient)
 
 	loggerInterceptorAccess := initializationInterceptorLogger()
 
@@ -38,8 +57,8 @@ func settingTime() {
 }
 
 // initializeAuth initializing authorization server
-func initializeAuth() *grpcAuth.AuthServer {
-	return grpcAuth.NewAuthServer()
+func initializeAuth(sessionServiceClient session_proto.SessionServiceClient, userServiceClient user_proto.UserServiceClient) *grpcAuth.AuthServer {
+	return grpcAuth.NewAuthServer(sessionServiceClient, userServiceClient)
 }
 
 // initializationInterceptorLogger initializing logger

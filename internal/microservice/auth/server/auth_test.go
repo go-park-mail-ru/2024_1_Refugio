@@ -35,12 +35,12 @@ func TestAuthServer_Login_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockUserServiceClient := user_mock.NewMockUserServer(ctrl)
-	mockSessionServiceClient := session_mock.NewMockSessionServer(ctrl)
+	mockUserServiceClient := user_mock.NewMockUserServiceClient(ctrl)
+	mockSessionServiceClient := session_mock.NewMockSessionServiceClient(ctrl)
 
-	server := &AuthServer{}
+	server := NewAuthServer(mockSessionServiceClient, mockUserServiceClient)
 
-	ctx := GetCTX()
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.New(map[string]string{"requestID": "testID"}))
 
 	loginRequest := &proto.LoginRequest{Login: "user@mailhub.su", Password: "password123"}
 
@@ -49,8 +49,7 @@ func TestAuthServer_Login_Success(t *testing.T) {
 	mockUserServiceClient.EXPECT().GetUserByLogin(gomock.Any(), gomock.Any()).Return(&user_proto.GetUserByLoginReply{User: mockUser}, nil)
 	mockSessionServiceClient.EXPECT().CreateSession(gomock.Any(), gomock.Any()).Return(&session_proto.CreateSessionReply{SessionId: "10101010"}, nil)
 
-	reply, err := server.Login(metadata.NewOutgoingContext(ctx,
-		metadata.New(map[string]string{"requestID": "testID"})), loginRequest)
+	reply, err := server.Login(ctx, loginRequest)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, reply)

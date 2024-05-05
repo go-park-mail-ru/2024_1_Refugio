@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"google.golang.org/grpc/metadata"
 	"log"
-	"mail/cmd/configs"
 	"net/http"
 	"os"
 	"time"
@@ -19,6 +18,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
 
+	"mail/cmd/configs"
 	"mail/internal/models/microservice_ports"
 	"mail/internal/monitoring"
 	"mail/internal/pkg/logger"
@@ -29,6 +29,7 @@ import (
 	migrate "github.com/rubenv/sql-migrate"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 
+	auth_proto "mail/internal/microservice/auth/proto"
 	session_proto "mail/internal/microservice/session/proto"
 	authHand "mail/internal/pkg/auth/delivery/http"
 	emailHand "mail/internal/pkg/email/delivery/http"
@@ -56,7 +57,14 @@ func main() {
 	loggerMiddlewareAccess := initializeMiddlewareLogger()
 
 	sessionsManager := initializeSessionsManager()
-	authHandler := initializeAuthHandler(sessionsManager)
+
+	authServiceConn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.AuthService))
+	if err != nil {
+		log.Fatalf("connection with microservice auth fail")
+	}
+	defer authServiceConn.Close()
+	authHandler := initializeAuthHandler(sessionsManager, auth_proto.NewAuthServiceClient(authServiceConn))
+
 	userHandler := initializeUserHandler(sessionsManager)
 	emailHandler := initializeEmailHandler(sessionsManager)
 	folderHandler := initializeFolderHandler(sessionsManager)
@@ -117,9 +125,10 @@ func initializeSessionsManager() *session.SessionsManager {
 }
 
 // initializeAuthHandler initializing authorization handler
-func initializeAuthHandler(sessionsManager *session.SessionsManager) *authHand.AuthHandler {
+func initializeAuthHandler(sessionsManager *session.SessionsManager, authServiceClient auth_proto.AuthServiceClient) *authHand.AuthHandler {
 	return &authHand.AuthHandler{
-		Sessions: sessionsManager,
+		Sessions:          sessionsManager,
+		AuthServiceClient: authServiceClient,
 	}
 }
 

@@ -25,7 +25,8 @@ var (
 
 // AuthHandler handles user-related HTTP requests.
 type AuthHandler struct {
-	Sessions domainSession.SessionsManager
+	Sessions          domainSession.SessionsManager
+	AuthServiceClient auth_proto.AuthServiceClient
 }
 
 // InitializationAuthHandler initializes the user handler with the provided user handler.
@@ -66,15 +67,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.AuthService))
-	if err != nil {
-		response.HandleError(w, http.StatusInternalServerError, "connection fail")
-		return
-	}
-	defer conn.Close()
-
-	authServiceClient := auth_proto.NewAuthServiceClient(conn)
-	sessionId, errStatus := authServiceClient.Login(
+	sessionId, errStatus := ah.AuthServiceClient.Login(
 		metadata.NewOutgoingContext(r.Context(),
 			metadata.New(map[string]string{"requestID": r.Context().Value("requestID").(string)})),
 		&auth_proto.LoginRequest{Login: credentials.Login, Password: credentials.Password},
