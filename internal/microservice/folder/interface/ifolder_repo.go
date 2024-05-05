@@ -1,3 +1,5 @@
+//go:generate mockgen -source=./ifolder_repo.go -destination=../mock/folder_repo_mock.go -package=mock
+
 package _interface
 
 import (

@@ -8,7 +8,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
-	mock "mail/internal/microservice/email/mocks"
+	mock "mail/internal/microservice/email/mock"
 	emailCore "mail/internal/microservice/models/domain_models"
 	converters "mail/internal/models/delivery_converters"
 	emailApi "mail/internal/models/delivery_models"

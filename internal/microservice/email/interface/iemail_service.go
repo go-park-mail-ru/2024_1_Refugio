@@ -1,3 +1,5 @@
+//go:generate mockgen -source=./iemail_service.go -destination=../mock/email_service_mock.go -package=mock
+
 package _interface
 
 import (

@@ -1,3 +1,5 @@
+//go:generate mockgen -source=./ifolder_service.go -destination=../mock/folder_service_mock.go -package=mock
+
 package _interface
 
 import (
@@ -25,6 +27,12 @@ type FolderUseCase interface {
 	// CheckFolderProfile checking that the folder belongs to the user.
 	CheckFolderProfile(folderID uint32, profileID uint32, ctx context.Context) (bool, error)
 
+	// CheckEmailProfile checking that the email belongs to the user.
+	CheckEmailProfile(emailID uint32, profileID uint32, ctx context.Context) (bool, error)
+
 	// GetAllEmailsInFolder get all emails in folder as user.
 	GetAllEmailsInFolder(folderID, profileId, limit, offset uint32, ctx context.Context) ([]*folderCore.Email, error)
+
+	// DeleteEmailInFolder delete email in folder.
+	DeleteEmailInFolder(folderID uint32, emailID uint32, ctx context.Context) (bool, error)
 }
