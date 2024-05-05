@@ -30,7 +30,9 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 
 	auth_proto "mail/internal/microservice/auth/proto"
+	question_proto "mail/internal/microservice/questionnaire/proto"
 	session_proto "mail/internal/microservice/session/proto"
+	user_proto "mail/internal/microservice/user/proto"
 	authHand "mail/internal/pkg/auth/delivery/http"
 	emailHand "mail/internal/pkg/email/delivery/http"
 	folderHand "mail/internal/pkg/folder/delivery/http"
@@ -56,7 +58,12 @@ func main() {
 
 	loggerMiddlewareAccess := initializeMiddlewareLogger()
 
-	sessionsManager := initializeSessionsManager()
+	sessionManagerServiceConn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.SessionService))
+	if err != nil {
+		log.Fatalf("connection with microservice auth fail")
+	}
+	defer sessionManagerServiceConn.Close()
+	sessionsManager := initializeSessionsManager(session_proto.NewSessionServiceClient(sessionManagerServiceConn))
 
 	authServiceConn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.AuthService))
 	if err != nil {
@@ -65,10 +72,22 @@ func main() {
 	defer authServiceConn.Close()
 	authHandler := initializeAuthHandler(sessionsManager, auth_proto.NewAuthServiceClient(authServiceConn))
 
-	userHandler := initializeUserHandler(sessionsManager)
+	userServiceConn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.UserService))
+	if err != nil {
+		log.Fatalf("connection with microservice user fail")
+	}
+	defer userServiceConn.Close()
+	userHandler := initializeUserHandler(sessionsManager, user_proto.NewUserServiceClient(userServiceConn))
+
 	emailHandler := initializeEmailHandler(sessionsManager)
 	folderHandler := initializeFolderHandler(sessionsManager)
-	questionHandler := initializeQuestionHandler(sessionsManager)
+
+	questionServiceConn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.QuestionService))
+	if err != nil {
+		log.Fatalf("connection with microservice question fail")
+	}
+	defer questionServiceConn.Close()
+	questionHandler := initializeQuestionHandler(sessionsManager, question_proto.NewQuestionServiceClient(questionServiceConn))
 
 	router := setupRouter(authHandler, userHandler, emailHandler, folderHandler, questionHandler, loggerMiddlewareAccess)
 
@@ -115,11 +134,11 @@ func migrateDatabase(db *sql.DB) {
 }
 
 // initializeSessionsManager initializing session manager
-func initializeSessionsManager() *session.SessionsManager {
-	sessionsManager := session.NewSessionsManager()
+func initializeSessionsManager(sessionServiceClient session_proto.SessionServiceClient) *session.SessionsManager {
+	sessionsManager := session.NewSessionsManager(sessionServiceClient)
 	session.InitializationGlobalSessionManager(sessionsManager)
 
-	startSessionCleaner(24 * time.Hour)
+	startSessionCleaner(24*time.Hour, sessionServiceClient)
 
 	return sessionsManager
 }
@@ -140,9 +159,10 @@ func initializeEmailHandler(sessionsManager *session.SessionsManager) *emailHand
 }
 
 // initializeUserHandler initializing user handler
-func initializeUserHandler(sessionsManager *session.SessionsManager) *userHand.UserHandler {
+func initializeUserHandler(sessionsManager *session.SessionsManager, userServiceClient user_proto.UserServiceClient) *userHand.UserHandler {
 	return &userHand.UserHandler{
-		Sessions: sessionsManager,
+		Sessions:          sessionsManager,
+		UserServiceClient: userServiceClient,
 	}
 }
 
@@ -154,9 +174,10 @@ func initializeFolderHandler(sessionsManager *session.SessionsManager) *folderHa
 }
 
 // initializeQuestionHandler initializing question handler
-func initializeQuestionHandler(sessionsManager *session.SessionsManager) *questionHand.QuestionHandler {
+func initializeQuestionHandler(sessionsManager *session.SessionsManager, questionServiceClient question_proto.QuestionServiceClient) *questionHand.QuestionHandler {
 	return &questionHand.QuestionHandler{
-		Sessions: sessionsManager,
+		Sessions:              sessionsManager,
+		QuestionServiceClient: questionServiceClient,
 	}
 }
 
@@ -273,7 +294,7 @@ func startServer(router http.Handler) {
 }
 
 // StartSessionCleaner starting session cleanup
-func startSessionCleaner(interval time.Duration) {
+func startSessionCleaner(interval time.Duration, sessionServiceClient session_proto.SessionServiceClient) {
 	ticker := time.NewTicker(interval)
 	go func() {
 		for {
@@ -288,14 +309,6 @@ func startSessionCleaner(interval time.Duration) {
 				c := context.WithValue(context.Background(), "logger", logger.InitializationBdLog(f))
 				ctx := context.WithValue(c, "requestID", "DeleteExpiredSessionsNULL")
 
-				conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.SessionService))
-				if err != nil {
-					fmt.Printf("connection fail")
-					conn.Close()
-					return
-				}
-
-				sessionServiceClient := session_proto.NewSessionServiceClient(conn)
 				req, err := sessionServiceClient.CleanupExpiredSessions(
 					metadata.NewOutgoingContext(ctx,
 						metadata.New(map[string]string{"requestID": ctx.Value("requestID").(string)})),
@@ -303,12 +316,9 @@ func startSessionCleaner(interval time.Duration) {
 				)
 				if err != nil {
 					fmt.Printf("Error cleaning expired sessions: %v\n", err)
-					conn.Close()
 					return
 				}
 				fmt.Println(req)
-
-				conn.Close()
 			}
 		}
 	}()

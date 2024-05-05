@@ -3,7 +3,6 @@ package http
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
 	"google.golang.org/grpc/metadata"
 	"io"
 	"net/http"
@@ -11,16 +10,18 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"github.com/gorilla/mux"
+
 	"mail/internal/microservice/models/proto_converters"
 	"mail/internal/microservice/user/proto"
-	converters "mail/internal/models/delivery_converters"
-	api "mail/internal/models/delivery_models"
-	"mail/internal/models/microservice_ports"
-	response "mail/internal/models/response"
-	domainSession "mail/internal/pkg/session/interface"
-	"mail/internal/pkg/utils/connect_microservice"
 	"mail/internal/pkg/utils/generate_filename"
 	"mail/internal/pkg/utils/sanitize"
+
+	user_proto "mail/internal/microservice/user/proto"
+	converters "mail/internal/models/delivery_converters"
+	api "mail/internal/models/delivery_models"
+	response "mail/internal/models/response"
+	domainSession "mail/internal/pkg/session/interface"
 )
 
 var (
@@ -30,7 +31,8 @@ var (
 
 // UserHandler handles user-related HTTP requests.
 type UserHandler struct {
-	Sessions domainSession.SessionsManager
+	Sessions          domainSession.SessionsManager
+	UserServiceClient user_proto.UserServiceClient
 }
 
 // InitializationUserHandler initializes the user handler with the provided user handler.
@@ -66,15 +68,7 @@ func (uh *UserHandler) VerifyAuth(w http.ResponseWriter, r *http.Request) {
 func (uh *UserHandler) GetUserBySession(w http.ResponseWriter, r *http.Request) {
 	sessionUser := uh.Sessions.GetSession(r, r.Context())
 
-	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.UserService))
-	if err != nil {
-		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
-		return
-	}
-	defer conn.Close()
-
-	userServiceClient := proto.NewUserServiceClient(conn)
-	userDataProto, err := userServiceClient.GetUser(
+	userDataProto, err := uh.UserServiceClient.GetUser(
 		metadata.NewOutgoingContext(r.Context(),
 			metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 		&proto.GetUserRequest{Id: sessionUser.UserID},
@@ -123,15 +117,7 @@ func (uh *UserHandler) UpdateUserData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.UserService))
-	if err != nil {
-		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
-		return
-	}
-	defer conn.Close()
-
-	userServiceClient := proto.NewUserServiceClient(conn)
-	userUpdateProto, err := userServiceClient.UpdateUser(
+	userUpdateProto, err := uh.UserServiceClient.UpdateUser(
 		metadata.NewOutgoingContext(r.Context(),
 			metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 		&proto.UpdateUserRequest{User: proto_converters.UserConvertCoreInProto(*converters.UserConvertApiInCore(updatedUser))},
@@ -172,15 +158,7 @@ func (uh *UserHandler) DeleteUserData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.UserService))
-	if err != nil {
-		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
-		return
-	}
-	defer conn.Close()
-
-	userServiceClient := proto.NewUserServiceClient(conn)
-	deleted, err := userServiceClient.DeleteUserById(
+	deleted, err := uh.UserServiceClient.DeleteUserById(
 		metadata.NewOutgoingContext(r.Context(),
 			metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 		&proto.DeleteUserByIdRequest{Id: sessionUser.UserID},
@@ -247,16 +225,8 @@ func (uh *UserHandler) UploadUserAvatar(w http.ResponseWriter, r *http.Request) 
 
 	sessionUser := uh.Sessions.GetSession(r, r.Context())
 
-	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.UserService))
-	if err != nil {
-		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
-		return
-	}
-	defer conn.Close()
-
-	userServiceClient := proto.NewUserServiceClient(conn)
 	avatar := "https://mailhub.su/media/" + uniqueFileName
-	_, errAvatar := userServiceClient.UploadUserAvatar(
+	_, errAvatar := uh.UserServiceClient.UploadUserAvatar(
 		metadata.NewOutgoingContext(r.Context(),
 			metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 		&proto.UploadUserAvatarRequest{Id: sessionUser.UserID, Avatar: avatar},
@@ -284,15 +254,7 @@ func (uh *UserHandler) UploadUserAvatar(w http.ResponseWriter, r *http.Request) 
 func (uh *UserHandler) DeleteUserAvatar(w http.ResponseWriter, r *http.Request) {
 	sessionUser := uh.Sessions.GetSession(r, r.Context())
 
-	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.UserService))
-	if err != nil {
-		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
-		return
-	}
-	defer conn.Close()
-
-	userServiceClient := proto.NewUserServiceClient(conn)
-	deleted, err := userServiceClient.DeleteUserAvatar(
+	deleted, err := uh.UserServiceClient.DeleteUserAvatar(
 		metadata.NewOutgoingContext(r.Context(),
 			metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 		&proto.DeleteUserAvatarRequest{Id: sessionUser.UserID},

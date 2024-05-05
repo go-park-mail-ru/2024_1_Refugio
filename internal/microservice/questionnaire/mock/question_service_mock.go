@@ -35,7 +35,7 @@ func (m *MockQuestionAnswerUseCase) EXPECT() *MockQuestionAnswerUseCaseMockRecor
 	return m.recorder
 }
 
-// AddAnswer mocks base method.
+// AddAnswer mock base method.
 func (m *MockQuestionAnswerUseCase) AddAnswer(newAnswer *domain_models.Answer, ctx context.Context) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddAnswer", newAnswer, ctx)
@@ -50,7 +50,7 @@ func (mr *MockQuestionAnswerUseCaseMockRecorder) AddAnswer(newAnswer, ctx interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddAnswer", reflect.TypeOf((*MockQuestionAnswerUseCase)(nil).AddAnswer), newAnswer, ctx)
 }
 
-// AddQuestion mocks base method.
+// AddQuestion mock base method.
 func (m *MockQuestionAnswerUseCase) AddQuestion(newQuestion *domain_models.Question, ctx context.Context) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddQuestion", newQuestion, ctx)
@@ -65,7 +65,7 @@ func (mr *MockQuestionAnswerUseCaseMockRecorder) AddQuestion(newQuestion, ctx in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddQuestion", reflect.TypeOf((*MockQuestionAnswerUseCase)(nil).AddQuestion), newQuestion, ctx)
 }
 
-// GetQuestions mocks base method.
+// GetQuestions mock base method.
 func (m *MockQuestionAnswerUseCase) GetQuestions(ctx context.Context) ([]*domain_models.Question, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetQuestions", ctx)
@@ -80,7 +80,7 @@ func (mr *MockQuestionAnswerUseCaseMockRecorder) GetQuestions(ctx interface{}) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetQuestions", reflect.TypeOf((*MockQuestionAnswerUseCase)(nil).GetQuestions), ctx)
 }
 
-// GetStatistics mocks base method.
+// GetStatistics mock base method.
 func (m *MockQuestionAnswerUseCase) GetStatistics(ctx context.Context) ([]*domain_models.Statistics, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetStatistics", ctx)

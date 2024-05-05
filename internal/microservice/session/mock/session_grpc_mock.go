@@ -36,7 +36,7 @@ func (m *MockSessionServiceClient) EXPECT() *MockSessionServiceClientMockRecorde
 	return m.recorder
 }
 
-// CleanupExpiredSessions mocks base method.
+// CleanupExpiredSessions mock base method.
 func (m *MockSessionServiceClient) CleanupExpiredSessions(ctx context.Context, in *proto.CleanupExpiredSessionsRequest, opts ...grpc.CallOption) (*proto.CleanupExpiredSessionsReply, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, in}
@@ -56,7 +56,7 @@ func (mr *MockSessionServiceClientMockRecorder) CleanupExpiredSessions(ctx, in i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CleanupExpiredSessions", reflect.TypeOf((*MockSessionServiceClient)(nil).CleanupExpiredSessions), varargs...)
 }
 
-// CreateSession mocks base method.
+// CreateSession mock base method.
 func (m *MockSessionServiceClient) CreateSession(ctx context.Context, in *proto.CreateSessionRequest, opts ...grpc.CallOption) (*proto.CreateSessionReply, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, in}
@@ -76,7 +76,7 @@ func (mr *MockSessionServiceClientMockRecorder) CreateSession(ctx, in interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSession", reflect.TypeOf((*MockSessionServiceClient)(nil).CreateSession), varargs...)
 }
 
-// DeleteSession mocks base method.
+// DeleteSession mock base method.
 func (m *MockSessionServiceClient) DeleteSession(ctx context.Context, in *proto.DeleteSessionRequest, opts ...grpc.CallOption) (*proto.DeleteSessionReply, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, in}
@@ -96,7 +96,7 @@ func (mr *MockSessionServiceClientMockRecorder) DeleteSession(ctx, in interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSession", reflect.TypeOf((*MockSessionServiceClient)(nil).DeleteSession), varargs...)
 }
 
-// GetLoginBySession mocks base method.
+// GetLoginBySession mock base method.
 func (m *MockSessionServiceClient) GetLoginBySession(ctx context.Context, in *proto.GetLoginBySessionRequest, opts ...grpc.CallOption) (*proto.GetLoginBySessionReply, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, in}
@@ -116,7 +116,7 @@ func (mr *MockSessionServiceClientMockRecorder) GetLoginBySession(ctx, in interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLoginBySession", reflect.TypeOf((*MockSessionServiceClient)(nil).GetLoginBySession), varargs...)
 }
 
-// GetProfileIDBySession mocks base method.
+// GetProfileIDBySession mock base method.
 func (m *MockSessionServiceClient) GetProfileIDBySession(ctx context.Context, in *proto.GetLoginBySessionRequest, opts ...grpc.CallOption) (*proto.GetProfileIDBySessionReply, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, in}
@@ -136,7 +136,7 @@ func (mr *MockSessionServiceClientMockRecorder) GetProfileIDBySession(ctx, in in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProfileIDBySession", reflect.TypeOf((*MockSessionServiceClient)(nil).GetProfileIDBySession), varargs...)
 }
 
-// GetSession mocks base method.
+// GetSession mock base method.
 func (m *MockSessionServiceClient) GetSession(ctx context.Context, in *proto.GetSessionRequest, opts ...grpc.CallOption) (*proto.GetSessionReply, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, in}
@@ -179,7 +179,7 @@ func (m *MockSessionServiceServer) EXPECT() *MockSessionServiceServerMockRecorde
 	return m.recorder
 }
 
-// CleanupExpiredSessions mocks base method.
+// CleanupExpiredSessions mock base method.
 func (m *MockSessionServiceServer) CleanupExpiredSessions(arg0 context.Context, arg1 *proto.CleanupExpiredSessionsRequest) (*proto.CleanupExpiredSessionsReply, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CleanupExpiredSessions", arg0, arg1)
@@ -194,7 +194,7 @@ func (mr *MockSessionServiceServerMockRecorder) CleanupExpiredSessions(arg0, arg
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CleanupExpiredSessions", reflect.TypeOf((*MockSessionServiceServer)(nil).CleanupExpiredSessions), arg0, arg1)
 }
 
-// CreateSession mocks base method.
+// CreateSession mock base method.
 func (m *MockSessionServiceServer) CreateSession(arg0 context.Context, arg1 *proto.CreateSessionRequest) (*proto.CreateSessionReply, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateSession", arg0, arg1)
@@ -209,7 +209,7 @@ func (mr *MockSessionServiceServerMockRecorder) CreateSession(arg0, arg1 interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSession", reflect.TypeOf((*MockSessionServiceServer)(nil).CreateSession), arg0, arg1)
 }
 
-// DeleteSession mocks base method.
+// DeleteSession mock base method.
 func (m *MockSessionServiceServer) DeleteSession(arg0 context.Context, arg1 *proto.DeleteSessionRequest) (*proto.DeleteSessionReply, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteSession", arg0, arg1)
@@ -224,7 +224,7 @@ func (mr *MockSessionServiceServerMockRecorder) DeleteSession(arg0, arg1 interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSession", reflect.TypeOf((*MockSessionServiceServer)(nil).DeleteSession), arg0, arg1)
 }
 
-// GetLoginBySession mocks base method.
+// GetLoginBySession mock base method.
 func (m *MockSessionServiceServer) GetLoginBySession(arg0 context.Context, arg1 *proto.GetLoginBySessionRequest) (*proto.GetLoginBySessionReply, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetLoginBySession", arg0, arg1)
@@ -239,7 +239,7 @@ func (mr *MockSessionServiceServerMockRecorder) GetLoginBySession(arg0, arg1 int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLoginBySession", reflect.TypeOf((*MockSessionServiceServer)(nil).GetLoginBySession), arg0, arg1)
 }
 
-// GetProfileIDBySession mocks base method.
+// GetProfileIDBySession mock base method.
 func (m *MockSessionServiceServer) GetProfileIDBySession(arg0 context.Context, arg1 *proto.GetLoginBySessionRequest) (*proto.GetProfileIDBySessionReply, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetProfileIDBySession", arg0, arg1)
@@ -254,7 +254,7 @@ func (mr *MockSessionServiceServerMockRecorder) GetProfileIDBySession(arg0, arg1
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProfileIDBySession", reflect.TypeOf((*MockSessionServiceServer)(nil).GetProfileIDBySession), arg0, arg1)
 }
 
-// GetSession mocks base method.
+// GetSession mock base method.
 func (m *MockSessionServiceServer) GetSession(arg0 context.Context, arg1 *proto.GetSessionRequest) (*proto.GetSessionReply, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetSession", arg0, arg1)
@@ -269,7 +269,7 @@ func (mr *MockSessionServiceServerMockRecorder) GetSession(arg0, arg1 interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSession", reflect.TypeOf((*MockSessionServiceServer)(nil).GetSession), arg0, arg1)
 }
 
-// mustEmbedUnimplementedSessionServiceServer mocks base method.
+// mustEmbedUnimplementedSessionServiceServer mock base method.
 func (m *MockSessionServiceServer) mustEmbedUnimplementedSessionServiceServer() {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "mustEmbedUnimplementedSessionServiceServer")
@@ -304,7 +304,7 @@ func (m *MockUnsafeSessionServiceServer) EXPECT() *MockUnsafeSessionServiceServe
 	return m.recorder
 }
 
-// mustEmbedUnimplementedSessionServiceServer mocks base method.
+// mustEmbedUnimplementedSessionServiceServer mock base method.
 func (m *MockUnsafeSessionServiceServer) mustEmbedUnimplementedSessionServiceServer() {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "mustEmbedUnimplementedSessionServiceServer")

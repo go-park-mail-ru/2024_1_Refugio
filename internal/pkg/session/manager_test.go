@@ -1,346 +1,550 @@
 package session_test
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	domain "mail/internal/microservice/models/domain_models"
-	mock "mail/internal/microservice/session/mocks"
-	converters "mail/internal/models/delivery_converters"
-	"mail/internal/pkg/logger"
-	session "mail/internal/pkg/session"
-	"net/http/httptest"
-	"os"
-
-	"context"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
+
+	"mail/internal/microservice/session/mock"
+	"mail/internal/pkg/session"
+
+	session_proto "mail/internal/microservice/session/proto"
 )
 
-func GetCTX() context.Context {
-	requestID := "testID"
+func TestSessionsManager_SetSession_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-	f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	mockSessionServiceClient := mock.NewMockSessionServiceClient(ctrl)
+
+	sm := session.NewSessionsManager(mockSessionServiceClient)
+
+	mockSessionServiceClient.EXPECT().GetSession(gomock.Any(), gomock.Any()).
+		Return(&session_proto.GetSessionReply{
+			Session: &session_proto.Session{
+				SessionId: "123",
+				CsrfToken: "csrfToken",
+			},
+		}, nil)
+
+	req, err := http.NewRequest("GET", "/test", nil)
 	if err != nil {
-		fmt.Println("Failed to create logfile" + "log.txt")
+		t.Fatal(err)
 	}
-	defer f.Close()
+	rr := httptest.NewRecorder()
 
-	c := context.WithValue(context.Background(), "logger", logger.InitializationBdLog(f))
-	ctx := context.WithValue(c, "requestID", requestID)
-	return ctx
-}
-
-func TestSessionsManager_GetSession(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockSessionUseCase := mock.NewMockSessionUseCase(ctrl)
-	sessionManager := session.NewSessionsManager(mockSessionUseCase)
-
-	expectedSession := &domain.Session{
-		ID:           "session_id",
-		UserID:       1,
-		CreationDate: time.Now(),
-		Device:       "desktop",
-		LifeTime:     3600,
-		CsrfToken:    "csrf_token",
-	}
-	ctx := GetCTX()
-
-	mockSessionUseCase.EXPECT().
-		GetSession("session_id", ctx).
-		Return(expectedSession, nil).
-		Times(1)
-
-	req, _ := http.NewRequest("GET", "/", nil)
-	req.AddCookie(&http.Cookie{Name: "session_id", Value: "session_id"})
-
-	sessionModel := sessionManager.GetSession(req, ctx)
-
-	expectedSessionModel := converters.SessionConvertCoreInApi(*expectedSession)
-
-	if sessionModel.ID != expectedSessionModel.ID {
-		t.Errorf("Expected session ID %v, got %v", expectedSessionModel.ID, sessionModel.ID)
-	}
-}
-
-func TestSessionsManager_GetSession_Error(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockSessionUseCase := mock.NewMockSessionUseCase(ctrl)
-	sessionManager := session.NewSessionsManager(mockSessionUseCase)
-	ctx := GetCTX()
-
-	mockSessionUseCase.EXPECT().
-		GetSession("invalid_session_id", ctx).
-		Return(nil, errors.New("session not found")).
-		Times(1)
-
-	req, _ := http.NewRequest("GET", "/", nil)
-	req.AddCookie(&http.Cookie{Name: "session_id", Value: "invalid_session_id"})
-
-	sessionModel := sessionManager.GetSession(req, ctx)
-
-	if sessionModel != nil {
-		t.Errorf("Expected nil session, got %v", sessionModel)
-	}
-}
-
-func TestSessionsManager_Check(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockSessionUseCase := mock.NewMockSessionUseCase(ctrl)
-	sessionManager := session.NewSessionsManager(mockSessionUseCase)
-
-	expectedSession := &domain.Session{
-		ID:           "session_id",
-		UserID:       1,
-		CreationDate: time.Now(),
-		Device:       "desktop",
-		LifeTime:     3600,
-		CsrfToken:    "csrf_token",
-	}
-	ctx := GetCTX()
-
-	mockSessionUseCase.EXPECT().
-		GetSession("session_id", ctx).
-		Return(expectedSession, nil).
-		Times(1)
-
-	req, _ := http.NewRequest("GET", "/", nil)
-	req.Header.Set("X-CSRF-Token", "csrf_token")
-	req.AddCookie(&http.Cookie{Name: "session_id", Value: "session_id"})
-
-	sess, err := sessionManager.Check(req, ctx)
+	err = sm.SetSession("123", rr, req, context.WithValue(context.Background(), "requestID", "testID"))
 	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
+		t.Fatalf("Unexpected error: %v", err)
 	}
-	if sess == nil {
-		t.Error("Expected non-nil session")
+
+	if rr.Header().Get("X-Csrf-Token") != "csrfToken" {
+		t.Errorf("Unexpected CSRF token in response header: got %s, want csrfToken", rr.Header().Get("X-Csrf-Token"))
 	}
-}
 
-func TestSessionsManager_Check_NoCSRFToken(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockSessionUseCase := mock.NewMockSessionUseCase(ctrl)
-	sessionManager := session.NewSessionsManager(mockSessionUseCase)
-	ctx := GetCTX()
-
-	req, _ := http.NewRequest("GET", "/", nil)
-	req.AddCookie(&http.Cookie{Name: "session_id", Value: "session_id"})
-
-	sess, err := sessionManager.Check(req, ctx)
-	if err == nil {
-		t.Error("Expected error, got nil")
+	cookie := rr.Result().Cookies()[0]
+	if cookie.Name != "session_id" {
+		t.Errorf("Unexpected cookie name: got %s, want session_id", cookie.Name)
 	}
-	if sess != nil {
-		t.Errorf("Expected nil session, got %v", sess)
+	if cookie.Value != "123" {
+		t.Errorf("Unexpected cookie value: got %s, want 123", cookie.Value)
 	}
 }
 
-func TestSessionsManager_Check_NoSessionCookie(t *testing.T) {
+func TestSessionsManager_SetSession_SessionServiceError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockSessionUseCase := mock.NewMockSessionUseCase(ctrl)
-	sessionManager := session.NewSessionsManager(mockSessionUseCase)
-	ctx := GetCTX()
+	mockSessionServiceClient := mock.NewMockSessionServiceClient(ctrl)
 
-	req, _ := http.NewRequest("GET", "/", nil)
-	req.Header.Set("X-CSRF-Token", "csrf_token")
+	sm := session.NewSessionsManager(mockSessionServiceClient)
 
-	sess, err := sessionManager.Check(req, ctx)
-	if err == nil {
-		t.Error("Expected error, got nil")
+	mockSessionServiceClient.EXPECT().GetSession(gomock.Any(), gomock.Any()).
+		Return(nil, fmt.Errorf("session not found"))
+
+	req, err := http.NewRequest("GET", "/test", nil)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if sess != nil {
-		t.Errorf("Expected nil session, got %v", sess)
+	rr := httptest.NewRecorder()
+
+	err = sm.SetSession("123", rr, req, context.WithValue(context.Background(), "requestID", "testID"))
+
+	assert.Error(t, err)
+}
+
+func TestSessionsManager_GetSession_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockSessionServiceClient := mock.NewMockSessionServiceClient(ctrl)
+
+	sm := session.NewSessionsManager(mockSessionServiceClient)
+
+	req, err := http.NewRequest("GET", "/test", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.AddCookie(&http.Cookie{Name: "session_id", Value: "123"})
+
+	mockSessionServiceClient.EXPECT().GetSession(gomock.Any(), gomock.Any()).
+		Return(&session_proto.GetSessionReply{
+			Session: &session_proto.Session{
+				SessionId: "123",
+				CsrfToken: "csrfToken",
+			},
+		}, nil)
+
+	session := sm.GetSession(req, context.WithValue(context.Background(), "requestID", "testID"))
+
+	if session == nil {
+		t.Error("Expected session, got nil")
+	}
+	if session.ID != "123" {
+		t.Errorf("Unexpected session ID: got %s, want 123", session.ID)
+	}
+	if session.CsrfToken != "csrfToken" {
+		t.Errorf("Unexpected CSRF token: got %s, want csrfToken", session.CsrfToken)
 	}
 }
 
-func TestSessionsManager_Check_SessionNotFound(t *testing.T) {
+func TestSessionsManager_GetSession_SessionNotFound(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockSessionUseCase := mock.NewMockSessionUseCase(ctrl)
-	sessionManager := session.NewSessionsManager(mockSessionUseCase)
-	ctx := GetCTX()
+	mockSessionServiceClient := mock.NewMockSessionServiceClient(ctrl)
 
-	mockSessionUseCase.EXPECT().
-		GetSession("invalid_session_id", ctx).
-		Return(nil, errors.New("no session found")).
-		Times(1)
+	sm := session.NewSessionsManager(mockSessionServiceClient)
 
-	req, _ := http.NewRequest("GET", "/", nil)
-	req.Header.Set("X-CSRF-Token", "csrf_token")
-	req.AddCookie(&http.Cookie{Name: "session_id", Value: "invalid_session_id"})
-
-	sess, err := sessionManager.Check(req, ctx)
-	if err == nil {
-		t.Error("Expected error, got nil")
+	req, err := http.NewRequest("GET", "/test", nil)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if sess != nil {
-		t.Errorf("Expected nil session, got %v", sess)
+	req.AddCookie(&http.Cookie{Name: "session_id", Value: "123"})
+
+	mockSessionServiceClient.EXPECT().GetSession(gomock.Any(), gomock.Any()).
+		Return(nil, fmt.Errorf("session not found"))
+
+	session := sm.GetSession(req, context.WithValue(context.Background(), "requestID", "testID"))
+
+	if session != nil {
+		t.Error("Expected nil session, got non-nil session")
 	}
 }
 
-func TestSessionsManager_Check_CSRFTokenMismatch(t *testing.T) {
+func TestSessionsManager_Check_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockSessionUseCase := mock.NewMockSessionUseCase(ctrl)
-	sessionManager := session.NewSessionsManager(mockSessionUseCase)
-	ctx := GetCTX()
+	mockSessionServiceClient := mock.NewMockSessionServiceClient(ctrl)
 
-	mockSessionUseCase.EXPECT().
-		GetSession("session_id", ctx).
-		Return(&domain.Session{CsrfToken: "csrf_token"}, nil).
-		Times(1)
+	sm := session.NewSessionsManager(mockSessionServiceClient)
 
-	req, _ := http.NewRequest("GET", "/", nil)
-	req.Header.Set("X-CSRF-Token", "invalid_csrf_token")
-	req.AddCookie(&http.Cookie{Name: "session_id", Value: "session_id"})
+	req, err := http.NewRequest("GET", "/test", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.AddCookie(&http.Cookie{Name: "session_id", Value: "123"})
+	req.Header.Set("X-Csrf-Token", "csrfToken")
 
-	sess, err := sessionManager.Check(req, ctx)
+	mockSessionServiceClient.EXPECT().GetSession(gomock.Any(), gomock.Any()).
+		Return(&session_proto.GetSessionReply{
+			Session: &session_proto.Session{
+				SessionId: "123",
+				CsrfToken: "csrfToken",
+			},
+		}, nil)
+
+	session, err := sm.Check(req, context.WithValue(context.Background(), "requestID", "testID"))
+
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+	if session == nil {
+		t.Error("Expected session, got nil")
+	}
+	if session.ID != "123" {
+		t.Errorf("Unexpected session ID: got %s, want 123", session.ID)
+	}
+}
+
+func TestSessionsManager_Check_NoCsrf(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockSessionServiceClient := mock.NewMockSessionServiceClient(ctrl)
+
+	sm := session.NewSessionsManager(mockSessionServiceClient)
+
+	req, err := http.NewRequest("GET", "/test", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	session, err := sm.Check(req, context.WithValue(context.Background(), "requestID", "testID"))
+
+	assert.Error(t, err)
+	assert.Nil(t, session)
+}
+
+func TestSessionsManager_Check_NoSession(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockSessionServiceClient := mock.NewMockSessionServiceClient(ctrl)
+
+	sm := session.NewSessionsManager(mockSessionServiceClient)
+
+	req, err := http.NewRequest("GET", "/test", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("X-Csrf-Token", "csrfToken")
+
+	session, err := sm.Check(req, context.WithValue(context.Background(), "requestID", "testID"))
+
+	assert.Error(t, err)
+	assert.Nil(t, session)
+}
+
+func TestSessionsManager_Check_ErrorNotSession(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockSessionServiceClient := mock.NewMockSessionServiceClient(ctrl)
+
+	sm := session.NewSessionsManager(mockSessionServiceClient)
+
+	req, err := http.NewRequest("GET", "/test", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.AddCookie(&http.Cookie{Name: "session_id", Value: "123"})
+	req.Header.Set("X-Csrf-Token", "csrfToken")
+
+	mockSessionServiceClient.EXPECT().
+		GetSession(gomock.Any(), gomock.Any()).
+		Return(nil, errors.New("session not found"))
+
+	session, err := sm.Check(req, context.WithValue(context.Background(), "requestID", "testID"))
+
+	assert.Error(t, err)
+	assert.Nil(t, session)
+}
+
+func TestSessionsManager_Check_ErrorCsrf(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockSessionServiceClient := mock.NewMockSessionServiceClient(ctrl)
+
+	sm := session.NewSessionsManager(mockSessionServiceClient)
+
+	req, err := http.NewRequest("GET", "/test", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.AddCookie(&http.Cookie{Name: "session_id", Value: "123"})
+	req.Header.Set("X-Csrf-Token", "csrfTokenFail")
+
+	mockSessionServiceClient.EXPECT().GetSession(gomock.Any(), gomock.Any()).
+		Return(&session_proto.GetSessionReply{
+			Session: &session_proto.Session{
+				SessionId: "123",
+				CsrfToken: "csrfToken",
+			},
+		}, nil)
+
+	session, err := sm.Check(req, context.WithValue(context.Background(), "requestID", "testID"))
+
+	assert.Error(t, err)
+	assert.Nil(t, session)
+}
+
+func TestSessionsManager_CheckLogin_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockSessionServiceClient := mock.NewMockSessionServiceClient(ctrl)
+
+	sm := session.NewSessionsManager(mockSessionServiceClient)
+
+	req, err := http.NewRequest("GET", "/test", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.AddCookie(&http.Cookie{Name: "session_id", Value: "123"})
+
+	mockSessionServiceClient.EXPECT().GetLoginBySession(gomock.Any(), gomock.Any()).
+		Return(&session_proto.GetLoginBySessionReply{Login: "user@mailhub.su"}, nil)
+
+	err = sm.CheckLogin("user@mailhub.su", req, context.WithValue(context.Background(), "requestID", "testID"))
+
+	assert.NoError(t, err)
+}
+
+func TestSessionsManager_CheckLogin_WrongLogin(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockSessionServiceClient := mock.NewMockSessionServiceClient(ctrl)
+
+	sm := session.NewSessionsManager(mockSessionServiceClient)
+
+	req, err := http.NewRequest("GET", "/test", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.AddCookie(&http.Cookie{Name: "session_id", Value: "123"})
+
+	mockSessionServiceClient.EXPECT().GetLoginBySession(gomock.Any(), gomock.Any()).
+		Return(&session_proto.GetLoginBySessionReply{Login: "anotheruser@mailhub.su"}, nil)
+
+	err = sm.CheckLogin("user@mailhub.su", req, context.WithValue(context.Background(), "requestID", "testID"))
+
+	assert.Error(t, err)
+}
+
+func TestSessionsManager_GetLoginBySession_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockSessionServiceClient := mock.NewMockSessionServiceClient(ctrl)
+
+	sm := session.NewSessionsManager(mockSessionServiceClient)
+
+	req, err := http.NewRequest("GET", "/test", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.AddCookie(&http.Cookie{Name: "session_id", Value: "123"})
+
+	mockSessionServiceClient.EXPECT().
+		GetLoginBySession(gomock.Any(), gomock.Any()).
+		Return(&session_proto.GetLoginBySessionReply{Login: "user@mailhub.su"}, nil)
+
+	login, err := sm.GetLoginBySession(req, context.WithValue(context.Background(), "requestID", "testID"))
+
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+	if login != "user@mailhub.su" {
+		t.Errorf("Unexpected login: got %s, want user@mailhub.su", login)
+	}
+}
+
+func TestSessionsManager_GetLoginBySession_NoSessionCookie(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockSessionServiceClient := mock.NewMockSessionServiceClient(ctrl)
+
+	sm := session.NewSessionsManager(mockSessionServiceClient)
+
+	req, err := http.NewRequest("GET", "/test", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.AddCookie(&http.Cookie{Name: "session_id", Value: "123"})
+
+	mockSessionServiceClient.EXPECT().GetLoginBySession(gomock.Any(), gomock.Any()).
+		Return(&session_proto.GetLoginBySessionReply{}, fmt.Errorf("no session found"))
+
+	login, err := sm.GetLoginBySession(req, context.WithValue(context.Background(), "requestID", "testID"))
+
 	if err == nil {
 		t.Error("Expected error, got nil")
 	}
-	if sess != nil {
-		t.Errorf("Expected nil session, got %v", sess)
+	if login != "" {
+		t.Errorf("Unexpected login: got %s, want empty string", login)
 	}
+}
+
+func TestSessionsManager_GetProfileIDBySessionID_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockSessionServiceClient := mock.NewMockSessionServiceClient(ctrl)
+
+	sm := session.NewSessionsManager(mockSessionServiceClient)
+
+	req, err := http.NewRequest("GET", "/test", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.AddCookie(&http.Cookie{Name: "session_id", Value: "123"})
+
+	mockSessionServiceClient.EXPECT().GetProfileIDBySession(gomock.Any(), gomock.Any()).
+		Return(&session_proto.GetProfileIDBySessionReply{Id: 123}, nil)
+
+	profileID, err := sm.GetProfileIDBySessionID(req, context.WithValue(context.Background(), "requestID", "testID"))
+
+	assert.NoError(t, err)
+	assert.Equal(t, uint32(123), profileID)
+}
+
+func TestSessionsManager_GetProfileIDBySessionID_Error(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockSessionServiceClient := mock.NewMockSessionServiceClient(ctrl)
+
+	sm := session.NewSessionsManager(mockSessionServiceClient)
+
+	req, err := http.NewRequest("GET", "/test", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.AddCookie(&http.Cookie{Name: "session_id", Value: "123"})
+
+	mockSessionServiceClient.EXPECT().GetProfileIDBySession(gomock.Any(), gomock.Any()).
+		Return(nil, fmt.Errorf("session not found"))
+
+	profileID, err := sm.GetProfileIDBySessionID(req, context.WithValue(context.Background(), "requestID", "testID"))
+
+	assert.Error(t, err)
+	assert.Zero(t, profileID)
 }
 
 func TestSessionsManager_Create_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockSessionUseCase := mock.NewMockSessionUseCase(ctrl)
-	sessionManager := session.NewSessionsManager(mockSessionUseCase)
+	mockSessionServiceClient := mock.NewMockSessionServiceClient(ctrl)
 
-	expectedSession := &domain.Session{
-		ID:        "session_id",
-		UserID:    123,
-		CsrfToken: "csrf_token",
-	}
-	ctx := GetCTX()
+	sm := session.NewSessionsManager(mockSessionServiceClient)
 
-	mockSessionUseCase.EXPECT().
-		CreateNewSession(uint32(123), gomock.Any(), gomock.Any(), gomock.Any()).
-		Return("session_id", nil).
-		Times(1)
+	mockSessionServiceClient.EXPECT().
+		CreateSession(gomock.Any(), gomock.Any()).
+		Return(&session_proto.CreateSessionReply{
+			SessionId: "123",
+		}, nil)
 
-	mockSessionUseCase.EXPECT().
-		GetSession("session_id", ctx).
-		Return(expectedSession, nil).
-		Times(1)
+	mockSessionServiceClient.EXPECT().
+		GetSession(gomock.Any(), gomock.Any()).
+		Return(&session_proto.GetSessionReply{
+			Session: &session_proto.Session{
+				SessionId: "123",
+				CsrfToken: "csrfToken",
+			},
+		}, nil)
 
 	w := httptest.NewRecorder()
 
-	sess, err := sessionManager.Create(w, 123, ctx)
-	if err != nil {
-		t.Errorf("Expected no error, got %v", err)
-	}
-	if sess == nil {
-		t.Error("Expected session, got nil")
-	}
+	ctx := context.WithValue(context.Background(), "requestID", "testID")
 
-	cookies := w.Result().Cookies()
-	if len(cookies) != 1 {
-		t.Errorf("Expected 1 cookies, got %d", len(cookies))
-	}
+	session, err := sm.Create(w, 123, ctx)
 
-	var foundSessionCookie bool
-	for _, cookie := range cookies {
-		switch cookie.Name {
-		case "session_id":
-			if cookie.Value == "session_id" {
-				foundSessionCookie = true
-			}
-		}
-	}
+	assert.NoError(t, err)
 
-	if !foundSessionCookie {
-		t.Error("Expected session_cookie with name 'session_id' and value 'session_id'")
-	}
+	assert.Equal(t, "csrfToken", w.Header().Get("X-Csrf-Token"))
+
+	cookie := w.Result().Cookies()[0]
+	assert.Equal(t, "session_id", cookie.Name)
+	assert.Equal(t, "123", cookie.Value)
+	assert.WithinDuration(t, time.Now().Add(24*time.Hour), cookie.Expires, 2*time.Second)
+
+	assert.Equal(t, "123", session.ID)
+	assert.Equal(t, "csrfToken", session.CsrfToken)
 }
 
-func TestSessionsManager_Create_SessionAlreadyExists(t *testing.T) {
+func TestSessionsManager_Create_SessionCreateError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockSessionUseCase := mock.NewMockSessionUseCase(ctrl)
-	sessionManager := session.NewSessionsManager(mockSessionUseCase)
-	ctx := GetCTX()
+	mockSessionServiceClient := mock.NewMockSessionServiceClient(ctrl)
 
-	mockSessionUseCase.EXPECT().
-		CreateNewSession(uint32(123), gomock.Any(), gomock.Any(), ctx).
-		Return("", fmt.Errorf("session already exist")).
-		Times(1)
+	sm := session.NewSessionsManager(mockSessionServiceClient)
+
+	mockSessionServiceClient.EXPECT().CreateSession(gomock.Any(), gomock.Any()).
+		Return(nil, fmt.Errorf("session already exists"))
 
 	w := httptest.NewRecorder()
 
-	sess, err := sessionManager.Create(w, 123, ctx)
-	if err == nil {
-		t.Error("Expected error, got nil")
-	}
-	if sess != nil {
-		t.Errorf("Expected nil session, got %+v", sess)
-	}
+	ctx := context.WithValue(context.Background(), "requestID", "testID")
 
-	cookies := w.Result().Cookies()
-	if len(cookies) != 0 {
-		t.Errorf("Expected 0 cookies, got %d", len(cookies))
-	}
+	session, err := sm.Create(w, 123, ctx)
+
+	assert.Error(t, err)
+	assert.Nil(t, session)
+}
+
+func TestSessionsManager_Create_SessionGetError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockSessionServiceClient := mock.NewMockSessionServiceClient(ctrl)
+
+	sm := session.NewSessionsManager(mockSessionServiceClient)
+
+	mockSessionServiceClient.EXPECT().
+		CreateSession(gomock.Any(), gomock.Any()).
+		Return(&session_proto.CreateSessionReply{
+			SessionId: "123",
+		}, nil)
+
+	mockSessionServiceClient.EXPECT().
+		GetSession(gomock.Any(), gomock.Any()).
+		Return(nil, errors.New("session not found"))
+
+	w := httptest.NewRecorder()
+
+	ctx := context.WithValue(context.Background(), "requestID", "testID")
+
+	session, err := sm.Create(w, 123, ctx)
+
+	assert.Error(t, err)
+	assert.Nil(t, session)
 }
 
 func TestSessionsManager_DestroyCurrent_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockSessionUseCase := mock.NewMockSessionUseCase(ctrl)
-	sessionManager := session.NewSessionsManager(mockSessionUseCase)
-	ctx := GetCTX()
+	mockSessionServiceClient := mock.NewMockSessionServiceClient(ctrl)
 
-	mockSessionUseCase.EXPECT().DeleteSession(gomock.Any(), gomock.Any()).Return(nil)
+	sm := session.NewSessionsManager(mockSessionServiceClient)
+
+	req := httptest.NewRequest("GET", "/", nil)
+	req.AddCookie(&http.Cookie{Name: "session_id", Value: "123"})
 
 	w := httptest.NewRecorder()
-	r := httptest.NewRequest("GET", "/", nil)
-	r.AddCookie(&http.Cookie{Name: "session_id", Value: "session_id_value"})
 
-	err := sessionManager.DestroyCurrent(w, r, ctx)
+	mockSessionServiceClient.EXPECT().
+		DeleteSession(gomock.Any(), gomock.Any()).
+		Return(&session_proto.DeleteSessionReply{Status: true}, nil)
 
-	if err != nil {
-		t.Errorf("Expected no error, got %v", err)
-	}
+	err := sm.DestroyCurrent(w, req, context.WithValue(context.Background(), "requestID", "testID"))
 
-	sessionCookie := w.Result().Cookies()[0]
-	expectedExpires := time.Now().AddDate(0, 0, -1)
-	if !sessionCookie.Expires.Before(expectedExpires) {
-		t.Errorf("Expected session_id cookie to expire in the past, got %v", sessionCookie.Expires)
-	}
+	assert.NoError(t, err)
+
+	cookie := w.Result().Cookies()[0]
+	assert.Equal(t, "session_id", cookie.Name)
+	assert.Equal(t, "", cookie.Value)
+	assert.WithinDuration(t, time.Now().AddDate(0, 0, -1), cookie.Expires, 2*time.Second)
 }
 
-func TestSessionsManager_DestroyCurrent_NoSessionIDCookie(t *testing.T) {
+func TestSessionsManager_DestroyCurrent_NoSessionCookie(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockSessionUseCase := mock.NewMockSessionUseCase(ctrl)
-	sessionManager := session.NewSessionsManager(mockSessionUseCase)
-	ctx := GetCTX()
+	mockSessionServiceClient := mock.NewMockSessionServiceClient(ctrl)
+
+	sm := session.NewSessionsManager(mockSessionServiceClient)
+
+	req := httptest.NewRequest("GET", "/", nil)
 
 	w := httptest.NewRecorder()
-	r := httptest.NewRequest("GET", "/", nil)
 
-	err := sessionManager.DestroyCurrent(w, r, ctx)
+	err := sm.DestroyCurrent(w, req, context.WithValue(context.Background(), "requestID", "testID"))
 
-	if err == nil || err.Error() != "http: named cookie not present" {
-		t.Errorf("Expected 'http: named cookie not present' error, got %v", err)
-	}
+	assert.Error(t, err)
+	assert.EqualError(t, err, "http: named cookie not present")
 }

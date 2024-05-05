@@ -13,7 +13,7 @@ import (
 	converters "mail/internal/models/delivery_converters"
 	emailApi "mail/internal/models/delivery_models"
 	"mail/internal/pkg/logger"
-	mockSession "mail/internal/pkg/session/mocks"
+	mockSession "mail/internal/pkg/session/mock"
 	"net/http"
 	"net/http/httptest"
 	"os"

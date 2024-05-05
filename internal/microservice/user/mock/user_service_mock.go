@@ -35,7 +35,7 @@ func (m *MockUserUseCase) EXPECT() *MockUserUseCaseMockRecorder {
 	return m.recorder
 }
 
-// AddAvatar mocks base method.
+// AddAvatar mock base method.
 func (m *MockUserUseCase) AddAvatar(id uint32, fileID string, ctx context.Context) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddAvatar", id, fileID, ctx)
@@ -50,7 +50,7 @@ func (mr *MockUserUseCaseMockRecorder) AddAvatar(id, fileID, ctx interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddAvatar", reflect.TypeOf((*MockUserUseCase)(nil).AddAvatar), id, fileID, ctx)
 }
 
-// CreateUser mocks base method.
+// CreateUser mock base method.
 func (m *MockUserUseCase) CreateUser(user *domain_models.User, ctx context.Context) (*domain_models.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateUser", user, ctx)
@@ -65,7 +65,7 @@ func (mr *MockUserUseCaseMockRecorder) CreateUser(user, ctx interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockUserUseCase)(nil).CreateUser), user, ctx)
 }
 
-// DeleteAvatarByUserID mocks base method.
+// DeleteAvatarByUserID mock base method.
 func (m *MockUserUseCase) DeleteAvatarByUserID(userID uint32, ctx context.Context) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteAvatarByUserID", userID, ctx)
@@ -79,7 +79,7 @@ func (mr *MockUserUseCaseMockRecorder) DeleteAvatarByUserID(userID, ctx interfac
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAvatarByUserID", reflect.TypeOf((*MockUserUseCase)(nil).DeleteAvatarByUserID), userID, ctx)
 }
 
-// DeleteUserByID mocks base method.
+// DeleteUserByID mock base method.
 func (m *MockUserUseCase) DeleteUserByID(id uint32, ctx context.Context) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteUserByID", id, ctx)
@@ -94,7 +94,7 @@ func (mr *MockUserUseCaseMockRecorder) DeleteUserByID(id, ctx interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUserByID", reflect.TypeOf((*MockUserUseCase)(nil).DeleteUserByID), id, ctx)
 }
 
-// GetAllUsers mocks base method.
+// GetAllUsers mock base method.
 func (m *MockUserUseCase) GetAllUsers(ctx context.Context) ([]*domain_models.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllUsers", ctx)
@@ -109,7 +109,7 @@ func (mr *MockUserUseCaseMockRecorder) GetAllUsers(ctx interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllUsers", reflect.TypeOf((*MockUserUseCase)(nil).GetAllUsers), ctx)
 }
 
-// GetUserByID mocks base method.
+// GetUserByID mock base method.
 func (m *MockUserUseCase) GetUserByID(id uint32, ctx context.Context) (*domain_models.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUserByID", id, ctx)
@@ -124,7 +124,7 @@ func (mr *MockUserUseCaseMockRecorder) GetUserByID(id, ctx interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByID", reflect.TypeOf((*MockUserUseCase)(nil).GetUserByID), id, ctx)
 }
 
-// GetUserByLogin mocks base method.
+// GetUserByLogin mock base method.
 func (m *MockUserUseCase) GetUserByLogin(login, password string, ctx context.Context) (*domain_models.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUserByLogin", login, password, ctx)
@@ -139,7 +139,7 @@ func (mr *MockUserUseCaseMockRecorder) GetUserByLogin(login, password, ctx inter
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByLogin", reflect.TypeOf((*MockUserUseCase)(nil).GetUserByLogin), login, password, ctx)
 }
 
-// IsLoginUnique mocks base method.
+// IsLoginUnique mock base method.
 func (m *MockUserUseCase) IsLoginUnique(login string, ctx context.Context) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsLoginUnique", login, ctx)
@@ -154,7 +154,7 @@ func (mr *MockUserUseCaseMockRecorder) IsLoginUnique(login, ctx interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsLoginUnique", reflect.TypeOf((*MockUserUseCase)(nil).IsLoginUnique), login, ctx)
 }
 
-// UpdateUser mocks base method.
+// UpdateUser mock base method.
 func (m *MockUserUseCase) UpdateUser(userNew *domain_models.User, ctx context.Context) (*domain_models.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateUser", userNew, ctx)

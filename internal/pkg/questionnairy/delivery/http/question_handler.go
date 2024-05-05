@@ -2,20 +2,20 @@ package http
 
 import (
 	"encoding/json"
-	"github.com/gorilla/schema"
 	"google.golang.org/grpc/metadata"
-	domain "mail/internal/microservice/models/domain_models"
+	"net/http"
+
+	"github.com/gorilla/schema"
+
 	"mail/internal/microservice/models/proto_converters"
+	"mail/internal/models/response"
+	"mail/internal/pkg/utils/sanitize"
+
+	domain "mail/internal/microservice/models/domain_models"
 	question_proto "mail/internal/microservice/questionnaire/proto"
 	converters "mail/internal/models/delivery_converters"
 	api "mail/internal/models/delivery_models"
-	"mail/internal/models/microservice_ports"
-	"mail/internal/models/response"
 	domainSession "mail/internal/pkg/session/interface"
-	"net/http"
-
-	"mail/internal/pkg/utils/connect_microservice"
-	"mail/internal/pkg/utils/sanitize"
 )
 
 var (
@@ -25,7 +25,8 @@ var (
 
 // QuestionHandler handles user-related HTTP requests.
 type QuestionHandler struct {
-	Sessions domainSession.SessionsManager
+	Sessions              domainSession.SessionsManager
+	QuestionServiceClient question_proto.QuestionServiceClient
 }
 
 // Get all questions.
@@ -41,15 +42,7 @@ type QuestionHandler struct {
 // @Failure 500 {object} response.ErrorResponse "Failed to get questions"
 // @Router /api/v1/questions [get]
 func (qh *QuestionHandler) GetAllQuestions(w http.ResponseWriter, r *http.Request) {
-	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.QuestionService))
-	if err != nil {
-		response.HandleError(w, http.StatusInternalServerError, "connection fail")
-		return
-	}
-	defer conn.Close()
-
-	questionServiceClient := question_proto.NewQuestionServiceClient(conn)
-	questionProto, errStatus := questionServiceClient.GetQuestions(
+	questionProto, errStatus := qh.QuestionServiceClient.GetQuestions(
 		metadata.NewOutgoingContext(r.Context(),
 			metadata.New(map[string]string{"requestID": r.Context().Value("requestID").(string)})),
 		&question_proto.GetQuestionsRequest{},
@@ -100,17 +93,9 @@ func (qh *QuestionHandler) AddQuestion(w http.ResponseWriter, r *http.Request) {
 	newQuestion.MaxText = sanitize.SanitizeString(newQuestion.MaxText)
 	newQuestion.DopQuestion = sanitize.SanitizeString(newQuestion.DopQuestion)
 
-	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.QuestionService))
-	if err != nil {
-		response.HandleError(w, http.StatusInternalServerError, "connection fail")
-		return
-	}
-	defer conn.Close()
-
 	question := converters.QuestionConvertApiInCore(newQuestion)
 
-	questionServiceClient := question_proto.NewQuestionServiceClient(conn)
-	questionProto, errStatus := questionServiceClient.AddQuestion(
+	questionProto, errStatus := qh.QuestionServiceClient.AddQuestion(
 		metadata.NewOutgoingContext(r.Context(),
 			metadata.New(map[string]string{"requestID": r.Context().Value("requestID").(string)})),
 		&question_proto.AddQuestionRequest{Question: proto_converters.QuestionConvertCoreInProto(*question)},
@@ -155,17 +140,9 @@ func (qh *QuestionHandler) AddAnswer(w http.ResponseWriter, r *http.Request) {
 	}
 	newAnswer.Login = login
 
-	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.QuestionService))
-	if err != nil {
-		response.HandleError(w, http.StatusInternalServerError, "connection fail")
-		return
-	}
-	defer conn.Close()
-
 	answer := converters.AnswerConvertApiInCore(newAnswer)
 
-	questionServiceClient := question_proto.NewQuestionServiceClient(conn)
-	answerProto, errStatus := questionServiceClient.AddAnswer(
+	answerProto, errStatus := qh.QuestionServiceClient.AddAnswer(
 		metadata.NewOutgoingContext(r.Context(),
 			metadata.New(map[string]string{"requestID": r.Context().Value("requestID").(string)})),
 		&question_proto.AddAnswerRequest{Answer: proto_converters.AnswerConvertCoreInProto(*answer)},
@@ -191,15 +168,7 @@ func (qh *QuestionHandler) AddAnswer(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} response.ErrorResponse "Failed to get statistics"
 // @Router /api/v1/statistics [get]
 func (qh *QuestionHandler) GetStatistics(w http.ResponseWriter, r *http.Request) {
-	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.QuestionService))
-	if err != nil {
-		response.HandleError(w, http.StatusInternalServerError, "connection fail")
-		return
-	}
-	defer conn.Close()
-
-	questionServiceClient := question_proto.NewQuestionServiceClient(conn)
-	statisticsProto, errStatus := questionServiceClient.GetStatistic(
+	statisticsProto, errStatus := qh.QuestionServiceClient.GetStatistic(
 		metadata.NewOutgoingContext(r.Context(),
 			metadata.New(map[string]string{"requestID": r.Context().Value("requestID").(string)})),
 		&question_proto.GetStatisticRequest{},

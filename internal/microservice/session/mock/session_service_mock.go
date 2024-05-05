@@ -35,7 +35,7 @@ func (m *MockSessionUseCase) EXPECT() *MockSessionUseCaseMockRecorder {
 	return m.recorder
 }
 
-// CleanupExpiredSessions mocks base method.
+// CleanupExpiredSessions mock base method.
 func (m *MockSessionUseCase) CleanupExpiredSessions(ctx context.Context) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CleanupExpiredSessions", ctx)
@@ -49,7 +49,7 @@ func (mr *MockSessionUseCaseMockRecorder) CleanupExpiredSessions(ctx interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CleanupExpiredSessions", reflect.TypeOf((*MockSessionUseCase)(nil).CleanupExpiredSessions), ctx)
 }
 
-// CreateNewSession mocks base method.
+// CreateNewSession mock base method.
 func (m *MockSessionUseCase) CreateNewSession(userID uint32, device string, lifeTime int, ctx context.Context) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateNewSession", userID, device, lifeTime, ctx)
@@ -64,7 +64,7 @@ func (mr *MockSessionUseCaseMockRecorder) CreateNewSession(userID, device, lifeT
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNewSession", reflect.TypeOf((*MockSessionUseCase)(nil).CreateNewSession), userID, device, lifeTime, ctx)
 }
 
-// DeleteSession mocks base method.
+// DeleteSession mock base method.
 func (m *MockSessionUseCase) DeleteSession(sessionID string, ctx context.Context) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteSession", sessionID, ctx)
@@ -78,7 +78,7 @@ func (mr *MockSessionUseCaseMockRecorder) DeleteSession(sessionID, ctx interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSession", reflect.TypeOf((*MockSessionUseCase)(nil).DeleteSession), sessionID, ctx)
 }
 
-// GetLogin mocks base method.
+// GetLogin mock base method.
 func (m *MockSessionUseCase) GetLogin(sessionID string, ctx context.Context) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetLogin", sessionID, ctx)
@@ -93,7 +93,7 @@ func (mr *MockSessionUseCaseMockRecorder) GetLogin(sessionID, ctx interface{}) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLogin", reflect.TypeOf((*MockSessionUseCase)(nil).GetLogin), sessionID, ctx)
 }
 
-// GetProfileID mocks base method.
+// GetProfileID mock base method.
 func (m *MockSessionUseCase) GetProfileID(sessionID string, ctx context.Context) (uint32, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetProfileID", sessionID, ctx)
@@ -108,7 +108,7 @@ func (mr *MockSessionUseCaseMockRecorder) GetProfileID(sessionID, ctx interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProfileID", reflect.TypeOf((*MockSessionUseCase)(nil).GetProfileID), sessionID, ctx)
 }
 
-// GetSession mocks base method.
+// GetSession mock base method.
 func (m *MockSessionUseCase) GetSession(sessionID string, ctx context.Context) (*domain_models.Session, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetSession", sessionID, ctx)

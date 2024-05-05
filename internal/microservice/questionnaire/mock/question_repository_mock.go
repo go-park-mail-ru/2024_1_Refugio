@@ -35,7 +35,7 @@ func (m *MockQuestionAnswerRepository) EXPECT() *MockQuestionAnswerRepositoryMoc
 	return m.recorder
 }
 
-// AddAnswer mocks base method.
+// AddAnswer mock base method.
 func (m *MockQuestionAnswerRepository) AddAnswer(newAnswer *domain_models.Answer, ctx context.Context) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddAnswer", newAnswer, ctx)
@@ -50,7 +50,7 @@ func (mr *MockQuestionAnswerRepositoryMockRecorder) AddAnswer(newAnswer, ctx int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddAnswer", reflect.TypeOf((*MockQuestionAnswerRepository)(nil).AddAnswer), newAnswer, ctx)
 }
 
-// AddQuestion mocks base method.
+// AddQuestion mock base method.
 func (m *MockQuestionAnswerRepository) AddQuestion(newQuestion *domain_models.Question, ctx context.Context) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddQuestion", newQuestion, ctx)
@@ -65,7 +65,7 @@ func (mr *MockQuestionAnswerRepositoryMockRecorder) AddQuestion(newQuestion, ctx
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddQuestion", reflect.TypeOf((*MockQuestionAnswerRepository)(nil).AddQuestion), newQuestion, ctx)
 }
 
-// GetAllAnswers mocks base method.
+// GetAllAnswers mock base method.
 func (m *MockQuestionAnswerRepository) GetAllAnswers(ctx context.Context) ([]*domain_models.Answer, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllAnswers", ctx)
@@ -80,7 +80,7 @@ func (mr *MockQuestionAnswerRepositoryMockRecorder) GetAllAnswers(ctx interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllAnswers", reflect.TypeOf((*MockQuestionAnswerRepository)(nil).GetAllAnswers), ctx)
 }
 
-// GetAllQuestions mocks base method.
+// GetAllQuestions mock base method.
 func (m *MockQuestionAnswerRepository) GetAllQuestions(ctx context.Context) ([]*domain_models.Question, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllQuestions", ctx)

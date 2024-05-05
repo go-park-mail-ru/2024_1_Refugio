@@ -36,7 +36,7 @@ func (m *MockQuestionServiceClient) EXPECT() *MockQuestionServiceClientMockRecor
 	return m.recorder
 }
 
-// AddAnswer mocks base method.
+// AddAnswer mock base method.
 func (m *MockQuestionServiceClient) AddAnswer(ctx context.Context, in *proto.AddAnswerRequest, opts ...grpc.CallOption) (*proto.AddAnswerReply, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, in}
@@ -56,7 +56,7 @@ func (mr *MockQuestionServiceClientMockRecorder) AddAnswer(ctx, in interface{}, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddAnswer", reflect.TypeOf((*MockQuestionServiceClient)(nil).AddAnswer), varargs...)
 }
 
-// AddQuestion mocks base method.
+// AddQuestion mock base method.
 func (m *MockQuestionServiceClient) AddQuestion(ctx context.Context, in *proto.AddQuestionRequest, opts ...grpc.CallOption) (*proto.AddQuestionReply, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, in}
@@ -76,7 +76,7 @@ func (mr *MockQuestionServiceClientMockRecorder) AddQuestion(ctx, in interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddQuestion", reflect.TypeOf((*MockQuestionServiceClient)(nil).AddQuestion), varargs...)
 }
 
-// GetQuestions mocks base method.
+// GetQuestions mock base method.
 func (m *MockQuestionServiceClient) GetQuestions(ctx context.Context, in *proto.GetQuestionsRequest, opts ...grpc.CallOption) (*proto.GetQuestionsReply, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, in}
@@ -96,7 +96,7 @@ func (mr *MockQuestionServiceClientMockRecorder) GetQuestions(ctx, in interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetQuestions", reflect.TypeOf((*MockQuestionServiceClient)(nil).GetQuestions), varargs...)
 }
 
-// GetStatistic mocks base method.
+// GetStatistic mock base method.
 func (m *MockQuestionServiceClient) GetStatistic(ctx context.Context, in *proto.GetStatisticRequest, opts ...grpc.CallOption) (*proto.GetStatisticReply, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, in}
@@ -139,7 +139,7 @@ func (m *MockQuestionServiceServer) EXPECT() *MockQuestionServiceServerMockRecor
 	return m.recorder
 }
 
-// AddAnswer mocks base method.
+// AddAnswer mock base method.
 func (m *MockQuestionServiceServer) AddAnswer(arg0 context.Context, arg1 *proto.AddAnswerRequest) (*proto.AddAnswerReply, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddAnswer", arg0, arg1)
@@ -154,7 +154,7 @@ func (mr *MockQuestionServiceServerMockRecorder) AddAnswer(arg0, arg1 interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddAnswer", reflect.TypeOf((*MockQuestionServiceServer)(nil).AddAnswer), arg0, arg1)
 }
 
-// AddQuestion mocks base method.
+// AddQuestion mock base method.
 func (m *MockQuestionServiceServer) AddQuestion(arg0 context.Context, arg1 *proto.AddQuestionRequest) (*proto.AddQuestionReply, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddQuestion", arg0, arg1)
@@ -169,7 +169,7 @@ func (mr *MockQuestionServiceServerMockRecorder) AddQuestion(arg0, arg1 interfac
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddQuestion", reflect.TypeOf((*MockQuestionServiceServer)(nil).AddQuestion), arg0, arg1)
 }
 
-// GetQuestions mocks base method.
+// GetQuestions mock base method.
 func (m *MockQuestionServiceServer) GetQuestions(arg0 context.Context, arg1 *proto.GetQuestionsRequest) (*proto.GetQuestionsReply, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetQuestions", arg0, arg1)
@@ -184,7 +184,7 @@ func (mr *MockQuestionServiceServerMockRecorder) GetQuestions(arg0, arg1 interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetQuestions", reflect.TypeOf((*MockQuestionServiceServer)(nil).GetQuestions), arg0, arg1)
 }
 
-// GetStatistic mocks base method.
+// GetStatistic mock base method.
 func (m *MockQuestionServiceServer) GetStatistic(arg0 context.Context, arg1 *proto.GetStatisticRequest) (*proto.GetStatisticReply, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetStatistic", arg0, arg1)
@@ -199,7 +199,7 @@ func (mr *MockQuestionServiceServerMockRecorder) GetStatistic(arg0, arg1 interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStatistic", reflect.TypeOf((*MockQuestionServiceServer)(nil).GetStatistic), arg0, arg1)
 }
 
-// mustEmbedUnimplementedQuestionServiceServer mocks base method.
+// mustEmbedUnimplementedQuestionServiceServer mock base method.
 func (m *MockQuestionServiceServer) mustEmbedUnimplementedQuestionServiceServer() {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "mustEmbedUnimplementedQuestionServiceServer")
@@ -234,7 +234,7 @@ func (m *MockUnsafeQuestionServiceServer) EXPECT() *MockUnsafeQuestionServiceSer
 	return m.recorder
 }
 
-// mustEmbedUnimplementedQuestionServiceServer mocks base method.
+// mustEmbedUnimplementedQuestionServiceServer mock base method.
 func (m *MockUnsafeQuestionServiceServer) mustEmbedUnimplementedQuestionServiceServer() {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "mustEmbedUnimplementedQuestionServiceServer")

@@ -83,7 +83,7 @@ func initializeQuestion(db *sql.DB) *grpcQuestionnaire.QuestionAnswerServer {
 	questionnaireRepository := questionnaireRepo.NewQuestionRepository(sqlx.NewDb(db, "pgx"))
 	questionnaireUseCase := questionnaireUc.NewQuestionAnswerUseCase(questionnaireRepository)
 
-	return grpcQuestionnaire.NewQestionAnswerServer(questionnaireUseCase)
+	return grpcQuestionnaire.NewQuestionAnswerServer(questionnaireUseCase)
 }
 
 // initializationInterceptorLogger initializing logger

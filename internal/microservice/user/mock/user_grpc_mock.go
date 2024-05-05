@@ -36,7 +36,7 @@ func (m *MockUserServiceClient) EXPECT() *MockUserServiceClientMockRecorder {
 	return m.recorder
 }
 
-// CreateUser mocks base method.
+// CreateUser mock base method.
 func (m *MockUserServiceClient) CreateUser(ctx context.Context, in *proto.CreateUserRequest, opts ...grpc.CallOption) (*proto.CreateUserReply, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, in}
@@ -56,7 +56,7 @@ func (mr *MockUserServiceClientMockRecorder) CreateUser(ctx, in interface{}, opt
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockUserServiceClient)(nil).CreateUser), varargs...)
 }
 
-// DeleteUserAvatar mocks base method.
+// DeleteUserAvatar mock base method.
 func (m *MockUserServiceClient) DeleteUserAvatar(ctx context.Context, in *proto.DeleteUserAvatarRequest, opts ...grpc.CallOption) (*proto.DeleteUserAvatarReply, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, in}
@@ -76,7 +76,7 @@ func (mr *MockUserServiceClientMockRecorder) DeleteUserAvatar(ctx, in interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUserAvatar", reflect.TypeOf((*MockUserServiceClient)(nil).DeleteUserAvatar), varargs...)
 }
 
-// DeleteUserById mocks base method.
+// DeleteUserById mock base method.
 func (m *MockUserServiceClient) DeleteUserById(ctx context.Context, in *proto.DeleteUserByIdRequest, opts ...grpc.CallOption) (*proto.DeleteUserByIdReply, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, in}
@@ -96,7 +96,7 @@ func (mr *MockUserServiceClientMockRecorder) DeleteUserById(ctx, in interface{},
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUserById", reflect.TypeOf((*MockUserServiceClient)(nil).DeleteUserById), varargs...)
 }
 
-// GetUser mocks base method.
+// GetUser mock base method.
 func (m *MockUserServiceClient) GetUser(ctx context.Context, in *proto.GetUserRequest, opts ...grpc.CallOption) (*proto.GetUserReply, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, in}
@@ -116,7 +116,7 @@ func (mr *MockUserServiceClientMockRecorder) GetUser(ctx, in interface{}, opts .
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockUserServiceClient)(nil).GetUser), varargs...)
 }
 
-// GetUserByLogin mocks base method.
+// GetUserByLogin mock base method.
 func (m *MockUserServiceClient) GetUserByLogin(ctx context.Context, in *proto.GetUserByLoginRequest, opts ...grpc.CallOption) (*proto.GetUserByLoginReply, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, in}
@@ -136,7 +136,7 @@ func (mr *MockUserServiceClientMockRecorder) GetUserByLogin(ctx, in interface{},
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByLogin", reflect.TypeOf((*MockUserServiceClient)(nil).GetUserByLogin), varargs...)
 }
 
-// GetUsers mocks base method.
+// GetUsers mock base method.
 func (m *MockUserServiceClient) GetUsers(ctx context.Context, in *proto.GetUsersRequest, opts ...grpc.CallOption) (*proto.GetUsersReply, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, in}
@@ -156,7 +156,7 @@ func (mr *MockUserServiceClientMockRecorder) GetUsers(ctx, in interface{}, opts 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUsers", reflect.TypeOf((*MockUserServiceClient)(nil).GetUsers), varargs...)
 }
 
-// IsLoginUnique mocks base method.
+// IsLoginUnique mock base method.
 func (m *MockUserServiceClient) IsLoginUnique(ctx context.Context, in *proto.IsLoginUniqueRequest, opts ...grpc.CallOption) (*proto.IsLoginUniqueReply, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, in}
@@ -176,7 +176,7 @@ func (mr *MockUserServiceClientMockRecorder) IsLoginUnique(ctx, in interface{}, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsLoginUnique", reflect.TypeOf((*MockUserServiceClient)(nil).IsLoginUnique), varargs...)
 }
 
-// UpdateUser mocks base method.
+// UpdateUser mock base method.
 func (m *MockUserServiceClient) UpdateUser(ctx context.Context, in *proto.UpdateUserRequest, opts ...grpc.CallOption) (*proto.UpdateUserReply, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, in}
@@ -196,7 +196,7 @@ func (mr *MockUserServiceClientMockRecorder) UpdateUser(ctx, in interface{}, opt
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUser", reflect.TypeOf((*MockUserServiceClient)(nil).UpdateUser), varargs...)
 }
 
-// UploadUserAvatar mocks base method.
+// UploadUserAvatar mock base method.
 func (m *MockUserServiceClient) UploadUserAvatar(ctx context.Context, in *proto.UploadUserAvatarRequest, opts ...grpc.CallOption) (*proto.UploadUserAvatarReply, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, in}
@@ -239,7 +239,7 @@ func (m *MockUserServiceServer) EXPECT() *MockUserServiceServerMockRecorder {
 	return m.recorder
 }
 
-// CreateUser mocks base method.
+// CreateUser mock base method.
 func (m *MockUserServiceServer) CreateUser(arg0 context.Context, arg1 *proto.CreateUserRequest) (*proto.CreateUserReply, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateUser", arg0, arg1)
@@ -254,7 +254,7 @@ func (mr *MockUserServiceServerMockRecorder) CreateUser(arg0, arg1 interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockUserServiceServer)(nil).CreateUser), arg0, arg1)
 }
 
-// DeleteUserAvatar mocks base method.
+// DeleteUserAvatar mock base method.
 func (m *MockUserServiceServer) DeleteUserAvatar(arg0 context.Context, arg1 *proto.DeleteUserAvatarRequest) (*proto.DeleteUserAvatarReply, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteUserAvatar", arg0, arg1)
@@ -269,7 +269,7 @@ func (mr *MockUserServiceServerMockRecorder) DeleteUserAvatar(arg0, arg1 interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUserAvatar", reflect.TypeOf((*MockUserServiceServer)(nil).DeleteUserAvatar), arg0, arg1)
 }
 
-// DeleteUserById mocks base method.
+// DeleteUserById mock base method.
 func (m *MockUserServiceServer) DeleteUserById(arg0 context.Context, arg1 *proto.DeleteUserByIdRequest) (*proto.DeleteUserByIdReply, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteUserById", arg0, arg1)
@@ -284,7 +284,7 @@ func (mr *MockUserServiceServerMockRecorder) DeleteUserById(arg0, arg1 interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUserById", reflect.TypeOf((*MockUserServiceServer)(nil).DeleteUserById), arg0, arg1)
 }
 
-// GetUser mocks base method.
+// GetUser mock base method.
 func (m *MockUserServiceServer) GetUser(arg0 context.Context, arg1 *proto.GetUserRequest) (*proto.GetUserReply, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUser", arg0, arg1)
@@ -299,7 +299,7 @@ func (mr *MockUserServiceServerMockRecorder) GetUser(arg0, arg1 interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockUserServiceServer)(nil).GetUser), arg0, arg1)
 }
 
-// GetUserByLogin mocks base method.
+// GetUserByLogin mock base method.
 func (m *MockUserServiceServer) GetUserByLogin(arg0 context.Context, arg1 *proto.GetUserByLoginRequest) (*proto.GetUserByLoginReply, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUserByLogin", arg0, arg1)
@@ -314,7 +314,7 @@ func (mr *MockUserServiceServerMockRecorder) GetUserByLogin(arg0, arg1 interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByLogin", reflect.TypeOf((*MockUserServiceServer)(nil).GetUserByLogin), arg0, arg1)
 }
 
-// GetUsers mocks base method.
+// GetUsers mock base method.
 func (m *MockUserServiceServer) GetUsers(arg0 context.Context, arg1 *proto.GetUsersRequest) (*proto.GetUsersReply, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUsers", arg0, arg1)
@@ -329,7 +329,7 @@ func (mr *MockUserServiceServerMockRecorder) GetUsers(arg0, arg1 interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUsers", reflect.TypeOf((*MockUserServiceServer)(nil).GetUsers), arg0, arg1)
 }
 
-// IsLoginUnique mocks base method.
+// IsLoginUnique mock base method.
 func (m *MockUserServiceServer) IsLoginUnique(arg0 context.Context, arg1 *proto.IsLoginUniqueRequest) (*proto.IsLoginUniqueReply, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsLoginUnique", arg0, arg1)
@@ -344,7 +344,7 @@ func (mr *MockUserServiceServerMockRecorder) IsLoginUnique(arg0, arg1 interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsLoginUnique", reflect.TypeOf((*MockUserServiceServer)(nil).IsLoginUnique), arg0, arg1)
 }
 
-// UpdateUser mocks base method.
+// UpdateUser mock base method.
 func (m *MockUserServiceServer) UpdateUser(arg0 context.Context, arg1 *proto.UpdateUserRequest) (*proto.UpdateUserReply, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateUser", arg0, arg1)
@@ -359,7 +359,7 @@ func (mr *MockUserServiceServerMockRecorder) UpdateUser(arg0, arg1 interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUser", reflect.TypeOf((*MockUserServiceServer)(nil).UpdateUser), arg0, arg1)
 }
 
-// UploadUserAvatar mocks base method.
+// UploadUserAvatar mock base method.
 func (m *MockUserServiceServer) UploadUserAvatar(arg0 context.Context, arg1 *proto.UploadUserAvatarRequest) (*proto.UploadUserAvatarReply, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UploadUserAvatar", arg0, arg1)
@@ -374,7 +374,7 @@ func (mr *MockUserServiceServerMockRecorder) UploadUserAvatar(arg0, arg1 interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UploadUserAvatar", reflect.TypeOf((*MockUserServiceServer)(nil).UploadUserAvatar), arg0, arg1)
 }
 
-// mustEmbedUnimplementedUserServiceServer mocks base method.
+// mustEmbedUnimplementedUserServiceServer mock base method.
 func (m *MockUserServiceServer) mustEmbedUnimplementedUserServiceServer() {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "mustEmbedUnimplementedUserServiceServer")
@@ -409,7 +409,7 @@ func (m *MockUnsafeUserServiceServer) EXPECT() *MockUnsafeUserServiceServerMockR
 	return m.recorder
 }
 
-// mustEmbedUnimplementedUserServiceServer mocks base method.
+// mustEmbedUnimplementedUserServiceServer mock base method.
 func (m *MockUnsafeUserServiceServer) mustEmbedUnimplementedUserServiceServer() {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "mustEmbedUnimplementedUserServiceServer")

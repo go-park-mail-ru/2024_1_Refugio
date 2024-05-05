@@ -36,7 +36,7 @@ func (m *MockAuthServiceClient) EXPECT() *MockAuthServiceClientMockRecorder {
 	return m.recorder
 }
 
-// Login mocks base method.
+// Login mock base method.
 func (m *MockAuthServiceClient) Login(ctx context.Context, in *proto.LoginRequest, opts ...grpc.CallOption) (*proto.LoginReply, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, in}
@@ -56,7 +56,7 @@ func (mr *MockAuthServiceClientMockRecorder) Login(ctx, in interface{}, opts ...
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockAuthServiceClient)(nil).Login), varargs...)
 }
 
-// Logout mocks base method.
+// Logout mock base method.
 func (m *MockAuthServiceClient) Logout(ctx context.Context, in *proto.LogoutRequest, opts ...grpc.CallOption) (*proto.LogoutReply, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, in}
@@ -76,7 +76,7 @@ func (mr *MockAuthServiceClientMockRecorder) Logout(ctx, in interface{}, opts ..
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Logout", reflect.TypeOf((*MockAuthServiceClient)(nil).Logout), varargs...)
 }
 
-// Signup mocks base method.
+// Signup mock base method.
 func (m *MockAuthServiceClient) Signup(ctx context.Context, in *proto.SignupRequest, opts ...grpc.CallOption) (*proto.SignupReply, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, in}
@@ -119,7 +119,7 @@ func (m *MockAuthServiceServer) EXPECT() *MockAuthServiceServerMockRecorder {
 	return m.recorder
 }
 
-// Login mocks base method.
+// Login mock base method.
 func (m *MockAuthServiceServer) Login(arg0 context.Context, arg1 *proto.LoginRequest) (*proto.LoginReply, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Login", arg0, arg1)
@@ -134,7 +134,7 @@ func (mr *MockAuthServiceServerMockRecorder) Login(arg0, arg1 interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockAuthServiceServer)(nil).Login), arg0, arg1)
 }
 
-// Logout mocks base method.
+// Logout mock base method.
 func (m *MockAuthServiceServer) Logout(arg0 context.Context, arg1 *proto.LogoutRequest) (*proto.LogoutReply, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Logout", arg0, arg1)
@@ -149,7 +149,7 @@ func (mr *MockAuthServiceServerMockRecorder) Logout(arg0, arg1 interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Logout", reflect.TypeOf((*MockAuthServiceServer)(nil).Logout), arg0, arg1)
 }
 
-// Signup mocks base method.
+// Signup mock base method.
 func (m *MockAuthServiceServer) Signup(arg0 context.Context, arg1 *proto.SignupRequest) (*proto.SignupReply, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Signup", arg0, arg1)
@@ -164,7 +164,7 @@ func (mr *MockAuthServiceServerMockRecorder) Signup(arg0, arg1 interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Signup", reflect.TypeOf((*MockAuthServiceServer)(nil).Signup), arg0, arg1)
 }
 
-// mustEmbedUnimplementedAuthServiceServer mocks base method.
+// mustEmbedUnimplementedAuthServiceServer mock base method.
 func (m *MockAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "mustEmbedUnimplementedAuthServiceServer")
@@ -199,7 +199,7 @@ func (m *MockUnsafeAuthServiceServer) EXPECT() *MockUnsafeAuthServiceServerMockR
 	return m.recorder
 }
 
-// mustEmbedUnimplementedAuthServiceServer mocks base method.
+// mustEmbedUnimplementedAuthServiceServer mock base method.
 func (m *MockUnsafeAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "mustEmbedUnimplementedAuthServiceServer")
