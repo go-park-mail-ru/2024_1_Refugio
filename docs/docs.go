@@ -1634,7 +1634,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "API Mailhub",
-	Description:      "API server for mailhub",
+	Description:      "API server for Mailhub",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

@@ -114,7 +114,7 @@ definitions:
 host: mailhub.su
 info:
   contact: {}
-  description: API server for mailhub
+  description: API server for Mailhub
   title: API Mailhub
   version: "1.0"
 paths:

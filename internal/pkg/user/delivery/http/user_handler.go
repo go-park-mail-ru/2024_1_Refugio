@@ -215,7 +215,13 @@ func (uh *UserHandler) UploadUserAvatar(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if !isImage(file) {
+	tempFile, _, errImg := r.FormFile("file")
+	if errImg != nil {
+		response.HandleError(w, http.StatusBadRequest, "Failed to get file")
+		return
+	}
+	defer tempFile.Close()
+	if !isImage(tempFile) {
 		response.HandleError(w, http.StatusBadRequest, "File is not an image")
 		return
 	}
