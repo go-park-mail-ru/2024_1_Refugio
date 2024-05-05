@@ -102,7 +102,7 @@ func startServer(authGrpc *grpcAuth.AuthServer, interceptorsLogger *interceptors
 	grpc_prometheus.Register(grpcServer)
 	http.Handle("/metrics", promhttp.Handler())
 	httpServer := &http.Server{
-		Addr:    ":9091",
+		Addr:    ":9094",
 		Handler: nil,
 	}
 
