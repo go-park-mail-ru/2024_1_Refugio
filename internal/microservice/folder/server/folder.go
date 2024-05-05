@@ -3,19 +3,19 @@ package server
 import (
 	"context"
 	"fmt"
+	"strconv"
 
+	usecase "mail/internal/microservice/folder/interface"
 	"mail/internal/microservice/folder/proto"
-	"mail/internal/microservice/folder/usecase"
 	converters "mail/internal/microservice/models/proto_converters"
 )
 
 type FolderServer struct {
 	proto.UnimplementedFolderServiceServer
-
-	FolderUseCase *usecase.FolderUseCase
+	FolderUseCase usecase.FolderUseCase
 }
 
-func NewFolderServer(folderUseCase *usecase.FolderUseCase) *FolderServer {
+func NewFolderServer(folderUseCase usecase.FolderUseCase) *FolderServer {
 	return &FolderServer{FolderUseCase: folderUseCase}
 }
 
@@ -23,10 +23,12 @@ func (es *FolderServer) CreateFolder(ctx context.Context, input *proto.Folder) (
 	if input == nil {
 		return nil, fmt.Errorf("invalid folder format: %s", input)
 	}
+
 	id, folder, err := es.FolderUseCase.CreateFolder(converters.FolderConvertProtoInCore(*input), ctx)
 	if err != nil {
-		return nil, fmt.Errorf("folder not found")
+		return nil, fmt.Errorf("failed create folder")
 	}
+
 	folderWithId := new(proto.FolderWithID)
 	folderWithId.Id = id
 	folderWithId.Folder = converters.FolderConvertCoreInProto(*folder)
@@ -39,7 +41,7 @@ func (es *FolderServer) GetAllFolders(ctx context.Context, input *proto.GetAllFo
 	}
 
 	if input.Id <= 0 {
-		return nil, fmt.Errorf("invalid profileID = %s", input.Id)
+		return nil, fmt.Errorf("invalid profileID = %s", strconv.Itoa(int(input.Id)))
 	}
 
 	foldersCore, err := es.FolderUseCase.GetAllFolders(input.Id, input.Offset, input.Limit, ctx)
@@ -63,7 +65,7 @@ func (es *FolderServer) DeleteFolder(ctx context.Context, input *proto.DeleteFol
 	}
 
 	if input.FolderID <= 0 || input.ProfileID <= 0 {
-		return nil, fmt.Errorf("invalid folderID = %s or profileID = %s", input.FolderID, input.ProfileID)
+		return nil, fmt.Errorf("invalid folderID = %s or profileID = %s", strconv.Itoa(int(input.FolderID)), strconv.Itoa(int(input.ProfileID)))
 	}
 
 	foldersCore, err := es.FolderUseCase.DeleteFolder(input.FolderID, input.ProfileID, ctx)
@@ -82,7 +84,7 @@ func (es *FolderServer) UpdateFolder(ctx context.Context, input *proto.Folder) (
 	}
 
 	if input.Id <= 0 || input.ProfileId <= 0 || input.Name == "" {
-		return nil, fmt.Errorf("invalid folderID = %s or ProfileId = %s or Name = %s", input.Id, input.ProfileId, input.Name)
+		return nil, fmt.Errorf("invalid folderID = %s or ProfileId = %s or Name = %s", strconv.Itoa(int(input.Id)), strconv.Itoa(int(input.ProfileId)), input.Name)
 	}
 
 	foldersCore, err := es.FolderUseCase.UpdateFolder(converters.FolderConvertProtoInCore(*input), ctx)
@@ -101,7 +103,7 @@ func (es *FolderServer) AddEmailInFolder(ctx context.Context, input *proto.Folde
 	}
 
 	if input.EmailID <= 0 || input.FolderID <= 0 {
-		return nil, fmt.Errorf("invalid EmailID = %s or FolderID = %s", input.EmailID, input.FolderID)
+		return nil, fmt.Errorf("invalid EmailID = %s or FolderID = %s", strconv.Itoa(int(input.EmailID)), strconv.Itoa(int(input.FolderID)))
 	}
 
 	status, err := es.FolderUseCase.AddEmailInFolder(input.FolderID, input.EmailID, ctx)
@@ -119,7 +121,7 @@ func (es *FolderServer) DeleteEmailInFolder(ctx context.Context, input *proto.Fo
 	}
 
 	if input.EmailID <= 0 || input.FolderID <= 0 {
-		return nil, fmt.Errorf("invalid EmailID = %s or FolderID = %s", input.EmailID, input.FolderID)
+		return nil, fmt.Errorf("invalid EmailID = %s or FolderID = %s", strconv.Itoa(int(input.EmailID)), strconv.Itoa(int(input.FolderID)))
 	}
 
 	status, err := es.FolderUseCase.DeleteEmailInFolder(input.FolderID, input.EmailID, ctx)
@@ -139,7 +141,7 @@ func (es *FolderServer) CheckFolderProfile(ctx context.Context, input *proto.Fol
 	}
 
 	if input.ProfileID <= 0 || input.FolderID <= 0 {
-		return nil, fmt.Errorf("invalid ProfileID = %s or FolderID = %s", input.ProfileID, input.FolderID)
+		return nil, fmt.Errorf("invalid ProfileID = %s or FolderID = %s", strconv.Itoa(int(input.ProfileID)), strconv.Itoa(int(input.FolderID)))
 	}
 
 	status, err := es.FolderUseCase.CheckFolderProfile(input.FolderID, input.ProfileID, ctx)
@@ -158,7 +160,7 @@ func (es *FolderServer) CheckEmailProfile(ctx context.Context, input *proto.Emai
 	}
 
 	if input.ProfileID <= 0 || input.EmailID <= 0 {
-		return nil, fmt.Errorf("invalid ProfileID = %s or EmailID = %s", input.ProfileID, input.EmailID)
+		return nil, fmt.Errorf("invalid ProfileID = %s or EmailID = %s", strconv.Itoa(int(input.ProfileID)), strconv.Itoa(int(input.EmailID)))
 	}
 
 	status, err := es.FolderUseCase.CheckEmailProfile(input.EmailID, input.ProfileID, ctx)
@@ -177,7 +179,7 @@ func (es *FolderServer) GetAllEmailsInFolder(ctx context.Context, input *proto.G
 	}
 
 	if input.FolderID <= 0 || input.ProfileID <= 0 {
-		return nil, fmt.Errorf("invalid folderID=%s or profileID=%s or limit=%s or offset=%s", input.FolderID, input.ProfileID, input.Limit, input.Offset)
+		return nil, fmt.Errorf("invalid folderID=%s or profileID=%s or limit=%s or offset=%s", strconv.Itoa(int(input.FolderID)), strconv.Itoa(int(input.ProfileID)), strconv.Itoa(int(input.Limit)), strconv.Itoa(int(input.Offset)))
 	}
 
 	emailsCore, err := es.FolderUseCase.GetAllEmailsInFolder(input.FolderID, input.ProfileID, input.Limit, input.Offset, ctx)

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	mock_repository "mail/internal/microservice/email/mocks"
+	mock_repository "mail/internal/microservice/email/mock"
 	domain "mail/internal/microservice/models/domain_models"
 	"mail/internal/pkg/logger"
 	"os"
@@ -14,17 +14,16 @@ import (
 )
 
 func GetCTX() context.Context {
-	requestID := "testID"
-
-	f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	f, err := os.OpenFile("log_test.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		fmt.Println("Failed to create logfile" + "log.txt")
 	}
 	defer f.Close()
 
-	c := context.WithValue(context.Background(), "logger", logger.InitializationBdLog(f))
-	ctx := context.WithValue(c, "requestID", requestID)
-	return ctx
+	ctx := context.WithValue(context.Background(), "logger", logger.InitializationBdLog(f))
+	ctx2 := context.WithValue(ctx, "requestID", []string{"testID"})
+
+	return ctx2
 }
 
 func TestNewEmailUseCase(t *testing.T) {
@@ -56,9 +55,11 @@ func TestGetAllEmailsIncoming_Success(t *testing.T) {
 	}
 	ctx := GetCTX()
 
-	mockRepo.EXPECT().GetAllIncoming(login, 0, 0, ctx).Return(expectedEmails, nil)
+	sero := int64(0)
 
-	emails, err := useCase.GetAllEmailsIncoming(login, 0, 0, ctx)
+	mockRepo.EXPECT().GetAllIncoming(login, sero, sero, ctx).Return(expectedEmails, nil)
+
+	emails, err := useCase.GetAllEmailsIncoming(login, sero, sero, ctx)
 
 	assert.NoError(t, err)
 	assert.Equal(t, expectedEmails, emails)
@@ -73,11 +74,11 @@ func TestAllEmailsIncoming_ErrorFromRepository(t *testing.T) {
 
 	login := "test@mailhub.su"
 	ctx := GetCTX()
-
+	sero := int64(0)
 	//mockRepo.EXPECT().GetAllIncoming(0, 0).Return(nil, errors.New("repository error"))
-	mockRepo.EXPECT().GetAllIncoming(login, 0, 0, ctx).Return(nil, errors.New("repository error"))
+	mockRepo.EXPECT().GetAllIncoming(login, sero, sero, ctx).Return(nil, errors.New("repository error"))
 
-	emails, err := useCase.GetAllEmailsIncoming(login, 0, 0, ctx)
+	emails, err := useCase.GetAllEmailsIncoming(login, sero, sero, ctx)
 
 	assert.Error(t, err)
 	assert.Nil(t, emails)
@@ -96,9 +97,10 @@ func TestGetAllEmailsSent_Success(t *testing.T) {
 		{Topic: "Topic 2", Text: "Text 2"},
 	}
 	ctx := GetCTX()
-	mockRepo.EXPECT().GetAllSent(login, 0, 0, ctx).Return(expectedEmails, nil)
+	sero := int64(0)
+	mockRepo.EXPECT().GetAllSent(login, sero, sero, ctx).Return(expectedEmails, nil)
 
-	emails, err := useCase.GetAllEmailsSent(login, 0, 0, ctx)
+	emails, err := useCase.GetAllEmailsSent(login, sero, sero, ctx)
 
 	assert.NoError(t, err)
 	assert.Equal(t, expectedEmails, emails)
@@ -113,13 +115,60 @@ func TestGetAllEmailsSent_ErrorFromRepository(t *testing.T) {
 
 	login := "test@mailhub.su"
 	ctx := GetCTX()
+	sero := int64(0)
 
-	mockRepo.EXPECT().GetAllSent(login, 0, 0, ctx).Return(nil, errors.New("repository error"))
+	mockRepo.EXPECT().GetAllSent(login, sero, sero, ctx).Return(nil, errors.New("repository error"))
 
-	emails, err := useCase.GetAllEmailsSent(login, 0, 0, ctx)
+	emails, err := useCase.GetAllEmailsSent(login, sero, sero, ctx)
 
 	assert.Error(t, err)
 	assert.Nil(t, emails)
+}
+
+func TestGetAllEmailsDraft(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockEmailRepository(ctrl)
+	useCase := NewEmailUseCase(mockRepo)
+
+	login := "test@mailhub.su"
+	expectedEmails := []*domain.Email{
+		{Topic: "Topic 1", Text: "Text 1"},
+		{Topic: "Topic 2", Text: "Text 2"},
+	}
+	ctx := GetCTX()
+	sero := int64(0)
+
+	mockRepo.EXPECT().GetAllDraft(login, sero, sero, ctx).Return(expectedEmails, nil)
+
+	emails, err := useCase.GetAllDraftEmails(login, sero, sero, ctx)
+
+	assert.NoError(t, err)
+	assert.Equal(t, expectedEmails, emails)
+}
+
+func TestGetAllEmailsSpam(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockEmailRepository(ctrl)
+	useCase := NewEmailUseCase(mockRepo)
+
+	login := "test@mailhub.su"
+	expectedEmails := []*domain.Email{
+		{Topic: "Topic 1", Text: "Text 1"},
+		{Topic: "Topic 2", Text: "Text 2"},
+	}
+	ctx := GetCTX()
+	sero := int64(0)
+
+	mockRepo.EXPECT().GetAllSpam(login, sero, sero, ctx).Return(expectedEmails, nil)
+
+	emails, err := useCase.GetAllSpamEmails(login, sero, sero, ctx)
+
+	assert.NoError(t, err)
+	assert.Equal(t, expectedEmails, emails)
 }
 
 func TestGetEmailByID_Success(t *testing.T) {
@@ -169,11 +218,11 @@ func TestCreateEmail_Success(t *testing.T) {
 	ctx := GetCTX()
 
 	newEmail := &domain.Email{Topic: "Topic 1", Text: "Text 1"}
-	mockRepo.EXPECT().Add(gomock.Any(), ctx).Return(int64(1), newEmail, nil)
+	mockRepo.EXPECT().Add(gomock.Any(), ctx).Return(uint64(1), newEmail, nil)
 
 	id, emailRes, err := useCase.CreateEmail(newEmail, ctx)
 
-	assert.Equal(t, int64(1), id)
+	assert.Equal(t, uint64(1), id)
 	assert.NoError(t, err)
 	assert.Equal(t, newEmail, emailRes)
 }
@@ -188,11 +237,11 @@ func TestCreateEmail_ErrorFromRepository(t *testing.T) {
 
 	ctx := GetCTX()
 
-	mockRepo.EXPECT().Add(gomock.Any(), ctx).Return(int64(1), newEmail, errors.New("repository error"))
+	mockRepo.EXPECT().Add(gomock.Any(), ctx).Return(uint64(1), newEmail, errors.New("repository error"))
 
 	id, emailRes, err := useCase.CreateEmail(newEmail, ctx)
 
-	assert.Equal(t, int64(1), id)
+	assert.Equal(t, uint64(1), id)
 	assert.Error(t, err)
 	assert.Equal(t, newEmail, emailRes)
 }
@@ -204,7 +253,7 @@ func TestCreateProfileEmail_Success(t *testing.T) {
 	mockRepo := mock_repository.NewMockEmailRepository(ctrl)
 	useCase := NewEmailUseCase(mockRepo)
 
-	email_id := int64(1)
+	email_id := uint64(1)
 	sender := "test_sender@mailhub.su"
 	recipient := "test_recipient@mailhub.su"
 	ctx := GetCTX()
@@ -223,7 +272,7 @@ func TestCreateProfileEmail_ErrorFromRepository(t *testing.T) {
 	mockRepo := mock_repository.NewMockEmailRepository(ctrl)
 	useCase := NewEmailUseCase(mockRepo)
 
-	email_id := int64(1)
+	email_id := uint64(1)
 	sender := "test_sender@mailhub.su"
 	recipient := "test_recipient@mailhub.su"
 	ctx := GetCTX()

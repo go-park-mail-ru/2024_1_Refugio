@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	domain "mail/internal/microservice/models/domain_models"
-	mock "mail/internal/microservice/session/mocks"
+	mock "mail/internal/microservice/session/mock"
 	converters "mail/internal/models/delivery_converters"
 	"mail/internal/pkg/logger"
 	session "mail/internal/pkg/session"

@@ -10,7 +10,7 @@ import (
 	"io"
 	"io/ioutil"
 	domain "mail/internal/microservice/models/domain_models"
-	mock "mail/internal/microservice/user/mocks"
+	mock "mail/internal/microservice/user/mock"
 	api "mail/internal/models/delivery_models"
 	mockManager "mail/internal/pkg/session/mocks"
 	"mime/multipart"
