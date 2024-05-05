@@ -17,6 +17,7 @@ import (
 	"mail/internal/models/microservice_ports"
 	"mail/internal/pkg/utils/connect_microservice"
 
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	grpcAuth "mail/internal/microservice/auth/server"
 	session_proto "mail/internal/microservice/session/proto"
 	user_proto "mail/internal/microservice/user/proto"
@@ -82,11 +83,15 @@ func startServer(authGrpc *grpcAuth.AuthServer, interceptorsLogger *interceptors
 		log.Fatalf("Cannot listen port: %s. Err: %s", "8004", err.Error())
 	}
 
+	grpc_prometheus.EnableHandlingTimeHistogram()
+
 	opts := []grpc.ServerOption{
 		grpc.ChainUnaryInterceptor(
 			interceptorsLogger.AccessLogInterceptor,
 			interceptors.PanicRecoveryWithoutLoggerInterceptor,
+			grpc_prometheus.UnaryServerInterceptor,
 		),
+		grpc.StreamInterceptor(grpc_prometheus.StreamServerInterceptor),
 	}
 	grpcServer := grpc.NewServer(opts...)
 
@@ -94,7 +99,18 @@ func startServer(authGrpc *grpcAuth.AuthServer, interceptorsLogger *interceptors
 
 	fmt.Printf("The server is running in port 8004\n")
 
+	grpc_prometheus.Register(grpcServer)
 	http.Handle("/metrics", promhttp.Handler())
+	httpServer := &http.Server{
+		Addr:    ":9091",
+		Handler: nil,
+	}
+
+	go func() {
+		if err := httpServer.ListenAndServe(); err != nil {
+			log.Printf("Failed to start Prometheus metrics server: %s\n", err)
+		}
+	}()
 
 	err = grpcServer.Serve(listen)
 	if err != nil {

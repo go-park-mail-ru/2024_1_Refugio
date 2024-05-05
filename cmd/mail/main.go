@@ -44,7 +44,7 @@ import (
 
 // @title API Mailhub
 // @version 1.0
-// @description API server for mailhub
+// @description API server for Mailhub
 
 // @host mailhub.su
 // @BasePath /
