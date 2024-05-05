@@ -6,8 +6,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"net/http"
 
-	"mail/internal/models/microservice_ports"
-	"mail/internal/pkg/utils/connect_microservice"
 	"mail/internal/pkg/utils/sanitize"
 
 	auth_proto "mail/internal/microservice/auth/proto"
@@ -124,15 +122,7 @@ func (ah *AuthHandler) Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.AuthService))
-	if err != nil {
-		response.HandleError(w, http.StatusInternalServerError, "connection fail")
-		return
-	}
-	defer conn.Close()
-
-	authServiceClient := auth_proto.NewAuthServiceClient(conn)
-	_, errStatus := authServiceClient.Signup(
+	_, errStatus := ah.AuthServiceClient.Signup(
 		metadata.NewOutgoingContext(r.Context(),
 			metadata.New(map[string]string{"requestID": r.Context().Value("requestID").(string)})),
 		&auth_proto.SignupRequest{Login: newUser.Login,
