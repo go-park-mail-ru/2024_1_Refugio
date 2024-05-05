@@ -6,8 +6,6 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	"mail/internal/microservice/auth/proto"
-	"mail/internal/models/microservice_ports"
-	"mail/internal/pkg/utils/connect_microservice"
 	"mail/internal/pkg/utils/sanitize"
 
 	domain "mail/internal/microservice/models/domain_models"
@@ -99,14 +97,7 @@ func (as *AuthServer) Signup(ctx context.Context, input *proto.SignupRequest) (*
 	}
 	value := md.Get("requestID")
 
-	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.UserService))
-	if err != nil {
-		return nil, fmt.Errorf("invalid connection")
-	}
-	defer conn.Close()
-
-	userServiceClient := user_proto.NewUserServiceClient(conn)
-	_, errLogin := userServiceClient.IsLoginUnique(
+	_, errLogin := as.userServiceClient.IsLoginUnique(
 		metadata.NewOutgoingContext(ctx,
 			metadata.New(map[string]string{"requestID": value[0]})),
 		&user_proto.IsLoginUniqueRequest{Login: input.Login},
@@ -115,7 +106,7 @@ func (as *AuthServer) Signup(ctx context.Context, input *proto.SignupRequest) (*
 		return nil, fmt.Errorf("such a login already exists")
 	}
 
-	_, errCreate := userServiceClient.CreateUser(
+	_, errCreate := as.userServiceClient.CreateUser(
 		metadata.NewOutgoingContext(ctx,
 			metadata.New(map[string]string{"requestID": value[0]})),
 		&user_proto.CreateUserRequest{User: &user_proto.User{
@@ -146,20 +137,13 @@ func (as *AuthServer) Logout(ctx context.Context, input *proto.LogoutRequest) (*
 		return nil, fmt.Errorf("session id must be filled in")
 	}
 
-	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.SessionService))
-	if err != nil {
-		return nil, fmt.Errorf("invalid connection")
-	}
-	defer conn.Close()
-
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("metadata error")
 	}
 	value := md.Get("requestID")
 
-	sessionServiceClient := session_proto.NewSessionServiceClient(conn)
-	_, errStatus := sessionServiceClient.DeleteSession(
+	_, errStatus := as.sessionServiceClient.DeleteSession(
 		metadata.NewOutgoingContext(ctx,
 			metadata.New(map[string]string{"requestID": value[0]})),
 		&session_proto.DeleteSessionRequest{SessionId: input.SessionId},
