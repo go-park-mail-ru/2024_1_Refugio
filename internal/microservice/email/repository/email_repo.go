@@ -278,7 +278,7 @@ func (r *EmailRepository) GetAllSpam(login string, offset, limit int64, ctx cont
 		JOIN profile p ON pe.profile_id = (
 			SELECT id FROM profile WHERE login = $1
 		)
-		WHERE e.sender_email = $1 AND e.isSpam = true
+		WHERE e.recipient_email = $1 AND e.isSpam = true
 		ORDER BY e.date_of_dispatch DESC
 	`
 
