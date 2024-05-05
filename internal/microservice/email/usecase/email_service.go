@@ -30,7 +30,7 @@ func (uc *EmailUseCase) GetAllEmailsSent(login string, offset, limit int64, ctx 
 
 // GetDraftEmails returns all draft emails.
 func (uc *EmailUseCase) GetAllDraftEmails(login string, offset, limit int64, ctx context.Context) ([]*domain.Email, error) {
-	return uc.repo.GetAllSpam(login, offset, limit, ctx)
+	return uc.repo.GetAllDraft(login, offset, limit, ctx)
 }
 
 // GetAllSpamEmails returns all draft emails.
@@ -50,6 +50,10 @@ func (uc *EmailUseCase) CreateEmail(newEmail *domain.Email, ctx context.Context)
 
 // CreateProfileEmail creates a new profile_email
 func (uc *EmailUseCase) CreateProfileEmail(email_id uint64, sender, recipient string, ctx context.Context) error {
+	if sender == recipient {
+		return uc.repo.AddProfileEmailMyself(email_id, sender, recipient, ctx)
+	}
+
 	return uc.repo.AddProfileEmail(email_id, sender, recipient, ctx)
 }
 

@@ -28,6 +28,8 @@ type EmailRepository interface {
 	// Add adds a new profile_email
 	AddProfileEmail(email_id uint64, sender, recipient string, ctx context.Context) error
 
+	AddProfileEmailMyself(email_id uint64, sender, recipient string, ctx context.Context) error
+
 	// Update updates the information of an email in the storage based on the provided new email.
 	Update(newEmail *domain.Email, ctx context.Context) (bool, error)
 

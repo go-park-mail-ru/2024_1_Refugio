@@ -84,6 +84,26 @@ func (r *EmailRepository) AddProfileEmail(email_id uint64, sender, recipient str
 
 }
 
+func (r *EmailRepository) AddProfileEmailMyself(email_id uint64, sender, recipient string, ctx context.Context) error {
+	query := `
+		INSERT INTO profile_email (profile_id, email_id)
+		VALUES ((SELECT id FROM profile WHERE login=$1), $2)
+	`
+
+	start := time.Now()
+	_, err := r.DB.Exec(query, sender, email_id)
+
+	args := []interface{}{sender, email_id}
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
+
+	if err != nil {
+		return fmt.Errorf("Profile_email with profile_id=%d and fail", email_id)
+	}
+
+	return nil
+
+}
+
 func (r *EmailRepository) FindEmail(login string, ctx context.Context) error {
 	query := "SELECT * FROM profile WHERE login = $1"
 
