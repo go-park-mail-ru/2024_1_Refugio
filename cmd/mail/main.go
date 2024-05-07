@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"google.golang.org/grpc/metadata"
 	"log"
-	"mail/internal/models/microservice_ports"
 	"net/http"
 	"os"
 	"time"
@@ -16,9 +15,12 @@ import (
 	"github.com/gorilla/mux"
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/kataras/requestid"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
 
-	"mail/internal/models/configs"
+	"mail/cmd/configs"
+	"mail/internal/models/microservice_ports"
+	"mail/internal/monitoring"
 	"mail/internal/pkg/logger"
 	"mail/internal/pkg/middleware"
 	"mail/internal/pkg/session"
@@ -27,7 +29,12 @@ import (
 	migrate "github.com/rubenv/sql-migrate"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 
+	auth_proto "mail/internal/microservice/auth/proto"
+	email_proto "mail/internal/microservice/email/proto"
+	folder_proto "mail/internal/microservice/folder/proto"
+	question_proto "mail/internal/microservice/questionnaire/proto"
 	session_proto "mail/internal/microservice/session/proto"
+	user_proto "mail/internal/microservice/user/proto"
 	authHand "mail/internal/pkg/auth/delivery/http"
 	emailHand "mail/internal/pkg/email/delivery/http"
 	folderHand "mail/internal/pkg/folder/delivery/http"
@@ -37,11 +44,11 @@ import (
 	_ "mail/docs"
 )
 
-// @title API Mail
+// @title API Mailhub
 // @version 1.0
-// @description API server for mail
+// @description API server for Mailhub
 
-// @host localhost:8080
+// @host mailhub.su
 // @BasePath /
 func main() {
 	settingTime()
@@ -53,27 +60,70 @@ func main() {
 
 	loggerMiddlewareAccess := initializeMiddlewareLogger()
 
-	sessionsManager := initializeSessionsManager()
-	authHandler := initializeAuthHandler(sessionsManager)
-	emailHandler := initializeEmailHandler(sessionsManager)
-	userHandler := initializeUserHandler(sessionsManager)
-	questionHandler := initializeQuestionHandler(sessionsManager)
-	folderHandler := initializeFolderHandler(sessionsManager)
+	sessionManagerServiceConn, err := connect_microservice.
+		OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.SessionService))
+	if err != nil {
+		log.Fatalf("connection with microservice auth fail")
+	}
+	defer sessionManagerServiceConn.Close()
+	sessionsManager := initializeSessionsManager(session_proto.NewSessionServiceClient(sessionManagerServiceConn))
+
+	authServiceConn, err := connect_microservice.
+		OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.AuthService))
+	if err != nil {
+		log.Fatalf("connection with microservice auth fail")
+	}
+	defer authServiceConn.Close()
+	authHandler := initializeAuthHandler(sessionsManager, auth_proto.NewAuthServiceClient(authServiceConn))
+
+	userServiceConn, err := connect_microservice.
+		OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.UserService))
+	if err != nil {
+		log.Fatalf("connection with microservice user fail")
+	}
+	defer userServiceConn.Close()
+	userHandler := initializeUserHandler(sessionsManager, user_proto.NewUserServiceClient(userServiceConn))
+
+	emailServiceConn, err := connect_microservice.
+		OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.EmailService))
+	if err != nil {
+		log.Fatalf("connection with microservice user fail")
+	}
+	defer emailServiceConn.Close()
+	emailHandler := initializeEmailHandler(sessionsManager, email_proto.NewEmailServiceClient(emailServiceConn))
+
+	folderServiceConn, err := connect_microservice.
+		OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.FolderService))
+	if err != nil {
+		log.Fatalf("connection with microservice user fail")
+	}
+	defer folderServiceConn.Close()
+	folderHandler := initializeFolderHandler(sessionsManager, folder_proto.NewFolderServiceClient(folderServiceConn))
+
+	questionServiceConn, err := connect_microservice.
+		OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.QuestionService))
+	if err != nil {
+		log.Fatalf("connection with microservice question fail")
+	}
+	defer questionServiceConn.Close()
+	questionHandler := initializeQuestionHandler(sessionsManager, question_proto.NewQuestionServiceClient(questionServiceConn))
 
 	router := setupRouter(authHandler, userHandler, emailHandler, folderHandler, questionHandler, loggerMiddlewareAccess)
 
 	startServer(router)
 }
 
+// settingTime setting local time on server
 func settingTime() {
 	loc, err := time.LoadLocation("Europe/Moscow")
 	if err != nil {
-		fmt.Println("Error loc time")
+		fmt.Println("Error in location detection")
 	}
 
 	time.Local = loc
 }
 
+// initializeDatabase database initialization
 func initializeDatabase() *sql.DB {
 	db, err := sql.Open("pgx", configs.DSN)
 	if err != nil {
@@ -82,7 +132,7 @@ func initializeDatabase() *sql.DB {
 
 	err = db.Ping()
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln("Database is not available", err)
 	}
 
 	db.SetMaxOpenConns(10)
@@ -90,6 +140,7 @@ func initializeDatabase() *sql.DB {
 	return db
 }
 
+// migrateDatabase applying database migration
 func migrateDatabase(db *sql.DB) {
 	migrations := &migrate.FileMigrationSource{
 		Dir: "db/migrations",
@@ -101,59 +152,71 @@ func migrateDatabase(db *sql.DB) {
 	}
 }
 
-func initializeSessionsManager() *session.SessionsManager {
-	sessionsManager := session.NewSessionsManager()
-	session.InitializationGlobalSeaaionManager(sessionsManager)
+// initializeSessionsManager initializing session manager
+func initializeSessionsManager(sessionServiceClient session_proto.SessionServiceClient) *session.SessionsManager {
+	sessionsManager := session.NewSessionsManager(sessionServiceClient)
+	session.InitializationGlobalSessionManager(sessionsManager)
 
-	StartSessionCleaner(24 * time.Hour)
+	startSessionCleaner(24*time.Hour, sessionServiceClient)
 
 	return sessionsManager
 }
 
-func initializeAuthHandler(sessionsManager *session.SessionsManager) *authHand.AuthHandler {
+// initializeAuthHandler initializing authorization handler
+func initializeAuthHandler(sessionsManager *session.SessionsManager, authServiceClient auth_proto.AuthServiceClient) *authHand.AuthHandler {
 	return &authHand.AuthHandler{
-		Sessions: sessionsManager,
+		Sessions:          sessionsManager,
+		AuthServiceClient: authServiceClient,
 	}
 }
 
-func initializeEmailHandler(sessionsManager *session.SessionsManager) *emailHand.EmailHandler {
-
+// initializeEmailHandler initializing email handler
+func initializeEmailHandler(sessionsManager *session.SessionsManager, emailServiceClient email_proto.EmailServiceClient) *emailHand.EmailHandler {
 	return &emailHand.EmailHandler{
-		Sessions: sessionsManager,
+		Sessions:           sessionsManager,
+		EmailServiceClient: emailServiceClient,
 	}
 }
 
-func initializeUserHandler(sessionsManager *session.SessionsManager) *userHand.UserHandler {
+// initializeUserHandler initializing user handler
+func initializeUserHandler(sessionsManager *session.SessionsManager, userServiceClient user_proto.UserServiceClient) *userHand.UserHandler {
 	return &userHand.UserHandler{
-		Sessions: sessionsManager,
+		Sessions:          sessionsManager,
+		UserServiceClient: userServiceClient,
 	}
 }
 
-func initializeQuestionHandler(sessionsManager *session.SessionsManager) *questionHand.QuestionHandler {
-	return &questionHand.QuestionHandler{
-		Sessions: sessionsManager,
-	}
-}
-
-func initializeFolderHandler(sessionsManager *session.SessionsManager) *folderHand.FolderHandler {
+// initializeFolderHandler initializing folder handler
+func initializeFolderHandler(sessionsManager *session.SessionsManager, folderServiceClient folder_proto.FolderServiceClient) *folderHand.FolderHandler {
 	return &folderHand.FolderHandler{
-		Sessions: sessionsManager,
+		Sessions:            sessionsManager,
+		FolderServiceClient: folderServiceClient,
 	}
 }
 
+// initializeQuestionHandler initializing question handler
+func initializeQuestionHandler(sessionsManager *session.SessionsManager, questionServiceClient question_proto.QuestionServiceClient) *questionHand.QuestionHandler {
+	return &questionHand.QuestionHandler{
+		Sessions:              sessionsManager,
+		QuestionServiceClient: questionServiceClient,
+	}
+}
+
+// initializeMiddlewareLogger initializing logger
 func initializeMiddlewareLogger() *middleware.Logger {
 	f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		fmt.Println("Failed to create logfile" + "log.txt")
 	}
 
-	LogrusAcces := logger.InitializationAccesLog(f)
-	LoggerAcces := new(middleware.Logger)
-	LoggerAcces.Logger = LogrusAcces
+	logrusAccess := logger.InitializationAccesLog(f)
+	loggerAccess := new(middleware.Logger)
+	loggerAccess.Logger = logrusAccess
 
-	return LoggerAcces
+	return loggerAccess
 }
 
+// setupRouter configuring routers
 func setupRouter(authHandler *authHand.AuthHandler, userHandler *userHand.UserHandler, emailHandler *emailHand.EmailHandler, folderHandler *folderHand.FolderHandler, questionHandler *questionHand.QuestionHandler, logger *middleware.Logger) http.Handler {
 	router := mux.NewRouter()
 
@@ -169,9 +232,12 @@ func setupRouter(authHandler *authHand.AuthHandler, userHandler *userHand.UserHa
 
 	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
+	logger.Metrics = monitoring.RegisterMonitoring(router)
+
 	return logger.AccessLogMiddleware(router)
 }
 
+// setupAuthRouter configuring authorization router
 func setupAuthRouter(authHandler *authHand.AuthHandler, emailHandler *emailHand.EmailHandler, logger *middleware.Logger) http.Handler {
 	auth := mux.NewRouter().PathPrefix("/api/v1/auth").Subrouter()
 	auth.Use(logger.AccessLogMiddleware, middleware.PanicMiddleware)
@@ -184,6 +250,7 @@ func setupAuthRouter(authHandler *authHand.AuthHandler, emailHandler *emailHand.
 	return auth
 }
 
+// setupLogRouter configuring router with logger
 func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.UserHandler, folderHandler *folderHand.FolderHandler, questionHandler *questionHand.QuestionHandler, logger *middleware.Logger) http.Handler {
 	logRouter := mux.NewRouter().PathPrefix("/api/v1").Subrouter()
 	logRouter.Use(logger.AccessLogMiddleware, middleware.PanicMiddleware, middleware.AuthMiddleware)
@@ -220,6 +287,7 @@ func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.
 	return logRouter
 }
 
+// startServer starting server
 func startServer(router http.Handler) {
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{
@@ -238,13 +306,16 @@ func startServer(router http.Handler) {
 	fmt.Printf("The server is running on http://localhost:%d\n", port)
 	fmt.Printf("Swagger is running on http://localhost:%d/swagger/index.html\n", port)
 
+	http.Handle("/metrics", promhttp.Handler())
+
 	err := http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", port), requestid.Handler(corsHandler))
 	if err != nil {
 		fmt.Println("Error when starting the server:", err)
 	}
 }
 
-func StartSessionCleaner(interval time.Duration) {
+// StartSessionCleaner starting session cleanup
+func startSessionCleaner(interval time.Duration, sessionServiceClient session_proto.SessionServiceClient) {
 	ticker := time.NewTicker(interval)
 	go func() {
 		for {
@@ -259,14 +330,6 @@ func StartSessionCleaner(interval time.Duration) {
 				c := context.WithValue(context.Background(), "logger", logger.InitializationBdLog(f))
 				ctx := context.WithValue(c, "requestID", "DeleteExpiredSessionsNULL")
 
-				conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.SessionService))
-				if err != nil {
-					fmt.Printf("connection fail")
-					conn.Close()
-					return
-				}
-
-				sessionServiceClient := session_proto.NewSessionServiceClient(conn)
 				req, err := sessionServiceClient.CleanupExpiredSessions(
 					metadata.NewOutgoingContext(ctx,
 						metadata.New(map[string]string{"requestID": ctx.Value("requestID").(string)})),
@@ -274,12 +337,9 @@ func StartSessionCleaner(interval time.Duration) {
 				)
 				if err != nil {
 					fmt.Printf("Error cleaning expired sessions: %v\n", err)
-					conn.Close()
 					return
 				}
 				fmt.Println(req)
-
-				conn.Close()
 			}
 		}
 	}()

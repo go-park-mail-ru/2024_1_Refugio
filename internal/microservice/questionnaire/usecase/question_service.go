@@ -3,9 +3,10 @@ package usecase
 import (
 	"context"
 	"errors"
+	"math"
+
 	domain "mail/internal/microservice/models/domain_models"
 	repository "mail/internal/microservice/questionnaire/interface"
-	"math"
 )
 
 // QuestionAnswerUseCase represents the use case for working questionnaire.
@@ -20,12 +21,22 @@ func NewQuestionAnswerUseCase(repo repository.QuestionAnswerRepository) *Questio
 	}
 }
 
-// GetQuestions returns all question.
+// GetQuestions retrieves all questions.
 func (uc *QuestionAnswerUseCase) GetQuestions(ctx context.Context) ([]*domain.Question, error) {
 	return uc.repo.GetAllQuestions(ctx)
 }
 
-// GetAnswers returns all answer.
+// AddQuestion adds a new question.
+func (uc *QuestionAnswerUseCase) AddQuestion(newQuestion *domain.Question, ctx context.Context) (bool, error) {
+	return uc.repo.AddQuestion(newQuestion, ctx)
+}
+
+// AddAnswer adds a new answer.
+func (uc *QuestionAnswerUseCase) AddAnswer(newQuestion *domain.Answer, ctx context.Context) (bool, error) {
+	return uc.repo.AddAnswer(newQuestion, ctx)
+}
+
+// GetStatistics retrieves statistics related to questions and answers.
 func (uc *QuestionAnswerUseCase) GetStatistics(ctx context.Context) ([]*domain.Statistics, error) {
 	answers, err := uc.repo.GetAllAnswers(ctx)
 	if err != nil {
@@ -40,16 +51,7 @@ func (uc *QuestionAnswerUseCase) GetStatistics(ctx context.Context) ([]*domain.S
 	return statistics, nil
 }
 
-// AddQuestion add question.
-func (uc *QuestionAnswerUseCase) AddQuestion(newQuestion *domain.Question, ctx context.Context) (bool, error) {
-	return uc.repo.AddQuestion(newQuestion, ctx)
-}
-
-// AddAnswer add answer.
-func (uc *QuestionAnswerUseCase) AddAnswer(newQuestion *domain.Answer, ctx context.Context) (bool, error) {
-	return uc.repo.AddAnswer(newQuestion, ctx)
-}
-
+// CalculatingStatistics calculates the statistics based on the provided answers.
 func CalculatingStatistics(answers []*domain.Answer) ([]*domain.Statistics, error) {
 	var maxQuestionId uint32 = 0
 	for _, a := range answers {

@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+
 	domain "mail/internal/microservice/models/domain_models"
 	repository "mail/internal/microservice/session/interface"
 )

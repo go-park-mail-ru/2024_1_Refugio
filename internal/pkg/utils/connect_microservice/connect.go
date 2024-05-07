@@ -3,7 +3,7 @@ package connect_microservice
 import (
 	"fmt"
 	"google.golang.org/grpc"
-	"mail/internal/models/configs"
+	"mail/cmd/configs"
 )
 
 // OpenGRPCConnection opens a connection to the rpc server on the specified port.

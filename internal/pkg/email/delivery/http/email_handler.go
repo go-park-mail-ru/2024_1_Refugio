@@ -3,26 +3,24 @@ package http
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/microcosm-cc/bluemonday"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	emailUsecase "mail/internal/microservice/email/interface"
-	"mail/internal/microservice/email/proto"
-	"mail/internal/microservice/models/proto_converters"
-	"mail/internal/models/microservice_ports"
-	"mail/internal/pkg/utils/connect_microservice"
 	"net/http"
 	"strconv"
 
-	converters "mail/internal/models/delivery_converters"
-
-	emailApi "mail/internal/models/delivery_models"
-	"mail/internal/models/response"
-	domainSession "mail/internal/pkg/session/interface"
-	"mail/internal/pkg/utils/validators"
-
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
+	"github.com/microcosm-cc/bluemonday"
+
+	"mail/internal/microservice/email/proto"
+	"mail/internal/microservice/models/proto_converters"
+	"mail/internal/models/response"
+	"mail/internal/pkg/utils/validators"
+
+	email_proto "mail/internal/microservice/email/proto"
+	converters "mail/internal/models/delivery_converters"
+	emailApi "mail/internal/models/delivery_models"
+	domainSession "mail/internal/pkg/session/interface"
 )
 
 var (
@@ -32,8 +30,8 @@ var (
 
 // EmailHandler represents the handler for email operations.
 type EmailHandler struct {
-	EmailUseCase emailUsecase.EmailUseCase
-	Sessions     domainSession.SessionsManager
+	Sessions           domainSession.SessionsManager
+	EmailServiceClient email_proto.EmailServiceClient
 }
 
 func sanitizeString(str string) string {
@@ -66,15 +64,7 @@ func (h *EmailHandler) Incoming(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.EmailService))
-	if err != nil {
-		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
-		return
-	}
-	defer conn.Close()
-
-	emailServiceClient := proto.NewEmailServiceClient(conn)
-	emailDataProto, err := emailServiceClient.GetAllIncoming(
+	emailDataProto, err := h.EmailServiceClient.GetAllIncoming(
 		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 		&proto.LoginOffsetLimit{Login: login, Offset: 0, Limit: 0},
 	)
@@ -117,15 +107,7 @@ func (h *EmailHandler) Sent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.EmailService))
-	if err != nil {
-		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
-		return
-	}
-	defer conn.Close()
-
-	emailServiceClient := proto.NewEmailServiceClient(conn)
-	emailDataProto, err := emailServiceClient.GetAllSent(
+	emailDataProto, err := h.EmailServiceClient.GetAllSent(
 		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 		&proto.LoginOffsetLimit{Login: login, Offset: 0, Limit: 0},
 	)
@@ -176,15 +158,7 @@ func (h *EmailHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.EmailService))
-	if err != nil {
-		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
-		return
-	}
-	defer conn.Close()
-
-	emailServiceClient := proto.NewEmailServiceClient(conn)
-	emailDataProto, err := emailServiceClient.GetEmailByID(
+	emailDataProto, err := h.EmailServiceClient.GetEmailByID(
 		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 		&proto.EmailIdAndLogin{Id: id, Login: login},
 	)
@@ -222,12 +196,17 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 
 	newEmail.Topic = sanitizeString(newEmail.Topic)
 	newEmail.Text = sanitizeString(newEmail.Text)
-	newEmail.AvatarID = sanitizeString(newEmail.AvatarID)
+	newEmail.PhotoID = sanitizeString(newEmail.PhotoID)
 	newEmail.SenderEmail = sanitizeString(newEmail.SenderEmail)
 	newEmail.RecipientEmail = sanitizeString(newEmail.RecipientEmail)
 
 	sender := newEmail.SenderEmail
 	recipient := newEmail.RecipientEmail
+
+	if validators.IsEmpty(newEmail.Text) || validators.IsEmpty(newEmail.SenderEmail) || validators.IsEmpty(newEmail.RecipientEmail) {
+		response.HandleError(w, http.StatusBadRequest, "Data is empty")
+		return
+	}
 
 	switch {
 	case validators.IsValidEmailFormat(sender) && validators.IsValidEmailFormat(recipient):
@@ -237,15 +216,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.EmailService))
-		if err != nil {
-			response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
-			return
-		}
-		defer conn.Close()
-
-		emailServiceClient := proto.NewEmailServiceClient(conn)
-		_, err = emailServiceClient.CheckRecipientEmail(
+		_, err = h.EmailServiceClient.CheckRecipientEmail(
 			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 			&proto.Recipient{Recipient: recipient},
 		)
@@ -254,13 +225,13 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		emailDataProto, err := emailServiceClient.CreateEmail(
+		emailDataProto, err := h.EmailServiceClient.CreateEmail(
 			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 			&proto.Email{
 				Id:             newEmail.ID,
 				Topic:          newEmail.Topic,
 				Text:           newEmail.Text,
-				PhotoID:        newEmail.AvatarID,
+				PhotoID:        newEmail.PhotoID,
 				ReadStatus:     newEmail.ReadStatus,
 				Flag:           newEmail.Flag,
 				Deleted:        newEmail.Deleted,
@@ -279,7 +250,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 		emailData := proto_converters.EmailConvertProtoInCore(*emailDataProto.Email)
 		emailData.ID = emailDataProto.Id
 
-		_, err = emailServiceClient.CreateProfileEmail(
+		_, err = h.EmailServiceClient.CreateProfileEmail(
 			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 			&proto.IdSenderRecipient{Id: emailData.ID, Sender: emailData.SenderEmail, Recipient: emailData.RecipientEmail},
 		)
@@ -301,15 +272,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 		response.HandleSuccess(w, http.StatusBadRequest, "An error occurred in the recipient's domain. You cannot send messages to other email services. Make sure that the recipient's domain ends with @mailhub.su")
 		return
 	case validators.IsValidEmailFormat(sender) == false && validators.IsValidEmailFormat(recipient) == true:
-		conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.EmailService))
-		if err != nil {
-			response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
-			return
-		}
-		defer conn.Close()
-
-		emailServiceClient := proto.NewEmailServiceClient(conn)
-		_, err = emailServiceClient.CheckRecipientEmail(
+		_, err = h.EmailServiceClient.CheckRecipientEmail(
 			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 			&proto.Recipient{Recipient: recipient},
 		)
@@ -318,13 +281,13 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		emailDataProto, err := emailServiceClient.CreateEmail(
+		emailDataProto, err := h.EmailServiceClient.CreateEmail(
 			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 			&proto.Email{
 				Id:             newEmail.ID,
 				Topic:          newEmail.Topic,
 				Text:           newEmail.Text,
-				PhotoID:        newEmail.AvatarID,
+				PhotoID:        newEmail.PhotoID,
 				ReadStatus:     newEmail.ReadStatus,
 				Flag:           newEmail.Flag,
 				Deleted:        newEmail.Deleted,
@@ -343,7 +306,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 		emailData := proto_converters.EmailConvertProtoInCore(*emailDataProto.Email)
 		emailData.ID = emailDataProto.Id
 
-		_, err = emailServiceClient.CreateProfileEmail(
+		_, err = h.EmailServiceClient.CreateProfileEmail(
 			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 			&proto.IdSenderRecipient{Id: emailData.ID, Sender: emailData.SenderEmail, Recipient: emailData.RecipientEmail},
 		)
@@ -390,7 +353,7 @@ func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	updatedEmail.Topic = sanitizeString(updatedEmail.Topic)
 	updatedEmail.Text = sanitizeString(updatedEmail.Text)
-	updatedEmail.AvatarID = sanitizeString(updatedEmail.AvatarID)
+	updatedEmail.PhotoID = sanitizeString(updatedEmail.PhotoID)
 	updatedEmail.RecipientEmail = sanitizeString(updatedEmail.RecipientEmail)
 	updatedEmail.SenderEmail = sanitizeString(updatedEmail.SenderEmail)
 
@@ -403,21 +366,13 @@ func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.EmailService))
-	if err != nil {
-		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
-		return
-	}
-	defer conn.Close()
-
-	emailServiceClient := proto.NewEmailServiceClient(conn)
-	emailDataProto, err := emailServiceClient.UpdateEmail(
+	emailDataProto, err := h.EmailServiceClient.UpdateEmail(
 		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 		&proto.Email{
 			Id:             updatedEmail.ID,
 			Topic:          updatedEmail.Topic,
 			Text:           updatedEmail.Text,
-			PhotoID:        updatedEmail.AvatarID,
+			PhotoID:        updatedEmail.PhotoID,
 			ReadStatus:     updatedEmail.ReadStatus,
 			Flag:           updatedEmail.Flag,
 			Deleted:        updatedEmail.Deleted,
@@ -469,15 +424,7 @@ func (h *EmailHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.EmailService))
-	if err != nil {
-		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
-		return
-	}
-	defer conn.Close()
-
-	emailServiceClient := proto.NewEmailServiceClient(conn)
-	emailDataProto, err := emailServiceClient.DeleteEmail(
+	emailDataProto, err := h.EmailServiceClient.DeleteEmail(
 		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 		&proto.LoginWithID{Id: id, Login: login},
 	)
@@ -513,15 +460,7 @@ func (h *EmailHandler) Draft(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.EmailService))
-	if err != nil {
-		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
-		return
-	}
-	defer conn.Close()
-
-	emailServiceClient := proto.NewEmailServiceClient(conn)
-	emailDataProto, err := emailServiceClient.GetDraftEmails(
+	emailDataProto, err := h.EmailServiceClient.GetDraftEmails(
 		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 		&proto.LoginOffsetLimit{Login: login, Offset: 0, Limit: 0},
 	)
@@ -564,15 +503,7 @@ func (h *EmailHandler) Spam(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.EmailService))
-	if err != nil {
-		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
-		return
-	}
-	defer conn.Close()
-
-	emailServiceClient := proto.NewEmailServiceClient(conn)
-	emailDataProto, err := emailServiceClient.GetSpamEmails(
+	emailDataProto, err := h.EmailServiceClient.GetSpamEmails(
 		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 		&proto.LoginOffsetLimit{Login: login, Offset: 0, Limit: 0},
 	)

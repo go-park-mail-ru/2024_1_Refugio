@@ -3,17 +3,25 @@ package middleware
 import (
 	"context"
 	"fmt"
-	"github.com/sirupsen/logrus"
-	response "mail/internal/models/response"
-	"mail/internal/pkg/logger"
-	"mail/internal/pkg/session"
 	"net/http"
 	"os"
+	"regexp"
+	"strconv"
+	"strings"
 	"time"
+
+	"github.com/sirupsen/logrus"
+
+	"mail/internal/monitoring"
+	"mail/internal/pkg/logger"
+	"mail/internal/pkg/session"
+
+	response "mail/internal/models/response"
 )
 
 type Logger struct {
-	Logger *logger.LogrusLogger
+	Logger  *logger.LogrusLogger
+	Metrics *monitoring.PrometheusMetrics
 }
 
 var (
@@ -49,6 +57,8 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 func (log *Logger) AccessLogMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+
 		lrw := NewLoggingResponseWriter(w)
 
 		id, ok := r.Context().Value(requestIDContextKey).(string)
@@ -64,15 +74,23 @@ func (log *Logger) AccessLogMiddleware(next http.Handler) http.Handler {
 
 		c := context.WithValue(r.Context(), "logger", logger.InitializationBdLog(f))
 		ctx := context.WithValue(c, "requestID", id)
-		req := r.WithContext(ctx)
 
-		start := time.Now()
+		req := r.WithContext(ctx)
+		method := r.Method
+		path := r.RequestURI
+		re := regexp.MustCompile(`\d+`)
+		customPath := strings.Split(re.ReplaceAllString(path, "1"), "?")[0]
+		fmt.Println("customPath = ", customPath)
+
+		log.Metrics.Hits.WithLabelValues(customPath, method).Inc()
 		next.ServeHTTP(lrw, req)
+
+		timing := time.Since(start)
 
 		statusCode := lrw.statusCode
 		en := log.Logger.LogrusLogger.WithFields(logrus.Fields{
 			"method":     r.Method,
-			"work_time":  time.Since(start),
+			"work_time":  timing,
 			"URL":        r.URL.Path,
 			"mode":       "[access_log]",
 			"StatusCode": statusCode,
@@ -87,6 +105,7 @@ func (log *Logger) AccessLogMiddleware(next http.Handler) http.Handler {
 			en.Error("StatusServerError")
 		}
 
+		log.Metrics.Duration.WithLabelValues(strconv.Itoa(statusCode), customPath, method).Observe(timing.Seconds())
 	})
 }
 

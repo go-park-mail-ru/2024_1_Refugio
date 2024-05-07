@@ -3,8 +3,9 @@ package _interface
 
 import (
 	"context"
-	api "mail/internal/models/delivery_models"
 	"net/http"
+
+	api "mail/internal/models/delivery_models"
 )
 
 // SessionsManager represents the interface for managing user sessions.
@@ -24,7 +25,7 @@ type SessionsManager interface {
 	// GetLoginBySession retrieves the login associated with the session from the request.
 	GetLoginBySession(r *http.Request, ctx context.Context) (string, error)
 
-	// GetProfileIDBySessionID
+	// GetProfileIDBySessionID retrieves the profile ID associated with the given session ID from the session service.
 	GetProfileIDBySessionID(r *http.Request, ctx context.Context) (uint32, error)
 
 	// Create creates a new session for the user and sets the session ID cookie in the response.

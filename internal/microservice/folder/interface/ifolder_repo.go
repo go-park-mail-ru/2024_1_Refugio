@@ -1,3 +1,5 @@
+//go:generate mockgen -source=./ifolder_repo.go -destination=../mock/folder_repo_mock.go -package=mock
+
 package _interface
 
 import (
@@ -16,7 +18,7 @@ type FolderRepository interface {
 	// Delete delete folder as user
 	Delete(folderID uint32, profileID uint32, ctx context.Context) (bool, error)
 
-	// Update folder as user
+	// Update folder as user.
 	Update(newUpFolder *domain.Folder, ctx context.Context) (bool, error)
 
 	// AddEmailFolder adds a new email in folder to the storage and returns its assigned unique identifier.

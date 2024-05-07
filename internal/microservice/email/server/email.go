@@ -3,25 +3,25 @@ package server
 import (
 	"context"
 	"fmt"
+	"strconv"
 
+	usecase "mail/internal/microservice/email/interface"
 	"mail/internal/microservice/email/proto"
-	"mail/internal/microservice/email/usecase"
 	converters "mail/internal/microservice/models/proto_converters"
 )
 
 type EmailServer struct {
 	proto.UnimplementedEmailServiceServer
-
-	EmailUseCase *usecase.EmailUseCase
+	EmailUseCase usecase.EmailUseCase
 }
 
-func NewEmailServer(emailUseCase *usecase.EmailUseCase) *EmailServer {
+func NewEmailServer(emailUseCase usecase.EmailUseCase) *EmailServer {
 	return &EmailServer{EmailUseCase: emailUseCase}
 }
 
 func (es *EmailServer) GetEmailByID(ctx context.Context, input *proto.EmailIdAndLogin) (*proto.Email, error) {
 	if input.Id <= 0 {
-		return nil, fmt.Errorf("invalid email id: %s", input.Id)
+		return nil, fmt.Errorf("invalid email id: %s", strconv.Itoa(int(input.Id)))
 	}
 
 	email, err := es.EmailUseCase.GetEmailByID(input.Id, input.Login, ctx)
@@ -116,10 +116,12 @@ func (es *EmailServer) CreateEmail(ctx context.Context, input *proto.Email) (*pr
 	if input == nil {
 		return nil, fmt.Errorf("invalid email format: %s", input)
 	}
+
 	id, email, err := es.EmailUseCase.CreateEmail(converters.EmailConvertProtoInCore(*input), ctx)
 	if err != nil {
-		return nil, fmt.Errorf("email not found")
+		return nil, fmt.Errorf("failed create email")
 	}
+
 	emailWithId := new(proto.EmailWithID)
 	emailWithId.Id = id
 	emailWithId.Email = converters.EmailConvertCoreInProto(*email)
@@ -146,10 +148,16 @@ func (es *EmailServer) DeleteEmail(ctx context.Context, input *proto.LoginWithID
 	if input == nil {
 		return nil, fmt.Errorf("invalid email format: %s", input)
 	}
+
+	if input.Login == "" || input.Id <= 0 {
+		return nil, fmt.Errorf("invalid input data")
+	}
+
 	okStatus, err := es.EmailUseCase.DeleteEmail(input.Id, input.Login, ctx)
 	if err != nil {
 		return nil, fmt.Errorf("email not found")
 	}
+
 	protoStatusEmail := new(proto.StatusEmail)
 	protoStatusEmail.Status = okStatus
 	return protoStatusEmail, nil
@@ -157,11 +165,11 @@ func (es *EmailServer) DeleteEmail(ctx context.Context, input *proto.LoginWithID
 
 func (es *EmailServer) CreateProfileEmail(ctx context.Context, input *proto.IdSenderRecipient) (*proto.EmptyEmail, error) {
 	if input.Id <= 0 {
-		return nil, fmt.Errorf("invalid email id: %s", input.Id)
+		return nil, fmt.Errorf("invalid email id: %s", strconv.Itoa(int(input.Id)))
 	}
 
-	if input.Sender == "" && input.Recipient == "" {
-		return nil, fmt.Errorf("invalid email sender or recipient login: %s", input.Sender, input.Recipient)
+	if input.Sender == "" || input.Recipient == "" {
+		return nil, fmt.Errorf("invalid email sender or recipient login: %s, %s", input.Sender, input.Recipient)
 	}
 
 	err := es.EmailUseCase.CreateProfileEmail(input.Id, input.Sender, input.Recipient, ctx)

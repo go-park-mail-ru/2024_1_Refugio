@@ -93,7 +93,7 @@ CREATE TABLE IF NOT EXISTS settings (
 INSERT INTO file
 (file_id, file_type)
 VALUES
-    ('', 'PHOTO'), ('', 'PHOTO'), ('', 'PHOTO');
+    ('', 'PHOTO'), ('', 'PHOTO'), ('', 'PHOTO'), ('', 'PHOTO');
 
 -- Вставка начальных данных в таблицу users
 INSERT INTO profile
@@ -101,7 +101,8 @@ INSERT INTO profile
 VALUES
     ('sergey@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Sergey', 'Fedasov', 'Aleksandrovich', 'Male', '2003-08-20', NOW(), '+77777777777', 'Description', 1),
     ('ivan@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Ivan', 'Karpov', 'Aleksandrovich', 'Male', '2003-10-17', NOW(), '+79697045539', 'Description', 2),
-    ('max@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Maxim', 'Frelich', 'Aleksandrovich', 'Male', '2003-08-20', NOW(), '+79099099090', 'Description', 3)
+    ('max@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Maxim', 'Frelich', 'Aleksandrovich', 'Male', '2003-08-20', NOW(), '+79099099090', 'Description', 3),
+    ('alex@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Alexey', 'Khochevnikov', 'Aleksandrovich', 'Male', '2003-10-20', NOW(), '+79090007030', 'Description', 4)
 ON CONFLICT (login) DO NOTHING;
 
 -- Вставка начальных данных в таблицу email

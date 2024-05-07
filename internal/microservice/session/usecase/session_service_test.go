@@ -3,27 +3,29 @@ package usecase
 import (
 	"context"
 	"fmt"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
-	domain "mail/internal/microservice/models/domain_models"
-	mock "mail/internal/microservice/session/mocks"
-	"mail/internal/pkg/logger"
 	"os"
 	"testing"
+
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
+
+	"mail/internal/microservice/session/mock"
+	"mail/internal/pkg/logger"
+
+	domain "mail/internal/microservice/models/domain_models"
 )
 
 func GetCTX() context.Context {
-	requestID := "testID"
-
-	f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	f, err := os.OpenFile("log_test.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		fmt.Println("Failed to create logfile" + "log.txt")
 	}
 	defer f.Close()
 
-	c := context.WithValue(context.Background(), "logger", logger.InitializationBdLog(f))
-	ctx := context.WithValue(c, "requestID", requestID)
-	return ctx
+	ctx := context.WithValue(context.Background(), "logger", logger.InitializationBdLog(f))
+	ctx2 := context.WithValue(ctx, "requestID", []string{"testID"})
+
+	return ctx2
 }
 
 func TestCreateNewSession(t *testing.T) {
@@ -118,4 +120,24 @@ func TestGetLogin(t *testing.T) {
 	login, err := usecase.GetLogin(sessionID, ctx)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedLogin, login)
+}
+
+func TestGetProfileID(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock.NewMockSessionRepository(ctrl)
+	usecase := NewSessionUseCase(mockRepo)
+
+	sessionID := "10101010"
+
+	ctx := GetCTX()
+
+	expectedProfileId := uint32(42)
+
+	mockRepo.EXPECT().GetProfileIDBySessionID(sessionID, ctx).Return(expectedProfileId, nil)
+
+	profileId, err := usecase.GetProfileID(sessionID, ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedProfileId, profileId)
 }

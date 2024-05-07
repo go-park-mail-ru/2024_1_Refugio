@@ -4,6 +4,7 @@ package _interface
 
 import (
 	"context"
+
 	domain "mail/internal/microservice/models/domain_models"
 )
 
@@ -18,7 +19,7 @@ type SessionRepository interface {
 	// GetLoginBySessionID retrieves the login associated with the given session ID.
 	GetLoginBySessionID(sessionID string, ctx context.Context) (string, error)
 
-	// GetProfileIDBySessionID
+	// GetProfileIDBySessionID retrieves the profile id associated with the given session ID.
 	GetProfileIDBySessionID(sessionID string, ctx context.Context) (uint32, error)
 
 	// DeleteSessionByID deletes a session by its ID.

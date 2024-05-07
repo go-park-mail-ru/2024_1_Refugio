@@ -1,477 +1,438 @@
 package http
 
 import (
-	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
-	domain "mail/internal/microservice/models/domain_models"
-	mock "mail/internal/microservice/user/mocks"
-	api "mail/internal/models/delivery_models"
-	mockManager "mail/internal/pkg/session/mocks"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
+
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
+
+	"mail/internal/models/response"
+
+	auth_mock "mail/internal/microservice/auth/mock"
+	auth_proto "mail/internal/microservice/auth/proto"
+	session_mock "mail/internal/pkg/session/mock"
 )
 
-func TestLogin_Success(t *testing.T) {
+func TestAuthHandler_Login_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockUserUseCase := mock.NewMockUserUseCase(ctrl)
-	mockSessionsManager := mockManager.NewMockSessionsManager(ctrl)
+	mockAuthServiceClient := auth_mock.NewMockAuthServiceClient(ctrl)
+	mockSessionsManager := session_mock.NewMockSessionsManager(ctrl)
 
-	authHandler := AuthHandler{
-		UserUseCase: mockUserUseCase,
-		Sessions:    mockSessionsManager,
+	ah := &AuthHandler{
+		Sessions:          mockSessionsManager,
+		AuthServiceClient: mockAuthServiceClient,
 	}
 
-	requestBody := api.User{
-		Login:    "test@mailhub.su",
-		Password: "password",
-	}
-	requestBodyBytes, _ := json.Marshal(requestBody)
+	reqBody := `{"login": "user@mailhub.su", "password": "password123"}`
 
-	mockUserUseCase.EXPECT().GetUserByLogin("test@mailhub.su", "password", gomock.Any()).Return(&domain.User{ID: 1}, nil)
-	mockSessionsManager.EXPECT().Create(gomock.Any(), uint32(1), gomock.Any()).Return(nil, nil)
+	req := httptest.NewRequest("POST", "/api/v1/auth/login", strings.NewReader(reqBody))
+	ctx := context.WithValue(req.Context(), "requestID", "testID")
+	req = req.WithContext(ctx)
 
-	req, err := http.NewRequest("POST", "/api/v1/auth/login", bytes.NewReader(requestBodyBytes))
+	w := httptest.NewRecorder()
+
+	mockAuthServiceClient.EXPECT().
+		Login(gomock.Any(), gomock.Any()).
+		Return(&auth_proto.LoginReply{SessionId: "123"}, nil)
+
+	mockSessionsManager.EXPECT().
+		SetSession("123", w, req, req.Context()).
+		Return(nil)
+
+	ah.Login(w, req)
+
+	resp := w.Result()
+
+	var responseBody response.Response
+	err := json.NewDecoder(resp.Body).Decode(&responseBody)
 	assert.NoError(t, err)
-
-	rr := httptest.NewRecorder()
-
-	http.HandlerFunc(authHandler.Login).ServeHTTP(rr, req)
-
-	assert.Equal(t, http.StatusOK, rr.Code)
-
-	expectedResponseBody := `{"status":200,"body":{"Success":"Login successful"}}` + "\n"
-	assert.Equal(t, expectedResponseBody, rr.Body.String())
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
 
-func TestLogin_InvalidRequestBody(t *testing.T) {
+func TestAuthHandler_Login_InvalidRequestJson(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockUserUseCase := mock.NewMockUserUseCase(ctrl)
-	mockSessionsManager := mockManager.NewMockSessionsManager(ctrl)
+	mockAuthServiceClient := auth_mock.NewMockAuthServiceClient(ctrl)
+	mockSessionsManager := session_mock.NewMockSessionsManager(ctrl)
 
-	authHandler := AuthHandler{
-		UserUseCase: mockUserUseCase,
-		Sessions:    mockSessionsManager,
+	ah := &AuthHandler{
+		Sessions:          mockSessionsManager,
+		AuthServiceClient: mockAuthServiceClient,
 	}
 
-	requestBody := api.User{
-		Login:    "test@mailhub.su",
-		Password: "password",
-	}
-	requestBodyBytesMarshal, _ := json.Marshal(requestBody)
-	fmt.Println(string(requestBodyBytesMarshal))
-	requestBodyBytes := []byte(`{"birthday":"0001-01-01T00:00:00Z","login":"test@mailhub.su""password":"password"}`)
+	reqBody := `{"invalid": json"}`
 
-	req, err := http.NewRequest("POST", "/api/v1/auth/login", bytes.NewReader(requestBodyBytes))
+	req := httptest.NewRequest("POST", "/api/v1/auth/login", strings.NewReader(reqBody))
+	ctx := context.WithValue(req.Context(), "requestID", "testID")
+	req = req.WithContext(ctx)
+
+	w := httptest.NewRecorder()
+
+	ah.Login(w, req)
+
+	resp := w.Result()
+
+	var responseBody response.ErrorResponse
+	err := json.NewDecoder(resp.Body).Decode(&responseBody)
 	assert.NoError(t, err)
-
-	rr := httptest.NewRecorder()
-
-	http.HandlerFunc(authHandler.Login).ServeHTTP(rr, req)
-
-	assert.Equal(t, http.StatusBadRequest, rr.Code)
-
-	expectedResponseBody := `{"status":400,"body":{"error":"Invalid request body"}}` + "\n"
-	assert.Equal(t, expectedResponseBody, rr.Body.String())
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 }
 
-func TestLogin_AllFieldsMustBeFilledIn(t *testing.T) {
+func TestAuthHandler_Login_InvalidRequest(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockUserUseCase := mock.NewMockUserUseCase(ctrl)
-	mockSessionsManager := mockManager.NewMockSessionsManager(ctrl)
+	mockAuthServiceClient := auth_mock.NewMockAuthServiceClient(ctrl)
+	mockSessionsManager := session_mock.NewMockSessionsManager(ctrl)
 
-	authHandler := AuthHandler{
-		UserUseCase: mockUserUseCase,
-		Sessions:    mockSessionsManager,
+	ah := &AuthHandler{
+		Sessions:          mockSessionsManager,
+		AuthServiceClient: mockAuthServiceClient,
 	}
 
-	requestBody := api.User{
-		Login:    "test@mailhub.su",
-		Password: "",
-	}
-	requestBodyBytes, _ := json.Marshal(requestBody)
+	reqBody := `{"invalid": "json"}`
 
-	req, err := http.NewRequest("POST", "/api/v1/auth/login", bytes.NewReader(requestBodyBytes))
+	req := httptest.NewRequest("POST", "/api/v1/auth/login", strings.NewReader(reqBody))
+	ctx := context.WithValue(req.Context(), "requestID", "testID")
+	req = req.WithContext(ctx)
+
+	w := httptest.NewRecorder()
+
+	ah.Login(w, req)
+
+	resp := w.Result()
+
+	var responseBody response.ErrorResponse
+	err := json.NewDecoder(resp.Body).Decode(&responseBody)
 	assert.NoError(t, err)
-
-	rr := httptest.NewRecorder()
-
-	http.HandlerFunc(authHandler.Login).ServeHTTP(rr, req)
-
-	assert.Equal(t, http.StatusInternalServerError, rr.Code)
-
-	expectedResponseBody := `{"status":500,"body":{"error":"All fields must be filled in"}}` + "\n"
-	assert.Equal(t, expectedResponseBody, rr.Body.String())
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 }
 
-func TestLogin_DomainInLoginIsNotSuitable(t *testing.T) {
+func TestAuthHandler_Login_InvalidRequestLogin(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockUserUseCase := mock.NewMockUserUseCase(ctrl)
-	mockSessionsManager := mockManager.NewMockSessionsManager(ctrl)
+	mockAuthServiceClient := auth_mock.NewMockAuthServiceClient(ctrl)
+	mockSessionsManager := session_mock.NewMockSessionsManager(ctrl)
 
-	authHandler := AuthHandler{
-		UserUseCase: mockUserUseCase,
-		Sessions:    mockSessionsManager,
+	ah := &AuthHandler{
+		Sessions:          mockSessionsManager,
+		AuthServiceClient: mockAuthServiceClient,
 	}
 
-	requestBody := api.User{
-		Login:    "test@mailhub.ru",
-		Password: "password",
-	}
-	requestBodyBytes, _ := json.Marshal(requestBody)
+	reqBody := `{"login": "user@mail.ru", "password": "password123"}`
 
-	req, err := http.NewRequest("POST", "/api/v1/auth/login", bytes.NewReader(requestBodyBytes))
+	req := httptest.NewRequest("POST", "/api/v1/auth/login", strings.NewReader(reqBody))
+	ctx := context.WithValue(req.Context(), "requestID", "testID")
+	req = req.WithContext(ctx)
+
+	w := httptest.NewRecorder()
+
+	ah.Login(w, req)
+
+	resp := w.Result()
+
+	var responseBody response.ErrorResponse
+	err := json.NewDecoder(resp.Body).Decode(&responseBody)
 	assert.NoError(t, err)
-
-	rr := httptest.NewRecorder()
-
-	http.HandlerFunc(authHandler.Login).ServeHTTP(rr, req)
-
-	assert.Equal(t, http.StatusBadRequest, rr.Code)
-
-	expectedResponseBody := `{"status":400,"body":{"error":"Domain in the login is not suitable"}}` + "\n"
-	assert.Equal(t, expectedResponseBody, rr.Body.String())
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 }
 
-func TestLogin_UserWithLoginNotFound(t *testing.T) {
+func TestAuthHandler_Login_LoginFailed(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockUserUseCase := mock.NewMockUserUseCase(ctrl)
-	mockSessionsManager := mockManager.NewMockSessionsManager(ctrl)
+	mockAuthServiceClient := auth_mock.NewMockAuthServiceClient(ctrl)
+	mockSessionsManager := session_mock.NewMockSessionsManager(ctrl)
 
-	authHandler := AuthHandler{
-		UserUseCase: mockUserUseCase,
-		Sessions:    mockSessionsManager,
+	ah := &AuthHandler{
+		Sessions:          mockSessionsManager,
+		AuthServiceClient: mockAuthServiceClient,
 	}
 
-	requestBody := api.User{
-		Login:    "test@mailhub.su",
-		Password: "password",
-	}
-	requestBodyBytes, _ := json.Marshal(requestBody)
+	reqBody := `{"login": "user@mailhub.su", "password": "password123"}`
 
-	mockUserUseCase.EXPECT().GetUserByLogin("test@mailhub.su", "password", gomock.Any()).Return(nil, errors.New("user with login test@mailhub.su not found"))
+	req := httptest.NewRequest("POST", "/api/v1/auth/login", strings.NewReader(reqBody))
+	ctx := context.WithValue(req.Context(), "requestID", "testID")
+	req = req.WithContext(ctx)
 
-	req, err := http.NewRequest("POST", "/api/v1/auth/login", bytes.NewReader(requestBodyBytes))
+	w := httptest.NewRecorder()
+
+	mockAuthServiceClient.EXPECT().
+		Login(gomock.Any(), gomock.Any()).
+		Return(nil, errors.New("login failed"))
+
+	ah.Login(w, req)
+
+	resp := w.Result()
+
+	var responseBody response.ErrorResponse
+	err := json.NewDecoder(resp.Body).Decode(&responseBody)
 	assert.NoError(t, err)
-
-	rr := httptest.NewRecorder()
-
-	http.HandlerFunc(authHandler.Login).ServeHTTP(rr, req)
-
-	assert.Equal(t, http.StatusUnauthorized, rr.Code)
-
-	expectedResponseBody := `{"status":401,"body":{"error":"Login failed"}}` + "\n"
-	assert.Equal(t, expectedResponseBody, rr.Body.String())
+	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 }
 
-func TestLogin_FailedToCreateSession(t *testing.T) {
+func TestAuthHandler_Login_SessionFailed(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockUserUseCase := mock.NewMockUserUseCase(ctrl)
-	mockSessionsManager := mockManager.NewMockSessionsManager(ctrl)
+	mockAuthServiceClient := auth_mock.NewMockAuthServiceClient(ctrl)
+	mockSessionsManager := session_mock.NewMockSessionsManager(ctrl)
 
-	authHandler := AuthHandler{
-		UserUseCase: mockUserUseCase,
-		Sessions:    mockSessionsManager,
+	ah := &AuthHandler{
+		Sessions:          mockSessionsManager,
+		AuthServiceClient: mockAuthServiceClient,
 	}
 
-	requestBody := api.User{
-		Login:    "test@mailhub.su",
-		Password: "password",
-	}
-	requestBodyBytes, _ := json.Marshal(requestBody)
+	reqBody := `{"login": "user@mailhub.su", "password": "password123"}`
 
-	mockUserUseCase.EXPECT().GetUserByLogin("test@mailhub.su", "password", gomock.Any()).Return(&domain.User{ID: 1}, nil)
-	mockSessionsManager.EXPECT().Create(gomock.Any(), uint32(1), gomock.Any()).Return(nil, errors.New("session already exist"))
+	req := httptest.NewRequest("POST", "/api/v1/auth/login", strings.NewReader(reqBody))
+	ctx := context.WithValue(req.Context(), "requestID", "testID")
+	req = req.WithContext(ctx)
 
-	req, err := http.NewRequest("POST", "/api/v1/auth/login", bytes.NewReader(requestBodyBytes))
+	w := httptest.NewRecorder()
+
+	mockAuthServiceClient.EXPECT().
+		Login(gomock.Any(), gomock.Any()).
+		Return(&auth_proto.LoginReply{SessionId: "123"}, nil)
+
+	mockSessionsManager.EXPECT().
+		SetSession("123", w, req, req.Context()).
+		Return(errors.New("login failed"))
+
+	ah.Login(w, req)
+
+	resp := w.Result()
+
+	var responseBody response.Response
+	err := json.NewDecoder(resp.Body).Decode(&responseBody)
 	assert.NoError(t, err)
-
-	rr := httptest.NewRecorder()
-
-	http.HandlerFunc(authHandler.Login).ServeHTTP(rr, req)
-
-	assert.Equal(t, http.StatusInternalServerError, rr.Code)
-
-	expectedResponseBody := `{"status":500,"body":{"error":"Failed to create session"}}` + "\n"
-	assert.Equal(t, expectedResponseBody, rr.Body.String())
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 }
 
-func TestSignup_Success(t *testing.T) {
+func TestAuthHandler_Signup_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockUserUseCase := mock.NewMockUserUseCase(ctrl)
-	mockSessionsManager := mockManager.NewMockSessionsManager(ctrl)
+	mockAuthServiceClient := auth_mock.NewMockAuthServiceClient(ctrl)
+	mockSessionsManager := session_mock.NewMockSessionsManager(ctrl)
 
-	authHandler := AuthHandler{
-		UserUseCase: mockUserUseCase,
-		Sessions:    mockSessionsManager,
+	ah := &AuthHandler{
+		Sessions:          mockSessionsManager,
+		AuthServiceClient: mockAuthServiceClient,
 	}
 
-	requestBody := api.User{
-		Login:     "test@mailhub.su",
-		Password:  "password",
-		FirstName: "John",
-		Surname:   "Doe",
-		Gender:    "Male",
-	}
-	requestBodyBytes, _ := json.Marshal(requestBody)
+	reqBody := `{"login": "user@mailhub.su", "password": "password123", "firstName": "John", "surname": "Doe", "gender": "Male", "phoneNumber": "123456789"}`
 
-	mockUserUseCase.EXPECT().IsLoginUnique("test@mailhub.su", gomock.Any()).Return(true, nil)
-	mockUserUseCase.EXPECT().CreateUser(gomock.Any(), gomock.Any()).Return(&domain.User{ID: 1}, nil)
+	req := httptest.NewRequest("POST", "/api/v1/auth/signup", strings.NewReader(reqBody))
+	ctx := context.WithValue(req.Context(), "requestID", "testID")
+	req = req.WithContext(ctx)
 
-	req, err := http.NewRequest("POST", "/api/v1/auth/signup", bytes.NewReader(requestBodyBytes))
+	w := httptest.NewRecorder()
+
+	mockAuthServiceClient.EXPECT().
+		Signup(gomock.Any(), gomock.Any()).
+		Return(nil, nil)
+
+	ah.Signup(w, req)
+
+	resp := w.Result()
+
+	var responseBody response.Response
+	err := json.NewDecoder(resp.Body).Decode(&responseBody)
 	assert.NoError(t, err)
-
-	rr := httptest.NewRecorder()
-
-	http.HandlerFunc(authHandler.Signup).ServeHTTP(rr, req)
-
-	assert.Equal(t, http.StatusOK, rr.Code)
-
-	expectedResponseBody := `{"status":200,"body":{"Success":"Signup successful"}}` + "\n"
-	assert.Equal(t, expectedResponseBody, rr.Body.String())
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
 
-func TestSignup_InvalidRequestBody(t *testing.T) {
+func TestAuthHandler_Signup_InvalidRequestBody(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockUserUseCase := mock.NewMockUserUseCase(ctrl)
-	mockSessionsManager := mockManager.NewMockSessionsManager(ctrl)
+	mockAuthServiceClient := auth_mock.NewMockAuthServiceClient(ctrl)
+	mockSessionsManager := session_mock.NewMockSessionsManager(ctrl)
 
-	authHandler := AuthHandler{
-		UserUseCase: mockUserUseCase,
-		Sessions:    mockSessionsManager,
+	ah := &AuthHandler{
+		Sessions:          mockSessionsManager,
+		AuthServiceClient: mockAuthServiceClient,
 	}
 
-	requestBody := api.User{
-		Login:     "test@mailhub.su",
-		Password:  "password",
-		FirstName: "John",
-		Surname:   "Doe",
-		Gender:    "Male",
-	}
-	requestBodyBytesMarshal, _ := json.Marshal(requestBody)
-	fmt.Println(string(requestBodyBytesMarshal))
-	requestBodyBytes := []byte(`{"firstname":"John","surname":"Doe","gender":"Male","birthday":"0001-01-01T00:00:00Z""login":"test@mailhub.su","password":"password"}`)
+	reqBody := `{"invalid": json"}`
 
-	req, err := http.NewRequest("POST", "/api/v1/auth/signup", bytes.NewReader(requestBodyBytes))
+	req := httptest.NewRequest("POST", "/api/v1/auth/signup", strings.NewReader(reqBody))
+	ctx := context.WithValue(req.Context(), "requestID", "testID")
+	req = req.WithContext(ctx)
+
+	w := httptest.NewRecorder()
+
+	ah.Signup(w, req)
+
+	resp := w.Result()
+
+	var responseBody response.ErrorResponse
+	err := json.NewDecoder(resp.Body).Decode(&responseBody)
 	assert.NoError(t, err)
-
-	rr := httptest.NewRecorder()
-
-	http.HandlerFunc(authHandler.Signup).ServeHTTP(rr, req)
-
-	assert.Equal(t, http.StatusBadRequest, rr.Code)
-
-	expectedResponseBody := `{"status":400,"body":{"error":"Invalid request body"}}` + "\n"
-	assert.Equal(t, expectedResponseBody, rr.Body.String())
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 }
 
-func TestSignup_AllFieldsMustBeFilledIn(t *testing.T) {
+func TestAuthHandler_Signup_InvalidRequestFields(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockUserUseCase := mock.NewMockUserUseCase(ctrl)
-	mockSessionsManager := mockManager.NewMockSessionsManager(ctrl)
+	mockAuthServiceClient := auth_mock.NewMockAuthServiceClient(ctrl)
+	mockSessionsManager := session_mock.NewMockSessionsManager(ctrl)
 
-	authHandler := AuthHandler{
-		UserUseCase: mockUserUseCase,
-		Sessions:    mockSessionsManager,
+	ah := &AuthHandler{
+		Sessions:          mockSessionsManager,
+		AuthServiceClient: mockAuthServiceClient,
 	}
 
-	requestBody := api.User{
-		Login:     "test@mailhub.su",
-		Password:  "password",
-		FirstName: "John",
-		Surname:   "Doe",
-		Gender:    "male",
-	}
-	requestBodyBytes, _ := json.Marshal(requestBody)
+	reqBody := `{"login": "", "password": "", "firstName": "", "surname": "", "gender": "", "phoneNumber": ""}`
 
-	req, err := http.NewRequest("POST", "/api/v1/auth/signup", bytes.NewReader(requestBodyBytes))
+	req := httptest.NewRequest("POST", "/api/v1/auth/signup", strings.NewReader(reqBody))
+	ctx := context.WithValue(req.Context(), "requestID", "testID")
+	req = req.WithContext(ctx)
+
+	w := httptest.NewRecorder()
+
+	ah.Signup(w, req)
+
+	resp := w.Result()
+
+	var responseBody response.ErrorResponse
+	err := json.NewDecoder(resp.Body).Decode(&responseBody)
 	assert.NoError(t, err)
-
-	rr := httptest.NewRecorder()
-
-	http.HandlerFunc(authHandler.Signup).ServeHTTP(rr, req)
-
-	assert.Equal(t, http.StatusBadRequest, rr.Code)
-
-	expectedResponseBody := `{"status":400,"body":{"error":"All fields must be filled in"}}` + "\n"
-	assert.Equal(t, expectedResponseBody, rr.Body.String())
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 }
 
-func TestSignup_DomainInLoginIsNotSuitable(t *testing.T) {
+func TestAuthHandler_Signup_InvalidLoginFormat(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockUserUseCase := mock.NewMockUserUseCase(ctrl)
-	mockSessionsManager := mockManager.NewMockSessionsManager(ctrl)
+	mockAuthServiceClient := auth_mock.NewMockAuthServiceClient(ctrl)
+	mockSessionsManager := session_mock.NewMockSessionsManager(ctrl)
 
-	authHandler := AuthHandler{
-		UserUseCase: mockUserUseCase,
-		Sessions:    mockSessionsManager,
+	ah := &AuthHandler{
+		Sessions:          mockSessionsManager,
+		AuthServiceClient: mockAuthServiceClient,
 	}
 
-	requestBody := api.User{
-		Login:     "test@mailhub.ru",
-		Password:  "password",
-		FirstName: "John",
-		Surname:   "Doe",
-		Gender:    "Male",
-	}
-	requestBodyBytes, _ := json.Marshal(requestBody)
+	reqBody := `{"login": "invalid_email", "password": "password123", "firstName": "John", "surname": "Doe", "gender": "Male", "phoneNumber": "123456789"}`
 
-	req, err := http.NewRequest("POST", "/api/v1/auth/signup", bytes.NewReader(requestBodyBytes))
+	req := httptest.NewRequest("POST", "/api/v1/auth/signup", strings.NewReader(reqBody))
+	ctx := context.WithValue(req.Context(), "requestID", "testID")
+	req = req.WithContext(ctx)
+
+	w := httptest.NewRecorder()
+
+	ah.Signup(w, req)
+
+	resp := w.Result()
+
+	var responseBody response.ErrorResponse
+	err := json.NewDecoder(resp.Body).Decode(&responseBody)
 	assert.NoError(t, err)
-
-	rr := httptest.NewRecorder()
-
-	http.HandlerFunc(authHandler.Signup).ServeHTTP(rr, req)
-
-	assert.Equal(t, http.StatusBadRequest, rr.Code)
-
-	expectedResponseBody := `{"status":400,"body":{"error":"Domain in the login is not suitable"}}` + "\n"
-	assert.Equal(t, expectedResponseBody, rr.Body.String())
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 }
 
-func TestSignup_SuchLoginAlreadyExists(t *testing.T) {
+func TestAuthHandler_Signup_FailedToAddUser(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockUserUseCase := mock.NewMockUserUseCase(ctrl)
-	mockSessionsManager := mockManager.NewMockSessionsManager(ctrl)
+	mockAuthServiceClient := auth_mock.NewMockAuthServiceClient(ctrl)
+	mockSessionsManager := session_mock.NewMockSessionsManager(ctrl)
 
-	authHandler := AuthHandler{
-		UserUseCase: mockUserUseCase,
-		Sessions:    mockSessionsManager,
+	ah := &AuthHandler{
+		Sessions:          mockSessionsManager,
+		AuthServiceClient: mockAuthServiceClient,
 	}
 
-	requestBody := api.User{
-		Login:     "test@mailhub.su",
-		Password:  "password",
-		FirstName: "John",
-		Surname:   "Doe",
-		Gender:    "Male",
-	}
-	requestBodyBytes, _ := json.Marshal(requestBody)
+	reqBody := `{"login": "user@mailhub.su", "password": "password123", "firstName": "John", "surname": "Doe", "gender": "Male", "phoneNumber": "123456789"}`
 
-	mockUserUseCase.EXPECT().IsLoginUnique("test@mailhub.su", gomock.Any()).Return(false, nil)
+	req := httptest.NewRequest("POST", "/api/v1/auth/signup", strings.NewReader(reqBody))
+	ctx := context.WithValue(req.Context(), "requestID", "testID")
+	req = req.WithContext(ctx)
 
-	req, err := http.NewRequest("POST", "/api/v1/auth/signup", bytes.NewReader(requestBodyBytes))
+	w := httptest.NewRecorder()
+
+	mockAuthServiceClient.EXPECT().
+		Signup(gomock.Any(), gomock.Any()).
+		Return(nil, errors.New("failed to add user"))
+
+	ah.Signup(w, req)
+
+	resp := w.Result()
+
+	var responseBody response.ErrorResponse
+	err := json.NewDecoder(resp.Body).Decode(&responseBody)
 	assert.NoError(t, err)
-
-	rr := httptest.NewRecorder()
-
-	http.HandlerFunc(authHandler.Signup).ServeHTTP(rr, req)
-
-	assert.Equal(t, http.StatusBadRequest, rr.Code)
-
-	expectedResponseBody := `{"status":400,"body":{"error":"Such a login already exists"}}` + "\n"
-	assert.Equal(t, expectedResponseBody, rr.Body.String())
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 }
 
-func TestSignup_FailedToAddUser(t *testing.T) {
+func TestAuthHandler_Logout_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockUserUseCase := mock.NewMockUserUseCase(ctrl)
-	mockSessionsManager := mockManager.NewMockSessionsManager(ctrl)
+	mockSessionsManager := session_mock.NewMockSessionsManager(ctrl)
 
-	authHandler := AuthHandler{
-		UserUseCase: mockUserUseCase,
-		Sessions:    mockSessionsManager,
-	}
-
-	requestBody := api.User{
-		Login:     "test@mailhub.su",
-		Password:  "password",
-		FirstName: "John",
-		Surname:   "Doe",
-		Gender:    "Male",
-	}
-	requestBodyBytes, _ := json.Marshal(requestBody)
-
-	mockUserUseCase.EXPECT().IsLoginUnique("test@mailhub.su", gomock.Any()).Return(true, nil)
-	mockUserUseCase.EXPECT().CreateUser(gomock.Any(), gomock.Any()).Return(nil, errors.New("user with login test@mailhub.su fail"))
-
-	req, err := http.NewRequest("POST", "/api/v1/auth/signup", bytes.NewReader(requestBodyBytes))
-	assert.NoError(t, err)
-
-	rr := httptest.NewRecorder()
-
-	http.HandlerFunc(authHandler.Signup).ServeHTTP(rr, req)
-
-	assert.Equal(t, http.StatusInternalServerError, rr.Code)
-
-	expectedResponseBody := `{"status":500,"body":{"error":"Failed to add user"}}` + "\n"
-	assert.Equal(t, expectedResponseBody, rr.Body.String())
-}
-
-func TestLogout_Success(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockSessionsManager := mockManager.NewMockSessionsManager(ctrl)
-
-	authHandler := AuthHandler{
+	ah := &AuthHandler{
 		Sessions: mockSessionsManager,
 	}
 
-	req, err := http.NewRequest("POST", "/api/v1/auth/logout", nil)
+	req := httptest.NewRequest("POST", "/api/v1/auth/logout", nil)
+	ctx := context.WithValue(req.Context(), "requestID", "testID")
+	req = req.WithContext(ctx)
+
+	w := httptest.NewRecorder()
+
+	mockSessionsManager.EXPECT().
+		DestroyCurrent(w, req, req.Context()).
+		Return(nil)
+
+	ah.Logout(w, req)
+
+	resp := w.Result()
+
+	var responseBody response.Response
+	err := json.NewDecoder(resp.Body).Decode(&responseBody)
 	assert.NoError(t, err)
-
-	rr := httptest.NewRecorder()
-
-	mockSessionsManager.EXPECT().DestroyCurrent(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-
-	http.HandlerFunc(authHandler.Logout).ServeHTTP(rr, req)
-
-	assert.Equal(t, http.StatusOK, rr.Code)
-
-	expectedResponseBody := `{"status":200,"body":{"Success":"Logout successful"}}` + "\n"
-	assert.Equal(t, expectedResponseBody, rr.Body.String())
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
 
-func TestLogout_NotAuthorized(t *testing.T) {
+func TestAuthHandler_Logout_Unauthorized(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockSessionsManager := mockManager.NewMockSessionsManager(ctrl)
+	mockSessionsManager := session_mock.NewMockSessionsManager(ctrl)
 
-	authHandler := AuthHandler{
+	ah := &AuthHandler{
 		Sessions: mockSessionsManager,
 	}
 
-	req, err := http.NewRequest("POST", "/api/v1/auth/logout", nil)
+	req := httptest.NewRequest("POST", "/api/v1/auth/logout", nil)
+	ctx := context.WithValue(req.Context(), "requestID", "testID")
+	req = req.WithContext(ctx)
+
+	w := httptest.NewRecorder()
+
+	mockSessionsManager.EXPECT().
+		DestroyCurrent(w, req, req.Context()).
+		Return(errors.New("not authorized"))
+
+	ah.Logout(w, req)
+
+	resp := w.Result()
+
+	var responseBody response.ErrorResponse
+	err := json.NewDecoder(resp.Body).Decode(&responseBody)
 	assert.NoError(t, err)
-
-	rr := httptest.NewRecorder()
-
-	mockSessionsManager.EXPECT().DestroyCurrent(gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("Not Authorized"))
-
-	http.HandlerFunc(authHandler.Logout).ServeHTTP(rr, req)
-
-	assert.Equal(t, http.StatusUnauthorized, rr.Code)
-
-	expectedResponseBody := `{"status":401,"body":{"error":"Not Authorized"}}` + "\n"
-	assert.Equal(t, expectedResponseBody, rr.Body.String())
+	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 }

@@ -4,22 +4,29 @@ import (
 	"context"
 	"fmt"
 	"google.golang.org/grpc/metadata"
+
 	"mail/internal/microservice/auth/proto"
+	"mail/internal/pkg/utils/sanitize"
+
 	domain "mail/internal/microservice/models/domain_models"
 	session_proto "mail/internal/microservice/session/proto"
 	user_proto "mail/internal/microservice/user/proto"
-	"mail/internal/models/microservice_ports"
-	"mail/internal/pkg/utils/connect_microservice"
-	"mail/internal/pkg/utils/sanitize"
 	validUtil "mail/internal/pkg/utils/validators"
 )
 
+// AuthServer handles RPC calls for the AuthService.
 type AuthServer struct {
 	proto.UnimplementedAuthServiceServer
+	sessionServiceClient session_proto.SessionServiceClient
+	userServiceClient    user_proto.UserServiceClient
 }
 
-func NewAuthServer() *AuthServer {
-	return &AuthServer{}
+// NewAuthServer creates a new instance of AuthServer.
+func NewAuthServer(sessionClient session_proto.SessionServiceClient, userClient user_proto.UserServiceClient) *AuthServer {
+	return &AuthServer{
+		sessionServiceClient: sessionClient,
+		userServiceClient:    userClient,
+	}
 }
 
 // Login handles user login.
@@ -35,20 +42,13 @@ func (as *AuthServer) Login(ctx context.Context, input *proto.LoginRequest) (*pr
 		return nil, fmt.Errorf("domain in the login is not suitable")
 	}
 
-	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.UserService))
-	if err != nil {
-		return nil, fmt.Errorf("invalid connection")
-	}
-	defer conn.Close()
-
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("metadata error")
 	}
 	value := md.Get("requestID")
 
-	userServiceClient := user_proto.NewUserServiceClient(conn)
-	user, errLogin := userServiceClient.GetUserByLogin(
+	user, errLogin := as.userServiceClient.GetUserByLogin(
 		metadata.NewOutgoingContext(ctx,
 			metadata.New(map[string]string{"requestID": value[0]})),
 		&user_proto.GetUserByLoginRequest{Login: input.Login, Password: input.Password},
@@ -57,14 +57,7 @@ func (as *AuthServer) Login(ctx context.Context, input *proto.LoginRequest) (*pr
 		return &proto.LoginReply{LoginStatus: false}, fmt.Errorf("login failed")
 	}
 
-	conn2, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.SessionService))
-	if err != nil {
-		return nil, fmt.Errorf("invalid connection")
-	}
-	defer conn2.Close()
-
-	sessionServiceClient := session_proto.NewSessionServiceClient(conn2)
-	session, errStatus := sessionServiceClient.CreateSession(
+	session, errStatus := as.sessionServiceClient.CreateSession(
 		metadata.NewOutgoingContext(ctx,
 			metadata.New(map[string]string{"requestID": value[0]})),
 		&session_proto.CreateSessionRequest{Session: &session_proto.Session{UserId: user.User.Id,
@@ -104,14 +97,7 @@ func (as *AuthServer) Signup(ctx context.Context, input *proto.SignupRequest) (*
 	}
 	value := md.Get("requestID")
 
-	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.UserService))
-	if err != nil {
-		return nil, fmt.Errorf("invalid connection")
-	}
-	defer conn.Close()
-
-	userServiceClient := user_proto.NewUserServiceClient(conn)
-	_, errLogin := userServiceClient.IsLoginUnique(
+	_, errLogin := as.userServiceClient.IsLoginUnique(
 		metadata.NewOutgoingContext(ctx,
 			metadata.New(map[string]string{"requestID": value[0]})),
 		&user_proto.IsLoginUniqueRequest{Login: input.Login},
@@ -120,7 +106,7 @@ func (as *AuthServer) Signup(ctx context.Context, input *proto.SignupRequest) (*
 		return nil, fmt.Errorf("such a login already exists")
 	}
 
-	_, errCreate := userServiceClient.CreateUser(
+	_, errCreate := as.userServiceClient.CreateUser(
 		metadata.NewOutgoingContext(ctx,
 			metadata.New(map[string]string{"requestID": value[0]})),
 		&user_proto.CreateUserRequest{User: &user_proto.User{
@@ -151,20 +137,13 @@ func (as *AuthServer) Logout(ctx context.Context, input *proto.LogoutRequest) (*
 		return nil, fmt.Errorf("session id must be filled in")
 	}
 
-	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.SessionService))
-	if err != nil {
-		return nil, fmt.Errorf("invalid connection")
-	}
-	defer conn.Close()
-
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("metadata error")
 	}
 	value := md.Get("requestID")
 
-	sessionServiceClient := session_proto.NewSessionServiceClient(conn)
-	_, errStatus := sessionServiceClient.DeleteSession(
+	_, errStatus := as.sessionServiceClient.DeleteSession(
 		metadata.NewOutgoingContext(ctx,
 			metadata.New(map[string]string{"requestID": value[0]})),
 		&session_proto.DeleteSessionRequest{SessionId: input.SessionId},

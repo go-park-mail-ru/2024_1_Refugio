@@ -3,30 +3,34 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+	"os"
+	"testing"
+	"time"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/golang/mock/gomock"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
-	domain "mail/internal/microservice/models/domain_models"
+	"github.com/stretchr/testify/require"
+
 	"mail/internal/pkg/logger"
-	"os"
-	"testing"
-	"time"
+
+	domain "mail/internal/microservice/models/domain_models"
 )
 
 func GetCTX() context.Context {
-	requestID := "testID"
-
-	f, err := os.OpenFile("logTest.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	f, err := os.OpenFile("log_test.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		fmt.Println("Failed to create logfile" + "log.txt")
 	}
 	defer f.Close()
 
-	c := context.WithValue(context.Background(), "logger", logger.InitializationBdLog(f))
-	ctx := context.WithValue(c, "requestID", requestID)
-	return ctx
+	ctx := context.WithValue(context.Background(), "logger", logger.InitializationBdLog(f))
+	ctx2 := context.WithValue(ctx, "requestID", []string{"testID"})
+
+	return ctx2
 }
 
 func TestGetAll(t *testing.T) {
@@ -108,15 +112,22 @@ func TestGetByID(t *testing.T) {
 
 	t.Run("UserExists", func(t *testing.T) {
 		expectedUser := &domain.User{
-			ID:        1,
-			FirstName: "John",
-			Surname:   "Doe",
+			ID:          1,
+			Login:       "testuser",
+			FirstName:   "John",
+			Surname:     "Doe",
+			Patronymic:  "",
+			Gender:      "male",
+			Birthday:    time.Now(),
+			AvatarID:    "1",
+			PhoneNumber: "123456789",
+			Description: "Test user",
 		}
 
-		rows := sqlmock.NewRows([]string{"id", "firstname", "surname"}).
-			AddRow(expectedUser.ID, expectedUser.FirstName, expectedUser.Surname)
+		rows := sqlmock.NewRows([]string{"id", "login", "firstname", "surname", "patronymic", "gender", "birthday", "avatar", "phone_number", "description"}).
+			AddRow(expectedUser.ID, expectedUser.Login, expectedUser.FirstName, expectedUser.Surname, expectedUser.Patronymic, expectedUser.Gender, expectedUser.Birthday, expectedUser.AvatarID, expectedUser.PhoneNumber, expectedUser.Description)
 
-		mock.ExpectQuery(`SELECT \* FROM profile WHERE id = \$1`).WithArgs(expectedUser.ID).WillReturnRows(rows)
+		mock.ExpectQuery(`SELECT p\.id, p\.login, p\.firstname, p\.surname, p\.patronymic, p\.gender, p\.birthday, f\.file_id AS avatar, p\.phone_number, p\.description FROM profile p LEFT JOIN file f ON p\.avatar_id = f\.id WHERE p\.id = \$1`).WithArgs(expectedUser.ID).WillReturnRows(rows)
 
 		user, err := repo.GetByID(expectedUser.ID, ctx)
 		assert.NoError(t, err)
@@ -124,93 +135,13 @@ func TestGetByID(t *testing.T) {
 	})
 
 	t.Run("UserNotFound", func(t *testing.T) {
-		mock.ExpectQuery(`SELECT \* FROM profile WHERE id = \$1`).WithArgs(1).WillReturnError(sql.ErrNoRows)
+		mock.ExpectQuery(`SELECT p\.id, p\.login, p\.firstname, p\.surname, p\.patronymic, p\.gender, p\.birthday, f\.file_id AS avatar, p\.phone_number, p\.description FROM profile p LEFT JOIN file f ON p\.avatar_id = f\.id WHERE p\.id = \$1`).WithArgs(1).WillReturnError(sql.ErrNoRows)
 
 		user, err := repo.GetByID(1, ctx)
 		assert.Nil(t, user)
 		assert.Error(t, err)
 		expectedErrorMessage := fmt.Sprintf("user with id %d not found", 1)
 		assert.EqualError(t, err, expectedErrorMessage)
-	})
-}
-
-func TestAddUser(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockHashPassword := func(password string) (string, bool) {
-		return "1234", true
-	}
-
-	originalHashPassword := HashPassword
-	defer func() { HashPassword = originalHashPassword }()
-	HashPassword = mockHashPassword
-
-	mockRandomIDGenerator := func() uint32 {
-		return 1
-	}
-
-	originalRandomIDGenerator := GenerateRandomID
-	defer func() { GenerateRandomID = originalRandomIDGenerator }()
-	GenerateRandomID = mockRandomIDGenerator
-
-	mockDB, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer mockDB.Close()
-
-	repo := UserRepository{
-		DB: sqlx.NewDb(mockDB, "sqlmock"),
-	}
-
-	ctx := GetCTX()
-
-	t.Run("UserAddedSuccessfully", func(t *testing.T) {
-		user := &domain.User{
-			Login:       "testuser",
-			Password:    "1234",
-			FirstName:   "John",
-			Surname:     "Doe",
-			Patronymic:  "Doe",
-			Gender:      "male",
-			Birthday:    time.Date(1990, 1, 1, 0, 0, 0, 0, time.UTC),
-			AvatarID:    "avatar123",
-			PhoneNumber: "123456789",
-			Description: "Тестовый пользователь",
-		}
-
-		mock.ExpectExec(`INSERT INTO profile`).
-			WithArgs(user.Login, user.Password, user.FirstName, user.Surname, user.Patronymic, user.Gender, user.Birthday, sqlmock.AnyArg(), user.PhoneNumber, user.Description).
-			WillReturnResult(sqlmock.NewResult(1, 1))
-
-		createUser, err := repo.Add(user, ctx)
-		assert.NoError(t, err)
-		assert.Equal(t, user, createUser)
-	})
-
-	t.Run("UserAddFailed", func(t *testing.T) {
-		user := &domain.User{
-			Login:       "testuser",
-			Password:    "password",
-			FirstName:   "John",
-			Surname:     "Doe",
-			Patronymic:  "Doe",
-			Gender:      "male",
-			Birthday:    time.Date(1990, 1, 1, 0, 0, 0, 0, time.UTC),
-			AvatarID:    "avatar123",
-			PhoneNumber: "123456789",
-			Description: "Test user",
-		}
-
-		mock.ExpectExec(`INSERT INTO profile`).
-			WithArgs(user.Login, user.Password, user.FirstName, user.Surname, user.Patronymic, user.Gender, user.Birthday, sqlmock.AnyArg(), user.PhoneNumber, user.Description).
-			WillReturnError(fmt.Errorf("failed to insert user"))
-
-		var userFail *domain.User
-		userRes, err := repo.Add(user, ctx)
-		assert.Error(t, err)
-		assert.Equal(t, userFail, userRes)
 	})
 }
 
@@ -383,12 +314,13 @@ func TestGetUserByLogin(t *testing.T) {
 			Login:     login,
 			FirstName: "John",
 			Surname:   "Doe",
+			Birthday:  time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 		}
 
-		rows := sqlmock.NewRows([]string{"id", "login", "firstname", "surname", "password"}).
-			AddRow(expectedUser.ID, expectedUser.Login, expectedUser.FirstName, expectedUser.Surname, "hashed_password")
+		rows := sqlmock.NewRows([]string{"id", "login", "password_hash", "firstname", "surname", "patronymic", "gender", "birthday", "phone_number", "description"}).
+			AddRow(expectedUser.ID, expectedUser.Login, "hashed_password", expectedUser.FirstName, expectedUser.Surname, "", "", time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC), "", "")
 
-		mock.ExpectQuery(`SELECT \* FROM profile WHERE login = \$1`).WithArgs(login).WillReturnRows(rows)
+		mock.ExpectQuery(`SELECT p.id, p.login, p.password_hash, p.firstname, p.surname, p.patronymic, p.gender, p.birthday, p.phone_number, p.description FROM profile p WHERE login = \$1`).WithArgs(login).WillReturnRows(rows)
 
 		user, err := repo.GetUserByLogin(login, password, ctx)
 
@@ -397,7 +329,7 @@ func TestGetUserByLogin(t *testing.T) {
 	})
 
 	t.Run("UserNotFound", func(t *testing.T) {
-		mock.ExpectQuery(`SELECT \* FROM profile WHERE login = \$1`).WithArgs(login).WillReturnError(sql.ErrNoRows)
+		mock.ExpectQuery(`SELECT p.id, p.login, p.password_hash, p.firstname, p.surname, p.patronymic, p.gender, p.birthday, p.phone_number, p.description FROM profile p WHERE login = \$1`).WithArgs(login).WillReturnError(sql.ErrNoRows)
 
 		user, err := repo.GetUserByLogin(login, password, ctx)
 
@@ -416,10 +348,10 @@ func TestGetUserByLogin(t *testing.T) {
 		defer func() { CheckPasswordHash = originalCheckPassword }()
 		CheckPasswordHash = mockCheckPassword
 
-		rows := sqlmock.NewRows([]string{"id", "login", "firstname", "surname", "password"}).
-			AddRow(1, login, "John", "Doe", "hashed_password")
+		rows := sqlmock.NewRows([]string{"id", "login", "password_hash", "firstname", "surname", "patronymic", "gender", "birthday", "phone_number", "description"}).
+			AddRow(1, "login", "hashed_password", "John", "Petr", "", "", time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC), "", "")
 
-		mock.ExpectQuery(`SELECT \* FROM profile WHERE login = \$1`).WithArgs(login).WillReturnRows(rows)
+		mock.ExpectQuery(`SELECT p.id, p.login, p.password_hash, p.firstname, p.surname, p.patronymic, p.gender, p.birthday, p.phone_number, p.description FROM profile p WHERE login = \$1`).WithArgs(login).WillReturnRows(rows)
 
 		user, err := repo.GetUserByLogin(login, password, ctx)
 
@@ -427,5 +359,204 @@ func TestGetUserByLogin(t *testing.T) {
 		assert.Nil(t, user)
 		expectedErrorMessage := fmt.Sprintf("user with login %s not found", login)
 		assert.EqualError(t, err, expectedErrorMessage)
+	})
+}
+
+func TestAddUser(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockHashPassword := func(password string) (string, bool) {
+		return "1234", true
+	}
+
+	originalHashPassword := HashPassword
+	defer func() { HashPassword = originalHashPassword }()
+	HashPassword = mockHashPassword
+
+	mockRandomIDGenerator := func() uint32 {
+		return 1
+	}
+
+	originalRandomIDGenerator := GenerateRandomID
+	defer func() { GenerateRandomID = originalRandomIDGenerator }()
+	GenerateRandomID = mockRandomIDGenerator
+
+	mockDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer mockDB.Close()
+
+	repo := UserRepository{
+		DB: sqlx.NewDb(mockDB, "sqlmock"),
+	}
+
+	ctx := GetCTX()
+
+	t.Run("UserAddedSuccessfully", func(t *testing.T) {
+		user := &domain.User{
+			Login:       "testuser",
+			Password:    "1234",
+			FirstName:   "John",
+			Surname:     "Doe",
+			Patronymic:  "Doe",
+			Gender:      "male",
+			Birthday:    time.Date(1990, 1, 1, 0, 0, 0, 0, time.UTC),
+			AvatarID:    "avatar123",
+			PhoneNumber: "123456789",
+			Description: "Тестовый пользователь",
+		}
+
+		mock.ExpectExec(`INSERT INTO profile`).
+			WithArgs(user.Login, user.Password, user.FirstName, user.Surname, user.Patronymic, user.Gender, user.Birthday, sqlmock.AnyArg(), user.PhoneNumber, user.Description).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		createUser, err := repo.Add(user, ctx)
+		assert.NoError(t, err)
+		assert.Equal(t, user, createUser)
+	})
+
+	t.Run("UserAddFailed", func(t *testing.T) {
+		user := &domain.User{
+			Login:       "testuser",
+			Password:    "password",
+			FirstName:   "John",
+			Surname:     "Doe",
+			Patronymic:  "Doe",
+			Gender:      "male",
+			Birthday:    time.Date(1990, 1, 1, 0, 0, 0, 0, time.UTC),
+			AvatarID:    "avatar123",
+			PhoneNumber: "123456789",
+			Description: "Test user",
+		}
+
+		mock.ExpectExec(`INSERT INTO profile`).
+			WithArgs(user.Login, user.Password, user.FirstName, user.Surname, user.Patronymic, user.Gender, user.Birthday, sqlmock.AnyArg(), user.PhoneNumber, user.Description).
+			WillReturnError(fmt.Errorf("failed to insert user"))
+
+		var userFail *domain.User
+		userRes, err := repo.Add(user, ctx)
+		assert.Error(t, err)
+		assert.Equal(t, userFail, userRes)
+	})
+}
+
+func TestAddAvatar(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer mockDB.Close()
+
+	repo := UserRepository{
+		DB: sqlx.NewDb(mockDB, "sqlmock"),
+	}
+
+	ctx := GetCTX()
+
+	userID := uint32(1)
+	fileID := "avatar123"
+	fileType := "image/jpeg"
+
+	t.Run("AvatarAddedSuccessfully", func(t *testing.T) {
+		mock.ExpectExec(`UPDATE file SET file_id = \$1 FROM profile WHERE file.id = profile.avatar_id AND profile.id = \$2`).
+			WithArgs(fileID, userID).
+			WillReturnResult(sqlmock.NewResult(0, 1))
+
+		isAdded, err := repo.AddAvatar(userID, fileID, fileType, ctx)
+		assert.NoError(t, err)
+		assert.True(t, isAdded)
+	})
+
+	t.Run("FailedToAddAvatar", func(t *testing.T) {
+		mock.ExpectExec(`UPDATE file SET file_id = \$1 FROM profile WHERE file.id = profile.avatar_id AND profile.id = \$2`).
+			WithArgs(fileID, userID).
+			WillReturnError(fmt.Errorf("failed to update avatar"))
+
+		isAdded, err := repo.AddAvatar(userID, fileID, fileType, ctx)
+		assert.Error(t, err)
+		assert.False(t, isAdded)
+	})
+}
+
+func TestDeleteAvatarByUserID(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockDB, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer mockDB.Close()
+
+	repo := UserRepository{
+		DB: sqlx.NewDb(mockDB, "sqlmock"),
+	}
+
+	ctx := GetCTX()
+
+	userID := uint32(1)
+
+	t.Run("AvatarDeletedSuccessfully", func(t *testing.T) {
+		mock.ExpectExec(`UPDATE file SET file_id = '' FROM profile WHERE file.id = profile.avatar_id AND profile.id = \$1`).
+			WithArgs(userID).
+			WillReturnResult(sqlmock.NewResult(0, 1))
+
+		err := repo.DeleteAvatarByUserID(userID, ctx)
+		assert.NoError(t, err)
+	})
+
+	t.Run("FailedToDeleteAvatar", func(t *testing.T) {
+		mock.ExpectExec(`UPDATE file SET file_id = '' FROM profile WHERE file.id = profile.avatar_id AND profile.id = \$1`).
+			WithArgs(userID).
+			WillReturnError(errors.New("failed to delete avatar"))
+
+		err := repo.DeleteAvatarByUserID(userID, ctx)
+		assert.Error(t, err)
+		assert.EqualError(t, err, fmt.Sprintf("failed to delete user avatar: %v", "failed to delete avatar"))
+	})
+}
+
+func TestInitAvatar(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockDB, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer mockDB.Close()
+
+	repo := UserRepository{
+		DB: sqlx.NewDb(mockDB, "sqlmock"),
+	}
+
+	ctx := GetCTX()
+
+	userID := uint32(1)
+	fileID := "avatar123"
+	fileType := "image/jpeg"
+
+	t.Run("AvatarInitializedSuccessfully", func(t *testing.T) {
+		expectedQuery := `WITH inserted_file AS \( INSERT INTO file \(file_id, file_type\) VALUES \(\$1, \$2\) RETURNING id \) UPDATE profile SET avatar_id = \(SELECT id FROM inserted_file\) WHERE id = \$3`
+		mock.ExpectExec(expectedQuery).
+			WithArgs(fileID, fileType, userID).
+			WillReturnResult(sqlmock.NewResult(0, 1))
+
+		success, err := repo.InitAvatar(userID, fileID, fileType, ctx)
+		assert.NoError(t, err)
+		assert.True(t, success)
+	})
+
+	t.Run("FailedToInitializeAvatar", func(t *testing.T) {
+		expectedQuery := `WITH inserted_file AS \( INSERT INTO file \(file_id, file_type\) VALUES \(\$1, \$2\) RETURNING id \) UPDATE profile SET avatar_id = \(SELECT id FROM inserted_file\) WHERE id = \$3`
+		mock.ExpectExec(expectedQuery).
+			WithArgs(fileID, fileType, userID).
+			WillReturnError(errors.New("failed to initialize avatar"))
+
+		success, err := repo.InitAvatar(userID, fileID, fileType, ctx)
+		assert.Error(t, err)
+		assert.False(t, success)
+		assert.EqualError(t, err, fmt.Sprintf("failed to add user avatar: %v", "failed to initialize avatar"))
 	})
 }

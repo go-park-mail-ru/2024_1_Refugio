@@ -147,7 +147,7 @@ func (r *FolderRepository) Update(folderModelCore *domain.Folder, ctx context.Co
 	return true, nil
 }
 
-func (r *FolderRepository) AddEmailFolder(folderID uint32, emailID uint32, ctx context.Context) (bool, error) {
+func (r *FolderRepository) AddEmailFolder(folderID, emailID uint32, ctx context.Context) (bool, error) {
 	insertFolderEmailQuery := `
 		INSERT INTO folder_email (folder_id, email_id)
 		VALUES ($1, $2)

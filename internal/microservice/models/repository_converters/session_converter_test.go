@@ -1,11 +1,12 @@
 package repository_converters
 
 import (
-	domain "mail/internal/microservice/models/domain_models"
-	database "mail/internal/microservice/models/repository_models"
 	"reflect"
 	"testing"
 	"time"
+
+	domain "mail/internal/microservice/models/domain_models"
+	database "mail/internal/microservice/models/repository_models"
 )
 
 func TestSessionConvertDbInCore(t *testing.T) {

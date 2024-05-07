@@ -4,7 +4,7 @@
 - **Id**: Уникальный идентификатор пользователя в базе данных.
 - **Login**: Электронная почта пользователя, используемая для входа.
 - **PasswordHash**: Хэш пароль пользователя.
-- **Name**: Имя пользователя.
+- **FirstName**: Имя пользователя.
 - **Surname**: Фамилия пользователя.
 - **Patronymic**: Отчество пользователя.
 - **Gender**: Пол пользователя.
@@ -22,11 +22,12 @@
 - **PhotoId**: Ссылка на фотографию отправителя письма.
 - **SenderEmail**: Электронная почта пользователя, отправившего письмо.
 - **RecipientEmail**: Электронная почта пользователя, получившего письмо.
-- **ReadStatus**: Статус прочтения письма (прочтено/непрочтено).
-- **DeletedStatus**: Статус удаления письма (в корзине/не в корзине).
-- **DraftStatus**: Статус черновика письма (черновик/не черновик).
+- **IsRead**: Статус прочтения письма (прочтено/непрочтено).
+- **IsDeleted**: Статус удаления письма (в корзине/не в корзине).
+- **IsDraft**: Статус черновика письма (черновик/не черновик).
+- **IsSpam**: Статус спама письма (спам/не спам).
 - **ReplyToEmailId**: Уникальный идентификатор письма, на который данное письмо является ответом (если есть).
-- **Flag**: Флаг, который может быть установлен пользователем (например, помечено как важное).
+- **IsImportant**: Флаг, который может быть установлен пользователем (например, помечено как важное).
 
 #### File
 - **Id**: Уникальный идентификатор вложения в базе данных.
@@ -89,7 +90,7 @@ PROFILE {
 _ Id"(PK)"
 _ Login"(AK1.1)"
 _ PasswordHash
-_ Name
+_ FirstName
 _ Surname
 _ Patronymic
 _ Gender
@@ -107,11 +108,12 @@ _ DateOfDispatch
 _ PhotoId
 _ SenderEmail
 _ RecipientEmail
-_ ReadStatus
-_ DeletedStatus
-_ DraftStatus
+_ IsRead
+_ IsDeleted
+_ IsDraft
+_ IsSpam
 _ ReplyToEmailId"(FK)"
-_ Flag
+_ IsImportant
 }
 FILE {
 _ Id"(PK)"
@@ -166,12 +168,12 @@ FILE ||--|{ PROFILE : "Contains"
 ### Functional Dependencies
 
 #### Profile:
-- {Id} -> Login, PasswordHash, Name, Surname, Middlename, Gender, Birthday, RegistrationDate, AvatarId, PhoneNumber, Description
-- {Login} -> id, PasswordHash, Name, Surname, Middlename, Gender, Birthday, RegistrationDate, AvatarId, PhoneNumber, Description
-- {PhoneNumber} -> id, Login, PasswordHash, Name, Surname, Middlename, Gender, Birthday, RegistrationDate, AvatarId, Description
+- {Id} -> Login, PasswordHash, FirstName, Surname, Middlename, Gender, Birthday, RegistrationDate, AvatarId, PhoneNumber, Description
+- {Login} -> id, PasswordHash, FirstName, Surname, Middlename, Gender, Birthday, RegistrationDate, AvatarId, PhoneNumber, Description
+- {PhoneNumber} -> id, Login, PasswordHash, FirstName, Surname, Middlename, Gender, Birthday, RegistrationDate, AvatarId, Description
 
 #### Email:
-- {Id} -> Topic, Text, DateOfDispatch, PhotoId, SenderEmail, RecipientEmail, ReadStatus, DeletedStatus, DraftStatus, ReplyToEmailId, Flag
+- {Id} -> Topic, Text, DateOfDispatch, PhotoId, SenderEmail, RecipientEmail, IsRead, IsDeleted, IsDraft, IsSpam, ReplyToEmailId, IsImportant
 
 #### File:
 - {Id} -> EmailId, FileId, FileType

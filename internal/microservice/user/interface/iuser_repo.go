@@ -4,6 +4,7 @@ package _interface
 
 import (
 	"context"
+
 	domain "mail/internal/microservice/models/domain_models"
 )
 
@@ -32,4 +33,7 @@ type UserRepository interface {
 
 	// DeleteAvatarByUserID deletes a user's photo and an entry from the file table by its ID in one request.
 	DeleteAvatarByUserID(userID uint32, ctx context.Context) error
+
+	// InitAvatar initializes the user's avatar by updating the corresponding entry in the database.
+	InitAvatar(id uint32, fileID, fileType string, ctx context.Context) (bool, error)
 }

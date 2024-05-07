@@ -1480,51 +1480,39 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "dateOfDispatch": {
-                    "description": "DateOfDispatch is the date when the email was sent.",
                     "type": "string"
                 },
                 "deleted": {
-                    "description": "Deleted indicates whether the email has been deleted.",
                     "type": "boolean"
                 },
                 "draftStatus": {
-                    "description": "DraftStatus indicates whether the email is a draft.",
                     "type": "boolean"
                 },
                 "id": {
-                    "description": "ID is the unique identifier of the email in the database.",
                     "type": "integer"
                 },
                 "mark": {
-                    "description": "Mark is a flag, such as marking the email as a favorite.",
                     "type": "boolean"
                 },
                 "readStatus": {
-                    "description": "ReadStatus indicates whether the email has been read.",
                     "type": "boolean"
                 },
                 "recipientEmail": {
-                    "description": "RecipientEmail is the Email of the recipient user",
                     "type": "string"
                 },
                 "replyToEmailId": {
-                    "description": "ReplyToEmailID is the ID of the email to which a reply can be sent.",
                     "type": "integer"
                 },
                 "senderEmail": {
-                    "description": "SenderEmail is the Email of the sender user",
                     "type": "string"
                 },
                 "spamStatus": {
-                    "description": "SpamStatus indicates whether the email is a spam",
                     "type": "boolean"
                 },
                 "text": {
-                    "description": "Text is the body of the email.",
                     "type": "string"
                 },
                 "topic": {
-                    "description": "Topic is the subject of the email.",
                     "type": "string"
                 }
             }
@@ -1552,7 +1540,6 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "name": {
-                    "description": "Name the name of the folder.",
                     "type": "string"
                 }
             }
@@ -1603,51 +1590,36 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "avatar": {
-                    "description": "AvatarID stores the identifier of the user's avatar image.",
                     "type": "string"
                 },
                 "birthday": {
-                    "description": "Birthday stores the birthdate of the user.",
                     "type": "string"
                 },
                 "description": {
-                    "description": "Description stores additional information about the user.",
                     "type": "string"
                 },
                 "firstname": {
-                    "description": "FirstName stores the first name of the user.",
                     "type": "string"
                 },
                 "gender": {
-                    "description": "Gender stores the gender of the user.",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/response.UserGenderSwag"
-                        }
-                    ]
+                    "$ref": "#/definitions/response.UserGenderSwag"
                 },
                 "id": {
-                    "description": "ID uniquely identifies the user.",
                     "type": "integer"
                 },
                 "login": {
-                    "description": "Login is the username used for authentication.",
                     "type": "string"
                 },
                 "middlename": {
-                    "description": "Patronymic stores the middle name of the user, if available.",
                     "type": "string"
                 },
                 "password": {
-                    "description": "Password is the hashed password of the user.",
                     "type": "string"
                 },
                 "phonenumber": {
-                    "description": "PhoneNumber stores the phone number of the user.",
                     "type": "string"
                 },
                 "surname": {
-                    "description": "Surname stores the last name of the user.",
                     "type": "string"
                 }
             }
@@ -1658,11 +1630,11 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8080",
+	Host:             "mailhub.su",
 	BasePath:         "/",
 	Schemes:          []string{},
-	Title:            "API Mail",
-	Description:      "API server for mail",
+	Title:            "API Mailhub",
+	Description:      "API server for Mailhub",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

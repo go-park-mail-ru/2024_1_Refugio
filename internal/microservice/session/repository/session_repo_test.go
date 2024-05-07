@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"mail/internal/pkg/logger"
 	"os"
 	"regexp"
 	"testing"
@@ -15,21 +14,22 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 
+	"mail/internal/pkg/logger"
+
 	domain "mail/internal/microservice/models/domain_models"
 )
 
 func GetCTX() context.Context {
-	requestID := "testID"
-
-	f, err := os.OpenFile("logTest.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	f, err := os.OpenFile("log_test.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		fmt.Println("Failed to create logfile" + "log.txt")
 	}
 	defer f.Close()
 
-	c := context.WithValue(context.Background(), "logger", logger.InitializationBdLog(f))
-	ctx := context.WithValue(c, "requestID", requestID)
-	return ctx
+	ctx := context.WithValue(context.Background(), "logger", logger.InitializationBdLog(f))
+	ctx2 := context.WithValue(ctx, "requestID", []string{"testID"})
+
+	return ctx2
 }
 
 func TestCreateSession(t *testing.T) {
@@ -148,88 +148,6 @@ func TestGetSessionByID(t *testing.T) {
 	}
 }
 
-func TestDeleteSessionByID(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockDB, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer mockDB.Close()
-
-	repo := SessionRepository{
-		DB: sqlx.NewDb(mockDB, "sqlmock"),
-	}
-
-	ctx := GetCTX()
-
-	t.Run("Success", func(t *testing.T) {
-		sessionID := "10101010"
-
-		query := `DELETE FROM session WHERE id = \$1`
-		mock.ExpectExec(query).WithArgs(sessionID).WillReturnResult(sqlmock.NewResult(0, 1))
-
-		err := repo.DeleteSessionByID(sessionID, ctx)
-
-		assert.NoError(t, err)
-	})
-
-	t.Run("Error", func(t *testing.T) {
-		sessionID := "10101010"
-
-		query := `DELETE FROM session WHERE id = \$1`
-		mock.ExpectExec(query).WithArgs(sessionID).WillReturnError(fmt.Errorf("failed to delete session"))
-
-		err := repo.DeleteSessionByID(sessionID, ctx)
-
-		assert.Error(t, err)
-	})
-
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
-	}
-}
-
-func TestDeleteExpiredSessions(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockDB, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer mockDB.Close()
-
-	repo := SessionRepository{
-		DB: sqlx.NewDb(mockDB, "sqlmock"),
-	}
-
-	ctx := GetCTX()
-
-	t.Run("Success", func(t *testing.T) {
-		queryPattern := regexp.QuoteMeta(`DELETE FROM session WHERE creation_date + life_time * interval '1 second' < now()`)
-		mock.ExpectExec(queryPattern).WillReturnResult(sqlmock.NewResult(0, 3)) // Assuming 3 expired sessions were deleted
-
-		err := repo.DeleteExpiredSessions(ctx)
-
-		assert.NoError(t, err)
-	})
-
-	t.Run("Error", func(t *testing.T) {
-		queryPattern := regexp.QuoteMeta(`DELETE FROM session WHERE creation_date + life_time * interval '1 second' < now()`)
-		mock.ExpectExec(queryPattern).WillReturnError(fmt.Errorf("failed to delete expired sessions"))
-
-		err := repo.DeleteExpiredSessions(ctx)
-
-		assert.Error(t, err)
-	})
-
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
-	}
-}
-
 func TestGetLoginBySessionID(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -299,6 +217,132 @@ func TestGetLoginBySessionID(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Empty(t, login)
+	})
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
+func TestDeleteSessionByID(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer mockDB.Close()
+
+	repo := SessionRepository{
+		DB: sqlx.NewDb(mockDB, "sqlmock"),
+	}
+
+	ctx := GetCTX()
+
+	t.Run("Success", func(t *testing.T) {
+		sessionID := "10101010"
+
+		query := `DELETE FROM session WHERE id = \$1`
+		mock.ExpectExec(query).WithArgs(sessionID).WillReturnResult(sqlmock.NewResult(0, 1))
+
+		err := repo.DeleteSessionByID(sessionID, ctx)
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("Error", func(t *testing.T) {
+		sessionID := "10101010"
+
+		query := `DELETE FROM session WHERE id = \$1`
+		mock.ExpectExec(query).WithArgs(sessionID).WillReturnError(fmt.Errorf("failed to delete session"))
+
+		err := repo.DeleteSessionByID(sessionID, ctx)
+
+		assert.Error(t, err)
+	})
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
+func TestDeleteExpiredSessions(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer mockDB.Close()
+
+	repo := SessionRepository{
+		DB: sqlx.NewDb(mockDB, "sqlmock"),
+	}
+
+	ctx := GetCTX()
+
+	t.Run("Success", func(t *testing.T) {
+		queryPattern := regexp.QuoteMeta(`DELETE FROM session WHERE creation_date + life_time * interval '1 second' < now()`)
+		mock.ExpectExec(queryPattern).WillReturnResult(sqlmock.NewResult(0, 3))
+
+		err := repo.DeleteExpiredSessions(ctx)
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("Error", func(t *testing.T) {
+		queryPattern := regexp.QuoteMeta(`DELETE FROM session WHERE creation_date + life_time * interval '1 second' < now()`)
+		mock.ExpectExec(queryPattern).WillReturnError(fmt.Errorf("failed to delete expired sessions"))
+
+		err := repo.DeleteExpiredSessions(ctx)
+
+		assert.Error(t, err)
+	})
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
+func TestGetProfileIDBySessionID(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer mockDB.Close()
+
+	repo := SessionRepository{
+		DB: sqlx.NewDb(mockDB, "sqlmock"),
+	}
+
+	ctx := GetCTX()
+
+	t.Run("Success", func(t *testing.T) {
+		sessionID := "10101010"
+		query := `SELECT profile_id FROM session WHERE session.id = \$1`
+		rows := sqlmock.NewRows([]string{"profile_id"}).AddRow(42)
+		mock.ExpectQuery(query).WithArgs(sessionID).WillReturnRows(rows)
+
+		profileID, err := repo.GetProfileIDBySessionID(sessionID, ctx)
+
+		assert.NoError(t, err)
+		assert.Equal(t, uint32(42), profileID)
+	})
+
+	t.Run("Error", func(t *testing.T) {
+		sessionID := "10101010"
+		query := `SELECT profile_id FROM session WHERE session.id = \$1`
+		mock.ExpectQuery(query).WithArgs(sessionID).WillReturnError(fmt.Errorf("failed to retrieve profile ID"))
+
+		_, err := repo.GetProfileIDBySessionID(sessionID, ctx)
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to get user id")
 	})
 
 	if err := mock.ExpectationsWereMet(); err != nil {
