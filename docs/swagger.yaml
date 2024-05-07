@@ -111,7 +111,7 @@ definitions:
       surname:
         type: string
     type: object
-host: mailhub.su
+host: localhost:8080
 info:
   contact: {}
   description: API server for Mailhub

@@ -30,6 +30,8 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 
 	auth_proto "mail/internal/microservice/auth/proto"
+	email_proto "mail/internal/microservice/email/proto"
+	folder_proto "mail/internal/microservice/folder/proto"
 	question_proto "mail/internal/microservice/questionnaire/proto"
 	session_proto "mail/internal/microservice/session/proto"
 	user_proto "mail/internal/microservice/user/proto"
@@ -46,7 +48,7 @@ import (
 // @version 1.0
 // @description API server for Mailhub
 
-// @host mailhub.su
+// @host localhost:8080
 // @BasePath /
 func main() {
 	settingTime()
@@ -79,8 +81,19 @@ func main() {
 	defer userServiceConn.Close()
 	userHandler := initializeUserHandler(sessionsManager, user_proto.NewUserServiceClient(userServiceConn))
 
-	emailHandler := initializeEmailHandler(sessionsManager)
-	folderHandler := initializeFolderHandler(sessionsManager)
+	emailServiceConn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.EmailService))
+	if err != nil {
+		log.Fatalf("connection with microservice user fail")
+	}
+	defer emailServiceConn.Close()
+	emailHandler := initializeEmailHandler(sessionsManager, email_proto.NewEmailServiceClient(emailServiceConn))
+
+	folderServiceConn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.FolderService))
+	if err != nil {
+		log.Fatalf("connection with microservice user fail")
+	}
+	defer folderServiceConn.Close()
+	folderHandler := initializeFolderHandler(sessionsManager, folder_proto.NewFolderServiceClient(folderServiceConn))
 
 	questionServiceConn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.QuestionService))
 	if err != nil {
@@ -152,9 +165,10 @@ func initializeAuthHandler(sessionsManager *session.SessionsManager, authService
 }
 
 // initializeEmailHandler initializing email handler
-func initializeEmailHandler(sessionsManager *session.SessionsManager) *emailHand.EmailHandler {
+func initializeEmailHandler(sessionsManager *session.SessionsManager, emailServiceClient email_proto.EmailServiceClient) *emailHand.EmailHandler {
 	return &emailHand.EmailHandler{
-		Sessions: sessionsManager,
+		Sessions:           sessionsManager,
+		EmailServiceClient: emailServiceClient,
 	}
 }
 
@@ -167,9 +181,10 @@ func initializeUserHandler(sessionsManager *session.SessionsManager, userService
 }
 
 // initializeFolderHandler initializing folder handler
-func initializeFolderHandler(sessionsManager *session.SessionsManager) *folderHand.FolderHandler {
+func initializeFolderHandler(sessionsManager *session.SessionsManager, folderServiceClient folder_proto.FolderServiceClient) *folderHand.FolderHandler {
 	return &folderHand.FolderHandler{
-		Sessions: sessionsManager,
+		Sessions:            sessionsManager,
+		FolderServiceClient: folderServiceClient,
 	}
 }
 

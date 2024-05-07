@@ -2,21 +2,21 @@ package http
 
 import (
 	"encoding/json"
+	"google.golang.org/grpc/metadata"
+	"net/http"
+	"strconv"
+
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
 	"github.com/microcosm-cc/bluemonday"
-	"google.golang.org/grpc/metadata"
-	folderUsecase "mail/internal/microservice/folder/interface"
+
 	"mail/internal/microservice/folder/proto"
+	folder_proto "mail/internal/microservice/folder/proto"
 	"mail/internal/microservice/models/proto_converters"
 	converters "mail/internal/models/delivery_converters"
 	folderApi "mail/internal/models/delivery_models"
-	"mail/internal/models/microservice_ports"
 	"mail/internal/models/response"
 	domainSession "mail/internal/pkg/session/interface"
-	"mail/internal/pkg/utils/connect_microservice"
-	"net/http"
-	"strconv"
 )
 
 var (
@@ -26,8 +26,8 @@ var (
 
 // FolderHandler represents the handler for folder operations.
 type FolderHandler struct {
-	FolderUseCase folderUsecase.FolderUseCase
-	Sessions      domainSession.SessionsManager
+	Sessions            domainSession.SessionsManager
+	FolderServiceClient folder_proto.FolderServiceClient
 }
 
 func sanitizeString(str string) string {
@@ -68,15 +68,7 @@ func (h *FolderHandler) Add(w http.ResponseWriter, r *http.Request) {
 	newFolder.Name = sanitizeString(newFolder.Name)
 	newFolder.ProfileId = profileId
 
-	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.FolderService))
-	if err != nil {
-		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
-		return
-	}
-	defer conn.Close()
-
-	folderServiceClient := proto.NewFolderServiceClient(conn)
-	folderDataProto, err := folderServiceClient.CreateFolder(
+	folderDataProto, err := h.FolderServiceClient.CreateFolder(
 		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 		&proto.Folder{
 			Id:        newFolder.ID,
@@ -111,15 +103,7 @@ func (h *FolderHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.FolderService))
-	if err != nil {
-		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
-		return
-	}
-	defer conn.Close()
-
-	folderServiceClient := proto.NewFolderServiceClient(conn)
-	folderDataProto, err := folderServiceClient.GetAllFolders(
+	folderDataProto, err := h.FolderServiceClient.GetAllFolders(
 		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 		&proto.GetAllFoldersData{Id: profileId, Offset: 0, Limit: 0},
 	)
@@ -164,15 +148,7 @@ func (h *FolderHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.FolderService))
-	if err != nil {
-		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
-		return
-	}
-	defer conn.Close()
-
-	folderServiceClient := proto.NewFolderServiceClient(conn)
-	folderDataProto, err := folderServiceClient.DeleteFolder(
+	folderDataProto, err := h.FolderServiceClient.DeleteFolder(
 		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 		&proto.DeleteFolderData{FolderID: uint32(id), ProfileID: profileId},
 	)
@@ -224,15 +200,7 @@ func (h *FolderHandler) Update(w http.ResponseWriter, r *http.Request) {
 	newFolder.ID = uint32(id)
 	newFolder.ProfileId = profileId
 
-	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.FolderService))
-	if err != nil {
-		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
-		return
-	}
-	defer conn.Close()
-
-	folderServiceClient := proto.NewFolderServiceClient(conn)
-	folderDataProto, err := folderServiceClient.UpdateFolder(
+	folderDataProto, err := h.FolderServiceClient.UpdateFolder(
 		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 		&proto.Folder{
 			Id:        newFolder.ID,
@@ -277,15 +245,7 @@ func (h *FolderHandler) AddEmailInFolder(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.FolderService))
-	if err != nil {
-		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
-		return
-	}
-	defer conn.Close()
-
-	folderServiceClient := proto.NewFolderServiceClient(conn)
-	CheckFolderProfileDataProto, err := folderServiceClient.CheckFolderProfile(
+	CheckFolderProfileDataProto, err := h.FolderServiceClient.CheckFolderProfile(
 		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 		&proto.FolderProfile{
 			FolderID:  newFolderEmail.FolderID,
@@ -297,7 +257,7 @@ func (h *FolderHandler) AddEmailInFolder(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	CheckEmailProfileDataProto, err := folderServiceClient.CheckEmailProfile(
+	CheckEmailProfileDataProto, err := h.FolderServiceClient.CheckEmailProfile(
 		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 		&proto.EmailProfile{
 			EmailID:   newFolderEmail.EmailID,
@@ -309,7 +269,7 @@ func (h *FolderHandler) AddEmailInFolder(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	folderDataProto, err := folderServiceClient.AddEmailInFolder(
+	folderDataProto, err := h.FolderServiceClient.AddEmailInFolder(
 		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 		&proto.FolderEmail{
 			FolderID: newFolderEmail.FolderID,
@@ -353,16 +313,7 @@ func (h *FolderHandler) DeleteEmailInFolder(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.FolderService))
-	if err != nil {
-		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
-		return
-	}
-	defer conn.Close()
-
-	folderServiceClient := proto.NewFolderServiceClient(conn)
-
-	CheckFolderProfileDataProto, err := folderServiceClient.CheckFolderProfile(
+	CheckFolderProfileDataProto, err := h.FolderServiceClient.CheckFolderProfile(
 		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 		&proto.FolderProfile{
 			FolderID:  newFolderEmail.FolderID,
@@ -374,7 +325,7 @@ func (h *FolderHandler) DeleteEmailInFolder(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	CheckEmailProfileDataProto, err := folderServiceClient.CheckEmailProfile(
+	CheckEmailProfileDataProto, err := h.FolderServiceClient.CheckEmailProfile(
 		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 		&proto.EmailProfile{
 			EmailID:   newFolderEmail.EmailID,
@@ -386,7 +337,7 @@ func (h *FolderHandler) DeleteEmailInFolder(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	folderDataProto, err := folderServiceClient.DeleteEmailInFolder(
+	folderDataProto, err := h.FolderServiceClient.DeleteEmailInFolder(
 		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 		&proto.FolderEmail{
 			FolderID: newFolderEmail.FolderID,
@@ -427,15 +378,7 @@ func (h *FolderHandler) GetAllEmailsInFolder(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	conn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.FolderService))
-	if err != nil {
-		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
-		return
-	}
-	defer conn.Close()
-
-	folderServiceClient := proto.NewFolderServiceClient(conn)
-	CheckFolderProfileDataProto, err := folderServiceClient.CheckFolderProfile(
+	CheckFolderProfileDataProto, err := h.FolderServiceClient.CheckFolderProfile(
 		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 		&proto.FolderProfile{
 			FolderID:  uint32(id),
@@ -447,7 +390,7 @@ func (h *FolderHandler) GetAllEmailsInFolder(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	emailsDataProto, err := folderServiceClient.GetAllEmailsInFolder(
+	emailsDataProto, err := h.FolderServiceClient.GetAllEmailsInFolder(
 		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 		&proto.GetAllEmailsInFolderData{FolderID: uint32(id), ProfileID: profileId, Limit: 0, Offset: 0},
 	)
