@@ -11,11 +11,12 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 
 	"mail/internal/microservice/folder/proto"
-	folder_proto "mail/internal/microservice/folder/proto"
 	"mail/internal/microservice/models/proto_converters"
+	"mail/internal/models/response"
+
+	folder_proto "mail/internal/microservice/folder/proto"
 	converters "mail/internal/models/delivery_converters"
 	folderApi "mail/internal/models/delivery_models"
-	"mail/internal/models/response"
 	domainSession "mail/internal/pkg/session/interface"
 )
 
@@ -69,7 +70,8 @@ func (h *FolderHandler) Add(w http.ResponseWriter, r *http.Request) {
 	newFolder.ProfileId = profileId
 
 	folderDataProto, err := h.FolderServiceClient.CreateFolder(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(),
+			metadata.New(map[string]string{"requestID": r.Context().Value("requestID").(string)})),
 		&proto.Folder{
 			Id:        newFolder.ID,
 			ProfileId: newFolder.ProfileId,
@@ -104,7 +106,8 @@ func (h *FolderHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	}
 
 	folderDataProto, err := h.FolderServiceClient.GetAllFolders(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(),
+			metadata.New(map[string]string{"requestID": r.Context().Value("requestID").(string)})),
 		&proto.GetAllFoldersData{Id: profileId, Offset: 0, Limit: 0},
 	)
 	if err != nil {
@@ -149,7 +152,8 @@ func (h *FolderHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	folderDataProto, err := h.FolderServiceClient.DeleteFolder(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(),
+			metadata.New(map[string]string{"requestID": r.Context().Value("requestID").(string)})),
 		&proto.DeleteFolderData{FolderID: uint32(id), ProfileID: profileId},
 	)
 	if err != nil || !folderDataProto.Status {
@@ -201,7 +205,8 @@ func (h *FolderHandler) Update(w http.ResponseWriter, r *http.Request) {
 	newFolder.ProfileId = profileId
 
 	folderDataProto, err := h.FolderServiceClient.UpdateFolder(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(),
+			metadata.New(map[string]string{"requestID": r.Context().Value("requestID").(string)})),
 		&proto.Folder{
 			Id:        newFolder.ID,
 			ProfileId: newFolder.ProfileId,
@@ -246,7 +251,8 @@ func (h *FolderHandler) AddEmailInFolder(w http.ResponseWriter, r *http.Request)
 	}
 
 	CheckFolderProfileDataProto, err := h.FolderServiceClient.CheckFolderProfile(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(),
+			metadata.New(map[string]string{"requestID": r.Context().Value("requestID").(string)})),
 		&proto.FolderProfile{
 			FolderID:  newFolderEmail.FolderID,
 			ProfileID: profileId,
@@ -258,7 +264,8 @@ func (h *FolderHandler) AddEmailInFolder(w http.ResponseWriter, r *http.Request)
 	}
 
 	CheckEmailProfileDataProto, err := h.FolderServiceClient.CheckEmailProfile(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(),
+			metadata.New(map[string]string{"requestID": r.Context().Value("requestID").(string)})),
 		&proto.EmailProfile{
 			EmailID:   newFolderEmail.EmailID,
 			ProfileID: profileId,
@@ -270,7 +277,8 @@ func (h *FolderHandler) AddEmailInFolder(w http.ResponseWriter, r *http.Request)
 	}
 
 	folderDataProto, err := h.FolderServiceClient.AddEmailInFolder(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(),
+			metadata.New(map[string]string{"requestID": r.Context().Value("requestID").(string)})),
 		&proto.FolderEmail{
 			FolderID: newFolderEmail.FolderID,
 			EmailID:  newFolderEmail.EmailID,
@@ -314,7 +322,8 @@ func (h *FolderHandler) DeleteEmailInFolder(w http.ResponseWriter, r *http.Reque
 	}
 
 	CheckFolderProfileDataProto, err := h.FolderServiceClient.CheckFolderProfile(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(),
+			metadata.New(map[string]string{"requestID": r.Context().Value("requestID").(string)})),
 		&proto.FolderProfile{
 			FolderID:  newFolderEmail.FolderID,
 			ProfileID: profileId,
@@ -326,7 +335,8 @@ func (h *FolderHandler) DeleteEmailInFolder(w http.ResponseWriter, r *http.Reque
 	}
 
 	CheckEmailProfileDataProto, err := h.FolderServiceClient.CheckEmailProfile(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(),
+			metadata.New(map[string]string{"requestID": r.Context().Value("requestID").(string)})),
 		&proto.EmailProfile{
 			EmailID:   newFolderEmail.EmailID,
 			ProfileID: profileId,
@@ -338,7 +348,8 @@ func (h *FolderHandler) DeleteEmailInFolder(w http.ResponseWriter, r *http.Reque
 	}
 
 	folderDataProto, err := h.FolderServiceClient.DeleteEmailInFolder(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(),
+			metadata.New(map[string]string{"requestID": r.Context().Value("requestID").(string)})),
 		&proto.FolderEmail{
 			FolderID: newFolderEmail.FolderID,
 			EmailID:  newFolderEmail.EmailID,
@@ -379,7 +390,8 @@ func (h *FolderHandler) GetAllEmailsInFolder(w http.ResponseWriter, r *http.Requ
 	}
 
 	CheckFolderProfileDataProto, err := h.FolderServiceClient.CheckFolderProfile(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(),
+			metadata.New(map[string]string{"requestID": r.Context().Value("requestID").(string)})),
 		&proto.FolderProfile{
 			FolderID:  uint32(id),
 			ProfileID: profileId,
@@ -391,7 +403,8 @@ func (h *FolderHandler) GetAllEmailsInFolder(w http.ResponseWriter, r *http.Requ
 	}
 
 	emailsDataProto, err := h.FolderServiceClient.GetAllEmailsInFolder(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(),
+			metadata.New(map[string]string{"requestID": r.Context().Value("requestID").(string)})),
 		&proto.GetAllEmailsInFolderData{FolderID: uint32(id), ProfileID: profileId, Limit: 0, Offset: 0},
 	)
 	if err != nil {

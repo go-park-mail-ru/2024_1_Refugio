@@ -27,6 +27,7 @@
 │   └── user
 │       ├── Dockerfile
 │       └── main.go
+├── coverprofile.tmp
 ├── db
 │   ├── migrations
 │   │   └── init.sql
@@ -82,6 +83,7 @@
 │   │   │   │   ├── ifolder_repo.go
 │   │   │   │   └── ifolder_service.go
 │   │   │   ├── mock
+│   │   │   │   ├── folder_grpc_mock.go
 │   │   │   │   ├── folder_repo_mock.go
 │   │   │   │   └── folder_service_mock.go
 │   │   │   ├── proto
@@ -257,7 +259,8 @@
 │   │   ├── folder
 │   │   │   └── delivery
 │   │   │       └── http
-│   │   │           └── folder_handler.go
+│   │   │           ├── folder_handler.go
+│   │   │           └── folder_handler_test.go
 │   │   ├── logger
 │   │   │   ├── log.txt
 │   │   │   ├── logger.go
@@ -311,4 +314,4 @@
     └── prometheus
         └── prometheus.yml
 
-98 directories, 214 files
+98 directories, 217 files
