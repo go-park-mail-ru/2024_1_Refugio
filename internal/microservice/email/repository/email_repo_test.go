@@ -272,7 +272,7 @@ func TestGetAllIncoming(t *testing.T) {
 			AddRow(3, "Topic 3", "Text 3", "test@mailhub.su")
 
 		mock.ExpectQuery(`
-			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
 			FROM email e
 			LEFT JOIN email_file ef ON e.id = ef.email_id
 			LEFT JOIN file f ON ef.file_id = f.id
@@ -286,6 +286,7 @@ func TestGetAllIncoming(t *testing.T) {
 
 		emails, err := repo.GetAllIncoming(login, -1, -1, ctx)
 		assert.NoError(t, err)
+		assert.NotNil(t, emails)
 		assert.Equal(t, expectedEmails, emails)
 	})
 
@@ -300,7 +301,7 @@ func TestGetAllIncoming(t *testing.T) {
 			AddRow(3, "Topic 3", "Text 3", "test@mailhub.su")
 
 		mock.ExpectQuery(`
-			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
 			FROM email e
 			LEFT JOIN email_file ef ON e.id = ef.email_id
 			LEFT JOIN file f ON ef.file_id = f.id
@@ -320,7 +321,7 @@ func TestGetAllIncoming(t *testing.T) {
 
 	t.Run("Error", func(t *testing.T) {
 		mock.ExpectQuery(`
-			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid	й
 			FROM email e
 			LEFT JOIN email_file ef ON e.id = ef.email_id
 			LEFT JOIN file f ON ef.file_id = f.id
@@ -368,7 +369,7 @@ func TestGetAllSent(t *testing.T) {
 			AddRow(3, "Topic 3", "Text 3", "test@mailhub.su")
 
 		mock.ExpectQuery(`
-			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
 			FROM email e
 			LEFT JOIN email_file ef ON e.id = ef.email_id
 			LEFT JOIN file f ON ef.file_id = f.id
@@ -396,7 +397,7 @@ func TestGetAllSent(t *testing.T) {
 			AddRow(3, "Topic 3", "Text 3", "test@mailhub.su")
 
 		mock.ExpectQuery(`
-			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
 			FROM email e
 			LEFT JOIN email_file ef ON e.id = ef.email_id
 			LEFT JOIN file f ON ef.file_id = f.id
@@ -464,7 +465,7 @@ func TestGetAllDraft(t *testing.T) {
 			AddRow(3, "Topic 3", "Text 3", "test@mailhub.su", true)
 
 		mock.ExpectQuery(`
-			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
 			FROM email e
 			LEFT JOIN email_file ef ON e.id = ef.email_id
 			LEFT JOIN file f ON ef.file_id = f.id
@@ -492,7 +493,7 @@ func TestGetAllDraft(t *testing.T) {
 			AddRow(3, "Topic 3", "Text 3", "test@mailhub.su", true)
 
 		mock.ExpectQuery(`
-			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
 			FROM email e
 			LEFT JOIN email_file ef ON e.id = ef.email_id
 			LEFT JOIN file f ON ef.file_id = f.id
@@ -560,7 +561,7 @@ func TestGetAllSpam(t *testing.T) {
 			AddRow(3, "Topic 3", "Text 3", "test@mailhub.su", true)
 
 		mock.ExpectQuery(`
-			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
 			FROM email e
 			LEFT JOIN email_file ef ON e.id = ef.email_id
 			LEFT JOIN file f ON ef.file_id = f.id
@@ -568,7 +569,7 @@ func TestGetAllSpam(t *testing.T) {
 			JOIN profile p ON pe.profile_id = \(
 				SELECT id FROM profile WHERE login = \$1
 			\)
-			WHERE e.sender_email = \$1 AND e.isSpam = true
+			WHERE e.recipient_email = \$1 AND e.isSpam = true
 			ORDER BY e.date_of_dispatch DESC
 		`).WillReturnRows(rows)
 
@@ -588,7 +589,7 @@ func TestGetAllSpam(t *testing.T) {
 			AddRow(3, "Topic 3", "Text 3", "test@mailhub.su", true)
 
 		mock.ExpectQuery(`
-			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
 			FROM email e
 			LEFT JOIN email_file ef ON e.id = ef.email_id
 			LEFT JOIN file f ON ef.file_id = f.id
@@ -596,7 +597,7 @@ func TestGetAllSpam(t *testing.T) {
 			JOIN profile p ON pe.profile_id = \(
 				SELECT id FROM profile WHERE login = \$1
 			\)
-			WHERE e.sender_email = \$1 AND e.isSpam = true
+			WHERE e.recipient_email = \$1 AND e.isSpam = true
 			ORDER BY e.date_of_dispatch DESC
 			OFFSET \$2 LIMIT \$3
 		`).WillReturnRows(rows)
@@ -647,7 +648,7 @@ func TestGetByID(t *testing.T) {
 		expectedEmail := &domain.Email{ID: 1, Topic: "Topic 1", Text: "Text 1", SenderEmail: login}
 		rows := sqlmock.NewRows([]string{"id", "topic", "text", "sender_email"}).AddRow(expectedEmail.ID, expectedEmail.Topic, expectedEmail.Text, login)
 		mock.ExpectQuery(`
-			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
 			FROM email e
 			LEFT JOIN email_file ef ON e.id = ef.email_id
 			LEFT JOIN file f ON ef.file_id = f.id
@@ -665,7 +666,7 @@ func TestGetByID(t *testing.T) {
 
 	t.Run("EmailNotFound", func(t *testing.T) {
 		mock.ExpectQuery(`
-			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
 			FROM email e
 			LEFT JOIN email_file ef ON e.id = ef.email_id
 			LEFT JOIN file f ON ef.file_id = f.id
