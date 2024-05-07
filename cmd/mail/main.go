@@ -60,42 +60,48 @@ func main() {
 
 	loggerMiddlewareAccess := initializeMiddlewareLogger()
 
-	sessionManagerServiceConn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.SessionService))
+	sessionManagerServiceConn, err := connect_microservice.
+		OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.SessionService))
 	if err != nil {
 		log.Fatalf("connection with microservice auth fail")
 	}
 	defer sessionManagerServiceConn.Close()
 	sessionsManager := initializeSessionsManager(session_proto.NewSessionServiceClient(sessionManagerServiceConn))
 
-	authServiceConn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.AuthService))
+	authServiceConn, err := connect_microservice.
+		OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.AuthService))
 	if err != nil {
 		log.Fatalf("connection with microservice auth fail")
 	}
 	defer authServiceConn.Close()
 	authHandler := initializeAuthHandler(sessionsManager, auth_proto.NewAuthServiceClient(authServiceConn))
 
-	userServiceConn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.UserService))
+	userServiceConn, err := connect_microservice.
+		OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.UserService))
 	if err != nil {
 		log.Fatalf("connection with microservice user fail")
 	}
 	defer userServiceConn.Close()
 	userHandler := initializeUserHandler(sessionsManager, user_proto.NewUserServiceClient(userServiceConn))
 
-	emailServiceConn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.EmailService))
+	emailServiceConn, err := connect_microservice.
+		OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.EmailService))
 	if err != nil {
 		log.Fatalf("connection with microservice user fail")
 	}
 	defer emailServiceConn.Close()
 	emailHandler := initializeEmailHandler(sessionsManager, email_proto.NewEmailServiceClient(emailServiceConn))
 
-	folderServiceConn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.FolderService))
+	folderServiceConn, err := connect_microservice.
+		OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.FolderService))
 	if err != nil {
 		log.Fatalf("connection with microservice user fail")
 	}
 	defer folderServiceConn.Close()
 	folderHandler := initializeFolderHandler(sessionsManager, folder_proto.NewFolderServiceClient(folderServiceConn))
 
-	questionServiceConn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.QuestionService))
+	questionServiceConn, err := connect_microservice.
+		OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.QuestionService))
 	if err != nil {
 		log.Fatalf("connection with microservice question fail")
 	}

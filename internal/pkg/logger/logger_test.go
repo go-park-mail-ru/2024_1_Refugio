@@ -2,15 +2,16 @@ package logger
 
 import (
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/sirupsen/logrus"
-	"github.com/sirupsen/logrus/hooks/test"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"os"
 	"testing"
 	"time"
 	_ "time/tzdata"
+
+	"github.com/fatih/color"
+	"github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus/hooks/test"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestInitializationBdLog(t *testing.T) {

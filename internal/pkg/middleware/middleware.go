@@ -3,17 +3,20 @@ package middleware
 import (
 	"context"
 	"fmt"
-	"github.com/sirupsen/logrus"
-	response "mail/internal/models/response"
-	"mail/internal/monitoring"
-	"mail/internal/pkg/logger"
-	"mail/internal/pkg/session"
 	"net/http"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/sirupsen/logrus"
+
+	"mail/internal/monitoring"
+	"mail/internal/pkg/logger"
+	"mail/internal/pkg/session"
+
+	response "mail/internal/models/response"
 )
 
 type Logger struct {

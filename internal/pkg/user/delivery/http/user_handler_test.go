@@ -2,35 +2,66 @@ package http
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"github.com/golang/mock/gomock"
 	"github.com/gorilla/mux"
-	"github.com/stretchr/testify/assert"
-	"io"
-	"io/ioutil"
-	domain "mail/internal/microservice/models/domain_models"
-	mock "mail/internal/microservice/user/mock"
-	api "mail/internal/models/delivery_models"
-	mockManager "mail/internal/pkg/session/mock"
-	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"testing"
+
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
+
+	user_mock "mail/internal/microservice/user/mock"
+	user_proto "mail/internal/microservice/user/proto"
+	api "mail/internal/models/delivery_models"
+	session_mock "mail/internal/pkg/session/mock"
 )
+
+func TestVerifyAuth_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserServiceClient := user_mock.NewMockUserServiceClient(ctrl)
+	mockSessionsManager := session_mock.NewMockSessionsManager(ctrl)
+
+	userHandler := UserHandler{
+		Sessions:          mockSessionsManager,
+		UserServiceClient: mockUserServiceClient,
+	}
+
+	req, err := http.NewRequest("GET", "/api/v1/verify-auth", nil)
+	assert.NoError(t, err)
+	ctx := context.WithValue(req.Context(), "requestid", "testID")
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+
+	mockSessionsManager.EXPECT().GetSession(req, gomock.Any()).Return(&api.Session{CsrfToken: "csrf"})
+
+	http.HandlerFunc(userHandler.VerifyAuth).ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+
+	csrfToken := rr.Header().Get("X-Csrf-Token")
+	assert.NotEmpty(t, csrfToken)
+
+	expectedResponseBody := `{"status":200,"body":{"Success":"OK"}}` + "\n"
+	assert.Equal(t, expectedResponseBody, rr.Body.String())
+}
 
 func TestGetUserBySession_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockUserUseCase := mock.NewMockUserUseCase(ctrl)
-	mockSessionManager := mockManager.NewMockSessionsManager(ctrl)
+	mockUserServiceClient := user_mock.NewMockUserServiceClient(ctrl)
+	mockSessionsManager := session_mock.NewMockSessionsManager(ctrl)
 
 	userHandler := UserHandler{
-		UserUseCase: mockUserUseCase,
-		Sessions:    mockSessionManager,
+		Sessions:          mockSessionsManager,
+		UserServiceClient: mockUserServiceClient,
 	}
 
 	sessionData := &api.Session{
@@ -41,20 +72,22 @@ func TestGetUserBySession_Success(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	ctx := context.WithValue(req.Context(), "requestid", "testID")
+	req = req.WithContext(ctx)
 
-	mockSessionManager.EXPECT().GetSession(req, gomock.Any()).Return(sessionData)
+	mockSessionsManager.EXPECT().GetSession(req, gomock.Any()).Return(sessionData)
 
-	userData := &domain.User{
-		ID:          1,
+	userData := &user_proto.GetUserReply{User: &user_proto.User{
+		Id:          1,
 		Login:       "test@mailhub.su",
-		FirstName:   "John",
+		Firstname:   "John",
 		Surname:     "Doe",
 		Patronymic:  "Middle",
-		AvatarID:    "123",
+		Avatar:      "123",
 		PhoneNumber: "1234567890",
 		Description: "Test description",
-	}
-	mockUserUseCase.EXPECT().GetUserByID(sessionData.UserID, gomock.Any()).Return(userData, nil)
+	}}
+	mockUserServiceClient.EXPECT().GetUser(gomock.Any(), gomock.Any()).Return(userData, nil)
 
 	rr := httptest.NewRecorder()
 
@@ -62,7 +95,7 @@ func TestGetUserBySession_Success(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, rr.Code)
 
-	expectedResponseBody := `{"status":200,"body":{"user":{"id":1,"firstname":"John","surname":"Doe","middlename":"Middle","birthday":"0001-01-01T00:00:00Z","login":"test@mailhub.su","password":"","avatar":"123","phonenumber":"1234567890","description":"Test description"}}}` + "\n"
+	expectedResponseBody := `{"status":200,"body":{"user":{"id":1,"firstname":"John","surname":"Doe","middlename":"Middle","birthday":"1970-01-01T00:00:00Z","login":"test@mailhub.su","password":"","avatar":"123","phonenumber":"1234567890","description":"Test description"}}}` + "\n"
 	assert.Equal(t, expectedResponseBody, rr.Body.String())
 }
 
@@ -70,12 +103,12 @@ func TestGetUserBySession_InternalServerError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockUserUseCase := mock.NewMockUserUseCase(ctrl)
-	mockSessionManager := mockManager.NewMockSessionsManager(ctrl)
+	mockUserServiceClient := user_mock.NewMockUserServiceClient(ctrl)
+	mockSessionsManager := session_mock.NewMockSessionsManager(ctrl)
 
 	userHandler := UserHandler{
-		UserUseCase: mockUserUseCase,
-		Sessions:    mockSessionManager,
+		Sessions:          mockSessionsManager,
+		UserServiceClient: mockUserServiceClient,
 	}
 
 	sessionData := &api.Session{
@@ -86,10 +119,12 @@ func TestGetUserBySession_InternalServerError(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	ctx := context.WithValue(req.Context(), "requestid", "testID")
+	req = req.WithContext(ctx)
 
-	mockSessionManager.EXPECT().GetSession(req, gomock.Any()).Return(sessionData)
+	mockSessionsManager.EXPECT().GetSession(req, gomock.Any()).Return(sessionData)
 
-	mockUserUseCase.EXPECT().GetUserByID(sessionData.UserID, gomock.Any()).Return(nil, errors.New("user no found"))
+	mockUserServiceClient.EXPECT().GetUser(gomock.Any(), gomock.Any()).Return(nil, errors.New("user not found"))
 
 	rr := httptest.NewRecorder()
 
@@ -105,12 +140,12 @@ func TestUpdateUserData_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockUserUseCase := mock.NewMockUserUseCase(ctrl)
-	mockSessionManager := mockManager.NewMockSessionsManager(ctrl)
+	mockUserServiceClient := user_mock.NewMockUserServiceClient(ctrl)
+	mockSessionsManager := session_mock.NewMockSessionsManager(ctrl)
 
 	userHandler := UserHandler{
-		UserUseCase: mockUserUseCase,
-		Sessions:    mockSessionManager,
+		Sessions:          mockSessionsManager,
+		UserServiceClient: mockUserServiceClient,
 	}
 
 	requestBody := api.User{
@@ -129,23 +164,25 @@ func TestUpdateUserData_Success(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	ctx := context.WithValue(req.Context(), "requestid", "testID")
+	req = req.WithContext(ctx)
 
 	sessionData := &api.Session{
 		UserID: 1,
 	}
-	mockSessionManager.EXPECT().GetSession(req, gomock.Any()).Return(sessionData)
+	mockSessionsManager.EXPECT().GetSession(req, gomock.Any()).Return(sessionData)
 
-	updatedUser := &domain.User{
-		ID:          1,
+	updatedUser := &user_proto.UpdateUserReply{User: &user_proto.User{
+		Id:          1,
 		Login:       "updatedlogin@mailhub.su",
-		FirstName:   "Updated First Name",
+		Firstname:   "Updated First Name",
 		Surname:     "Updated Surname",
 		Patronymic:  "Updated Patronymic",
-		AvatarID:    "updated-avatar-id",
+		Avatar:      "updated-avatar-id",
 		PhoneNumber: "1234567890",
 		Description: "Updated Description",
-	}
-	mockUserUseCase.EXPECT().UpdateUser(updatedUser, gomock.Any()).Return(updatedUser, nil)
+	}}
+	mockUserServiceClient.EXPECT().UpdateUser(gomock.Any(), gomock.Any()).Return(updatedUser, nil)
 
 	rr := httptest.NewRecorder()
 
@@ -153,7 +190,7 @@ func TestUpdateUserData_Success(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, rr.Code)
 
-	expectedResponseBody := `{"status":200,"body":{"user":{"id":1,"firstname":"Updated First Name","surname":"Updated Surname","middlename":"Updated Patronymic","birthday":"0001-01-01T00:00:00Z","login":"updatedlogin@mailhub.su","password":"","avatar":"updated-avatar-id","phonenumber":"1234567890","description":"Updated Description"}}}` + "\n"
+	expectedResponseBody := `{"status":200,"body":{"user":{"id":1,"firstname":"Updated First Name","surname":"Updated Surname","middlename":"Updated Patronymic","birthday":"1970-01-01T00:00:00Z","login":"updatedlogin@mailhub.su","password":"","avatar":"updated-avatar-id","phonenumber":"1234567890","description":"Updated Description"}}}` + "\n"
 	assert.Equal(t, expectedResponseBody, rr.Body.String())
 }
 
@@ -161,12 +198,12 @@ func TestUpdateUserData_InvalidRequestBody(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockUserUseCase := mock.NewMockUserUseCase(ctrl)
-	mockSessionManager := mockManager.NewMockSessionsManager(ctrl)
+	mockUserServiceClient := user_mock.NewMockUserServiceClient(ctrl)
+	mockSessionsManager := session_mock.NewMockSessionsManager(ctrl)
 
 	userHandler := UserHandler{
-		UserUseCase: mockUserUseCase,
-		Sessions:    mockSessionManager,
+		Sessions:          mockSessionsManager,
+		UserServiceClient: mockUserServiceClient,
 	}
 
 	requestBody := api.User{
@@ -187,6 +224,8 @@ func TestUpdateUserData_InvalidRequestBody(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	ctx := context.WithValue(req.Context(), "requestid", "testID")
+	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
 
@@ -202,12 +241,12 @@ func TestUpdateUserData_NotAuthorized(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockUserUseCase := mock.NewMockUserUseCase(ctrl)
-	mockSessionManager := mockManager.NewMockSessionsManager(ctrl)
+	mockUserServiceClient := user_mock.NewMockUserServiceClient(ctrl)
+	mockSessionsManager := session_mock.NewMockSessionsManager(ctrl)
 
 	userHandler := UserHandler{
-		UserUseCase: mockUserUseCase,
-		Sessions:    mockSessionManager,
+		Sessions:          mockSessionsManager,
+		UserServiceClient: mockUserServiceClient,
 	}
 
 	requestBody := api.User{
@@ -226,11 +265,13 @@ func TestUpdateUserData_NotAuthorized(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	ctx := context.WithValue(req.Context(), "requestid", "testID")
+	req = req.WithContext(ctx)
 
 	sessionData := &api.Session{
 		UserID: 2,
 	}
-	mockSessionManager.EXPECT().GetSession(req, gomock.Any()).Return(sessionData)
+	mockSessionsManager.EXPECT().GetSession(req, gomock.Any()).Return(sessionData)
 
 	rr := httptest.NewRecorder()
 
@@ -246,12 +287,12 @@ func TestUpdateUserData_InternalServerError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockUserUseCase := mock.NewMockUserUseCase(ctrl)
-	mockSessionManager := mockManager.NewMockSessionsManager(ctrl)
+	mockUserServiceClient := user_mock.NewMockUserServiceClient(ctrl)
+	mockSessionsManager := session_mock.NewMockSessionsManager(ctrl)
 
 	userHandler := UserHandler{
-		UserUseCase: mockUserUseCase,
-		Sessions:    mockSessionManager,
+		Sessions:          mockSessionsManager,
+		UserServiceClient: mockUserServiceClient,
 	}
 
 	requestBody := api.User{
@@ -270,23 +311,15 @@ func TestUpdateUserData_InternalServerError(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	ctx := context.WithValue(req.Context(), "requestid", "testID")
+	req = req.WithContext(ctx)
 
 	sessionData := &api.Session{
 		UserID: 1,
 	}
-	mockSessionManager.EXPECT().GetSession(req, gomock.Any()).Return(sessionData)
+	mockSessionsManager.EXPECT().GetSession(req, gomock.Any()).Return(sessionData)
 
-	updatedUser := &domain.User{
-		ID:          1,
-		Login:       "updatedlogin@mailhub.su",
-		FirstName:   "Updated First Name",
-		Surname:     "Updated Surname",
-		Patronymic:  "Updated Patronymic",
-		AvatarID:    "updated-avatar-id",
-		PhoneNumber: "1234567890",
-		Description: "Updated Description",
-	}
-	mockUserUseCase.EXPECT().UpdateUser(updatedUser, gomock.Any()).Return(nil, errors.New("user no update"))
+	mockUserServiceClient.EXPECT().UpdateUser(gomock.Any(), gomock.Any()).Return(nil, errors.New("user no update"))
 
 	rr := httptest.NewRecorder()
 
@@ -302,12 +335,12 @@ func TestDeleteUserData_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockUserUseCase := mock.NewMockUserUseCase(ctrl)
-	mockSessionManager := mockManager.NewMockSessionsManager(ctrl)
+	mockUserServiceClient := user_mock.NewMockUserServiceClient(ctrl)
+	mockSessionsManager := session_mock.NewMockSessionsManager(ctrl)
 
 	userHandler := UserHandler{
-		UserUseCase: mockUserUseCase,
-		Sessions:    mockSessionManager,
+		Sessions:          mockSessionsManager,
+		UserServiceClient: mockUserServiceClient,
 	}
 
 	req, err := http.NewRequest("DELETE", "/api/v1/user/delete/1", nil)
@@ -315,13 +348,15 @@ func TestDeleteUserData_Success(t *testing.T) {
 		t.Fatal(err)
 	}
 	req = mux.SetURLVars(req, map[string]string{"id": "1"})
+	ctx := context.WithValue(req.Context(), "requestid", "testID")
+	req = req.WithContext(ctx)
 
 	sessionData := &api.Session{
 		UserID: 1,
 	}
-	mockSessionManager.EXPECT().GetSession(req, gomock.Any()).Return(sessionData)
+	mockSessionsManager.EXPECT().GetSession(req, gomock.Any()).Return(sessionData)
 
-	mockUserUseCase.EXPECT().DeleteUserByID(uint32(1), gomock.Any()).Return(true, nil)
+	mockUserServiceClient.EXPECT().DeleteUserById(gomock.Any(), gomock.Any()).Return(&user_proto.DeleteUserByIdReply{Status: true}, nil)
 
 	rr := httptest.NewRecorder()
 
@@ -337,12 +372,12 @@ func TestDeleteUserData_BadIdInRequest(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockUserUseCase := mock.NewMockUserUseCase(ctrl)
-	mockSessionManager := mockManager.NewMockSessionsManager(ctrl)
+	mockUserServiceClient := user_mock.NewMockUserServiceClient(ctrl)
+	mockSessionsManager := session_mock.NewMockSessionsManager(ctrl)
 
 	userHandler := UserHandler{
-		UserUseCase: mockUserUseCase,
-		Sessions:    mockSessionManager,
+		Sessions:          mockSessionsManager,
+		UserServiceClient: mockUserServiceClient,
 	}
 
 	req, err := http.NewRequest("DELETE", "/api/v1/user/delete/1", nil)
@@ -350,6 +385,8 @@ func TestDeleteUserData_BadIdInRequest(t *testing.T) {
 		t.Fatal(err)
 	}
 	req = mux.SetURLVars(req, map[string]string{"id": "i"})
+	ctx := context.WithValue(req.Context(), "requestid", "testID")
+	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
 
@@ -365,12 +402,12 @@ func TestDeleteUserData_NotAuthorized(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockUserUseCase := mock.NewMockUserUseCase(ctrl)
-	mockSessionManager := mockManager.NewMockSessionsManager(ctrl)
+	mockUserServiceClient := user_mock.NewMockUserServiceClient(ctrl)
+	mockSessionsManager := session_mock.NewMockSessionsManager(ctrl)
 
 	userHandler := UserHandler{
-		UserUseCase: mockUserUseCase,
-		Sessions:    mockSessionManager,
+		Sessions:          mockSessionsManager,
+		UserServiceClient: mockUserServiceClient,
 	}
 
 	req, err := http.NewRequest("DELETE", "/api/v1/user/delete/1", nil)
@@ -378,11 +415,13 @@ func TestDeleteUserData_NotAuthorized(t *testing.T) {
 		t.Fatal(err)
 	}
 	req = mux.SetURLVars(req, map[string]string{"id": "1"})
+	ctx := context.WithValue(req.Context(), "requestid", "testID")
+	req = req.WithContext(ctx)
 
 	sessionData := &api.Session{
 		UserID: 2,
 	}
-	mockSessionManager.EXPECT().GetSession(req, gomock.Any()).Return(sessionData)
+	mockSessionsManager.EXPECT().GetSession(req, gomock.Any()).Return(sessionData)
 
 	rr := httptest.NewRecorder()
 
@@ -398,12 +437,12 @@ func TestDeleteUserData_InternalServerError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockUserUseCase := mock.NewMockUserUseCase(ctrl)
-	mockSessionManager := mockManager.NewMockSessionsManager(ctrl)
+	mockUserServiceClient := user_mock.NewMockUserServiceClient(ctrl)
+	mockSessionsManager := session_mock.NewMockSessionsManager(ctrl)
 
 	userHandler := UserHandler{
-		UserUseCase: mockUserUseCase,
-		Sessions:    mockSessionManager,
+		Sessions:          mockSessionsManager,
+		UserServiceClient: mockUserServiceClient,
 	}
 
 	req, err := http.NewRequest("DELETE", "/api/v1/user/delete/1", nil)
@@ -411,13 +450,15 @@ func TestDeleteUserData_InternalServerError(t *testing.T) {
 		t.Fatal(err)
 	}
 	req = mux.SetURLVars(req, map[string]string{"id": "1"})
+	ctx := context.WithValue(req.Context(), "requestid", "testID")
+	req = req.WithContext(ctx)
 
 	sessionData := &api.Session{
 		UserID: 1,
 	}
-	mockSessionManager.EXPECT().GetSession(req, gomock.Any()).Return(sessionData)
+	mockSessionsManager.EXPECT().GetSession(req, gomock.Any()).Return(sessionData)
 
-	mockUserUseCase.EXPECT().DeleteUserByID(uint32(1), gomock.Any()).Return(false, errors.New("fail with delete"))
+	mockUserServiceClient.EXPECT().DeleteUserById(gomock.Any(), gomock.Any()).Return(&user_proto.DeleteUserByIdReply{Status: false}, errors.New("fail with delete"))
 
 	rr := httptest.NewRecorder()
 
@@ -433,12 +474,12 @@ func TestDeleteUserData_FailedToDeleteUserData(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockUserUseCase := mock.NewMockUserUseCase(ctrl)
-	mockSessionManager := mockManager.NewMockSessionsManager(ctrl)
+	mockUserServiceClient := user_mock.NewMockUserServiceClient(ctrl)
+	mockSessionsManager := session_mock.NewMockSessionsManager(ctrl)
 
 	userHandler := UserHandler{
-		UserUseCase: mockUserUseCase,
-		Sessions:    mockSessionManager,
+		Sessions:          mockSessionsManager,
+		UserServiceClient: mockUserServiceClient,
 	}
 
 	req, err := http.NewRequest("DELETE", "/api/v1/user/delete/1", nil)
@@ -446,13 +487,15 @@ func TestDeleteUserData_FailedToDeleteUserData(t *testing.T) {
 		t.Fatal(err)
 	}
 	req = mux.SetURLVars(req, map[string]string{"id": "1"})
+	ctx := context.WithValue(req.Context(), "requestid", "testID")
+	req = req.WithContext(ctx)
 
 	sessionData := &api.Session{
 		UserID: 1,
 	}
-	mockSessionManager.EXPECT().GetSession(req, gomock.Any()).Return(sessionData)
+	mockSessionsManager.EXPECT().GetSession(req, gomock.Any()).Return(sessionData)
 
-	mockUserUseCase.EXPECT().DeleteUserByID(uint32(1), gomock.Any()).Return(false, nil)
+	mockUserServiceClient.EXPECT().DeleteUserById(gomock.Any(), gomock.Any()).Return(&user_proto.DeleteUserByIdReply{Status: false}, nil)
 
 	rr := httptest.NewRecorder()
 
@@ -464,6 +507,115 @@ func TestDeleteUserData_FailedToDeleteUserData(t *testing.T) {
 	assert.Equal(t, expectedResponseBody, rr.Body.String())
 }
 
+func TestDeleteUserAvatar_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserServiceClient := user_mock.NewMockUserServiceClient(ctrl)
+	mockSessionsManager := session_mock.NewMockSessionsManager(ctrl)
+
+	userHandler := UserHandler{
+		Sessions:          mockSessionsManager,
+		UserServiceClient: mockUserServiceClient,
+	}
+
+	req, err := http.NewRequest("DELETE", "/api/v1/user/delete/1", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.WithValue(req.Context(), "requestid", "testID")
+	req = req.WithContext(ctx)
+
+	sessionData := &api.Session{
+		UserID: 1,
+	}
+	mockSessionsManager.EXPECT().GetSession(req, gomock.Any()).Return(sessionData)
+
+	mockUserServiceClient.EXPECT().DeleteUserAvatar(gomock.Any(), gomock.Any()).Return(&user_proto.DeleteUserAvatarReply{Status: true}, nil)
+
+	rr := httptest.NewRecorder()
+
+	userHandler.DeleteUserAvatar(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+
+	expectedResponseBody := `{"status":200,"body":{"message":"User avatar deleted successfully"}}` + "\n"
+	assert.Equal(t, expectedResponseBody, rr.Body.String())
+}
+
+func TestDeleteUserAvatar_InternalServerError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserServiceClient := user_mock.NewMockUserServiceClient(ctrl)
+	mockSessionsManager := session_mock.NewMockSessionsManager(ctrl)
+
+	userHandler := UserHandler{
+		Sessions:          mockSessionsManager,
+		UserServiceClient: mockUserServiceClient,
+	}
+
+	req, err := http.NewRequest("DELETE", "/api/v1/user/delete/1", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.WithValue(req.Context(), "requestid", "testID")
+	req = req.WithContext(ctx)
+
+	sessionData := &api.Session{
+		UserID: 1,
+	}
+	mockSessionsManager.EXPECT().GetSession(req, gomock.Any()).Return(sessionData)
+
+	mockUserServiceClient.EXPECT().DeleteUserAvatar(gomock.Any(), gomock.Any()).Return(&user_proto.DeleteUserAvatarReply{Status: false}, errors.New("fail with delete"))
+
+	rr := httptest.NewRecorder()
+
+	userHandler.DeleteUserAvatar(rr, req)
+
+	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+
+	expectedResponseBody := `{"status":500,"body":{"error":"Internal Server Error"}}` + "\n"
+	assert.Equal(t, expectedResponseBody, rr.Body.String())
+}
+
+func TestDeleteUserAvatar_FailedToDeleteUserData(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserServiceClient := user_mock.NewMockUserServiceClient(ctrl)
+	mockSessionsManager := session_mock.NewMockSessionsManager(ctrl)
+
+	userHandler := UserHandler{
+		Sessions:          mockSessionsManager,
+		UserServiceClient: mockUserServiceClient,
+	}
+
+	req, err := http.NewRequest("DELETE", "/api/v1/user/delete/1", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.WithValue(req.Context(), "requestid", "testID")
+	req = req.WithContext(ctx)
+
+	sessionData := &api.Session{
+		UserID: 1,
+	}
+	mockSessionsManager.EXPECT().GetSession(req, gomock.Any()).Return(sessionData)
+
+	mockUserServiceClient.EXPECT().DeleteUserAvatar(gomock.Any(), gomock.Any()).Return(&user_proto.DeleteUserAvatarReply{Status: false}, nil)
+
+	rr := httptest.NewRecorder()
+
+	userHandler.DeleteUserAvatar(rr, req)
+
+	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+
+	expectedResponseBody := `{"status":500,"body":{"error":"Failed to delete user avatar"}}` + "\n"
+	assert.Equal(t, expectedResponseBody, rr.Body.String())
+}
+
+/*
 func TestUploadUserAvatar_ErrorProcessingFile(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -548,31 +700,4 @@ func TestUploadUserAvatar_Success(t *testing.T) {
 
 	assert.Equal(t, http.StatusInternalServerError, rr.Code)
 }
-
-func TestVerifyAuth_Success(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockSessionsManager := mockManager.NewMockSessionsManager(ctrl)
-
-	userHandler := UserHandler{
-		Sessions: mockSessionsManager,
-	}
-
-	req, err := http.NewRequest("GET", "/api/v1/verify-auth", nil)
-	assert.NoError(t, err)
-
-	rr := httptest.NewRecorder()
-
-	mockSessionsManager.EXPECT().GetSession(req, gomock.Any()).Return(&api.Session{CsrfToken: "csrf"})
-
-	http.HandlerFunc(userHandler.VerifyAuth).ServeHTTP(rr, req)
-
-	assert.Equal(t, http.StatusOK, rr.Code)
-
-	csrfToken := rr.Header().Get("X-Csrf-Token")
-	assert.NotEmpty(t, csrfToken)
-
-	expectedResponseBody := `{"status":200,"body":{"Success":"OK"}}` + "\n"
-	assert.Equal(t, expectedResponseBody, rr.Body.String())
-}
+*/

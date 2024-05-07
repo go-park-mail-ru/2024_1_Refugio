@@ -5,17 +5,16 @@ import (
 	"fmt"
 	"google.golang.org/grpc/metadata"
 	"io"
-	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 
-	"github.com/disintegration/imaging"
 	"github.com/gorilla/mux"
 
 	"mail/internal/microservice/models/proto_converters"
 	"mail/internal/microservice/user/proto"
+	"mail/internal/pkg/utils/check_image"
 	"mail/internal/pkg/utils/generate_filename"
 	"mail/internal/pkg/utils/sanitize"
 
@@ -221,7 +220,7 @@ func (uh *UserHandler) UploadUserAvatar(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	defer tempFile.Close()
-	if !isImage(tempFile) {
+	if !check_image.IsImage(tempFile) {
 		response.HandleError(w, http.StatusBadRequest, "File is not an image")
 		return
 	}
@@ -255,12 +254,6 @@ func (uh *UserHandler) UploadUserAvatar(w http.ResponseWriter, r *http.Request) 
 	}
 
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "File is uploaded and saved"})
-}
-
-// isImage checks if the provided file is an image
-func isImage(file multipart.File) bool {
-	_, err := imaging.Decode(file)
-	return err == nil
 }
 
 // DeleteUserAvatar handles requests to delete user avatar.
