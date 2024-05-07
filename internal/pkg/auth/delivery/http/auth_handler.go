@@ -27,11 +27,6 @@ type AuthHandler struct {
 	AuthServiceClient auth_proto.AuthServiceClient
 }
 
-// InitializationAuthHandler initializes the user handler with the provided user handler.
-func InitializationAuthHandler(authHandler *AuthHandler) {
-	AHandler = authHandler
-}
-
 // Login handles user login.
 // @Summary Login User
 // @Description Login Handles user.

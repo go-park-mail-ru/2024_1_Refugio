@@ -2,11 +2,6 @@
 ├── Dockerfile
 ├── README.md
 ├── avatars
-│   ├── 20240501_235049_13.jpeg
-│   ├── 20240505_153432_70.jpeg
-│   ├── 20240505_153438_251.jpeg
-│   ├── 20240505_153809_273.jpeg
-│   └── 20240505_153832_31.jpg
 ├── cmd
 │   ├── auth
 │   │   ├── Dockerfile
@@ -63,6 +58,7 @@
 │   │   │   │   ├── iemail_repo.go
 │   │   │   │   └── iemail_service.go
 │   │   │   ├── mock
+│   │   │   │   ├── email_grpc_mock.go
 │   │   │   │   ├── email_repository_mock.go
 │   │   │   │   └── email_service_mock.go
 │   │   │   ├── proto
@@ -263,15 +259,18 @@
 │   │   │       └── http
 │   │   │           └── folder_handler.go
 │   │   ├── logger
+│   │   │   ├── log.txt
 │   │   │   ├── logger.go
 │   │   │   └── logger_test.go
 │   │   ├── middleware
+│   │   │   ├── log.txt
 │   │   │   ├── middleware.go
 │   │   │   └── middleware_test.go
 │   │   ├── questionnairy
 │   │   │   └── delivery
 │   │   │       └── http
-│   │   │           └── question_handler.go
+│   │   │           ├── question_handler.go
+│   │   │           └── question_handler_test.go
 │   │   ├── session
 │   │   │   ├── interface
 │   │   │   │   └── imanager.go
@@ -285,6 +284,8 @@
 │   │   │           ├── user_handler.go
 │   │   │           └── user_handler_test.go
 │   │   └── utils
+│   │       ├── check_image
+│   │       │   └── check_image.go
 │   │       ├── connect_microservice
 │   │       │   └── connect.go
 │   │       ├── generate_filename
@@ -306,10 +307,8 @@
 ├── log.txt
 ├── logInterEmail.txt
 ├── logInterFolder.txt
-├── message_smtp
-│   └── main.go
 └── monitoring
     └── prometheus
         └── prometheus.yml
 
-98 directories, 215 files
+98 directories, 214 files

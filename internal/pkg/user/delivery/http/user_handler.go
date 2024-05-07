@@ -36,11 +36,6 @@ type UserHandler struct {
 	UserServiceClient user_proto.UserServiceClient
 }
 
-// InitializationUserHandler initializes the user handler with the provided user handler.
-func InitializationUserHandler(userHandler *UserHandler) {
-	UHandler = userHandler
-}
-
 // VerifyAuth verifies user authentication.
 // @Summary Verify user authentication
 // @Description Verify user authentication using sessions
