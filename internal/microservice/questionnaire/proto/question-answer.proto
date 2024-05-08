@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+option go_package = "./;proto";
+
+package proto;
+
+// protoc --go_out=. --go-grpc_out=. --go-grpc_opt=paths=source_relative --go_opt=paths=source_relative *.proto
+
+service QuestionService {
+  rpc GetQuestions(GetQuestionsRequest) returns(GetQuestionsReply) {}
+  rpc AddQuestion(AddQuestionRequest) returns(AddQuestionReply) {}
+  rpc AddAnswer(AddAnswerRequest) returns(AddAnswerReply) {}
+  rpc GetStatistic(GetStatisticRequest) returns(GetStatisticReply) {}
+}
+
+message Question {
+  uint32 id = 1;
+  string text = 2;
+  string min_text = 3;
+  string max_text = 4;
+  string dop_question = 5;
+}
+
+message Answer {
+  uint32 id = 1;
+  uint32 question_id = 2;
+  string login = 3;
+  uint32 mark = 4;
+  string text = 5;
+}
+
+message Statistic {
+  string text = 1;
+  float average = 2;
+}
+
+message GetQuestionsRequest {
+
+}
+
+message GetQuestionsReply {
+  repeated Question questions = 1;
+}
+
+message AddQuestionRequest {
+  Question question = 1;
+}
+
+message AddQuestionReply {
+  bool status = 1;
+}
+
+message AddAnswerRequest {
+  Answer answer = 1;
+}
+
+message AddAnswerReply {
+  bool status = 1;
+}
+
+message GetStatisticRequest {
+
+}
+
+message GetStatisticReply {
+  repeated Statistic statistics = 1;
+}
+
+

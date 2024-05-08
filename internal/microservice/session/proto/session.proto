@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+option go_package = "./;proto";
+
+package proto;
+
+import "google/protobuf/timestamp.proto";
+
+// protoc --go_out=. --go-grpc_out=. --go-grpc_opt=paths=source_relative --go_opt=paths=source_relative *.proto
+
+service SessionService {
+  rpc GetSession(GetSessionRequest) returns(GetSessionReply) {}
+  rpc GetLoginBySession(GetLoginBySessionRequest) returns(GetLoginBySessionReply) {}
+  rpc GetProfileIDBySession(GetLoginBySessionRequest) returns(GetProfileIDBySessionReply) {}
+  rpc CreateSession(CreateSessionRequest) returns(CreateSessionReply) {}
+  rpc DeleteSession(DeleteSessionRequest) returns(DeleteSessionReply) {}
+  rpc CleanupExpiredSessions(CleanupExpiredSessionsRequest) returns(CleanupExpiredSessionsReply) {}
+}
+
+message Session {
+  string session_id = 1;
+  uint32 user_id = 2;
+  google.protobuf.Timestamp creation_date = 3;
+  string device = 4;
+  int32 life_time = 5;
+  string csrf_token = 6;
+}
+
+message GetSessionRequest {
+  string session_id = 1;
+}
+
+message GetSessionReply {
+  Session session = 1;
+}
+
+message GetLoginBySessionRequest {
+  string session_id = 1;
+}
+
+message GetLoginBySessionReply {
+  string login = 1;
+}
+
+message GetProfileIDBySessionReply {
+  uint32 id = 1;
+}
+
+message CreateSessionRequest {
+  Session session = 1;
+}
+
+message CreateSessionReply {
+  string session_id = 1;
+}
+
+message DeleteSessionRequest {
+  string session_id = 1;
+}
+
+message DeleteSessionReply {
+  bool status = 1;
+}
+
+message CleanupExpiredSessionsRequest {
+
+}
+
+message CleanupExpiredSessionsReply {
+
+}

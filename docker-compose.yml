@@ -17,7 +17,21 @@ services:
     networks:
       - deploy-guide-dev
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - db_postgres_data:/var/lib/postgresql/data
+
+  db_question:
+    container_name: db_question
+    image: postgres:16
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: Question
+    networks:
+      - deploy-guide-dev
+    volumes:
+      - db_question_postgres_data:/var/lib/postgresql/data
 
   backend:
     container_name: backend
@@ -34,12 +48,123 @@ services:
   smtp:
     container_name: smtp
     build:
-      context: ./smtp_server
+      context: ./internal/smtp_server
       dockerfile: Dockerfile
     ports:
       - "25:587"
     networks:
       - deploy-guide-dev
 
+  auth:
+    container_name: auth
+    build:
+      context: .
+      dockerfile: ./cmd/auth/Dockerfile
+    ports:
+      - "8004:8004"
+    networks:
+      - deploy-guide-dev
+    depends_on:
+      - db
+
+  email:
+    container_name: email
+    build:
+      context: .
+      dockerfile: ./cmd/email/Dockerfile
+    ports:
+      - "8002:8002"
+    networks:
+      - deploy-guide-dev
+    depends_on:
+      - db
+
+  session:
+    container_name: session
+    build:
+      context: .
+      dockerfile: ./cmd/session/Dockerfile
+    ports:
+      - "8003:8003"
+    networks:
+      - deploy-guide-dev
+    depends_on:
+      - db
+
+  user:
+    container_name: user
+    build:
+      context: .
+      dockerfile: ./cmd/user/Dockerfile
+    ports:
+      - "8001:8001"
+    networks:
+      - deploy-guide-dev
+    depends_on:
+      - db
+
+  folder:
+    container_name: folder
+    build:
+      context: .
+      dockerfile: ./cmd/folder/Dockerfile
+    ports:
+      - "8005:8005"
+    networks:
+      - deploy-guide-dev
+    depends_on:
+      - db
+
+  questionnaire:
+    container_name: questionnaire
+    build:
+      context: .
+      dockerfile: ./cmd/questionnaire/Dockerfile
+    ports:
+      - "8006:8006"
+    networks:
+      - deploy-guide-dev
+    depends_on:
+      - db_question
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - deploy-guide-dev
+    volumes:
+      - ./monitoring/prometheus:/etc/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - deploy-guide-dev
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+  node-exporter:
+    image: prom/node-exporter
+    container_name: node-exporter
+    ports:
+      - "9100:9100"
+    networks:
+      - deploy-guide-dev
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+
 volumes:
-  postgres_data:
+  db_postgres_data:
+  db_question_postgres_data:
+  prometheus_data:
+  grafana_data:
