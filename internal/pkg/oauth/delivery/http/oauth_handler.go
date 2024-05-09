@@ -215,6 +215,7 @@ func (ah *OAuthHandler) LoginVK(w http.ResponseWriter, r *http.Request) {
 		response.HandleError(w, http.StatusBadRequest, "wrong code")
 		return
 	}
+	fmt.Println("OK")
 
 	userVK, status, err := GetDataUser(*conf, code, ctx)
 	if err != nil {
@@ -222,6 +223,7 @@ func (ah *OAuthHandler) LoginVK(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fmt.Println("UserVK: ", userVK.VKId, "  ", userVK.FirstName)
 	/*
 		userVK := &api.VKUser{
 			VKId: 123,
