@@ -32,7 +32,7 @@ var (
 	APP_KEY                         = "oz3r7Pyakfeg25JpJsQV"
 	API_URL                         = "https://api.vk.com/method/users.get?fields=id,photo_max,email,sex,bdate&access_token=%s&v=5.131"
 	REDIRECT_URL_SIGNUP             = "https://mailhub.su/testAuth/auth-vk/auth"
-	REDIRECT_URL_LOGIN              = "https://mailhub.su/testAuth/auth-vk/loginVK"
+	REDIRECT_URL_LOGIN              = "https://mailhub.su/api/v1/testAuth/auth-vk/loginVK"
 	mepVKIDToken                    = make(map[uint32]string)
 )
 
@@ -215,7 +215,7 @@ func (ah *OAuthHandler) LoginVK(w http.ResponseWriter, r *http.Request) {
 		response.HandleError(w, http.StatusBadRequest, "wrong code")
 		return
 	}
-	fmt.Println("OK")
+	fmt.Println("Code: ", code)
 
 	userVK, status, err := GetDataUser(*conf, code, ctx)
 	if err != nil {
@@ -278,6 +278,7 @@ func GetDataUser(conf oauth2.Config, code string, ctx context.Context) (*api.VKU
 	token, err := conf.Exchange(ctx, code)
 	fmt.Println("Token: ", token)
 	if err != nil {
+		fmt.Println(err)
 		return &api.VKUser{}, 400, fmt.Errorf("cannot exchange")
 	}
 
