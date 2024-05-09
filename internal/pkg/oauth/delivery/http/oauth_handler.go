@@ -32,7 +32,7 @@ var (
 	APP_KEY                         = "oz3r7Pyakfeg25JpJsQV"
 	API_URL                         = "https://api.vk.com/method/users.get?fields=id,photo_max,email,sex,bdate&access_token=%s&v=5.131"
 	REDIRECT_URL_SIGNUP             = "https://mailhub.su/testAuth/auth-vk/auth"
-	REDIRECT_URL_LOGIN              = "https://mailhub.su/api/v1/testAuth/auth-vk/loginVK"
+	REDIRECT_URL_LOGIN              = "https://mailhub.su/testAuth/auth-vk/loginVK"
 	mepVKIDToken                    = make(map[uint32]string)
 )
 
@@ -286,12 +286,14 @@ func GetDataUser(conf oauth2.Config, code string, ctx context.Context) (*api.VKU
 	client := conf.Client(ctx, token)
 	resp, err := client.Get(fmt.Sprintf(API_URL, token.AccessToken))
 	if err != nil {
+		fmt.Println("cannot request data")
 		return &api.VKUser{}, 400, fmt.Errorf("cannot request data")
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
+		fmt.Println("cannot read buffer")
 		return &api.VKUser{}, 500, fmt.Errorf("cannot read buffer")
 	}
 
@@ -300,6 +302,7 @@ func GetDataUser(conf oauth2.Config, code string, ctx context.Context) (*api.VKU
 
 	birthdayTime, err := time.Parse("2006-01-02", data.Response[0].BirthDate)
 	if err != nil {
+		fmt.Println("bad BirthDate")
 		return &api.VKUser{}, 500, fmt.Errorf("bad BirthDate")
 	}
 
