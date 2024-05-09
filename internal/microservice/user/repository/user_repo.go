@@ -390,7 +390,7 @@ func (r *UserRepository) GetByVKID(vkId uint32, ctx context.Context) (*domain.Us
 
 	var userModelDb database.User
 
-	err := row.Scan(
+	err = row.Scan(
 		&userModelDb.ID,
 		&userModelDb.Login,
 		&userModelDb.FirstName,
