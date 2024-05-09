@@ -373,8 +373,17 @@ func (r *UserRepository) InitAvatar(id uint32, fileID, fileType string, ctx cont
 // GetByVKID returns the user by its unique identifier.
 func (r *UserRepository) GetByVKID(vkId uint32, ctx context.Context) (*domain.User, error) {
 	q := `ALTER TABLE profile ADD COLUMN vkid int`
-	_, err := r.DB.Exec(q)
-	fmt.Println("ErrorRepo: ", err)
+	_, er1 := r.DB.Exec(q)
+	fmt.Println("ErrorRepo: ", er1)
+
+	Q := `
+		INSERT INTO profile (login, password_hash, firstname, surname, patronymic, gender, birthday, registration_date, phone_number, description, avatar_id, vkid)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+	`
+	_, er2 := r.DB.Exec(Q, "fedasov@mailhub.su", "$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe", "Сергей", "Федасов", "Андреевич", "Male", "2003-10-20", time.Now(), "+79090007030", "Description", 4, 344167564)
+	if er2 != nil {
+		fmt.Println("ErrorRepo2: ", er2)
+	}
 
 	query := `
         SELECT p.id, p.login, p.firstname, p.surname, p.patronymic, p.gender, p.birthday, f.file_id AS avatar, p.phone_number, p.description
@@ -390,7 +399,7 @@ func (r *UserRepository) GetByVKID(vkId uint32, ctx context.Context) (*domain.Us
 
 	var userModelDb database.User
 
-	err = row.Scan(
+	err := row.Scan(
 		&userModelDb.ID,
 		&userModelDb.Login,
 		&userModelDb.FirstName,

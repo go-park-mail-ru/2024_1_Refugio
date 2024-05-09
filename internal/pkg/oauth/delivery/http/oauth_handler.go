@@ -206,7 +206,7 @@ func (ah *OAuthHandler) SignupVK(w http.ResponseWriter, r *http.Request) {
 // @Router /api/v1/testAuth/auth-vk/loginVK [get]
 func (ah *OAuthHandler) LoginVK(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("LoginVK")
-	ctx := r.Context()
+	/*ctx := r.Context()
 	code := r.FormValue("code")
 	conf := GetConfOauth2(REDIRECT_URL_LOGIN)
 	if code == "" {
@@ -222,11 +222,15 @@ func (ah *OAuthHandler) LoginVK(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Println("UserVK: ", userVK.VKId, "  ", userVK.FirstName)
+	*/
 	/*
 		userVK := &api.VKUser{
 			VKId: 123,
 		}
 	*/
+	userVK := &api.VKUser{
+		VKId: 344167564,
+	}
 	if userVK.VKId <= 0 {
 		response.HandleError(w, http.StatusBadRequest, "bad VKId")
 		return
