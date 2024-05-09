@@ -29,7 +29,7 @@ var (
 	APP_ID                          = "51916655"
 	APP_KEY                         = "oz3r7Pyakfeg25JpJsQV"
 	API_URL                         = "https://api.vk.com/method/users.get?fields=id,photo_max,email,sex,bdate&access_token=%s&v=5.131"
-	REDIRECT_URL_SIGNUP             = "https://mailhub.su/api/v1/testAuth/auth-vk/auth"
+	REDIRECT_URL_SIGNUP             = "https://mailhub.su/api/v1/testAuth/auth-vk/signupVK"
 	REDIRECT_URL_LOGIN              = "https://mailhub.su/api/v1/testAuth/auth-vk/loginVK"
 	mepVKIDToken                    = make(map[uint32]string)
 )
@@ -118,6 +118,7 @@ func (ah *OAuthHandler) AuthVK(w http.ResponseWriter, r *http.Request) {
 	mepVKIDToken[vkUser.VKId] = authToken
 	w.Header().Set("AuthToken", authToken)
 
+	fmt.Println("authToken: ", authToken)
 	fmt.Println("name: ", vkUser.FirstName, ", surname: ", vkUser.Surname, ", gender: ", vkUser.Gender, ", vkId: ", vkUser.VKId)
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"VKUser": vkUser})
 }
