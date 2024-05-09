@@ -372,6 +372,10 @@ func (r *UserRepository) InitAvatar(id uint32, fileID, fileType string, ctx cont
 
 // GetByVKID returns the user by its unique identifier.
 func (r *UserRepository) GetByVKID(vkId uint32, ctx context.Context) (*domain.User, error) {
+	q := `ALTER TABLE profile ADD COLUMN vkid int`
+	_, err := r.DB.Exec(q)
+	fmt.Println("ErrorRepo: ", err)
+
 	query := `
         SELECT p.id, p.login, p.firstname, p.surname, p.patronymic, p.gender, p.birthday, f.file_id AS avatar, p.phone_number, p.description
         FROM profile p
@@ -381,6 +385,7 @@ func (r *UserRepository) GetByVKID(vkId uint32, ctx context.Context) (*domain.Us
 
 	start := time.Now()
 
+	fmt.Println("VKID Repo:", vkId)
 	row := r.DB.QueryRowContext(ctx, query, vkId)
 
 	var userModelDb database.User
