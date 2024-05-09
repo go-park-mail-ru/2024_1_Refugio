@@ -29,7 +29,7 @@ var (
 	APP_ID                          = "51916655"
 	APP_KEY                         = "oz3r7Pyakfeg25JpJsQV"
 	API_URL                         = "https://api.vk.com/method/users.get?fields=id,photo_max,email,sex,bdate&access_token=%s&v=5.131"
-	REDIRECT_URL_SIGNUP             = "https://mailhub.su/testAuth/auth-vk/auth"
+	REDIRECT_URL_SIGNUP             = "https://mailhub.su/api/v1/testAuth/auth-vk/auth"
 	REDIRECT_URL_LOGIN              = "https://mailhub.su/api/v1/testAuth/auth-vk/loginVK"
 	mepVKIDToken                    = make(map[uint32]string)
 )
@@ -206,7 +206,7 @@ func (ah *OAuthHandler) SignupVK(w http.ResponseWriter, r *http.Request) {
 // @Router /api/v1/testAuth/auth-vk/loginVK [get]
 func (ah *OAuthHandler) LoginVK(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("LoginVK")
-	/*ctx := r.Context()
+	ctx := r.Context()
 	code := r.FormValue("code")
 	conf := GetConfOauth2(REDIRECT_URL_LOGIN)
 	if code == "" {
@@ -222,15 +222,12 @@ func (ah *OAuthHandler) LoginVK(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Println("UserVK: ", userVK.VKId, "  ", userVK.FirstName)
-	*/
+
 	/*
 		userVK := &api.VKUser{
-			VKId: 123,
+			VKId: 344167564,
 		}
 	*/
-	userVK := &api.VKUser{
-		VKId: 344167564,
-	}
 	if userVK.VKId <= 0 {
 		response.HandleError(w, http.StatusBadRequest, "bad VKId")
 		return
