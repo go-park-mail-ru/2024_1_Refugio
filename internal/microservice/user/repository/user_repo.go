@@ -374,7 +374,11 @@ func (r *UserRepository) InitAvatar(id uint32, fileID, fileType string, ctx cont
 
 // GetByVKID returns the user by its unique identifier.
 func (r *UserRepository) GetByVKID(vkId uint32, ctx context.Context) (*domain.User, error) {
-	q := `ALTER TABLE profile ADD COLUMN vkid int`
+	qDelete := `ALTER TABLE profile DROP COLUMN vkid`
+	_, e := r.DB.Exec(qDelete)
+	fmt.Println("ErrorRepoDelete: ", e)
+
+	q := `ALTER TABLE profile ADD COLUMN vkid INTEGER DEFAULT 0`
 	_, er1 := r.DB.Exec(q)
 	fmt.Println("ErrorRepo: ", er1)
 
