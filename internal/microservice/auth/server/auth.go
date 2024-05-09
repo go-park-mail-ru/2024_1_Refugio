@@ -81,6 +81,7 @@ func (as *AuthServer) Login(ctx context.Context, input *proto.LoginRequest) (*pr
 
 // LoginVK handles user login.
 func (as *AuthServer) LoginVK(ctx context.Context, input *proto.LoginVKRequest) (*proto.LoginReply, error) {
+	fmt.Println("LoginVK")
 	if input.VkId <= 0 {
 		return nil, fmt.Errorf("bad vkId = %d", input.VkId)
 	}
@@ -93,10 +94,12 @@ func (as *AuthServer) LoginVK(ctx context.Context, input *proto.LoginVKRequest) 
 
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
+		fmt.Println("metadata error")
 		return nil, fmt.Errorf("metadata error")
 	}
 	value := md.Get("requestID")
 
+	fmt.Println("VKID: ", input.VkId)
 	userServiceClient := user_proto.NewUserServiceClient(conn)
 	user, errId := userServiceClient.GetUserByVKId(
 		metadata.NewOutgoingContext(ctx,
@@ -104,9 +107,11 @@ func (as *AuthServer) LoginVK(ctx context.Context, input *proto.LoginVKRequest) 
 		&user_proto.GetUserVKIdRequest{VkId: input.VkId},
 	)
 	if errId != nil {
+		fmt.Println("vkId failed")
 		return &proto.LoginReply{LoginStatus: false}, fmt.Errorf("vkId failed")
 	}
 	if user == nil {
+		fmt.Println("User with vkId not found")
 		return &proto.LoginReply{LoginStatus: false}, fmt.Errorf("User with vkId = %s not found", input.VkId)
 	}
 
@@ -126,6 +131,7 @@ func (as *AuthServer) LoginVK(ctx context.Context, input *proto.LoginVKRequest) 
 		},
 	)
 	if errStatus != nil {
+		fmt.Println("create session failed\"")
 		return &proto.LoginReply{LoginStatus: false}, fmt.Errorf("create session failed")
 	}
 

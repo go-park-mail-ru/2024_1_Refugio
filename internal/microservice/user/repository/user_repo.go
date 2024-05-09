@@ -402,6 +402,7 @@ func (r *UserRepository) GetByVKID(vkId uint32, ctx context.Context) (*domain.Us
 	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
 
 	if err != nil {
+		fmt.Println("Error bd: ", err)
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("user with vkId %d not found", vkId)
 		}
