@@ -90,6 +90,7 @@ func (r *UserRepository) GetAll(offset, limit int, ctx context.Context) ([]*doma
 	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
 
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 
