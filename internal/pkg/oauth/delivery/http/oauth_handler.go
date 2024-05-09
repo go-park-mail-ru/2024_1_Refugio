@@ -9,19 +9,17 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"io/ioutil"
 	auth_proto "mail/internal/microservice/auth/proto"
+	"mail/internal/microservice/models/domain_models"
+	domain "mail/internal/microservice/models/domain_models"
 	api "mail/internal/models/delivery_models"
 	"mail/internal/models/microservice_ports"
+	response "mail/internal/models/response"
+	domainSession "mail/internal/pkg/session/interface"
 	"mail/internal/pkg/utils/connect_microservice"
 	"mail/internal/pkg/utils/sanitize"
 	validUtil "mail/internal/pkg/utils/validators"
 	"math/rand"
 	"net/http"
-	"time"
-
-	"mail/internal/microservice/models/domain_models"
-	domain "mail/internal/microservice/models/domain_models"
-	response "mail/internal/models/response"
-	domainSession "mail/internal/pkg/session/interface"
 )
 
 var (
@@ -301,18 +299,22 @@ func GetDataUser(conf oauth2.Config, code string, ctx context.Context) (*api.VKU
 	data := &Response{}
 	json.Unmarshal(body, data)
 
-	birthdayTime, err := time.Parse("2006-01-02", data.Response[0].BirthDate)
-	if err != nil {
-		fmt.Println("bad BirthDate")
-		return &api.VKUser{}, 500, fmt.Errorf("bad BirthDate")
-	}
+	fmt.Println("Data: ", data.Response[0].BirthDate)
+
+	/*
+		birthdayTime, err := time.Parse("2006-01-02", data.Response[0].BirthDate)
+		if err != nil {
+			fmt.Println("bad BirthDate")
+			return &api.VKUser{}, 500, fmt.Errorf("bad BirthDate")
+		}
+	*/
 
 	vkUser := &api.VKUser{
 		FirstName: data.Response[0].Name,
 		Surname:   data.Response[0].LastName,
 		Gender:    domain_models.GetGenderTypeInt(data.Response[0].Sex),
-		Birthday:  birthdayTime,
-		VKId:      uint32(data.Response[0].VKId),
+		// Birthday:  birthdayTime,
+		VKId: uint32(data.Response[0].VKId),
 	}
 
 	return vkUser, 200, nil
