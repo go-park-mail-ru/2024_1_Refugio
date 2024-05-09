@@ -209,6 +209,7 @@ func (r *UserRepository) Add(userModelCore *domain.User, ctx context.Context) (*
 	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
 
 	if err != nil {
+		fmt.Println(err)
 		return nil, fmt.Errorf("user with login %s not create", userModelDb.Login)
 	}
 
