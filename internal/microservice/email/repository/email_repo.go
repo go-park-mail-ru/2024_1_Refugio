@@ -94,7 +94,7 @@ func (r *EmailRepository) AddProfileEmail(email_id uint64, sender, recipient str
 	return nil
 }
 
-func (r *EmailRepository) AddProfileEmailMyself(email_id uint64, sender, recipient string, ctx context.Context) error {
+func (r *EmailRepository) AddProfileEmailMyself(email_id uint64, login string, ctx context.Context) error {
 	query := `
 		INSERT INTO profile_email (profile_id, email_id)
 		VALUES ((SELECT id FROM profile WHERE login=$1), $2)

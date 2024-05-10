@@ -4,6 +4,9 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/mux"
+	"github.com/gorilla/schema"
+	"github.com/microcosm-cc/bluemonday"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"log"
@@ -13,11 +16,6 @@ import (
 	"net/smtp"
 	"strconv"
 	"strings"
-	"time"
-
-	"github.com/gorilla/mux"
-	"github.com/gorilla/schema"
-	"github.com/microcosm-cc/bluemonday"
 
 	"mail/internal/microservice/email/proto"
 	"mail/internal/microservice/models/proto_converters"
@@ -210,7 +208,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 	sender := newEmail.SenderEmail
 	recipient := newEmail.RecipientEmail
 
-	if validators.IsEmpty(newEmail.Text) || validators.IsEmpty(newEmail.SenderEmail) || validators.IsEmpty(newEmail.RecipientEmail) {
+	if validators.IsEmpty(newEmail.Text) || validators.IsEmpty(sender) || validators.IsEmpty(recipient) {
 		response.HandleError(w, http.StatusBadRequest, "Data is empty")
 		return
 	}
@@ -246,8 +244,8 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 				ReplyToEmailID: newEmail.ReplyToEmailID,
 				DraftStatus:    newEmail.DraftStatus,
 				SpamStatus:     newEmail.SpamStatus,
-				SenderEmail:    newEmail.SenderEmail,
-				RecipientEmail: newEmail.RecipientEmail,
+				SenderEmail:    sender,
+				RecipientEmail: recipient,
 			},
 		)
 		if err != nil {
@@ -269,52 +267,73 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 		response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*emailData)})
 		return
 	case validators.IsValidEmailFormat(sender) == true && validators.IsValidEmailFormat(recipient) == false:
-		/*
-			msg := email.Message{
-				To:      "fedasov03@inbox.ru", // do not add < > or name in quotes
-				From:    "fedasov@mailhub.su", // do not add < > or name in quotes
-				Subject: "A simple email",
-				Body:    "Plain text email body. HTML not yet supported, but send a PR!",
-			}
-
-			err := msg.Send()
-			if err != nil {
-				fmt.Println(err)
-				response.HandleSuccess(w, http.StatusBadRequest, "An error occurred in the recipient's domain. You cannot send messages to other email services. Make sure that the recipient's domain ends with @mailhub.su")
-				return
-			}*/
-		/*email_id, email, err := h.EmailUseCase.CreateEmail(converters.EmailConvertApiInCore(newEmail))
+		err = h.Sessions.CheckLogin(sender, r, r.Context())
 		if err != nil {
-			delivery.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
+			response.HandleError(w, http.StatusBadRequest, "Bad sender login")
 			return
 		}
 
-		delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*email)})*/
-
-		var (
-			mx  string
-			err error
-		)
+		var mx string
+		var err error
 
 		// Connect to the server, authenticate, set the sender and recipient,
 		// and send the email all in one step.
-		from := "sergey@mailhub.su"
-		to := "fedasovsergey00@gmail.com"
-		subject := "Test Email"
-		body := "This is the email body at " + time.Now().String()
+		//from := "sergey@mailhub.su"
+		//to := "fedasovsergey00@gmail.com"
+		//subject := "Test Email"
+		//body := "This is the email body at " + time.Now().String()
 
-		msg := composeMimeMail(to, from, subject, body)
+		msg := composeMimeMail(recipient, sender, newEmail.Topic, newEmail.Text)
 
-		mx, err = getMXRecord(to)
+		mx, err = getMXRecord(recipient)
 		if err != nil {
 			log.Fatal(err)
+			response.HandleError(w, http.StatusBadRequest, "Bad request to login")
+			return
 		}
 
-		err = smtp.SendMail(mx+":25", nil, from, []string{to}, msg)
+		err = smtp.SendMail(mx+":25", nil, sender, []string{recipient}, msg)
 		if err != nil {
 			log.Fatal(err)
+			response.HandleError(w, http.StatusInternalServerError, "Error send email")
+			return
 		}
-		response.HandleSuccess(w, http.StatusOK, "Email send")
+
+		emailDataProto, err := h.EmailServiceClient.CreateEmail(
+			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+			&proto.Email{
+				Id:             newEmail.ID,
+				Topic:          newEmail.Topic,
+				Text:           newEmail.Text,
+				PhotoID:        newEmail.PhotoID,
+				ReadStatus:     newEmail.ReadStatus,
+				Flag:           newEmail.Flag,
+				Deleted:        newEmail.Deleted,
+				DateOfDispatch: timestamppb.New(newEmail.DateOfDispatch),
+				ReplyToEmailID: newEmail.ReplyToEmailID,
+				DraftStatus:    newEmail.DraftStatus,
+				SpamStatus:     newEmail.SpamStatus,
+				SenderEmail:    sender,
+				RecipientEmail: recipient,
+			},
+		)
+		if err != nil {
+			response.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
+			return
+		}
+		emailData := proto_converters.EmailConvertProtoInCore(*emailDataProto.Email)
+		emailData.ID = emailDataProto.Id
+
+		_, err = h.EmailServiceClient.CreateProfileEmail(
+			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+			&proto.IdSenderRecipient{Id: emailData.ID, Sender: emailData.SenderEmail, Recipient: emailData.RecipientEmail},
+		)
+		if err != nil {
+			response.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
+			return
+		}
+
+		response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*emailData)})
 		return
 	case validators.IsValidEmailFormat(sender) == false && validators.IsValidEmailFormat(recipient) == true:
 		_, err = h.EmailServiceClient.CheckRecipientEmail(
@@ -340,8 +359,8 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 				ReplyToEmailID: newEmail.ReplyToEmailID,
 				DraftStatus:    newEmail.DraftStatus,
 				SpamStatus:     newEmail.SpamStatus,
-				SenderEmail:    newEmail.SenderEmail,
-				RecipientEmail: newEmail.RecipientEmail,
+				SenderEmail:    sender,
+				RecipientEmail: recipient,
 			},
 		)
 		if err != nil {

@@ -4,6 +4,7 @@ import (
 	"context"
 	repository "mail/internal/microservice/email/interface"
 	domain "mail/internal/microservice/models/domain_models"
+	"mail/internal/pkg/utils/validators"
 )
 
 // EmailUseCase represents the use case for working with emails.
@@ -51,7 +52,11 @@ func (uc *EmailUseCase) CreateEmail(newEmail *domain.Email, ctx context.Context)
 // CreateProfileEmail creates a new profile_email
 func (uc *EmailUseCase) CreateProfileEmail(email_id uint64, sender, recipient string, ctx context.Context) error {
 	if sender == recipient {
-		return uc.repo.AddProfileEmailMyself(email_id, sender, recipient, ctx)
+		return uc.repo.AddProfileEmailMyself(email_id, sender, ctx)
+	} else if validators.IsValidEmailFormat(sender) == true && validators.IsValidEmailFormat(recipient) == false {
+		return uc.repo.AddProfileEmailMyself(email_id, sender, ctx)
+	} else if validators.IsValidEmailFormat(sender) == false && validators.IsValidEmailFormat(recipient) == true {
+		return uc.repo.AddProfileEmailMyself(email_id, recipient, ctx)
 	}
 
 	return uc.repo.AddProfileEmail(email_id, sender, recipient, ctx)
