@@ -7,7 +7,7 @@ import (
 
 func main() {
 	msg := email.Message{
-		To:      "fedasov03@inbox.ru", // do not add < > or name in quotes
+		To:      "fed@mailhub.su",     // do not add < > or name in quotes
 		From:    "fedasov@mailhub.su", // do not add < > or name in quotes
 		Subject: "A simple email",
 		Body:    "Plain text email body. HTML not yet supported, but send a PR!",

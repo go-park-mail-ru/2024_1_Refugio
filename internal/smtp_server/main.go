@@ -43,9 +43,11 @@ func authHandler(remoteAddr net.Addr, mechanism string, username []byte, passwor
 }*/
 
 func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
-	if true {
-		return fmt.Errorf("domain in the login is not suitable")
-	}
+	/*
+		if true {
+			return fmt.Errorf("domain in the login is not suitable")
+		}
+	*/
 
 	msg, err := mail.ReadMessage(bytes.NewReader(data))
 	if err != nil {
