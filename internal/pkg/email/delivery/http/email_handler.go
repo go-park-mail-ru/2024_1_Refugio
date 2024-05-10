@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/nilslice/email"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"net/http"
@@ -262,6 +263,19 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 		response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*emailData)})
 		return
 	case validators.IsValidEmailFormat(sender) == true && validators.IsValidEmailFormat(recipient) == false:
+		msg := email.Message{
+			To:      "fedasov03@inbox.ru", // do not add < > or name in quotes
+			From:    "fedasov@mailhub.su", // do not add < > or name in quotes
+			Subject: "A simple email",
+			Body:    "Plain text email body. HTML not yet supported, but send a PR!",
+		}
+
+		err := msg.Send()
+		if err != nil {
+			fmt.Println(err)
+			response.HandleSuccess(w, http.StatusBadRequest, "An error occurred in the recipient's domain. You cannot send messages to other email services. Make sure that the recipient's domain ends with @mailhub.su")
+			return
+		}
 		/*email_id, email, err := h.EmailUseCase.CreateEmail(converters.EmailConvertApiInCore(newEmail))
 		if err != nil {
 			delivery.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
@@ -269,7 +283,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 		}
 
 		delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*email)})*/
-		response.HandleSuccess(w, http.StatusBadRequest, "An error occurred in the recipient's domain. You cannot send messages to other email services. Make sure that the recipient's domain ends with @mailhub.su")
+		response.HandleSuccess(w, http.StatusOK, "Email send")
 		return
 	case validators.IsValidEmailFormat(sender) == false && validators.IsValidEmailFormat(recipient) == true:
 		_, err = h.EmailServiceClient.CheckRecipientEmail(

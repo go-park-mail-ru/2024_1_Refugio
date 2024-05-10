@@ -14,6 +14,7 @@ require (
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/kataras/requestid v0.0.2
 	github.com/microcosm-cc/bluemonday v1.0.26
+	github.com/nilslice/email v0.1.0
 	github.com/prometheus/client_golang v1.19.0
 	github.com/rs/cors v1.10.1
 	github.com/rubenv/sql-migrate v1.6.1
