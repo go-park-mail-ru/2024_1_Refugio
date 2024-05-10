@@ -1,13 +1,19 @@
 package http
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/nilslice/email"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"log"
+	"net"
 	"net/http"
+	"net/mail"
+	"net/smtp"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
@@ -263,19 +269,20 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 		response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*emailData)})
 		return
 	case validators.IsValidEmailFormat(sender) == true && validators.IsValidEmailFormat(recipient) == false:
-		msg := email.Message{
-			To:      "fedasov03@inbox.ru", // do not add < > or name in quotes
-			From:    "fedasov@mailhub.su", // do not add < > or name in quotes
-			Subject: "A simple email",
-			Body:    "Plain text email body. HTML not yet supported, but send a PR!",
-		}
+		/*
+			msg := email.Message{
+				To:      "fedasov03@inbox.ru", // do not add < > or name in quotes
+				From:    "fedasov@mailhub.su", // do not add < > or name in quotes
+				Subject: "A simple email",
+				Body:    "Plain text email body. HTML not yet supported, but send a PR!",
+			}
 
-		err := msg.Send()
-		if err != nil {
-			fmt.Println(err)
-			response.HandleSuccess(w, http.StatusBadRequest, "An error occurred in the recipient's domain. You cannot send messages to other email services. Make sure that the recipient's domain ends with @mailhub.su")
-			return
-		}
+			err := msg.Send()
+			if err != nil {
+				fmt.Println(err)
+				response.HandleSuccess(w, http.StatusBadRequest, "An error occurred in the recipient's domain. You cannot send messages to other email services. Make sure that the recipient's domain ends with @mailhub.su")
+				return
+			}*/
 		/*email_id, email, err := h.EmailUseCase.CreateEmail(converters.EmailConvertApiInCore(newEmail))
 		if err != nil {
 			delivery.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
@@ -283,6 +290,30 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 		}
 
 		delivery.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*email)})*/
+
+		var (
+			mx  string
+			err error
+		)
+
+		// Connect to the server, authenticate, set the sender and recipient,
+		// and send the email all in one step.
+		from := "sergey@mailhub.su"
+		to := "fedasovsergey00@gmail.com"
+		subject := "Test Email"
+		body := "This is the email body at " + time.Now().String()
+
+		msg := composeMimeMail(to, from, subject, body)
+
+		mx, err = getMXRecord(to)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		err = smtp.SendMail(mx+":25", nil, from, []string{to}, msg)
+		if err != nil {
+			log.Fatal(err)
+		}
 		response.HandleSuccess(w, http.StatusOK, "Email send")
 		return
 	case validators.IsValidEmailFormat(sender) == false && validators.IsValidEmailFormat(recipient) == true:
@@ -332,6 +363,63 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 		response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*emailData)})
 		return
 	}
+}
+
+func getMXRecord(to string) (mx string, err error) {
+	var e *mail.Address
+	e, err = mail.ParseAddress(to)
+	if err != nil {
+		return
+	}
+
+	domain := strings.Split(e.Address, "@")[1]
+
+	var mxs []*net.MX
+	mxs, err = net.LookupMX(domain)
+
+	if err != nil {
+		return
+	}
+
+	for _, x := range mxs {
+		mx = x.Host
+		return
+	}
+
+	return
+}
+
+// Never fails, tries to format the address if possible
+func formatEmailAddress(addr string) string {
+	e, err := mail.ParseAddress(addr)
+	if err != nil {
+		return addr
+	}
+	return e.String()
+}
+
+func encodeRFC2047(str string) string {
+	// use mail's rfc2047 to encode any string
+	addr := mail.Address{Address: str}
+	return strings.Trim(addr.String(), " <>")
+}
+
+func composeMimeMail(to string, from string, subject string, body string) []byte {
+	header := make(map[string]string)
+	header["From"] = formatEmailAddress(from)
+	header["To"] = formatEmailAddress(to)
+	header["Subject"] = encodeRFC2047(subject)
+	header["MIME-Version"] = "1.0"
+	header["Content-Type"] = "text/plain; charset=\"utf-8\""
+	header["Content-Transfer-Encoding"] = "base64"
+
+	message := ""
+	for k, v := range header {
+		message += fmt.Sprintf("%s: %s\r\n", k, v)
+	}
+	message += "\r\n" + base64.StdEncoding.EncodeToString([]byte(body))
+
+	return []byte(message)
 }
 
 // Update updates an existing email message.
