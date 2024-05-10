@@ -101,9 +101,9 @@ func (r *EmailRepository) AddProfileEmailMyself(email_id uint64, login string, c
 	`
 
 	start := time.Now()
-	_, err := r.DB.Exec(query, sender, email_id)
+	_, err := r.DB.Exec(query, login, email_id)
 
-	args := []interface{}{sender, email_id}
+	args := []interface{}{login, email_id}
 	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
 
 	if err != nil {
