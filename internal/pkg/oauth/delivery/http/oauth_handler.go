@@ -190,6 +190,22 @@ func (ah *OAuthHandler) SignupVK(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	sessionId, errStatus := authServiceClient.LoginVK(
+		metadata.NewOutgoingContext(r.Context(),
+			metadata.New(map[string]string{"requestID": r.Context().Value("requestID").(string)})),
+		&auth_proto.LoginVKRequest{VkId: newUser.VKId},
+	)
+	if errStatus != nil {
+		response.HandleError(w, http.StatusUnauthorized, "Login failed")
+		return
+	}
+
+	er := ah.Sessions.SetSession(sessionId.SessionId, w, r, r.Context())
+	if er != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Failed to create session")
+		return
+	}
+
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "Signup successful"})
 }
 
