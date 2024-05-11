@@ -191,7 +191,7 @@ func initializeUserHandler(sessionsManager *session.SessionsManager, userService
 	}
 
 	ctx := context.Background()
-	bucketName := "photo"
+	bucketName := "photos"
 	location := "eu-central-1"
 
 	exists, err := minioClient.BucketExists(ctx, bucketName)

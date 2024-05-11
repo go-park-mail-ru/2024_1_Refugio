@@ -230,7 +230,7 @@ func (uh *UserHandler) UploadUserAvatar(w http.ResponseWriter, r *http.Request) 
 
 	sessionUser := uh.Sessions.GetSession(r, r.Context())
 
-	avatarURL := fmt.Sprintf(configs.PROTOCOL+configs.ENDPOINT+"/photo/%s", uniqueFileName)
+	avatarURL := fmt.Sprintf(configs.PROTOCOL+configs.ENDPOINT+"/photos/%s", uniqueFileName)
 	_, errAvatar := uh.UserServiceClient.UploadUserAvatar(
 		metadata.NewOutgoingContext(r.Context(),
 			metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
