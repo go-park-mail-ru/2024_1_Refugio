@@ -46,9 +46,9 @@ import (
 	_ "mail/docs"
 )
 
-// @title API Mailhub
+// @title API MailHub
 // @version 1.0
-// @description API server for Mailhub
+// @description API server for MailHub
 
 // @host mailhub.su
 // @BasePath /
@@ -188,7 +188,6 @@ func initializeUserHandler(sessionsManager *session.SessionsManager, userService
 	})
 	if err != nil {
 		fmt.Println(err)
-		return nil
 	}
 
 	ctx := context.Background()
@@ -197,14 +196,12 @@ func initializeUserHandler(sessionsManager *session.SessionsManager, userService
 
 	exists, err := minioClient.BucketExists(ctx, bucketName)
 	if err != nil {
-		fmt.Println("failed to check bucket existence: %v", err)
-		return nil
+		fmt.Println("failed to check bucket existence")
 	}
 	if !exists {
 		err = minioClient.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{Region: location})
 		if err != nil {
-			fmt.Println("failed to create bucket: %v", err)
-			return nil
+			fmt.Println("failed to create bucket")
 		}
 		fmt.Printf("Bucket has been successfully created: %s\n", bucketName)
 	} else {

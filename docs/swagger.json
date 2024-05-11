@@ -1,8 +1,8 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "API server for Mailhub",
-        "title": "API Mailhub",
+        "description": "API server for MailHub",
+        "title": "API MailHub",
         "contact": {},
         "version": "1.0"
     },
