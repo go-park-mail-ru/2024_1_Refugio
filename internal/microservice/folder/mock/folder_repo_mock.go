@@ -156,6 +156,21 @@ func (mr *MockFolderRepositoryMockRecorder) GetAllEmails(folderID, profileId, li
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllEmails", reflect.TypeOf((*MockFolderRepository)(nil).GetAllEmails), folderID, profileId, limit, offset, ctx)
 }
 
+// GetAllFolderName mocks base method.
+func (m *MockFolderRepository) GetAllFolderName(emailID uint32, ctx context.Context) ([]*domain_models.Folder, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllFolderName", emailID, ctx)
+	ret0, _ := ret[0].([]*domain_models.Folder)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllFolderName indicates an expected call of GetAllFolderName.
+func (mr *MockFolderRepositoryMockRecorder) GetAllFolderName(emailID, ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllFolderName", reflect.TypeOf((*MockFolderRepository)(nil).GetAllFolderName), emailID, ctx)
+}
+
 // Update mocks base method.
 func (m *MockFolderRepository) Update(newUpFolder *domain_models.Folder, ctx context.Context) (bool, error) {
 	m.ctrl.T.Helper()

@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+
 	repository "mail/internal/microservice/folder/interface"
 	domain "mail/internal/microservice/models/domain_models"
 )
@@ -58,6 +59,12 @@ func (uc *FolderUseCase) CheckEmailProfile(emailID uint32, profileID uint32, ctx
 	return uc.repo.CheckEmail(emailID, profileID, ctx)
 }
 
+// GetAllEmailsInFolder get all emails in folder as user.
 func (uc *FolderUseCase) GetAllEmailsInFolder(folderID, profileID, limit, offset uint32, ctx context.Context) ([]*domain.Email, error) {
 	return uc.repo.GetAllEmails(folderID, profileID, limit, offset, ctx)
+}
+
+// GetAllFolderName retrieves the names of all folders associated with a given email ID.
+func (uc *FolderUseCase) GetAllFolderName(emailID uint32, ctx context.Context) ([]*domain.Folder, error) {
+	return uc.repo.GetAllFolderName(emailID, ctx)
 }

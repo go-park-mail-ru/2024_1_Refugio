@@ -192,6 +192,65 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/email/adddraft": {
+            "post": {
+                "description": "AddDraft a new draft email message to the system",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "emails"
+                ],
+                "summary": "AddDraft a new draft email message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Email message in JSON format",
+                        "name": "email",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/response.EmailSwag"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ID of the send email message",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad JSON in request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to add email message",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/email/delete/{id}": {
             "delete": {
                 "description": "Delete an email message based on its identifier",
@@ -832,6 +891,60 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/folder/allname/{id}": {
+            "get": {
+                "description": "GetAllName folders name users",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "folders"
+                ],
+                "summary": "GetAllName get all name folders",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID of the email",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ID of the send folder message",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad JSON in request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get all folders",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/folder/delete/{id}": {
             "delete": {
                 "description": "Delete folder a user",
@@ -1356,6 +1469,50 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Not Authorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user/get/count": {
+            "get": {
+                "description": "Handles requests to get count user.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get count user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "400": {
+                        "description": "Invalid user ID",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Not authorized",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }

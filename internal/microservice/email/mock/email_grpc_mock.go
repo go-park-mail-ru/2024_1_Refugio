@@ -36,6 +36,26 @@ func (m *MockEmailServiceClient) EXPECT() *MockEmailServiceClientMockRecorder {
 	return m.recorder
 }
 
+// AddEmailDraft mocks base method.
+func (m *MockEmailServiceClient) AddEmailDraft(ctx context.Context, in *proto.Email, opts ...grpc.CallOption) (*proto.EmailWithID, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "AddEmailDraft", varargs...)
+	ret0, _ := ret[0].(*proto.EmailWithID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddEmailDraft indicates an expected call of AddEmailDraft.
+func (mr *MockEmailServiceClientMockRecorder) AddEmailDraft(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddEmailDraft", reflect.TypeOf((*MockEmailServiceClient)(nil).AddEmailDraft), varargs...)
+}
+
 // CheckRecipientEmail mocks base method.
 func (m *MockEmailServiceClient) CheckRecipientEmail(ctx context.Context, in *proto.Recipient, opts ...grpc.CallOption) (*proto.EmptyEmail, error) {
 	m.ctrl.T.Helper()
@@ -257,6 +277,21 @@ func NewMockEmailServiceServer(ctrl *gomock.Controller) *MockEmailServiceServer 
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockEmailServiceServer) EXPECT() *MockEmailServiceServerMockRecorder {
 	return m.recorder
+}
+
+// AddEmailDraft mocks base method.
+func (m *MockEmailServiceServer) AddEmailDraft(arg0 context.Context, arg1 *proto.Email) (*proto.EmailWithID, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddEmailDraft", arg0, arg1)
+	ret0, _ := ret[0].(*proto.EmailWithID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddEmailDraft indicates an expected call of AddEmailDraft.
+func (mr *MockEmailServiceServerMockRecorder) AddEmailDraft(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddEmailDraft", reflect.TypeOf((*MockEmailServiceServer)(nil).AddEmailDraft), arg0, arg1)
 }
 
 // CheckRecipientEmail mocks base method.

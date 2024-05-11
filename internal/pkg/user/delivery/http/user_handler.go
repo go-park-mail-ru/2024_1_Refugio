@@ -282,3 +282,28 @@ func (uh *UserHandler) DeleteUserAvatar(w http.ResponseWriter, r *http.Request) 
 
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"message": "User avatar deleted successfully"})
 }
+
+// GetCountUsers handles requests to get count users.
+// @Summary Get count user
+// @Description Handles requests to get count user.
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param X-Csrf-Token header string true "CSRF Token"
+// @Failure 400 {object} response.ErrorResponse "Invalid user ID"
+// @Failure 401 {object} response.ErrorResponse "Not authorized"
+// @Failure 500 {object} response.ErrorResponse "Internal Server Error"
+// @Router /api/v1/user/get/count [get]
+func (uh *UserHandler) GetCountUsers(w http.ResponseWriter, r *http.Request) {
+	usersProto, err := uh.UserServiceClient.GetUsers(
+		metadata.NewOutgoingContext(r.Context(),
+			metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		&proto.GetUsersRequest{},
+	)
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"count": len(usersProto.Users)})
+}

@@ -646,3 +646,221 @@ func (h *EmailHandler) Spam(w http.ResponseWriter, r *http.Request) {
 func (h *EmailHandler) SendFromAnotherDomain(w http.ResponseWriter, r *http.Request) {
 	h.Send(w, r)
 }
+
+// AddDraft adds a new draft email message.
+// @Summary AddDraft a new draft email message
+// @Description AddDraft a new draft email message to the system
+// @Tags emails
+// @Accept json
+// @Produce json
+// @Param X-Csrf-Token header string true "CSRF Token"
+// @Param email body response.EmailSwag true "Email message in JSON format"
+// @Success 200 {object} response.Response "ID of the send email message"
+// @Failure 400 {object} response.Response "Bad JSON in request"
+// @Failure 401 {object} response.Response "Not Authorized"
+// @Failure 500 {object} response.Response "Failed to add email message"
+// @Router /api/v1/email/adddraft [post]
+func (h *EmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
+	var newEmail emailApi.Email
+	decoder := schema.NewDecoder()
+	decoder.IgnoreUnknownKeys(true)
+	err := json.NewDecoder(r.Body).Decode(&newEmail)
+	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
+		return
+	}
+
+	newEmail.Topic = sanitizeString(newEmail.Topic)
+	newEmail.Text = sanitizeString(newEmail.Text)
+	newEmail.PhotoID = sanitizeString(newEmail.PhotoID)
+	newEmail.SenderEmail = sanitizeString(newEmail.SenderEmail)
+	newEmail.RecipientEmail = sanitizeString(newEmail.RecipientEmail)
+
+	sender := newEmail.SenderEmail
+	recipient := newEmail.RecipientEmail
+
+	if validators.IsEmpty(sender) {
+		response.HandleError(w, http.StatusBadRequest, "Data is empty")
+		return
+	}
+
+	if validators.IsEmpty(recipient) && validators.IsValidEmailFormat(sender) {
+		err = h.Sessions.CheckLogin(sender, r, r.Context())
+		if err != nil {
+			response.HandleError(w, http.StatusBadRequest, "Bad sender login")
+			return
+		}
+
+		emailDataProto, err := h.EmailServiceClient.AddEmailDraft(
+			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+			&proto.Email{
+				Id:             newEmail.ID,
+				Topic:          newEmail.Topic,
+				Text:           newEmail.Text,
+				PhotoID:        newEmail.PhotoID,
+				ReadStatus:     newEmail.ReadStatus,
+				Flag:           newEmail.Flag,
+				Deleted:        newEmail.Deleted,
+				DateOfDispatch: timestamppb.New(newEmail.DateOfDispatch),
+				ReplyToEmailID: newEmail.ReplyToEmailID,
+				DraftStatus:    newEmail.DraftStatus,
+				SpamStatus:     newEmail.SpamStatus,
+				SenderEmail:    sender,
+				RecipientEmail: recipient,
+			},
+		)
+		if err != nil {
+			response.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
+			return
+		}
+		emailData := proto_converters.EmailConvertProtoInCore(*emailDataProto.Email)
+		emailData.ID = emailDataProto.Id
+
+		response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*emailData)})
+		return
+	} else {
+		switch {
+		case validators.IsValidEmailFormat(sender) && validators.IsValidEmailFormat(recipient):
+			err = h.Sessions.CheckLogin(sender, r, r.Context())
+			if err != nil {
+				response.HandleError(w, http.StatusBadRequest, "Bad sender login")
+				return
+			}
+
+			_, err = h.EmailServiceClient.CheckRecipientEmail(
+				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+				&proto.Recipient{Recipient: recipient},
+			)
+			if err != nil {
+				response.HandleError(w, http.StatusBadRequest, "Bad login")
+				return
+			}
+
+			emailDataProto, err := h.EmailServiceClient.CreateEmail(
+				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+				&proto.Email{
+					Id:             newEmail.ID,
+					Topic:          newEmail.Topic,
+					Text:           newEmail.Text,
+					PhotoID:        newEmail.PhotoID,
+					ReadStatus:     newEmail.ReadStatus,
+					Flag:           newEmail.Flag,
+					Deleted:        newEmail.Deleted,
+					DateOfDispatch: timestamppb.New(newEmail.DateOfDispatch),
+					ReplyToEmailID: newEmail.ReplyToEmailID,
+					DraftStatus:    newEmail.DraftStatus,
+					SpamStatus:     newEmail.SpamStatus,
+					SenderEmail:    sender,
+					RecipientEmail: recipient,
+				},
+			)
+			if err != nil {
+				response.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
+				return
+			}
+			emailData := proto_converters.EmailConvertProtoInCore(*emailDataProto.Email)
+			emailData.ID = emailDataProto.Id
+
+			_, err = h.EmailServiceClient.CreateProfileEmail(
+				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+				&proto.IdSenderRecipient{Id: emailData.ID, Sender: emailData.SenderEmail, Recipient: emailData.RecipientEmail},
+			)
+			if err != nil {
+				response.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
+				return
+			}
+
+			response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*emailData)})
+			return
+		case validators.IsValidEmailFormat(sender) == true && validators.IsValidEmailFormat(recipient) == false:
+			err = h.Sessions.CheckLogin(sender, r, r.Context())
+			if err != nil {
+				response.HandleError(w, http.StatusBadRequest, "Bad sender login")
+				return
+			}
+
+			emailDataProto, err := h.EmailServiceClient.CreateEmail(
+				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+				&proto.Email{
+					Id:             newEmail.ID,
+					Topic:          newEmail.Topic,
+					Text:           newEmail.Text,
+					PhotoID:        newEmail.PhotoID,
+					ReadStatus:     newEmail.ReadStatus,
+					Flag:           newEmail.Flag,
+					Deleted:        newEmail.Deleted,
+					DateOfDispatch: timestamppb.New(newEmail.DateOfDispatch),
+					ReplyToEmailID: newEmail.ReplyToEmailID,
+					DraftStatus:    newEmail.DraftStatus,
+					SpamStatus:     newEmail.SpamStatus,
+					SenderEmail:    sender,
+					RecipientEmail: recipient,
+				},
+			)
+			if err != nil {
+				response.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
+				return
+			}
+			emailData := proto_converters.EmailConvertProtoInCore(*emailDataProto.Email)
+			emailData.ID = emailDataProto.Id
+
+			_, err = h.EmailServiceClient.CreateProfileEmail(
+				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+				&proto.IdSenderRecipient{Id: emailData.ID, Sender: emailData.SenderEmail, Recipient: emailData.RecipientEmail},
+			)
+			if err != nil {
+				response.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
+				return
+			}
+
+			response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*emailData)})
+			return
+		case validators.IsValidEmailFormat(sender) == false && validators.IsValidEmailFormat(recipient) == true:
+			_, err = h.EmailServiceClient.CheckRecipientEmail(
+				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+				&proto.Recipient{Recipient: recipient},
+			)
+			if err != nil {
+				response.HandleError(w, http.StatusBadRequest, "Bad login")
+				return
+			}
+
+			emailDataProto, err := h.EmailServiceClient.CreateEmail(
+				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+				&proto.Email{
+					Id:             newEmail.ID,
+					Topic:          newEmail.Topic,
+					Text:           newEmail.Text,
+					PhotoID:        newEmail.PhotoID,
+					ReadStatus:     newEmail.ReadStatus,
+					Flag:           newEmail.Flag,
+					Deleted:        newEmail.Deleted,
+					DateOfDispatch: timestamppb.New(newEmail.DateOfDispatch),
+					ReplyToEmailID: newEmail.ReplyToEmailID,
+					DraftStatus:    newEmail.DraftStatus,
+					SpamStatus:     newEmail.SpamStatus,
+					SenderEmail:    sender,
+					RecipientEmail: recipient,
+				},
+			)
+			if err != nil {
+				response.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
+				return
+			}
+			emailData := proto_converters.EmailConvertProtoInCore(*emailDataProto.Email)
+			emailData.ID = emailDataProto.Id
+
+			_, err = h.EmailServiceClient.CreateProfileEmail(
+				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+				&proto.IdSenderRecipient{Id: emailData.ID, Sender: emailData.SenderEmail, Recipient: emailData.RecipientEmail},
+			)
+			if err != nil {
+				response.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
+				return
+			}
+
+			response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*emailData)})
+			return
+		}
+	}
+}

@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"strconv"
 
-	usecase "mail/internal/microservice/email/interface"
 	"mail/internal/microservice/email/proto"
+
+	usecase "mail/internal/microservice/email/interface"
 	converters "mail/internal/microservice/models/proto_converters"
 )
 
@@ -193,4 +194,25 @@ func (es *EmailServer) CheckRecipientEmail(ctx context.Context, input *proto.Rec
 
 	emailEmpty := new(proto.EmptyEmail)
 	return emailEmpty, nil
+}
+
+func (es *EmailServer) AddEmailDraft(ctx context.Context, input *proto.Email) (*proto.EmailWithID, error) {
+	if input == nil {
+		return nil, fmt.Errorf("invalid email format: %s", input)
+	}
+
+	id, email, err := es.EmailUseCase.CreateEmail(converters.EmailConvertProtoInCore(*input), ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed create email")
+	}
+
+	err = es.EmailUseCase.CreateProfileEmail(id, email.SenderEmail, "", ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed create profile email")
+	}
+
+	emailWithId := new(proto.EmailWithID)
+	emailWithId.Id = id
+	emailWithId.Email = converters.EmailConvertCoreInProto(*email)
+	return emailWithId, nil
 }

@@ -279,3 +279,35 @@ func (r *FolderRepository) GetAllEmails(folderID, profileID, limit, offset uint3
 
 	return emailsModelCore, nil
 }
+
+// GetAllFolderName retrieves the names of all folders associated with a given email ID.
+func (r *FolderRepository) GetAllFolderName(emailID uint32, ctx context.Context) ([]*domain.Folder, error) {
+	query := `
+		SELECT f.name
+		FROM folder f
+		INNER JOIN folder_email fe ON f.id = fe.folder_id
+		WHERE fe.email_id = $1
+	`
+
+	foldersModelDb := []repository_models.Folder{}
+
+	var err error
+	args := []interface{}{emailID}
+	start := time.Now()
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
+
+	err = r.DB.Select(&foldersModelDb, query, emailID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("DB no have folders")
+		}
+		return nil, err
+	}
+
+	var foldersModelCore []*domain.Folder
+	for _, e := range foldersModelDb {
+		foldersModelCore = append(foldersModelCore, converters.FolderConvertDbInCore(e))
+	}
+
+	return foldersModelCore, nil
+}

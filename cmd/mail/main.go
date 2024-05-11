@@ -261,6 +261,7 @@ func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.
 	logRouter.HandleFunc("/user/delete/{id}", userHandler.DeleteUserData).Methods("DELETE", "OPTIONS")
 	logRouter.HandleFunc("/user/avatar/upload", userHandler.UploadUserAvatar).Methods("POST", "OPTIONS")
 	logRouter.HandleFunc("/user/avatar/delete", userHandler.DeleteUserAvatar).Methods("DELETE", "OPTIONS")
+	logRouter.HandleFunc("/user/get/count", userHandler.GetCountUsers).Methods("GET", "OPTIONS")
 
 	logRouter.HandleFunc("/emails/incoming", emailHandler.Incoming).Methods("GET", "OPTIONS")
 	logRouter.HandleFunc("/emails/sent", emailHandler.Sent).Methods("GET", "OPTIONS")
@@ -270,6 +271,7 @@ func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.
 	logRouter.HandleFunc("/email/update/{id}", emailHandler.Update).Methods("PUT", "OPTIONS")
 	logRouter.HandleFunc("/email/delete/{id}", emailHandler.Delete).Methods("DELETE", "OPTIONS")
 	logRouter.HandleFunc("/email/send", emailHandler.Send).Methods("POST", "OPTIONS")
+	logRouter.HandleFunc("/email/adddraft", emailHandler.AddDraft).Methods("POST", "OPTIONS")
 
 	logRouter.HandleFunc("/questions", questionHandler.GetAllQuestions).Methods("GET", "OPTIONS")
 	logRouter.HandleFunc("/questions", questionHandler.AddQuestion).Methods("POST", "OPTIONS")
@@ -283,6 +285,7 @@ func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.
 	logRouter.HandleFunc("/folder/add_email", folderHandler.AddEmailInFolder).Methods("POST", "OPTIONS")
 	logRouter.HandleFunc("/folder/delete_email", folderHandler.DeleteEmailInFolder).Methods("DELETE", "OPTIONS")
 	logRouter.HandleFunc("/folder/all_emails/{id}", folderHandler.GetAllEmailsInFolder).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/folder/allname/{id}", folderHandler.GetAllName).Methods("GET", "OPTIONS")
 
 	return logRouter
 }

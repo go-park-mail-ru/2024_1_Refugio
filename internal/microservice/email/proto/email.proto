@@ -19,6 +19,7 @@ service EmailService {
   rpc CheckRecipientEmail(Recipient) returns(EmptyEmail) {}
   rpc UpdateEmail(Email) returns(StatusEmail) {}
   rpc DeleteEmail(LoginWithID) returns(StatusEmail) {}
+  rpc AddEmailDraft(Email) returns(EmailWithID) {}
 }
 
 message EmailIdAndLogin {

@@ -141,6 +141,21 @@ func (mr *MockFolderUseCaseMockRecorder) GetAllEmailsInFolder(folderID, profileI
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllEmailsInFolder", reflect.TypeOf((*MockFolderUseCase)(nil).GetAllEmailsInFolder), folderID, profileId, limit, offset, ctx)
 }
 
+// GetAllFolderName mocks base method.
+func (m *MockFolderUseCase) GetAllFolderName(emailID uint32, ctx context.Context) ([]*domain_models.Folder, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllFolderName", emailID, ctx)
+	ret0, _ := ret[0].([]*domain_models.Folder)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllFolderName indicates an expected call of GetAllFolderName.
+func (mr *MockFolderUseCaseMockRecorder) GetAllFolderName(emailID, ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllFolderName", reflect.TypeOf((*MockFolderUseCase)(nil).GetAllFolderName), emailID, ctx)
+}
+
 // GetAllFolders mocks base method.
 func (m *MockFolderUseCase) GetAllFolders(profileID uint32, offset, limit int64, ctx context.Context) ([]*domain_models.Folder, error) {
 	m.ctrl.T.Helper()

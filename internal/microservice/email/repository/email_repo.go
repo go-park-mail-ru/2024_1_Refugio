@@ -5,12 +5,15 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/jmoiron/sqlx"
-	domain "mail/internal/microservice/models/domain_models"
-	converters "mail/internal/microservice/models/repository_converters"
+
 	"mail/internal/microservice/models/repository_models"
 	"mail/internal/pkg/logger"
-	"time"
+
+	domain "mail/internal/microservice/models/domain_models"
+	converters "mail/internal/microservice/models/repository_converters"
 )
 
 var requestIDContextKey interface{} = "requestID"
@@ -20,11 +23,6 @@ type EmailRepository struct {
 }
 
 func NewEmailRepository(db *sqlx.DB) *EmailRepository {
-	/*f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		fmt.Println("Failed to create logfile in email_repo" + "log.txt")
-	}
-	Logger = logger.InitializationBdLog(f)*/
 	return &EmailRepository{DB: db}
 }
 

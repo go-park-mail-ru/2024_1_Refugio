@@ -270,6 +270,45 @@ paths:
       summary: Get an email message by ID
       tags:
       - emails
+  /api/v1/email/adddraft:
+    post:
+      consumes:
+      - application/json
+      description: AddDraft a new draft email message to the system
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      - description: Email message in JSON format
+        in: body
+        name: email
+        required: true
+        schema:
+          $ref: '#/definitions/response.EmailSwag'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ID of the send email message
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad JSON in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to add email message
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: AddDraft a new draft email message
+      tags:
+      - emails
   /api/v1/email/delete/{id}:
     delete:
       description: Delete an email message based on its identifier
@@ -658,6 +697,42 @@ paths:
       summary: GetAllEmailsInFolder get all emails in folder
       tags:
       - folders
+  /api/v1/folder/allname/{id}:
+    get:
+      description: GetAllName folders name users
+      parameters:
+      - description: ID of the email
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ID of the send folder message
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad JSON in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to get all folders
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: GetAllName get all name folders
+      tags:
+      - folders
   /api/v1/folder/delete/{id}:
     delete:
       description: Delete folder a user
@@ -1011,6 +1086,35 @@ paths:
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       summary: Get user by session
+      tags:
+      - users
+  /api/v1/user/get/count:
+    get:
+      consumes:
+      - application/json
+      description: Handles requests to get count user.
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Invalid user ID
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Not authorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Get count user
       tags:
       - users
   /api/v1/user/update:
