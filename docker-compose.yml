@@ -163,8 +163,24 @@ services:
       - /sys:/host/sys:ro
       - /:/rootfs:ro
 
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    networks:
+      - deploy-guide-dev
+    volumes:
+      - ./minio/data:/data
+      - ./minio/config:/root/.minio
+    command: server /data
+
 volumes:
   db_postgres_data:
   db_question_postgres_data:
   prometheus_data:
   grafana_data:
+  minio_data:
+  minio_config:

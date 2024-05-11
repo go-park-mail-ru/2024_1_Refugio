@@ -15,6 +15,8 @@ import (
 	"github.com/gorilla/mux"
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/kataras/requestid"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
 
@@ -180,9 +182,39 @@ func initializeEmailHandler(sessionsManager *session.SessionsManager, emailServi
 
 // initializeUserHandler initializing user handler
 func initializeUserHandler(sessionsManager *session.SessionsManager, userServiceClient user_proto.UserServiceClient) *userHand.UserHandler {
+	minioClient, err := minio.New(configs.ENDPOINT, &minio.Options{
+		Creds:  credentials.NewStaticV4(configs.ACCESSKEYID, configs.SECRETACCESSKEY, ""),
+		Secure: false,
+	})
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+
+	ctx := context.Background()
+	bucketName := "photo"
+	location := "eu-central-1"
+
+	exists, err := minioClient.BucketExists(ctx, bucketName)
+	if err != nil {
+		fmt.Println("failed to check bucket existence: %v", err)
+		return nil
+	}
+	if !exists {
+		err = minioClient.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{Region: location})
+		if err != nil {
+			fmt.Println("failed to create bucket: %v", err)
+			return nil
+		}
+		fmt.Printf("Bucket has been successfully created: %s\n", bucketName)
+	} else {
+		fmt.Printf("Bucket %s already exists\n", bucketName)
+	}
+
 	return &userHand.UserHandler{
 		Sessions:          sessionsManager,
 		UserServiceClient: userServiceClient,
+		MinioClient:       minioClient,
 	}
 }
 

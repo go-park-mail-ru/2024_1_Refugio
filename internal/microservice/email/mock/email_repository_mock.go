@@ -66,17 +66,17 @@ func (mr *MockEmailRepositoryMockRecorder) AddProfileEmail(email_id, sender, rec
 }
 
 // AddProfileEmailMyself mocks base method.
-func (m *MockEmailRepository) AddProfileEmailMyself(email_id uint64, sender, recipient string, ctx context.Context) error {
+func (m *MockEmailRepository) AddProfileEmailMyself(email_id uint64, login string, ctx context.Context) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddProfileEmailMyself", email_id, sender, recipient, ctx)
+	ret := m.ctrl.Call(m, "AddProfileEmailMyself", email_id, login, ctx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AddProfileEmailMyself indicates an expected call of AddProfileEmailMyself.
-func (mr *MockEmailRepositoryMockRecorder) AddProfileEmailMyself(email_id, sender, recipient, ctx interface{}) *gomock.Call {
+func (mr *MockEmailRepositoryMockRecorder) AddProfileEmailMyself(email_id, login, ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddProfileEmailMyself", reflect.TypeOf((*MockEmailRepository)(nil).AddProfileEmailMyself), email_id, sender, recipient, ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddProfileEmailMyself", reflect.TypeOf((*MockEmailRepository)(nil).AddProfileEmailMyself), email_id, login, ctx)
 }
 
 // Delete mocks base method.
