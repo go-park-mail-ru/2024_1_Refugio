@@ -1023,6 +1023,35 @@ paths:
       summary: Upload user avatar
       tags:
       - users
+  /api/v1/user/count:
+    get:
+      consumes:
+      - application/json
+      description: Handles requests to get count user.
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Invalid user ID
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Not authorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Get count user
+      tags:
+      - users
   /api/v1/user/delete/{id}:
     delete:
       consumes:
@@ -1086,35 +1115,6 @@ paths:
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       summary: Get user by session
-      tags:
-      - users
-  /api/v1/user/get/count:
-    get:
-      consumes:
-      - application/json
-      description: Handles requests to get count user.
-      parameters:
-      - description: CSRF Token
-        in: header
-        name: X-Csrf-Token
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "400":
-          description: Invalid user ID
-          schema:
-            $ref: '#/definitions/response.ErrorResponse'
-        "401":
-          description: Not authorized
-          schema:
-            $ref: '#/definitions/response.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/response.ErrorResponse'
-      summary: Get count user
       tags:
       - users
   /api/v1/user/update:

@@ -293,8 +293,9 @@ func (uh *UserHandler) DeleteUserAvatar(w http.ResponseWriter, r *http.Request) 
 // @Failure 400 {object} response.ErrorResponse "Invalid user ID"
 // @Failure 401 {object} response.ErrorResponse "Not authorized"
 // @Failure 500 {object} response.ErrorResponse "Internal Server Error"
-// @Router /api/v1/user/get/count [get]
+// @Router /api/v1/user/count [get]
 func (uh *UserHandler) GetCountUsers(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("START GET COUNT")
 	usersProto, err := uh.UserServiceClient.GetUsers(
 		metadata.NewOutgoingContext(r.Context(),
 			metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
@@ -304,6 +305,7 @@ func (uh *UserHandler) GetCountUsers(w http.ResponseWriter, r *http.Request) {
 		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
+	fmt.Println("END GET COUNT")
 
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"count": len(usersProto.Users)})
 }

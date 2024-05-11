@@ -9,7 +9,6 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"log"
 	"net"
 	"net/http"
 	"net/mail"
@@ -287,14 +286,12 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 
 		mx, err = getMXRecord(recipient)
 		if err != nil {
-			log.Fatal(err)
 			response.HandleError(w, http.StatusBadRequest, "Bad request to login")
 			return
 		}
 
 		err = smtp.SendMail(mx+":25", nil, sender, []string{recipient}, msg)
 		if err != nil {
-			log.Fatal(err)
 			response.HandleError(w, http.StatusInternalServerError, "Error send email")
 			return
 		}
@@ -336,6 +333,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 		response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*emailData)})
 		return
 	case validators.IsValidEmailFormat(sender) == false && validators.IsValidEmailFormat(recipient) == true:
+		fmt.Println("START SEND OTHER")
 		_, err = h.EmailServiceClient.CheckRecipientEmail(
 			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 			&proto.Recipient{Recipient: recipient},
@@ -345,6 +343,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		fmt.Println("MEDIAN SEND OTHER")
 		emailDataProto, err := h.EmailServiceClient.CreateEmail(
 			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 			&proto.Email{
@@ -370,6 +369,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 		emailData := proto_converters.EmailConvertProtoInCore(*emailDataProto.Email)
 		emailData.ID = emailDataProto.Id
 
+		fmt.Println("MEDIAN SEND OTHER 1")
 		_, err = h.EmailServiceClient.CreateProfileEmail(
 			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 			&proto.IdSenderRecipient{Id: emailData.ID, Sender: emailData.SenderEmail, Recipient: emailData.RecipientEmail},
@@ -378,6 +378,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 			response.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
 			return
 		}
+		fmt.Println("END SEND OTHER")
 
 		response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*emailData)})
 		return
