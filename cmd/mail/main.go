@@ -184,7 +184,7 @@ func initializeEmailHandler(sessionsManager *session.SessionsManager, emailServi
 func initializeUserHandler(sessionsManager *session.SessionsManager, userServiceClient user_proto.UserServiceClient) *userHand.UserHandler {
 	minioClient, err := minio.New(configs.ENDPOINT, &minio.Options{
 		Creds:  credentials.NewStaticV4(configs.ACCESSKEYID, configs.SECRETACCESSKEY, ""),
-		Secure: false,
+		Secure: true,
 	})
 	if err != nil {
 		fmt.Println(err)
@@ -206,6 +206,14 @@ func initializeUserHandler(sessionsManager *session.SessionsManager, userService
 		fmt.Printf("Bucket has been successfully created: %s\n", bucketName)
 	} else {
 		fmt.Printf("Bucket %s already exists\n", bucketName)
+	}
+
+	policy := `{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":"*","Action":["s3:GetObject"],"Resource":["arn:aws:s3:::photos/*"]}]}`
+	err = minioClient.SetBucketPolicy(ctx, bucketName, policy)
+	if err != nil {
+		fmt.Println("failed to set bucket policy")
+	} else {
+		fmt.Println("bucket policy set successfully")
 	}
 
 	return &userHand.UserHandler{
