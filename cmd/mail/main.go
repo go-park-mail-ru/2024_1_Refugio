@@ -208,8 +208,7 @@ func initializeUserHandler(sessionsManager *session.SessionsManager, userService
 		fmt.Printf("Bucket %s already exists\n", bucketName)
 	}
 
-	policy := `{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":"*","Action":["s3:GetObject"],"Resource":["arn:aws:s3:::photos/*"]}]}`
-	err = minioClient.SetBucketPolicy(ctx, bucketName, policy)
+	err = minioClient.SetBucketPolicy(ctx, bucketName, generatePolicy(bucketName))
 	if err != nil {
 		fmt.Println("failed to set bucket policy")
 	} else {
@@ -221,6 +220,11 @@ func initializeUserHandler(sessionsManager *session.SessionsManager, userService
 		UserServiceClient: userServiceClient,
 		MinioClient:       minioClient,
 	}
+}
+
+// generatePolicy policy generation for minio
+func generatePolicy(bucketName string) string {
+	return fmt.Sprintf(`{"Version": "2012-10-17","Statement": [{"Effect": "Allow","Principal": {"AWS": ["*"]},"Action": ["s3:GetBucketLocation"],"Resource": ["arn:aws:s3:::%s"]},{"Effect": "Allow","Principal": {"AWS": ["*"]},"Action": ["s3:GetObject"],"Resource": ["arn:aws:s3:::%s/*"]}]}`, bucketName, bucketName)
 }
 
 // initializeFolderHandler initializing folder handler
