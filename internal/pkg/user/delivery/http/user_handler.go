@@ -222,7 +222,7 @@ func (uh *UserHandler) UploadUserAvatar(w http.ResponseWriter, r *http.Request) 
 	}
 
 	uniqueFileName := generate_filename.GenerateUniqueFileName(fileExt)
-	_, err = uh.MinioClient.PutObject(r.Context(), "photo", uniqueFileName, file, -1, minio.PutObjectOptions{ContentType: handler.Header.Get("Content-Type")})
+	_, err = uh.MinioClient.PutObject(r.Context(), "photos", uniqueFileName, file, -1, minio.PutObjectOptions{ContentType: handler.Header.Get("Content-Type")})
 	if err != nil {
 		response.HandleError(w, http.StatusInternalServerError, "Error uploading file to MinIO")
 		return
