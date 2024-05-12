@@ -26,7 +26,7 @@ const DSN = "user=postgres dbname=Mail password=postgres host=89.208.223.140 por
 
 const DSN_QUESTION = "user=postgres dbname=Question password=postgres host=89.208.223.140 port=5433 sslmode=disable"
 
-const ENDPOINT = "https://mailhub.su:9000"
+const ENDPOINT = "http://mailhub.su:9000"
 
 const ACCESSKEYID = "minioadmin"
 
