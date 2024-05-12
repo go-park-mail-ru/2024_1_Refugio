@@ -184,7 +184,7 @@ func initializeEmailHandler(sessionsManager *session.SessionsManager, emailServi
 func initializeUserHandler(sessionsManager *session.SessionsManager, userServiceClient user_proto.UserServiceClient) *userHand.UserHandler {
 	minioClient, err := minio.New(configs.ENDPOINT, &minio.Options{
 		Creds:  credentials.NewStaticV4(configs.ACCESSKEYID, configs.SECRETACCESSKEY, ""),
-		Secure: true,
+		Secure: false,
 	})
 	if err != nil {
 		fmt.Println(err)
