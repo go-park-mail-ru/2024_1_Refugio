@@ -309,6 +309,39 @@ paths:
       summary: Add an attachment to an email message
       tags:
       - files
+  /api/v1/email/{id}/get/files/:
+    get:
+      description: Retrieve files associated with an email by its ID from the email
+        service
+      parameters:
+      - description: ID of the email
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Files retrieved successfully
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad ID in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Files not found
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Retrieve files by email ID
+      tags:
+      - files
   /api/v1/email/adddraft:
     post:
       consumes:
@@ -384,6 +417,38 @@ paths:
       summary: Delete an email message
       tags:
       - emails
+  /api/v1/email/delete/file/{id}:
+    delete:
+      description: Delete a file by its ID from the email service
+      parameters:
+      - description: ID of the file
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: File deleted successfully
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad ID in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Failed to delete file
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Delete a file by its ID
+      tags:
+      - files
   /api/v1/email/get/file/{id}:
     get:
       description: Retrieve a file by its ID from the email service
@@ -499,6 +564,43 @@ paths:
       summary: Update an email message
       tags:
       - emails
+  /api/v1/email/update/file/{id}:
+    put:
+      description: Update a file by its ID in the email service
+      parameters:
+      - description: ID of the file
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated file to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: File updated successfully
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad ID in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Failed to update file
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Update a file by its ID
+      tags:
+      - files
   /api/v1/emails/draft:
     get:
       description: Get a list of all email messages

@@ -251,6 +251,54 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/email/delete/file/{id}": {
+            "delete": {
+                "description": "Delete a file by its ID from the email service",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "files"
+                ],
+                "summary": "Delete a file by its ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID of the file",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "File deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad ID in request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Failed to delete file",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/email/delete/{id}": {
             "delete": {
                 "description": "Delete an email message based on its identifier",
@@ -405,6 +453,61 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Failed to add email message",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/email/update/file/{id}": {
+            "put": {
+                "description": "Update a file by its ID in the email service",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "files"
+                ],
+                "summary": "Update a file by its ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID of the file",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Updated file to upload",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "File updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad ID in request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Failed to update file",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -583,6 +686,54 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Failed to add attachment",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/email/{id}/get/files/": {
+            "get": {
+                "description": "Retrieve files associated with an email by its ID from the email service",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "files"
+                ],
+                "summary": "Retrieve files by email ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID of the email",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Files retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad ID in request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Files not found",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }

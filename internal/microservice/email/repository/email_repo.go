@@ -504,7 +504,7 @@ func (r *EmailRepository) GetFileByID(id uint64, ctx context.Context) (*domain.F
 // GetFilesByEmailID retrieves all files associated with a given email ID.
 func (r *EmailRepository) GetFilesByEmailID(emailID uint64, ctx context.Context) ([]*domain.File, error) {
 	query := `
-        SELECT f.file_id, f.file_type
+        SELECT f.id, f.file_id, f.file_type
         FROM file f
         JOIN email_file ef ON f.id = ef.file_id
         WHERE ef.email_id = $1
@@ -523,9 +523,12 @@ func (r *EmailRepository) GetFilesByEmailID(emailID uint64, ctx context.Context)
 
 	for rows.Next() {
 		var file repository_models.File
-		err := rows.Scan(&file.FileId, &file.FileType)
+		err := rows.Scan(&file.ID, &file.FileId, &file.FileType)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan file: %v", err)
+		}
+		if file.FileType == "PHOTO" {
+			continue
 		}
 		filesModelDb = append(filesModelDb, &file)
 	}

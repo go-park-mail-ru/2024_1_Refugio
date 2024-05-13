@@ -1047,9 +1047,10 @@ func TestGetFileByID(t *testing.T) {
 	ctx := GetCTX()
 
 	t.Run("FileFound", func(t *testing.T) {
+		Id := uint64(1)
 		fileID := "file123"
 		fileType := "text/plain"
-		expectedFile := &domain.File{FileId: fileID, FileType: fileType}
+		expectedFile := &domain.File{ID: Id, FileId: fileID, FileType: fileType}
 
 		mock.ExpectQuery("SELECT file_id, file_type FROM file").
 			WithArgs(uint64(1)).
@@ -1100,15 +1101,15 @@ func TestGetFilesByEmailID(t *testing.T) {
 	t.Run("FilesFound", func(t *testing.T) {
 		emailID := uint64(1)
 		expectedFiles := []*domain.File{
-			{FileId: "file123", FileType: "text/plain"},
-			{FileId: "file456", FileType: "image/jpeg"},
+			{ID: 1, FileId: "file123", FileType: "text/plain"},
+			{ID: 2, FileId: "file456", FileType: "image/jpeg"},
 		}
 
-		rows := sqlmock.NewRows([]string{"file_id", "file_type"}).
-			AddRow("file123", "text/plain").
-			AddRow("file456", "image/jpeg")
+		rows := sqlmock.NewRows([]string{"id", "file_id", "file_type"}).
+			AddRow(1, "file123", "text/plain").
+			AddRow(2, "file456", "image/jpeg")
 
-		mock.ExpectQuery("SELECT f.file_id, f.file_type FROM file").
+		mock.ExpectQuery("SELECT f.id, f.file_id, f.file_type FROM file").
 			WithArgs(emailID).
 			WillReturnRows(rows)
 
@@ -1121,7 +1122,7 @@ func TestGetFilesByEmailID(t *testing.T) {
 	t.Run("NoFilesFound", func(t *testing.T) {
 		emailID := uint64(2)
 
-		mock.ExpectQuery("SELECT f.file_id, f.file_type FROM file").
+		mock.ExpectQuery("SELECT f.id, f.file_id, f.file_type FROM file").
 			WithArgs(emailID).
 			WillReturnError(sql.ErrNoRows)
 
@@ -1134,7 +1135,7 @@ func TestGetFilesByEmailID(t *testing.T) {
 	t.Run("DBError", func(t *testing.T) {
 		emailID := uint64(3)
 
-		mock.ExpectQuery("SELECT f.file_id, f.file_type FROM file").
+		mock.ExpectQuery("SELECT f.id, f.file_id, f.file_type FROM file").
 			WithArgs(emailID).
 			WillReturnError(fmt.Errorf("database error"))
 

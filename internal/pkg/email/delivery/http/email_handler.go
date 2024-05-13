@@ -982,7 +982,7 @@ func (h *EmailHandler) GetFileByID(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} response.Response "Files retrieved successfully"
 // @Failure 400 {object} response.Response "Bad ID in request"
 // @Failure 404 {object} response.Response "Files not found"
-// @Router /api/v1/email/get/files/{id} [get]
+// @Router /api/v1/email/{id}/get/files/ [get]
 func (h *EmailHandler) GetFilesByEmailID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.ParseUint(vars["id"], 10, 64)
