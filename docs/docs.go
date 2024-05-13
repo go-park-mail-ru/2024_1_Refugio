@@ -305,6 +305,54 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/email/get/file/{id}": {
+            "get": {
+                "description": "Retrieve a file by its ID from the email service",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "files"
+                ],
+                "summary": "Retrieve a file by its ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID of the file",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "File retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad ID in request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "File not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/email/send": {
             "post": {
                 "description": "Send a new email message to the system",
@@ -477,6 +525,64 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Email not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/email/{id}/addattachment": {
+            "post": {
+                "description": "Add an attachment to an email message by its ID",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "files"
+                ],
+                "summary": "Add an attachment to an email message",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID of the email message",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Attachment file to upload",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Attachment added successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad id in request or bad JSON in request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Failed to add attachment",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -1787,7 +1893,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "mailhub.su",
+	Host:             "localhost:8080",
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "API MailHub",

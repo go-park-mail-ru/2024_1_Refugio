@@ -20,6 +20,11 @@ service EmailService {
   rpc UpdateEmail(Email) returns(StatusEmail) {}
   rpc DeleteEmail(LoginWithID) returns(StatusEmail) {}
   rpc AddEmailDraft(Email) returns(EmailWithID) {}
+  rpc AddAttachment(AddAttachmentRequest) returns(AddAttachmentReply) {}
+  rpc GetFileByID(GetFileByIDRequest) returns(GetFileByIDReply) {}
+  rpc GetFilesByEmailID(GetFilesByEmailIDRequest) returns(GetFilesByEmailIDReply) {}
+  rpc DeleteFileByID(DeleteFileByIDRequest) returns(DeleteFileByIDReply) {}
+  rpc UpdateFileByID(UpdateFileByIDRequest) returns(UpdateFileByIDReply) {}
 }
 
 message EmailIdAndLogin {
@@ -80,3 +85,55 @@ message StatusEmail {
 message EmptyEmail {
 
 }
+
+message File {
+  uint64 Id = 1;
+  string fileId = 2;
+  string fileType = 3;
+}
+
+message AddAttachmentRequest {
+  uint64 emailId = 1;
+  string fileId = 2;
+  string fileType = 3;
+}
+
+message AddAttachmentReply {
+  uint64 fileId = 1;
+}
+
+message GetFileByIDRequest {
+  uint64 fileId = 1;
+}
+
+message GetFileByIDReply {
+  File file = 1;
+}
+
+message GetFilesByEmailIDRequest {
+  uint64 emailId = 1;
+}
+
+message GetFilesByEmailIDReply {
+  repeated File files = 1;
+}
+
+message DeleteFileByIDRequest {
+  uint64 fileId = 1;
+}
+
+message DeleteFileByIDReply {
+  bool status = 1;
+}
+
+message UpdateFileByIDRequest {
+  uint64 Id = 1;
+  string newFileId = 2;
+  string newFileType = 3;
+}
+
+message UpdateFileByIDReply {
+  bool status = 1;
+}
+
+

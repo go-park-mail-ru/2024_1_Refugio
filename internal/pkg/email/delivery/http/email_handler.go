@@ -4,21 +4,27 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/gorilla/schema"
-	"github.com/microcosm-cc/bluemonday"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"net"
 	"net/http"
 	"net/mail"
 	"net/smtp"
+	"path/filepath"
 	"strconv"
 	"strings"
 
+	"github.com/gorilla/mux"
+	"github.com/gorilla/schema"
+	"github.com/microcosm-cc/bluemonday"
+	"github.com/minio/minio-go/v7"
+
+	"mail/cmd/configs"
 	"mail/internal/microservice/email/proto"
 	"mail/internal/microservice/models/proto_converters"
 	"mail/internal/models/response"
+	"mail/internal/pkg/utils/check_file_type"
+	"mail/internal/pkg/utils/generate_filename"
 	"mail/internal/pkg/utils/validators"
 
 	email_proto "mail/internal/microservice/email/proto"
@@ -36,6 +42,7 @@ var (
 type EmailHandler struct {
 	Sessions           domainSession.SessionsManager
 	EmailServiceClient email_proto.EmailServiceClient
+	MinioClient        *minio.Client
 }
 
 func sanitizeString(str string) string {
@@ -860,4 +867,244 @@ func (h *EmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+}
+
+// AddAttachment adds an attachment to an email message.
+// @Summary Add an attachment to an email message
+// @Description Add an attachment to an email message by its ID
+// @Tags files
+// @Accept multipart/form-data
+// @Produce json
+// @Param id path integer true "ID of the email message"
+// @Param file formData file true "Attachment file to upload"
+// @Param X-Csrf-Token header string true "CSRF Token"
+// @Success 200 {object} response.Response "Attachment added successfully"
+// @Failure 400 {object} response.Response "Bad id in request or bad JSON in request"
+// @Failure 404 {object} response.Response "Failed to add attachment"
+// @Router /api/v1/email/{id}/addattachment [post]
+func (h *EmailHandler) AddAttachment(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.ParseUint(vars["id"], 10, 64)
+	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Bad id in request")
+		return
+	}
+
+	err = r.ParseMultipartForm(20 * 1024 * 1024)
+	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Error processing file")
+		return
+	}
+
+	file, handler, err := r.FormFile("file")
+	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Failed to get file")
+		return
+	}
+	defer file.Close()
+
+	if handler.Size > (20 * 1024 * 1024) {
+		response.HandleError(w, http.StatusInternalServerError, "Failed to get file")
+		return
+	}
+
+	fileExt := filepath.Ext(handler.Filename)
+	contentType := handler.Header.Get("Content-Type")
+
+	fileType := check_file_type.GetFileType(contentType)
+
+	uniqueFileName := generate_filename.GenerateUniqueFileName(fileExt)
+
+	_, err = h.MinioClient.PutObject(r.Context(), "files", uniqueFileName, file, -1, minio.PutObjectOptions{ContentType: contentType})
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Error uploading file to MinIO")
+		return
+	}
+
+	fileURL := fmt.Sprintf(configs.PROTOCOL+"0.0.0.0:9000"+"/files/%s", uniqueFileName)
+
+	fileId, err := h.EmailServiceClient.AddAttachment(
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		&proto.AddAttachmentRequest{EmailId: id, FileId: fileURL, FileType: fileType},
+	)
+	if err != nil {
+		response.HandleError(w, http.StatusNotFound, fmt.Sprintf("Failed to add attachment: %s", err.Error()))
+		return
+	}
+
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"FileId": fileId.FileId})
+}
+
+// GetFileByID retrieves a file by its ID.
+// @Summary Retrieve a file by its ID
+// @Description Retrieve a file by its ID from the email service
+// @Tags files
+// @Produce json
+// @Param id path integer true "ID of the file"
+// @Param X-Csrf-Token header string true "CSRF Token"
+// @Success 200 {object} response.Response "File retrieved successfully"
+// @Failure 400 {object} response.Response "Bad ID in request"
+// @Failure 404 {object} response.Response "File not found"
+// @Router /api/v1/email/get/file/{id} [get]
+func (h *EmailHandler) GetFileByID(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.ParseUint(vars["id"], 10, 64)
+	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Bad ID in request")
+		return
+	}
+
+	fileProto, err := h.EmailServiceClient.GetFileByID(
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		&proto.GetFileByIDRequest{FileId: id},
+	)
+	if err != nil {
+		response.HandleError(w, http.StatusNotFound, fmt.Sprintf("Failed to get file: %s", err.Error()))
+		return
+	}
+
+	fileApi := emailApi.File{
+		ID:       fileProto.File.Id,
+		FileId:   fileProto.File.FileId,
+		FileType: fileProto.File.FileType,
+	}
+
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"file": fileApi})
+}
+
+// GetFilesByEmailID retrieves files associated with an email by its ID.
+// @Summary Retrieve files by email ID
+// @Description Retrieve files associated with an email by its ID from the email service
+// @Tags files
+// @Produce json
+// @Param id path integer true "ID of the email"
+// @Param X-Csrf-Token header string true "CSRF Token"
+// @Success 200 {object} response.Response "Files retrieved successfully"
+// @Failure 400 {object} response.Response "Bad ID in request"
+// @Failure 404 {object} response.Response "Files not found"
+// @Router /api/v1/email/get/files/{id} [get]
+func (h *EmailHandler) GetFilesByEmailID(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.ParseUint(vars["id"], 10, 64)
+	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Bad ID in request")
+		return
+	}
+
+	filesProto, err := h.EmailServiceClient.GetFilesByEmailID(
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		&proto.GetFilesByEmailIDRequest{EmailId: id},
+	)
+	if err != nil {
+		response.HandleError(w, http.StatusNotFound, fmt.Sprintf("Failed to get files: %s", err.Error()))
+		return
+	}
+
+	filesApi := make([]*emailApi.File, 0, len(filesProto.Files))
+	for _, file := range filesProto.Files {
+		filesApi = append(filesApi, &emailApi.File{
+			ID:       file.Id,
+			FileId:   file.FileId,
+			FileType: file.FileType,
+		})
+	}
+
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"files": filesApi})
+}
+
+// DeleteFileByID deletes a file by its ID.
+// @Summary Delete a file by its ID
+// @Description Delete a file by its ID from the email service
+// @Tags files
+// @Produce json
+// @Param id path integer true "ID of the file"
+// @Param X-Csrf-Token header string true "CSRF Token"
+// @Success 200 {object} response.Response "File deleted successfully"
+// @Failure 400 {object} response.Response "Bad ID in request"
+// @Failure 404 {object} response.Response "Failed to delete file"
+// @Router /api/v1/email/delete/file/{id} [delete]
+func (h *EmailHandler) DeleteFileByID(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.ParseUint(vars["id"], 10, 64)
+	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Bad ID in request")
+		return
+	}
+
+	status, err := h.EmailServiceClient.DeleteFileByID(
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		&proto.DeleteFileByIDRequest{FileId: id},
+	)
+	if err != nil {
+		response.HandleError(w, http.StatusNotFound, fmt.Sprintf("Failed to delete file: %s", err.Error()))
+		return
+	}
+	if !status.Status {
+		response.HandleError(w, http.StatusNotFound, fmt.Sprintf("Failed to delete file: %s", err.Error()))
+		return
+	}
+
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": status.Status})
+}
+
+// UpdateFileByID updates a file by its ID.
+// @Summary Update a file by its ID
+// @Description Update a file by its ID in the email service
+// @Tags files
+// @Produce json
+// @Param id path integer true "ID of the file"
+// @Param file formData file true "Updated file to upload"
+// @Param X-Csrf-Token header string true "CSRF Token"
+// @Success 200 {object} response.Response "File updated successfully"
+// @Failure 400 {object} response.Response "Bad ID in request"
+// @Failure 404 {object} response.Response "Failed to update file"
+// @Router /api/v1/email/update/file/{id} [put]
+func (h *EmailHandler) UpdateFileByID(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.ParseUint(vars["id"], 10, 64)
+	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Bad ID in request")
+		return
+	}
+
+	err = r.ParseMultipartForm(20 * 1024 * 1024)
+	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Error processing file")
+		return
+	}
+
+	file, handler, err := r.FormFile("file")
+	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Failed to get file")
+		return
+	}
+	defer file.Close()
+
+	if handler.Size > (20 * 1024 * 1024) {
+		response.HandleError(w, http.StatusInternalServerError, "Failed to get file")
+		return
+	}
+
+	fileProto, err := h.EmailServiceClient.GetFileByID(
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		&proto.GetFileByIDRequest{FileId: id},
+	)
+	if err != nil {
+		response.HandleError(w, http.StatusNotFound, fmt.Sprintf("Failed to get file: %s", err.Error()))
+		return
+	}
+
+	err = h.MinioClient.RemoveObject(r.Context(), "files", fileProto.File.FileId[strings.LastIndex(fileProto.File.FileId, "/")+1:], minio.RemoveObjectOptions{})
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Failed to delete old file in MinIO")
+		return
+	}
+
+	_, err = h.MinioClient.PutObject(r.Context(), "files", fileProto.File.FileId[strings.LastIndex(fileProto.File.FileId, "/")+1:], file, -1, minio.PutObjectOptions{})
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Failed to update file in MinIO")
+		return
+	}
+
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": true})
 }

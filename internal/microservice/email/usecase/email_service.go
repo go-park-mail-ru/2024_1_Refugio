@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 
 	"mail/internal/pkg/utils/validators"
 
@@ -82,4 +83,99 @@ func (uc *EmailUseCase) UpdateEmail(updatedEmail *domain.Email, ctx context.Cont
 // DeleteEmail deletes the email.
 func (uc *EmailUseCase) DeleteEmail(id uint64, login string, ctx context.Context) (bool, error) {
 	return uc.repo.Delete(id, login, ctx)
+}
+
+// AddAttachment adds an attachment to the specified email.
+func (uc *EmailUseCase) AddAttachment(fileID string, fileType string, emailID uint64, ctx context.Context) (uint64, error) {
+	if validators.IsEmpty(fileID) || validators.IsEmpty(fileType) {
+		return 0, fmt.Errorf("file id or file type is empty")
+	}
+
+	if emailID <= 0 {
+		return 0, fmt.Errorf("invalid email id")
+	}
+
+	file_id, err := uc.repo.AddFile(fileID, fileType, ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to add file")
+	}
+
+	err = uc.repo.AddAttachment(emailID, file_id, ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to add attachment")
+	}
+
+	return file_id, nil
+}
+
+// GetFileByID returns the file with the specified ID.
+func (uc *EmailUseCase) GetFileByID(fileID uint64, ctx context.Context) (*domain.File, error) {
+	if fileID <= 0 {
+		return nil, fmt.Errorf("invalid file id")
+	}
+
+	file, err := uc.repo.GetFileByID(fileID, ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get file")
+	}
+
+	return file, nil
+}
+
+// GetFilesByEmailID returns all files attached to the specified email.
+func (uc *EmailUseCase) GetFilesByEmailID(emailID uint64, ctx context.Context) ([]*domain.File, error) {
+	if emailID <= 0 {
+		return nil, fmt.Errorf("invalid email id")
+	}
+
+	files, err := uc.repo.GetFilesByEmailID(emailID, ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get files")
+	}
+
+	return files, nil
+}
+
+// DeleteFileByID deletes the file with the specified ID.
+func (uc *EmailUseCase) DeleteFileByID(fileID uint64, ctx context.Context) (bool, error) {
+	if fileID <= 0 {
+		return false, fmt.Errorf("invalid file id")
+	}
+
+	err := uc.repo.DeleteFileByID(fileID, ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to delete file")
+	}
+
+	return true, nil
+}
+
+// UpdateFileByID updates the information of the specified file.
+func (uc *EmailUseCase) UpdateFileByID(fileID uint64, newFileID string, newFileType string, ctx context.Context) (bool, error) {
+	if validators.IsEmpty(newFileID) || validators.IsEmpty(newFileType) {
+		return false, fmt.Errorf("file id or file type is empty")
+	}
+
+	if fileID <= 0 {
+		return false, fmt.Errorf("invalid file id")
+	}
+
+	file, err := uc.repo.GetFileByID(fileID, ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get file")
+	}
+
+	if newFileID != "" && file.FileId != newFileID {
+		file.FileId = newFileID
+	}
+	if newFileType != "" && file.FileType != newFileType {
+		file.FileType = newFileType
+	}
+
+	err = uc.repo.UpdateFileByID(fileID, file.FileId, file.FileType, ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to update file")
+	}
+
+	return true, nil
 }

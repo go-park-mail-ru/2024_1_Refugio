@@ -32,6 +32,11 @@ const (
 	EmailService_UpdateEmail_FullMethodName         = "/proto.EmailService/UpdateEmail"
 	EmailService_DeleteEmail_FullMethodName         = "/proto.EmailService/DeleteEmail"
 	EmailService_AddEmailDraft_FullMethodName       = "/proto.EmailService/AddEmailDraft"
+	EmailService_AddAttachment_FullMethodName       = "/proto.EmailService/AddAttachment"
+	EmailService_GetFileByID_FullMethodName         = "/proto.EmailService/GetFileByID"
+	EmailService_GetFilesByEmailID_FullMethodName   = "/proto.EmailService/GetFilesByEmailID"
+	EmailService_DeleteFileByID_FullMethodName      = "/proto.EmailService/DeleteFileByID"
+	EmailService_UpdateFileByID_FullMethodName      = "/proto.EmailService/UpdateFileByID"
 )
 
 // EmailServiceClient is the client API for EmailService service.
@@ -49,6 +54,11 @@ type EmailServiceClient interface {
 	UpdateEmail(ctx context.Context, in *Email, opts ...grpc.CallOption) (*StatusEmail, error)
 	DeleteEmail(ctx context.Context, in *LoginWithID, opts ...grpc.CallOption) (*StatusEmail, error)
 	AddEmailDraft(ctx context.Context, in *Email, opts ...grpc.CallOption) (*EmailWithID, error)
+	AddAttachment(ctx context.Context, in *AddAttachmentRequest, opts ...grpc.CallOption) (*AddAttachmentReply, error)
+	GetFileByID(ctx context.Context, in *GetFileByIDRequest, opts ...grpc.CallOption) (*GetFileByIDReply, error)
+	GetFilesByEmailID(ctx context.Context, in *GetFilesByEmailIDRequest, opts ...grpc.CallOption) (*GetFilesByEmailIDReply, error)
+	DeleteFileByID(ctx context.Context, in *DeleteFileByIDRequest, opts ...grpc.CallOption) (*DeleteFileByIDReply, error)
+	UpdateFileByID(ctx context.Context, in *UpdateFileByIDRequest, opts ...grpc.CallOption) (*UpdateFileByIDReply, error)
 }
 
 type emailServiceClient struct {
@@ -158,6 +168,51 @@ func (c *emailServiceClient) AddEmailDraft(ctx context.Context, in *Email, opts 
 	return out, nil
 }
 
+func (c *emailServiceClient) AddAttachment(ctx context.Context, in *AddAttachmentRequest, opts ...grpc.CallOption) (*AddAttachmentReply, error) {
+	out := new(AddAttachmentReply)
+	err := c.cc.Invoke(ctx, EmailService_AddAttachment_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *emailServiceClient) GetFileByID(ctx context.Context, in *GetFileByIDRequest, opts ...grpc.CallOption) (*GetFileByIDReply, error) {
+	out := new(GetFileByIDReply)
+	err := c.cc.Invoke(ctx, EmailService_GetFileByID_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *emailServiceClient) GetFilesByEmailID(ctx context.Context, in *GetFilesByEmailIDRequest, opts ...grpc.CallOption) (*GetFilesByEmailIDReply, error) {
+	out := new(GetFilesByEmailIDReply)
+	err := c.cc.Invoke(ctx, EmailService_GetFilesByEmailID_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *emailServiceClient) DeleteFileByID(ctx context.Context, in *DeleteFileByIDRequest, opts ...grpc.CallOption) (*DeleteFileByIDReply, error) {
+	out := new(DeleteFileByIDReply)
+	err := c.cc.Invoke(ctx, EmailService_DeleteFileByID_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *emailServiceClient) UpdateFileByID(ctx context.Context, in *UpdateFileByIDRequest, opts ...grpc.CallOption) (*UpdateFileByIDReply, error) {
+	out := new(UpdateFileByIDReply)
+	err := c.cc.Invoke(ctx, EmailService_UpdateFileByID_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // EmailServiceServer is the server API for EmailService service.
 // All implementations must embed UnimplementedEmailServiceServer
 // for forward compatibility
@@ -173,6 +228,11 @@ type EmailServiceServer interface {
 	UpdateEmail(context.Context, *Email) (*StatusEmail, error)
 	DeleteEmail(context.Context, *LoginWithID) (*StatusEmail, error)
 	AddEmailDraft(context.Context, *Email) (*EmailWithID, error)
+	AddAttachment(context.Context, *AddAttachmentRequest) (*AddAttachmentReply, error)
+	GetFileByID(context.Context, *GetFileByIDRequest) (*GetFileByIDReply, error)
+	GetFilesByEmailID(context.Context, *GetFilesByEmailIDRequest) (*GetFilesByEmailIDReply, error)
+	DeleteFileByID(context.Context, *DeleteFileByIDRequest) (*DeleteFileByIDReply, error)
+	UpdateFileByID(context.Context, *UpdateFileByIDRequest) (*UpdateFileByIDReply, error)
 	mustEmbedUnimplementedEmailServiceServer()
 }
 
@@ -212,6 +272,21 @@ func (UnimplementedEmailServiceServer) DeleteEmail(context.Context, *LoginWithID
 }
 func (UnimplementedEmailServiceServer) AddEmailDraft(context.Context, *Email) (*EmailWithID, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddEmailDraft not implemented")
+}
+func (UnimplementedEmailServiceServer) AddAttachment(context.Context, *AddAttachmentRequest) (*AddAttachmentReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddAttachment not implemented")
+}
+func (UnimplementedEmailServiceServer) GetFileByID(context.Context, *GetFileByIDRequest) (*GetFileByIDReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFileByID not implemented")
+}
+func (UnimplementedEmailServiceServer) GetFilesByEmailID(context.Context, *GetFilesByEmailIDRequest) (*GetFilesByEmailIDReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFilesByEmailID not implemented")
+}
+func (UnimplementedEmailServiceServer) DeleteFileByID(context.Context, *DeleteFileByIDRequest) (*DeleteFileByIDReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteFileByID not implemented")
+}
+func (UnimplementedEmailServiceServer) UpdateFileByID(context.Context, *UpdateFileByIDRequest) (*UpdateFileByIDReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateFileByID not implemented")
 }
 func (UnimplementedEmailServiceServer) mustEmbedUnimplementedEmailServiceServer() {}
 
@@ -424,6 +499,96 @@ func _EmailService_AddEmailDraft_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _EmailService_AddAttachment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddAttachmentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EmailServiceServer).AddAttachment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EmailService_AddAttachment_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EmailServiceServer).AddAttachment(ctx, req.(*AddAttachmentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EmailService_GetFileByID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFileByIDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EmailServiceServer).GetFileByID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EmailService_GetFileByID_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EmailServiceServer).GetFileByID(ctx, req.(*GetFileByIDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EmailService_GetFilesByEmailID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFilesByEmailIDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EmailServiceServer).GetFilesByEmailID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EmailService_GetFilesByEmailID_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EmailServiceServer).GetFilesByEmailID(ctx, req.(*GetFilesByEmailIDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EmailService_DeleteFileByID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteFileByIDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EmailServiceServer).DeleteFileByID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EmailService_DeleteFileByID_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EmailServiceServer).DeleteFileByID(ctx, req.(*DeleteFileByIDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EmailService_UpdateFileByID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateFileByIDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EmailServiceServer).UpdateFileByID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EmailService_UpdateFileByID_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EmailServiceServer).UpdateFileByID(ctx, req.(*UpdateFileByIDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // EmailService_ServiceDesc is the grpc.ServiceDesc for EmailService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -474,6 +639,26 @@ var EmailService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddEmailDraft",
 			Handler:    _EmailService_AddEmailDraft_Handler,
+		},
+		{
+			MethodName: "AddAttachment",
+			Handler:    _EmailService_AddAttachment_Handler,
+		},
+		{
+			MethodName: "GetFileByID",
+			Handler:    _EmailService_GetFileByID_Handler,
+		},
+		{
+			MethodName: "GetFilesByEmailID",
+			Handler:    _EmailService_GetFilesByEmailID_Handler,
+		},
+		{
+			MethodName: "DeleteFileByID",
+			Handler:    _EmailService_DeleteFileByID_Handler,
+		},
+		{
+			MethodName: "UpdateFileByID",
+			Handler:    _EmailService_UpdateFileByID_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

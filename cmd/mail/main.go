@@ -50,7 +50,7 @@ import (
 // @version 1.0
 // @description API server for MailHub
 
-// @host mailhub.su
+// @host localhost:8080
 // @BasePath /
 func main() {
 	settingTime()
@@ -174,9 +174,43 @@ func initializeAuthHandler(sessionsManager *session.SessionsManager, authService
 
 // initializeEmailHandler initializing email handler
 func initializeEmailHandler(sessionsManager *session.SessionsManager, emailServiceClient email_proto.EmailServiceClient) *emailHand.EmailHandler {
+	minioClient, err := minio.New(configs.ENDPOINT, &minio.Options{
+		Creds:  credentials.NewStaticV4(configs.ACCESSKEYID, configs.SECRETACCESSKEY, ""),
+		Secure: false,
+	})
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	ctx := context.Background()
+	bucketName := "files"
+	location := "eu-central-1"
+
+	exists, err := minioClient.BucketExists(ctx, bucketName)
+	if err != nil {
+		fmt.Println("failed to check bucket existence")
+	}
+	if !exists {
+		err = minioClient.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{Region: location})
+		if err != nil {
+			fmt.Println("failed to create bucket")
+		}
+		fmt.Printf("Bucket has been successfully created: %s\n", bucketName)
+	} else {
+		fmt.Printf("Bucket %s already exists\n", bucketName)
+	}
+
+	err = minioClient.SetBucketPolicy(ctx, bucketName, generatePolicy(bucketName))
+	if err != nil {
+		fmt.Println("failed to set bucket policy")
+	} else {
+		fmt.Println("bucket policy set successfully")
+	}
+
 	return &emailHand.EmailHandler{
 		Sessions:           sessionsManager,
 		EmailServiceClient: emailServiceClient,
+		MinioClient:        minioClient,
 	}
 }
 
@@ -313,6 +347,9 @@ func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.
 	logRouter.HandleFunc("/email/delete/{id}", emailHandler.Delete).Methods("DELETE", "OPTIONS")
 	logRouter.HandleFunc("/email/send", emailHandler.Send).Methods("POST", "OPTIONS")
 	logRouter.HandleFunc("/email/adddraft", emailHandler.AddDraft).Methods("POST", "OPTIONS")
+
+	logRouter.HandleFunc("/email/{id}/addattachment", emailHandler.AddAttachment).Methods("POST", "OPTIONS")
+	logRouter.HandleFunc("/email/get/file/{id}", emailHandler.GetFileByID).Methods("GET", "OPTIONS")
 
 	logRouter.HandleFunc("/questions", questionHandler.GetAllQuestions).Methods("GET", "OPTIONS")
 	logRouter.HandleFunc("/questions", questionHandler.AddQuestion).Methods("POST", "OPTIONS")

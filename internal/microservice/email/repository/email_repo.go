@@ -16,16 +16,20 @@ import (
 	converters "mail/internal/microservice/models/repository_converters"
 )
 
+// requestIDContextKey is the context key for the request ID.
 var requestIDContextKey interface{} = "requestID"
 
+// EmailRepository represents a repository for managing email data in the database.
 type EmailRepository struct {
 	DB *sqlx.DB
 }
 
+// NewEmailRepository creates a new instance of EmailRepository with the given database connection.
 func NewEmailRepository(db *sqlx.DB) *EmailRepository {
 	return &EmailRepository{DB: db}
 }
 
+// Add adds a new email to the storage and returns its assigned unique identifier.
 func (r *EmailRepository) Add(emailModelCore *domain.Email, ctx context.Context) (uint64, *domain.Email, error) {
 	insertEmailQuery := `
 		INSERT INTO email (topic, text, date_of_dispatch, sender_email, recipient_email, isRead, isDeleted, isDraft, isSpam, reply_to_email_id, is_important)
@@ -40,13 +44,17 @@ func (r *EmailRepository) Add(emailModelCore *domain.Email, ctx context.Context)
 		WHERE p.login = $2
 	`
 
+	var id uint64
+	var err error
+	start := time.Now()
 	emailModelDb := converters.EmailConvertCoreInDb(*emailModelCore)
 	format := "2006/01/02 15:04:05"
 
-	var id uint64
-	start := time.Now()
+	err = r.DB.QueryRow(insertEmailQuery, emailModelDb.Topic, emailModelDb.Text, time.Now().Format(format), emailModelDb.SenderEmail, emailModelDb.RecipientEmail, emailModelDb.ReadStatus, emailModelDb.Deleted, emailModelDb.DraftStatus, emailModelCore.SpamStatus, emailModelDb.ReplyToEmailID, emailModelDb.Flag).Scan(&id)
 
-	err := r.DB.QueryRow(insertEmailQuery, emailModelDb.Topic, emailModelDb.Text, time.Now().Format(format), emailModelDb.SenderEmail, emailModelDb.RecipientEmail, emailModelDb.ReadStatus, emailModelDb.Deleted, emailModelDb.DraftStatus, emailModelCore.SpamStatus, emailModelDb.ReplyToEmailID, emailModelDb.Flag).Scan(&id)
+	args := []interface{}{emailModelDb.Topic, emailModelDb.Text, time.Now().Format(format), emailModelDb.SenderEmail, emailModelDb.RecipientEmail, emailModelDb.ReadStatus, emailModelDb.Deleted, emailModelDb.DraftStatus, emailModelDb.ReplyToEmailID, emailModelDb.Flag, emailModelDb.SenderEmail}
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(insertEmailQuery, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
+
 	if err != nil {
 		return 0, &domain.Email{}, fmt.Errorf("failed to add email: %v", err)
 	}
@@ -56,12 +64,10 @@ func (r *EmailRepository) Add(emailModelCore *domain.Email, ctx context.Context)
 		return 0, &domain.Email{}, fmt.Errorf("failed to add email file: %v", err)
 	}
 
-	args := []interface{}{emailModelDb.Topic, emailModelDb.Text, time.Now().Format(format), emailModelDb.SenderEmail, emailModelDb.RecipientEmail, emailModelDb.ReadStatus, emailModelDb.Deleted, emailModelDb.DraftStatus, emailModelDb.ReplyToEmailID, emailModelDb.Flag, emailModelDb.SenderEmail}
-	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(insertEmailQuery, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
-
 	return id, emailModelCore, nil
 }
 
+// AddProfileEmail links an email to one or more profiles based on sender and recipient information.
 func (r *EmailRepository) AddProfileEmail(email_id uint64, sender, recipient string, ctx context.Context) error {
 	var query string
 	var err error
@@ -86,12 +92,13 @@ func (r *EmailRepository) AddProfileEmail(email_id uint64, sender, recipient str
 	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
 
 	if err != nil {
-		return fmt.Errorf("Profile_email with email_id=%d and fail", email_id)
+		return fmt.Errorf("profile_email with email_id=%d and fail", email_id)
 	}
 
 	return nil
 }
 
+// AddProfileEmailMyself links an email to the profile corresponding to the sender (when sender and recipient are the same).
 func (r *EmailRepository) AddProfileEmailMyself(email_id uint64, login string, ctx context.Context) error {
 	query := `
 		INSERT INTO profile_email (profile_id, email_id)
@@ -112,6 +119,7 @@ func (r *EmailRepository) AddProfileEmailMyself(email_id uint64, login string, c
 
 }
 
+// FindEmail searches for a user in the database based on their login.
 func (r *EmailRepository) FindEmail(login string, ctx context.Context) error {
 	query := "SELECT * FROM profile WHERE login = $1"
 
@@ -130,6 +138,7 @@ func (r *EmailRepository) FindEmail(login string, ctx context.Context) error {
 	return nil
 }
 
+// GetAllIncoming returns all emails incoming from the storage.
 func (r *EmailRepository) GetAllIncoming(login string, offset, limit int64, ctx context.Context) ([]*domain.Email, error) {
 	query := `
 		SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
@@ -149,6 +158,7 @@ func (r *EmailRepository) GetAllIncoming(login string, offset, limit int64, ctx 
 	var err error
 	args := []interface{}{}
 	start := time.Now()
+
 	if offset >= 0 && limit > 0 {
 		query += " OFFSET $2 LIMIT $3"
 		args = []interface{}{login, offset, limit}
@@ -175,6 +185,7 @@ func (r *EmailRepository) GetAllIncoming(login string, offset, limit int64, ctx 
 	return emailsModelCore, nil
 }
 
+// GetAllSent returns all emails sent from the storage.
 func (r *EmailRepository) GetAllSent(login string, offset, limit int64, ctx context.Context) ([]*domain.Email, error) {
 	query := `
 		SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
@@ -194,6 +205,7 @@ func (r *EmailRepository) GetAllSent(login string, offset, limit int64, ctx cont
 	var err error
 	args := []interface{}{}
 	start := time.Now()
+
 	if offset >= 0 && limit > 0 {
 		query += " OFFSET $2 LIMIT $3"
 		args = []interface{}{login, offset, limit}
@@ -221,6 +233,7 @@ func (r *EmailRepository) GetAllSent(login string, offset, limit int64, ctx cont
 	return emailsModelCore, nil
 }
 
+// GetAllDraft returns all draft emails from the storage.
 func (r *EmailRepository) GetAllDraft(login string, offset, limit int64, ctx context.Context) ([]*domain.Email, error) {
 	query := `
 		SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
@@ -240,6 +253,7 @@ func (r *EmailRepository) GetAllDraft(login string, offset, limit int64, ctx con
 	var err error
 	args := []interface{}{}
 	start := time.Now()
+
 	if offset >= 0 && limit > 0 {
 		query += " OFFSET $2 LIMIT $3"
 		args = []interface{}{login, offset, limit}
@@ -266,6 +280,7 @@ func (r *EmailRepository) GetAllDraft(login string, offset, limit int64, ctx con
 	return emailsModelCore, nil
 }
 
+// GetAllSpam returns all draft emails from the storage.
 func (r *EmailRepository) GetAllSpam(login string, offset, limit int64, ctx context.Context) ([]*domain.Email, error) {
 	query := `
 		SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
@@ -285,6 +300,7 @@ func (r *EmailRepository) GetAllSpam(login string, offset, limit int64, ctx cont
 	var err error
 	args := []interface{}{}
 	start := time.Now()
+
 	if offset >= 0 && limit > 0 {
 		query += " OFFSET $2 LIMIT $3"
 		args = []interface{}{login, offset, limit}
@@ -311,6 +327,7 @@ func (r *EmailRepository) GetAllSpam(login string, offset, limit int64, ctx cont
 	return emailsModelCore, nil
 }
 
+// GetByID returns the email by its unique identifier.
 func (r *EmailRepository) GetByID(id uint64, login string, ctx context.Context) (*domain.Email, error) {
 	query := `
 		SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
@@ -341,6 +358,7 @@ func (r *EmailRepository) GetByID(id uint64, login string, ctx context.Context) 
 	return converters.EmailConvertDbInCore(emailModelDb), nil
 }
 
+// Update updates the information of an email in the storage based on the provided new email.
 func (r *EmailRepository) Update(newEmail *domain.Email, ctx context.Context) (bool, error) {
 	newEmailDb := converters.EmailConvertCoreInDb(*newEmail)
 
@@ -382,6 +400,7 @@ func (r *EmailRepository) Update(newEmail *domain.Email, ctx context.Context) (b
 	return true, nil
 }
 
+// Delete removes the email from the storage by its unique identifier.
 func (r *EmailRepository) Delete(id uint64, login string, ctx context.Context) (bool, error) {
 	query := `
 		DELETE FROM profile_email
@@ -391,7 +410,7 @@ func (r *EmailRepository) Delete(id uint64, login string, ctx context.Context) (
 			JOIN profile p ON pe.profile_id = p.id
 			WHERE email_id = $1 AND p.login = $2
 		)
-		AND email_id = $1;
+		AND email_id = $1
 	`
 
 	start := time.Now()
@@ -415,4 +434,151 @@ func (r *EmailRepository) Delete(id uint64, login string, ctx context.Context) (
 	}
 
 	return true, nil
+}
+
+// AddFile adds a file entry to the database with the provided file ID and file type.
+func (r *EmailRepository) AddFile(fileID string, fileType string, ctx context.Context) (uint64, error) {
+	query := `
+        INSERT INTO file (file_id, file_type)
+        VALUES ($1, $2)
+        RETURNING id
+    `
+
+	var id uint64
+	start := time.Now()
+	err := r.DB.QueryRowContext(ctx, query, fileID, fileType).Scan(&id)
+
+	args := []interface{}{fileID, fileType}
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
+
+	if err != nil {
+		return 0, fmt.Errorf("failed to add file: %v", err)
+	}
+
+	return id, nil
+}
+
+// AddAttachment links a file to an email by inserting a record into the email_file table.
+func (r *EmailRepository) AddAttachment(emailID uint64, fileID uint64, ctx context.Context) error {
+	query := `
+        INSERT INTO email_file (email_id, file_id)
+        VALUES ($1, $2)
+    `
+
+	start := time.Now()
+	_, err := r.DB.ExecContext(ctx, query, emailID, fileID)
+
+	args := []interface{}{emailID, fileID}
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
+
+	if err != nil {
+		return fmt.Errorf("failed to add attachment: %v", err)
+	}
+
+	return nil
+}
+
+// GetFileByID retrieves file information based on the provided file ID.
+func (r *EmailRepository) GetFileByID(id uint64, ctx context.Context) (*domain.File, error) {
+	query := `
+        SELECT file_id, file_type
+        FROM file
+        WHERE id = $1
+    `
+
+	var fileID string
+	var fileType string
+	start := time.Now()
+	err := r.DB.QueryRowContext(ctx, query, id).Scan(&fileID, &fileType)
+
+	args := []interface{}{fileID}
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get file: %v", err)
+	}
+
+	return &domain.File{ID: id, FileId: fileID, FileType: fileType}, nil
+}
+
+// GetFilesByEmailID retrieves all files associated with a given email ID.
+func (r *EmailRepository) GetFilesByEmailID(emailID uint64, ctx context.Context) ([]*domain.File, error) {
+	query := `
+        SELECT f.file_id, f.file_type
+        FROM file f
+        JOIN email_file ef ON f.id = ef.file_id
+        WHERE ef.email_id = $1
+    `
+
+	var filesModelDb []*repository_models.File
+	start := time.Now()
+	rows, err := r.DB.QueryContext(ctx, query, emailID)
+
+	args := []interface{}{emailID}
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get files")
+	}
+
+	for rows.Next() {
+		var file repository_models.File
+		err := rows.Scan(&file.FileId, &file.FileType)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan file: %v", err)
+		}
+		filesModelDb = append(filesModelDb, &file)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to iterate over files: %v", err)
+	}
+
+	var filesModelCore []*domain.File
+	for _, f := range filesModelDb {
+		filesModelCore = append(filesModelCore, converters.FileConvertDbInCore(*f))
+	}
+
+	return filesModelCore, nil
+}
+
+// DeleteFileByID deletes a file entry from the database based on the provided file ID.
+func (r *EmailRepository) DeleteFileByID(fileID uint64, ctx context.Context) error {
+	query := `
+        DELETE FROM file
+        WHERE id = $1
+    `
+
+	start := time.Now()
+	_, err := r.DB.ExecContext(ctx, query, fileID)
+
+	args := []interface{}{fileID}
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
+
+	if err != nil {
+		return fmt.Errorf("failed to delete file: %v", err)
+	}
+
+	return nil
+}
+
+// UpdateFileByID updates the file ID and file type of a file entry in the database based on the provided file ID.
+func (r *EmailRepository) UpdateFileByID(fileID uint64, newFileID string, newFileType string, ctx context.Context) error {
+	query := `
+        UPDATE file
+        SET file_id = $1, file_type = $2
+        WHERE id = $3
+    `
+
+	start := time.Now()
+	_, err := r.DB.ExecContext(ctx, query, newFileID, newFileType, fileID)
+
+	args := []interface{}{newFileID, newFileType, fileID}
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
+
+	if err != nil {
+		return fmt.Errorf("failed to update file: %v", err)
+	}
+
+	return nil
 }

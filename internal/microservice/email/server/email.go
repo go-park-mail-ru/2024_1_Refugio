@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"mail/internal/microservice/email/proto"
+	"mail/internal/pkg/utils/validators"
 
 	usecase "mail/internal/microservice/email/interface"
 	converters "mail/internal/microservice/models/proto_converters"
@@ -215,4 +216,108 @@ func (es *EmailServer) AddEmailDraft(ctx context.Context, input *proto.Email) (*
 	emailWithId.Id = id
 	emailWithId.Email = converters.EmailConvertCoreInProto(*email)
 	return emailWithId, nil
+}
+
+func (es *EmailServer) AddAttachment(ctx context.Context, input *proto.AddAttachmentRequest) (*proto.AddAttachmentReply, error) {
+	if input == nil {
+		return nil, fmt.Errorf("invalid file format: %s", input)
+	}
+
+	if validators.IsEmpty(input.FileId) || validators.IsEmpty(input.FileType) {
+		return nil, fmt.Errorf("file id or file type is empty")
+	}
+
+	if input.EmailId <= 0 {
+		return nil, fmt.Errorf("invalid email id")
+	}
+
+	fileId, err := es.EmailUseCase.AddAttachment(input.FileId, input.FileType, input.EmailId, ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed add attachment")
+	}
+
+	return &proto.AddAttachmentReply{FileId: fileId}, nil
+}
+
+func (es *EmailServer) GetFileByID(ctx context.Context, input *proto.GetFileByIDRequest) (*proto.GetFileByIDReply, error) {
+	if input == nil {
+		return nil, fmt.Errorf("invalid file format: %s", input)
+	}
+
+	if input.FileId <= 0 {
+		return nil, fmt.Errorf("invalid file id")
+	}
+
+	file, err := es.EmailUseCase.GetFileByID(input.FileId, ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed get file by id")
+	}
+
+	return &proto.GetFileByIDReply{File: converters.FileConvertCoreInProto(*file)}, nil
+}
+
+func (es *EmailServer) GetFilesByEmailID(ctx context.Context, input *proto.GetFilesByEmailIDRequest) (*proto.GetFilesByEmailIDReply, error) {
+	if input == nil {
+		return nil, fmt.Errorf("invalid file format: %s", input)
+	}
+
+	if input.EmailId <= 0 {
+		return nil, fmt.Errorf("invalid email id")
+	}
+
+	files, err := es.EmailUseCase.GetFilesByEmailID(input.EmailId, ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed get files by email id")
+	}
+
+	filesProto := make([]*proto.File, 0, len(files))
+	for _, file := range files {
+		filesProto = append(filesProto, converters.FileConvertCoreInProto(*file))
+	}
+
+	return &proto.GetFilesByEmailIDReply{Files: filesProto}, nil
+}
+
+func (es *EmailServer) DeleteFileByID(ctx context.Context, input *proto.DeleteFileByIDRequest) (*proto.DeleteFileByIDReply, error) {
+	if input == nil {
+		return nil, fmt.Errorf("invalid file format: %s", input)
+	}
+
+	if input.FileId <= 0 {
+		return nil, fmt.Errorf("invalid file id")
+	}
+
+	deleted, err := es.EmailUseCase.DeleteFileByID(input.FileId, ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed delete file by id")
+	}
+	if !deleted {
+		return nil, fmt.Errorf("file not deleted")
+	}
+
+	return &proto.DeleteFileByIDReply{Status: deleted}, nil
+}
+
+func (es *EmailServer) UpdateFileByID(ctx context.Context, input *proto.UpdateFileByIDRequest) (*proto.UpdateFileByIDReply, error) {
+	if input == nil {
+		return nil, fmt.Errorf("invalid file format: %s", input)
+	}
+
+	if validators.IsEmpty(input.NewFileId) || validators.IsEmpty(input.NewFileType) {
+		return nil, fmt.Errorf("file id or file type is empty")
+	}
+
+	if input.Id <= 0 {
+		return nil, fmt.Errorf("invalid file id")
+	}
+
+	updated, err := es.EmailUseCase.UpdateFileByID(input.Id, input.NewFileId, input.NewFileType, ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed update file by id")
+	}
+	if !updated {
+		return nil, fmt.Errorf("file not updated")
+	}
+
+	return &proto.UpdateFileByIDReply{Status: updated}, nil
 }
