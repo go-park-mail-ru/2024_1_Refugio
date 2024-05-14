@@ -188,13 +188,13 @@ func (us *UserServer) CreateUser(ctx context.Context, input *proto.CreateUserReq
 // CreateUser creates user.
 func (us *UserServer) GetUserByVKId(ctx context.Context, input *proto.GetUserVKIdRequest) (*proto.GetUserReply, error) {
 	if input.VkId <= 0 {
-		return nil, fmt.Errorf("bad vkId", input.VkId)
+		return nil, fmt.Errorf("bad vkId")
 	}
 
 	user, err := us.UserUseCase.GetUserVkID(input.VkId, ctx)
 	if err != nil {
 		fmt.Println("user with vkId create fail")
-		return nil, fmt.Errorf("user with vkId %s create fail", input.VkId)
+		return nil, fmt.Errorf("user with vkId create fail")
 	}
 
 	return &proto.GetUserReply{User: converters.UserConvertCoreInProto(*user)}, nil

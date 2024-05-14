@@ -107,7 +107,7 @@ func (as *AuthServer) LoginVK(ctx context.Context, input *proto.LoginVKRequest) 
 	}
 	if user == nil {
 		fmt.Println("User with vkId not found")
-		return &proto.LoginReply{LoginStatus: false}, fmt.Errorf("User with vkId = %s not found", input.VkId)
+		return &proto.LoginReply{LoginStatus: false}, fmt.Errorf("User with vkId not found")
 	}
 
 	conn2, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.SessionService))
