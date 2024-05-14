@@ -20,4 +20,5 @@ type User struct {
 	AvatarID         *string           `db:"avatar_id"`         // AvatarID stores the identifier of the user's avatar image.
 	PhoneNumber      string            `db:"phone_number"`      // PhoneNumber stores the phone number of the user.
 	Description      string            `db:"description"`       // Description stores additional information about the user.
+	VKId             uint32            `db:"vkid"`              // ID uniquely identifies the user in VK.
 }

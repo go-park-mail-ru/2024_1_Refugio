@@ -111,7 +111,24 @@ definitions:
       surname:
         type: string
     type: object
-host: localhost:8080
+  response.UserVKSwag:
+    properties:
+      birthday:
+        type: string
+      firstname:
+        type: string
+      gender:
+        $ref: '#/definitions/response.UserGenderSwag'
+      id:
+        type: integer
+      login:
+        type: string
+      surname:
+        type: string
+      vkId:
+        type: integer
+    type: object
+host: mailhub.su
 info:
   contact: {}
   description: API server for MailHub
@@ -1127,6 +1144,131 @@ paths:
       summary: Get statistics
       tags:
       - question
+  /api/v1/testAuth/auth-vk/auth:
+    get:
+      consumes:
+      - application/json
+      description: Handles user auth VK.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Auth successful
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to auth user
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: User auth VK
+      tags:
+      - auth-vk
+  /api/v1/testAuth/auth-vk/getAuthUrlLoginVK:
+    get:
+      consumes:
+      - application/json
+      description: Handles user login.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to get url
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: URL VK
+      tags:
+      - auth-vk
+  /api/v1/testAuth/auth-vk/getAuthUrlSignUpVK:
+    get:
+      consumes:
+      - application/json
+      description: Handles user signup.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to get url
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: URL VK
+      tags:
+      - auth-vk
+  /api/v1/testAuth/auth-vk/loginVK:
+    get:
+      consumes:
+      - application/json
+      description: LoginVK Handles user.
+      parameters:
+      - description: code from oauth
+        in: query
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login successful
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Invalid credentials
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to create session
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: LoginVK User
+      tags:
+      - auth-vk
+  /api/v1/testAuth/auth-vk/signupVK:
+    post:
+      consumes:
+      - application/json
+      description: Handles user signup VK.
+      parameters:
+      - description: Auth Token
+        in: header
+        name: Auth-Token
+        required: true
+        type: string
+      - description: New user details for signup
+        in: body
+        name: newUser
+        required: true
+        schema:
+          $ref: '#/definitions/response.UserVKSwag'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Signup successful
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to add user
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: User signup VK
+      tags:
+      - auth-vk
   /api/v1/user/avatar/delete:
     delete:
       consumes:

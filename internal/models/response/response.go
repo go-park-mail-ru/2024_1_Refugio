@@ -61,6 +61,16 @@ type UserSwag struct {
 	Description string         `json:"description,omitempty"`
 }
 
+type UserVKSwag struct {
+	ID        uint32         `json:"id,omitempty"`
+	FirstName string         `json:"firstname,omitempty"`
+	Surname   string         `json:"surname,omitempty"`
+	Gender    UserGenderSwag `json:"gender,omitempty"`
+	Birthday  time.Time      `json:"birthday,omitempty"`
+	VKId      uint32         `json:"vkId"`
+	Login     string         `json:"login"`
+}
+
 type EmailSwag struct {
 	ID             uint64    `json:"id,omitempty"`
 	Topic          string    `json:"topic"`

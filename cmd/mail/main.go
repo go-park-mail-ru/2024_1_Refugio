@@ -40,6 +40,7 @@ import (
 	authHand "mail/internal/pkg/auth/delivery/http"
 	emailHand "mail/internal/pkg/email/delivery/http"
 	folderHand "mail/internal/pkg/folder/delivery/http"
+	oauthHand "mail/internal/pkg/oauth/delivery/http"
 	questionHand "mail/internal/pkg/questionnairy/delivery/http"
 	userHand "mail/internal/pkg/user/delivery/http"
 
@@ -50,7 +51,7 @@ import (
 // @version 1.0
 // @description API server for MailHub
 
-// @host localhost:8080
+// @host mailhub.su
 // @BasePath /
 func main() {
 	settingTime()
@@ -110,7 +111,9 @@ func main() {
 	defer questionServiceConn.Close()
 	questionHandler := initializeQuestionHandler(sessionsManager, question_proto.NewQuestionServiceClient(questionServiceConn))
 
-	router := setupRouter(authHandler, userHandler, emailHandler, folderHandler, questionHandler, loggerMiddlewareAccess)
+	oauthHandler := initializeOAuthHandler(sessionsManager)
+
+	router := setupRouter(authHandler, oauthHandler, userHandler, emailHandler, folderHandler, questionHandler, loggerMiddlewareAccess)
 
 	startServer(router)
 }
@@ -169,6 +172,13 @@ func initializeAuthHandler(sessionsManager *session.SessionsManager, authService
 	return &authHand.AuthHandler{
 		Sessions:          sessionsManager,
 		AuthServiceClient: authServiceClient,
+	}
+}
+
+// initializeOAuthHandler initializing authorization handler
+func initializeOAuthHandler(sessionsManager *session.SessionsManager) *oauthHand.OAuthHandler {
+	return &oauthHand.OAuthHandler{
+		Sessions: sessionsManager,
 	}
 }
 
@@ -292,10 +302,16 @@ func initializeMiddlewareLogger() *middleware.Logger {
 }
 
 // setupRouter configuring routers
-func setupRouter(authHandler *authHand.AuthHandler, userHandler *userHand.UserHandler, emailHandler *emailHand.EmailHandler, folderHandler *folderHand.FolderHandler, questionHandler *questionHand.QuestionHandler, logger *middleware.Logger) http.Handler {
+func setupRouter(authHandler *authHand.AuthHandler, oauthHandler *oauthHand.OAuthHandler, userHandler *userHand.UserHandler, emailHandler *emailHand.EmailHandler, folderHandler *folderHand.FolderHandler, questionHandler *questionHand.QuestionHandler, logger *middleware.Logger) http.Handler {
 	router := mux.NewRouter()
 
-	auth := setupAuthRouter(authHandler, emailHandler, logger)
+	router.HandleFunc("/api/v1/testAuth/auth-vk/getAuthUrlSignUpVK", oauthHandler.GetSignUpURLVK).Methods("GET", "OPTIONS")
+	router.HandleFunc("/api/v1/testAuth/auth-vk/getAuthUrlLoginVK", oauthHandler.GetLoginURLVK).Methods("GET", "OPTIONS")
+	router.HandleFunc("/api/v1/testAuth/auth-vk/auth", oauthHandler.AuthVK).Methods("GET", "OPTIONS")
+	router.HandleFunc("/api/v1/testAuth/auth-vk/loginVK", oauthHandler.LoginVK).Methods("GET", "OPTIONS")
+	router.HandleFunc("/api/v1/testAuth/auth-vk/signupVK", oauthHandler.SignupVK).Methods("POST", "OPTIONS")
+
+	auth := setupAuthRouter(authHandler, oauthHandler, logger)
 	router.PathPrefix("/api/v1/auth").Handler(auth)
 
 	logRouter := setupLogRouter(emailHandler, userHandler, folderHandler, questionHandler, logger)
@@ -313,15 +329,17 @@ func setupRouter(authHandler *authHand.AuthHandler, userHandler *userHand.UserHa
 }
 
 // setupAuthRouter configuring authorization router
-func setupAuthRouter(authHandler *authHand.AuthHandler, emailHandler *emailHand.EmailHandler, logger *middleware.Logger) http.Handler {
+func setupAuthRouter(authHandler *authHand.AuthHandler, oauthHandler *oauthHand.OAuthHandler, logger *middleware.Logger) http.Handler {
 	auth := mux.NewRouter().PathPrefix("/api/v1/auth").Subrouter()
 	auth.Use(logger.AccessLogMiddleware, middleware.PanicMiddleware)
 
 	auth.HandleFunc("/login", authHandler.Login).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/signup", authHandler.Signup).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/logout", authHandler.Logout).Methods("POST", "OPTIONS")
-	auth.HandleFunc("/sendOther", emailHandler.SendFromAnotherDomain).Methods("POST", "OPTIONS")
 
+	//auth.HandleFunc("/getAuthUrlVK", oauthHandler.GetSignUpURLVK).Methods("GET", "OPTIONS")
+	//auth.HandleFunc("/auth-vk/signupVK", oauthHandler.SignupVK).Methods("GET", "OPTIONS")
+	//auth.HandleFunc("/auth-vk/loginVK", oauthHandler.LoginVK).Methods("GET", "OPTIONS")
 	return auth
 }
 
