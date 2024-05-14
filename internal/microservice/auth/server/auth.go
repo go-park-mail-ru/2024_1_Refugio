@@ -6,6 +6,8 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	"mail/internal/microservice/auth/proto"
+	"mail/internal/models/microservice_ports"
+	"mail/internal/pkg/utils/connect_microservice"
 	"mail/internal/pkg/utils/sanitize"
 
 	domain "mail/internal/microservice/models/domain_models"
