@@ -1503,6 +1503,361 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/gmail/email/delete/{id}": {
+            "delete": {
+                "description": "Delete an email message based on its identifier",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "emails-gmail"
+                ],
+                "summary": "Delete an email message",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID of the email message",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deletion success status",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad id",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to delete email message",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/gmail/email/send": {
+            "post": {
+                "description": "Send a new email message to the system",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "emails-gmail"
+                ],
+                "summary": "Send a new email message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Email message in JSON format",
+                        "name": "email",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/response.EmailSwag"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ID of the send email message",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad JSON in request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to add email message",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/gmail/email/{id}": {
+            "get": {
+                "description": "Get an email message by its unique identifier",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "emails-gmail"
+                ],
+                "summary": "Get an email message by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID of the email message",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Email message data",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad id in request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Email not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/gmail/emails/draft": {
+            "get": {
+                "description": "Get a list of all email messages",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "emails-gmail"
+                ],
+                "summary": "Display the list of email messages",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of all email messages",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "JSON encoding error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/gmail/emails/incoming": {
+            "get": {
+                "description": "Get a list of all email messages",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "emails-gmail"
+                ],
+                "summary": "Display the list of email messages",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of all email messages",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "JSON encoding error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/gmail/emails/sent": {
+            "get": {
+                "description": "Get a list of all email messages",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "emails-gmail"
+                ],
+                "summary": "Display the list of email messages",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of all email messages",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "JSON encoding error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/gmail/emails/spam": {
+            "get": {
+                "description": "Get a list of all email messages",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "emails-gmail"
+                ],
+                "summary": "Display the list of email messages",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of all email messages",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "JSON encoding error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/questions": {
             "get": {
                 "description": "Get Handles questions.",

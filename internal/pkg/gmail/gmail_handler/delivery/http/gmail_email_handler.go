@@ -1,69 +1,74 @@
 package http
 
 import (
-	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/denisbrodbeck/striphtmltags"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/schema"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/gmail/v1"
-	"google.golang.org/api/option"
 	"io/ioutil"
 	"log"
 	apiModels "mail/internal/models/delivery_models"
 	"mail/internal/models/response"
+	gmailAuth "mail/internal/pkg/gmail/gmail_auth/delivery/http"
+	domainSession "mail/internal/pkg/session/interface"
+	"mail/internal/pkg/utils/validators"
 	"net/http"
 	"os"
 	"time"
 )
 
-func GetIncoming(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-	config, tok := getClient()
-	client := config.Client(context.Background(), tok)
+// GMailEmailHandler handles user-related HTTP requests.
+type GMailEmailHandler struct {
+	Sessions     domainSession.SessionsManager
+	GMailService *gmail.Service
+}
 
-	srv, err := gmail.NewService(ctx, option.WithHTTPClient(client))
+// GetIncoming displays the list of email messages.
+// @Summary Display the list of email messages
+// @Description Get a list of all email messages
+// @Tags emails-gmail
+// @Produce json
+// @Param X-Csrf-Token header string true "CSRF Token"
+// @Success 200 {object} response.Response "List of all email messages"
+// @Failure 400 {object} response.Response "Bad request"
+// @Failure 401 {object} response.Response "Not Authorized"
+// @Failure 500 {object} response.Response "JSON encoding error"
+// @Router /api/v1/gmail/emails/incoming [get]
+func (g *GMailEmailHandler) GetIncoming(w http.ResponseWriter, r *http.Request) {
+	login, err := g.Sessions.GetLoginBySession(r, r.Context())
 	if err != nil {
-		log.Fatalf("Unable to retrieve Gmail client: %v", err)
+		response.HandleError(w, http.StatusBadRequest, "Bad user session")
+		return
+	}
+	if !validators.IsValidEmailFormatGmail(login) {
+		response.HandleError(w, http.StatusBadRequest, "Login must end with @gmail.com")
+		return
+	}
+
+	srv, err := GetSRV(login)
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Unable to retrieve Gmail client")
+		return
 	}
 
 	req, err := srv.Users.Messages.List("me").Q("label:inbox").Do()
 	if err != nil {
-		log.Fatalf("Error: %v", err)
-	}
-
-	emailsApi := make([]*apiModels.OtherEmail, len(req.Messages))
-	for i, m := range req.Messages {
-		msg, _ := srv.Users.Messages.Get("me", m.Id).Format("full").Do()
-		email := CreateEmailStruct(msg)
-		emailsApi[i] = email
-	}
-	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"emails": emailsApi})
-}
-
-func GetSent(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-	config, tok := getClient()
-	client := config.Client(context.Background(), tok)
-
-	srv, err := gmail.NewService(ctx, option.WithHTTPClient(client))
-	if err != nil {
-		log.Fatalf("Unable to retrieve Gmail client: %v", err)
-	}
-
-	req, err := srv.Users.Messages.List("me").Q("label:sent").Do()
-	if err != nil {
-		log.Fatalf("Error: %v", err)
+		response.HandleError(w, http.StatusInternalServerError, "Error receiving list messages")
+		return
 	}
 
 	emailsApi := make([]*apiModels.OtherEmail, len(req.Messages))
 	for i, m := range req.Messages {
 		msg, err := srv.Users.Messages.Get("me", m.Id).Format("full").Do()
 		if err != nil {
-			fmt.Println("Error: ", err)
+			response.HandleError(w, http.StatusInternalServerError, "Error receiving messages")
+			return
 		}
 		email := CreateEmailStruct(msg)
 		emailsApi[i] = email
@@ -71,26 +76,93 @@ func GetSent(w http.ResponseWriter, r *http.Request) {
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"emails": emailsApi})
 }
 
-func GetSpam(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-	config, tok := getClient()
-	client := config.Client(context.Background(), tok)
-
-	srv, err := gmail.NewService(ctx, option.WithHTTPClient(client))
+// GetSent displays the list of email messages.
+// @Summary Display the list of email messages
+// @Description Get a list of all email messages
+// @Tags emails-gmail
+// @Produce json
+// @Param X-Csrf-Token header string true "CSRF Token"
+// @Success 200 {object} response.Response "List of all email messages"
+// @Failure 400 {object} response.Response "Bad request"
+// @Failure 401 {object} response.Response "Not Authorized"
+// @Failure 500 {object} response.Response "JSON encoding error"
+// @Router /api/v1/gmail/emails/sent [get]
+func (g *GMailEmailHandler) GetSent(w http.ResponseWriter, r *http.Request) {
+	login, err := g.Sessions.GetLoginBySession(r, r.Context())
 	if err != nil {
-		log.Fatalf("Unable to retrieve Gmail client: %v", err)
+		response.HandleError(w, http.StatusBadRequest, "Bad user session")
+		return
+	}
+	if !validators.IsValidEmailFormatGmail(login) {
+		response.HandleError(w, http.StatusBadRequest, "Login must end with @gmail.com")
+		return
 	}
 
-	req, err := srv.Users.Messages.List("me").Q("label:spam").Do()
+	srv, err := GetSRV(login)
 	if err != nil {
-		log.Fatalf("Error: %v", err)
+		response.HandleError(w, http.StatusInternalServerError, "Unable to retrieve Gmail client")
+		return
+	}
+
+	req, err := srv.Users.Messages.List("me").Q("label:sent").Do()
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Error receiving list messages")
+		return
 	}
 
 	emailsApi := make([]*apiModels.OtherEmail, len(req.Messages))
 	for i, m := range req.Messages {
 		msg, err := srv.Users.Messages.Get("me", m.Id).Format("full").Do()
 		if err != nil {
-			fmt.Println("Error: ", err)
+			response.HandleError(w, http.StatusInternalServerError, "Error receiving messages")
+			return
+		}
+		email := CreateEmailStruct(msg)
+		emailsApi[i] = email
+	}
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"emails": emailsApi})
+}
+
+// GetSpam displays the list of email messages.
+// @Summary Display the list of email messages
+// @Description Get a list of all email messages
+// @Tags emails-gmail
+// @Produce json
+// @Param X-Csrf-Token header string true "CSRF Token"
+// @Success 200 {object} response.Response "List of all email messages"
+// @Failure 400 {object} response.Response "Bad request"
+// @Failure 401 {object} response.Response "Not Authorized"
+// @Failure 500 {object} response.Response "JSON encoding error"
+// @Router /api/v1/gmail/emails/spam [get]
+func (g *GMailEmailHandler) GetSpam(w http.ResponseWriter, r *http.Request) {
+	login, err := g.Sessions.GetLoginBySession(r, r.Context())
+	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Bad user session")
+		return
+	}
+	if !validators.IsValidEmailFormatGmail(login) {
+		response.HandleError(w, http.StatusBadRequest, "Login must end with @gmail.com")
+		return
+	}
+
+	srv, err := GetSRV(login)
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Unable to retrieve Gmail client")
+		return
+	}
+
+	req, err := srv.Users.Messages.List("me").Q("label:spam").Do()
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Error receiving list messages")
+		return
+	}
+
+	emailsApi := make([]*apiModels.OtherEmail, len(req.Messages))
+	for i, m := range req.Messages {
+		msg, err := srv.Users.Messages.Get("me", m.Id).Format("full").Do()
+		if err != nil {
+			response.HandleError(w, http.StatusInternalServerError, "Error receiving messages")
+			return
 		}
 		email := CreateEmailStruct(msg)
 		emailsApi[i] = email
@@ -103,24 +175,47 @@ func GetSpam(w http.ResponseWriter, r *http.Request) {
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"emails": emailsApi})
 }
 
-func GetDrafts(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-	config, tok := getClient()
-	client := config.Client(context.Background(), tok)
-
-	srv, err := gmail.NewService(ctx, option.WithHTTPClient(client))
+// GetDrafts displays the list of email messages.
+// @Summary Display the list of email messages
+// @Description Get a list of all email messages
+// @Tags emails-gmail
+// @Produce json
+// @Param X-Csrf-Token header string true "CSRF Token"
+// @Success 200 {object} response.Response "List of all email messages"
+// @Failure 400 {object} response.Response "Bad request"
+// @Failure 401 {object} response.Response "Not Authorized"
+// @Failure 500 {object} response.Response "JSON encoding error"
+// @Router /api/v1/gmail/emails/draft [get]
+func (g *GMailEmailHandler) GetDrafts(w http.ResponseWriter, r *http.Request) {
+	login, err := g.Sessions.GetLoginBySession(r, r.Context())
 	if err != nil {
-		log.Fatalf("Unable to retrieve Gmail client: %v", err)
+		response.HandleError(w, http.StatusBadRequest, "Bad user session")
+		return
+	}
+	if !validators.IsValidEmailFormatGmail(login) {
+		response.HandleError(w, http.StatusBadRequest, "Login must end with @gmail.com")
+		return
+	}
+
+	srv, err := GetSRV(login)
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Unable to retrieve Gmail client")
+		return
 	}
 
 	req, err := srv.Users.Messages.List("me").Q("label:drafts").Do()
 	if err != nil {
-		log.Fatalf("Error: %v", err)
+		response.HandleError(w, http.StatusInternalServerError, "Error receiving list messages")
+		return
 	}
 
 	emailsApi := make([]*apiModels.OtherEmail, len(req.Messages))
 	for i, m := range req.Messages {
-		msg, _ := srv.Users.Messages.Get("me", m.Id).Format("full").Do()
+		msg, err := srv.Users.Messages.Get("me", m.Id).Format("full").Do()
+		if err != nil {
+			response.HandleError(w, http.StatusInternalServerError, "Error receiving messages")
+			return
+		}
 		email := CreateEmailStruct(msg)
 		emailsApi[i] = email
 	}
@@ -132,23 +227,46 @@ func GetDrafts(w http.ResponseWriter, r *http.Request) {
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"emails": emailsApi})
 }
 
-func GetById(w http.ResponseWriter, r *http.Request) {
+// GetById returns an email message by its ID.
+// @Summary Get an email message by ID
+// @Description Get an email message by its unique identifier
+// @Tags emails-gmail
+// @Produce json
+// @Param id path integer true "ID of the email message"
+// @Param X-Csrf-Token header string true "CSRF Token"
+// @Success 200 {object} response.Response "Email message data"
+// @Failure 400 {object} response.Response "Bad id in request"
+// @Failure 401 {object} response.Response "Not Authorized"
+// @Failure 404 {object} response.Response "Email not found"
+// @Router /api/v1/gmail/email/{id} [get]
+func (g *GMailEmailHandler) GetById(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	messageID := vars["id"]
-
-	ctx := context.Background()
-	config, tok := getClient()
-	client := config.Client(context.Background(), tok)
-
-	srv, err := gmail.NewService(ctx, option.WithHTTPClient(client))
-	if err != nil {
-		log.Fatalf("Unable to retrieve Gmail client: %v", err)
+	messageID, ok := vars["id"]
+	if !ok {
+		response.HandleError(w, http.StatusBadRequest, "Bad id in request")
+		return
 	}
 
-	fmt.Println("OK")
+	login, err := g.Sessions.GetLoginBySession(r, r.Context())
+	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Bad user session")
+		return
+	}
+	if !validators.IsValidEmailFormatGmail(login) {
+		response.HandleError(w, http.StatusBadRequest, "Login must end with @gmail.com")
+		return
+	}
+
+	srv, err := GetSRV(login)
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Unable to retrieve Gmail client")
+		return
+	}
+
 	msg, err := srv.Users.Messages.Get("me", messageID).Format("full").Do()
 	if err != nil {
-		fmt.Println("Error: Unable to retrieve message: %v", err)
+		response.HandleError(w, http.StatusInternalServerError, "Error receiving messages")
+		return
 	}
 
 	email := CreateEmailStruct(msg)
@@ -156,23 +274,55 @@ func GetById(w http.ResponseWriter, r *http.Request) {
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": email})
 }
 
-func Send(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-	config, tok := getClient()
-	client := config.Client(context.Background(), tok)
-
-	srv, err := gmail.NewService(ctx, option.WithHTTPClient(client))
+// Send adds a new email message.
+// @Summary Send a new email message
+// @Description Send a new email message to the system
+// @Tags emails-gmail
+// @Accept json
+// @Produce json
+// @Param X-Csrf-Token header string true "CSRF Token"
+// @Param email body response.EmailSwag true "Email message in JSON format"
+// @Success 200 {object} response.Response "ID of the send email message"
+// @Failure 400 {object} response.Response "Bad JSON in request"
+// @Failure 401 {object} response.Response "Not Authorized"
+// @Failure 500 {object} response.Response "Failed to add email message"
+// @Router /api/v1/gmail/email/send [post]
+func (g *GMailEmailHandler) Send(w http.ResponseWriter, r *http.Request) {
+	var newEmail apiModels.OtherEmail
+	decoder := schema.NewDecoder()
+	decoder.IgnoreUnknownKeys(true)
+	err := json.NewDecoder(r.Body).Decode(&newEmail)
 	if err != nil {
-		log.Fatalf("Unable to retrieve Gmail client: %v", err)
+		response.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
+		return
 	}
 
-	// input := base64.RawStdEncoding.EncodeToString([]byte("From: fedasovsergey00@gmail.com\r\nTo: fedasov03@inbox.ru\r\nSubject: My first Gmail API message\r\n\r\nЭто тестовое сообщение, отправленное через Gmail API."))
-	sub := string([]rune("Привет"))
-	input := base64.RawStdEncoding.EncodeToString([]byte(
-		"From: fedasovsergey00@gmail.com\r\n" +
-			"To: fedasov03@inbox.ru\r\n" +
-			fmt.Sprintf("Subject: Hello\n\n", sub) +
-			"Это тестовое сообщение, отправленное через Gmail API."))
+	login, err := g.Sessions.GetLoginBySession(r, r.Context())
+	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Bad sender session")
+		return
+	}
+
+	err = g.Sessions.CheckLogin(newEmail.SenderEmail, r, r.Context())
+	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Bad sender login")
+		return
+	}
+
+	srv, err := GetSRV(login)
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Unable to retrieve Gmail client")
+		return
+	}
+
+	input := base64.RawStdEncoding.EncodeToString([]byte(fmt.Sprintf("From: %v\r\nTo: %v\r\nSubject: %v\r\n\r\n%v", newEmail.SenderEmail, newEmail.RecipientEmail, newEmail.Topic, newEmail.Text)))
+	/*
+		input := base64.RawStdEncoding.EncodeToString([]byte(
+			"From: fedasovsergey00@gmail.com\r\n" +
+				"To: fedasov03@inbox.ru\r\n" +
+				fmt.Sprintf("Subject: Hello\n\n", sub) +
+				"Это тестовое сообщение, отправленное через Gmail API."))
+	*/
 
 	message := &gmail.Message{
 		Raw: input,
@@ -180,32 +330,56 @@ func Send(w http.ResponseWriter, r *http.Request) {
 
 	_, err = srv.Users.Messages.Send("me", message).Do()
 	if err != nil {
-		fmt.Println("Error: ", err)
+		response.HandleError(w, http.StatusInternalServerError, "Error sending the message")
+		return
 	}
 
-	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Status": "OK"})
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": newEmail})
 }
 
-func Delete(w http.ResponseWriter, r *http.Request) {
+// Delete deletes an email message.
+// @Summary Delete an email message
+// @Description Delete an email message based on its identifier
+// @Tags emails-gmail
+// @Produce json
+// @Param id path integer true "ID of the email message"
+// @Param X-Csrf-Token header string true "CSRF Token"
+// @Success 200 {object} response.Response "Deletion success status"
+// @Failure 400 {object} response.Response "Bad id"
+// @Failure 401 {object} response.Response "Not Authorized"
+// @Failure 500 {object} response.Response "Failed to delete email message"
+// @Router /api/v1/gmail/email/delete/{id} [delete]
+func (g *GMailEmailHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	messageID := vars["id"]
-
-	ctx := context.Background()
-	config, tok := getClient()
-	client := config.Client(context.Background(), tok)
-
-	srv, err := gmail.NewService(ctx, option.WithHTTPClient(client))
-	if err != nil {
-		log.Fatalf("Unable to retrieve Gmail client: %v", err)
+	messageID, ok := vars["id"]
+	if !ok {
+		response.HandleError(w, http.StatusBadRequest, "Bad id in request")
+		return
 	}
 
-	fmt.Println("OK")
+	login, err := g.Sessions.GetLoginBySession(r, r.Context())
+	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Bad user session")
+		return
+	}
+	if !validators.IsValidEmailFormatGmail(login) {
+		response.HandleError(w, http.StatusBadRequest, "Login must end with @gmail.com")
+		return
+	}
+
+	srv, err := GetSRV(login)
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Unable to retrieve Gmail client")
+		return
+	}
+
 	err = srv.Users.Messages.Delete("me", messageID).Do()
 	if err != nil {
-		fmt.Println("Error: Unable to retrieve message: %v", err)
+		response.HandleError(w, http.StatusInternalServerError, "Error deleting a message")
+		return
 	}
 
-	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"status": "OK"})
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": true})
 }
 
 func CreateEmailStruct(msg *gmail.Message) *apiModels.OtherEmail {
@@ -277,4 +451,12 @@ func getClient() (*oauth2.Config, *oauth2.Token) {
 		fmt.Println("Error:", err)
 	}
 	return config, tok
+}
+
+func GetSRV(login string) (*gmail.Service, error) {
+	srv, ok := gmailAuth.MapOAuthCongig[login]
+	if !ok {
+		return nil, errors.New("Unable to retrieve Gmail client")
+	}
+	return srv, nil
 }

@@ -99,6 +99,21 @@ type EmailSwag struct {
 	RecipientEmail string    `json:"recipientEmail"`
 }
 
+type EmailOtherSwag struct {
+	ID             string    `json:"id,omitempty"`
+	Topic          string    `json:"topic"`
+	Text           string    `json:"text"`
+	ReadStatus     bool      `json:"readStatus"`
+	Flag           bool      `json:"mark,omitempty"`
+	Deleted        bool      `json:"deleted"`
+	DateOfDispatch time.Time `json:"dateOfDispatch,omitempty"`
+	ReplyToEmailID uint64    `json:"replyToEmailId,omitempty"`
+	DraftStatus    bool      `json:"draftStatus"`
+	SpamStatus     bool      `json:"spamStatus"`
+	SenderEmail    string    `json:"senderEmail"`
+	RecipientEmail string    `json:"recipientEmail"`
+}
+
 type FolderSwag struct {
 	Name string `json:"name"`
 }

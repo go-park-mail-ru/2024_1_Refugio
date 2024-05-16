@@ -17,3 +17,10 @@ func IsValidEmailFormat(email string) bool {
 
 	return emailRegex.MatchString(email)
 }
+
+// IsValidEmailFormatGmail checks if the provided email string matches the specific format for emails ending with "@gmail.com".
+func IsValidEmailFormatGmail(email string) bool {
+	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@gmail\.com$`)
+
+	return emailRegex.MatchString(email)
+}

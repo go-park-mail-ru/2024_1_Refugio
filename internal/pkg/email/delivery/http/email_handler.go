@@ -388,63 +388,6 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getMXRecord(to string) (mx string, err error) {
-	var e *mail.Address
-	e, err = mail.ParseAddress(to)
-	if err != nil {
-		return
-	}
-
-	domain := strings.Split(e.Address, "@")[1]
-
-	var mxs []*net.MX
-	mxs, err = net.LookupMX(domain)
-
-	if err != nil {
-		return
-	}
-
-	for _, x := range mxs {
-		mx = x.Host
-		return
-	}
-
-	return
-}
-
-// Never fails, tries to format the address if possible
-func formatEmailAddress(addr string) string {
-	e, err := mail.ParseAddress(addr)
-	if err != nil {
-		return addr
-	}
-	return e.String()
-}
-
-func encodeRFC2047(str string) string {
-	// use mail's rfc2047 to encode any string
-	addr := mail.Address{Address: str}
-	return strings.Trim(addr.String(), " <>")
-}
-
-func composeMimeMail(to string, from string, subject string, body string) []byte {
-	header := make(map[string]string)
-	header["From"] = formatEmailAddress(from)
-	header["To"] = formatEmailAddress(to)
-	header["Subject"] = encodeRFC2047(subject)
-	header["MIME-Version"] = "1.0"
-	header["Content-Type"] = "text/plain; charset=\"utf-8\""
-	header["Content-Transfer-Encoding"] = "base64"
-
-	message := ""
-	for k, v := range header {
-		message += fmt.Sprintf("%s: %s\r\n", k, v)
-	}
-	message += "\r\n" + base64.StdEncoding.EncodeToString([]byte(body))
-
-	return []byte(message)
-}
-
 // Update updates an existing email message.
 // @Summary Update an email message
 // @Description Update an existing email message based on its identifier
@@ -1107,4 +1050,60 @@ func (h *EmailHandler) UpdateFileByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": true})
+}
+
+func getMXRecord(to string) (mx string, err error) {
+	var e *mail.Address
+	e, err = mail.ParseAddress(to)
+	if err != nil {
+		return
+	}
+
+	domain := strings.Split(e.Address, "@")[1]
+
+	var mxs []*net.MX
+	mxs, err = net.LookupMX(domain)
+
+	if err != nil {
+		return
+	}
+
+	for _, x := range mxs {
+		mx = x.Host
+		return
+	}
+
+	return
+}
+
+func formatEmailAddress(addr string) string {
+	e, err := mail.ParseAddress(addr)
+	if err != nil {
+		return addr
+	}
+	return e.String()
+}
+
+func encodeRFC2047(str string) string {
+	// use mail's rfc2047 to encode any string
+	addr := mail.Address{Address: str}
+	return strings.Trim(addr.String(), " <>")
+}
+
+func composeMimeMail(to string, from string, subject string, body string) []byte {
+	header := make(map[string]string)
+	header["From"] = formatEmailAddress(from)
+	header["To"] = formatEmailAddress(to)
+	header["Subject"] = encodeRFC2047(subject)
+	header["MIME-Version"] = "1.0"
+	header["Content-Type"] = "text/plain; charset=\"utf-8\""
+	header["Content-Transfer-Encoding"] = "base64"
+
+	message := ""
+	for k, v := range header {
+		message += fmt.Sprintf("%s: %s\r\n", k, v)
+	}
+	message += "\r\n" + base64.StdEncoding.EncodeToString([]byte(body))
+
+	return []byte(message)
 }

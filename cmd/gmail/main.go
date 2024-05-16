@@ -16,6 +16,7 @@ func main() {
 	gMail := mux.NewRouter()
 	gMail.HandleFunc("/getAuthURL", gMailHand.GetAuthURL).Methods("GET", "OPTIONS")
 	gMail.HandleFunc("/gAuth", gMailHand.GoogleAuth).Methods("GET", "OPTIONS")
+
 	gMail.HandleFunc("/gIncoming", http2.GetIncoming).Methods("GET", "OPTIONS")
 	gMail.HandleFunc("/gSent", http2.GetSent).Methods("GET", "OPTIONS")
 	gMail.HandleFunc("/getByID/{id}", http2.GetById).Methods("GET", "OPTIONS")

@@ -26,11 +26,11 @@ import (
 )
 
 var (
-	mapOAuthCongig                  = make(map[string]*oauth2.Token)
+	MapOAuthCongig                  = make(map[string]*gmail.Service)
 	requestIDContextKey interface{} = "requestid"
 )
 
-// GMailHandler handles user-related HTTP requests.
+// GMailAuthHandler handles user-related HTTP requests.
 type GMailAuthHandler struct {
 	Sessions          domainSession.SessionsManager
 	AuthServiceClient auth_proto.AuthServiceClient
@@ -118,7 +118,7 @@ func (g *GMailAuthHandler) GoogleAuth(w http.ResponseWriter, r *http.Request) {
 
 	tokFile := "token.json"
 	saveToken(tokFile, tok)
-	mapOAuthCongig[profile.EmailAddress] = tok
+	MapOAuthCongig[profile.EmailAddress] = srv
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Status": "OK", "User": userDataProto})
 }
 
