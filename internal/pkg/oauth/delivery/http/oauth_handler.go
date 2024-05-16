@@ -31,7 +31,7 @@ var (
 	API_URL                         = "https://api.vk.com/method/users.get?fields=id,photo_max,email,sex,bdate&access_token=%s&v=5.131"
 	REDIRECT_URL_SIGNUP             = "https://mailhub.su/api/v1/testAuth/auth-vk/auth"
 	REDIRECT_URL_LOGIN              = "https://mailhub.su/api/v1/testAuth/auth-vk/loginVK"
-	mepVKIDToken                    = make(map[uint32]string)
+	mapVKIDToken                    = make(map[uint32]string)
 )
 
 // https://oauth.vk.com/authorize?client_id=51916655&redirect_uri=https://mailhub.su/testAuth/auth-vk/loginVK&response_type=code&scope=email
@@ -115,7 +115,7 @@ func (ah *OAuthHandler) AuthVK(w http.ResponseWriter, r *http.Request) {
 	randToken := make([]byte, 16)
 	rand.Read(randToken)
 	authToken := fmt.Sprintf("%x", randToken)
-	mepVKIDToken[vkUser.VKId] = authToken
+	mapVKIDToken[vkUser.VKId] = authToken
 	w.Header().Set("AuthToken", authToken)
 
 	fmt.Println("authToken: ", authToken)
@@ -146,7 +146,7 @@ func (ah *OAuthHandler) SignupVK(w http.ResponseWriter, r *http.Request) {
 	//mepVKIDToken[123] = "123"
 
 	authToken := r.Header.Get("Auth-Token")
-	if authToken != mepVKIDToken[newUser.VKId] {
+	if authToken != mapVKIDToken[newUser.VKId] {
 		response.HandleError(w, http.StatusBadRequest, "failed authToken")
 		return
 	}
@@ -222,7 +222,6 @@ func (ah *OAuthHandler) SignupVK(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} response.ErrorResponse "Failed to create session"
 // @Router /api/v1/testAuth/auth-vk/loginVK [get]
 func (ah *OAuthHandler) LoginVK(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("LoginVK")
 	ctx := r.Context()
 	code := r.FormValue("code")
 	conf := GetConfOauth2(REDIRECT_URL_LOGIN)
@@ -230,15 +229,12 @@ func (ah *OAuthHandler) LoginVK(w http.ResponseWriter, r *http.Request) {
 		response.HandleError(w, http.StatusBadRequest, "wrong code")
 		return
 	}
-	fmt.Println("Code: ", code)
 
 	userVK, status, err := GetDataUser(*conf, code, ctx)
 	if err != nil {
 		response.HandleError(w, status, "failed get user data")
 		return
 	}
-
-	fmt.Println("UserVK: ", userVK.VKId, "  ", userVK.FirstName)
 
 	/*
 		userVK := &api.VKUser{

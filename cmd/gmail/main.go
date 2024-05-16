@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	gMailHand "mail/internal/pkg/gmail/delivery/http"
+	http2 "mail/internal/pkg/gmail/gmail_handler/delivery/http"
 	"net/http"
 	"time"
 )
@@ -15,23 +16,23 @@ func main() {
 	gMail := mux.NewRouter()
 	gMail.HandleFunc("/getAuthURL", gMailHand.GetAuthURL).Methods("GET", "OPTIONS")
 	gMail.HandleFunc("/gAuth", gMailHand.GoogleAuth).Methods("GET", "OPTIONS")
-	gMail.HandleFunc("/gIncoming", gMailHand.GetIncoming).Methods("GET", "OPTIONS")
-	gMail.HandleFunc("/gSent", gMailHand.GetSent).Methods("GET", "OPTIONS")
-	gMail.HandleFunc("/getByID/{id}", gMailHand.GetById).Methods("GET", "OPTIONS")
-	gMail.HandleFunc("/gSpam", gMailHand.GetSpam).Methods("GET", "OPTIONS")
-	gMail.HandleFunc("/gDrafts", gMailHand.GetDrafts).Methods("GET", "OPTIONS")
-	gMail.HandleFunc("/gSend", gMailHand.Send).Methods("GET", "OPTIONS")
-	gMail.HandleFunc("/gDelete/{id}", gMailHand.Delete).Methods("GET", "OPTIONS")
+	gMail.HandleFunc("/gIncoming", http2.GetIncoming).Methods("GET", "OPTIONS")
+	gMail.HandleFunc("/gSent", http2.GetSent).Methods("GET", "OPTIONS")
+	gMail.HandleFunc("/getByID/{id}", http2.GetById).Methods("GET", "OPTIONS")
+	gMail.HandleFunc("/gSpam", http2.GetSpam).Methods("GET", "OPTIONS")
+	gMail.HandleFunc("/gDrafts", http2.GetDrafts).Methods("GET", "OPTIONS")
+	gMail.HandleFunc("/gSend", http2.Send).Methods("GET", "OPTIONS")
+	gMail.HandleFunc("/gDelete/{id}", http2.Delete).Methods("GET", "OPTIONS")
 	// update???
 
-	gMail.HandleFunc("/gGetLabels", gMailHand.GetAllLabels).Methods("GET", "OPTIONS")
-	gMail.HandleFunc("/gGetAllEmailsInLabel/{name}", gMailHand.GetAllEmailsInLabel).Methods("GET", "OPTIONS")
-	gMail.HandleFunc("/gGetAllNameLabels/{id}", gMailHand.GetAllNameLabels).Methods("GET", "OPTIONS")
-	gMail.HandleFunc("/createLabel", gMailHand.CreateLabel).Methods("GET", "OPTIONS")
-	gMail.HandleFunc("/deleteLabel/{id}", gMailHand.DeleteLabel).Methods("GET", "OPTIONS")
-	gMail.HandleFunc("/updateLabel/{id}", gMailHand.UpdateLabel).Methods("GET", "OPTIONS")
-	gMail.HandleFunc("/add_email/{id}", gMailHand.AddEmailInLabel).Methods("GET", "OPTIONS")
-	gMail.HandleFunc("/delete_email/{id}", gMailHand.DeleteEmailInLabel).Methods("GET", "OPTIONS")
+	gMail.HandleFunc("/gGetLabels", http2.GetAllLabels).Methods("GET", "OPTIONS")
+	gMail.HandleFunc("/gGetAllEmailsInLabel/{name}", http2.GetAllEmailsInLabel).Methods("GET", "OPTIONS")
+	gMail.HandleFunc("/gGetAllNameLabels/{id}", http2.GetAllNameLabels).Methods("GET", "OPTIONS")
+	gMail.HandleFunc("/createLabel", http2.CreateLabel).Methods("GET", "OPTIONS")
+	gMail.HandleFunc("/deleteLabel/{id}", http2.DeleteLabel).Methods("GET", "OPTIONS")
+	gMail.HandleFunc("/updateLabel/{id}", http2.UpdateLabel).Methods("GET", "OPTIONS")
+	gMail.HandleFunc("/add_email/{id}", http2.AddEmailInLabel).Methods("GET", "OPTIONS")
+	gMail.HandleFunc("/delete_email/{id}", http2.DeleteEmailInLabel).Methods("GET", "OPTIONS")
 	//gMail.HandleFunc("/gSend", gMailHand.Send).Methods("GET", "OPTIONS")
 
 	err := http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", 8080), gMail)

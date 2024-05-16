@@ -433,3 +433,31 @@ func (r *UserRepository) GetByVKID(vkId uint32, ctx context.Context) (*domain.Us
 
 	return converters.UserConvertDbInCore(userModelDb), nil
 }
+
+// GetByOnlyLogin returns the user by login.
+func (r *UserRepository) GetByOnlyLogin(login string, ctx context.Context) (*domain.User, error) {
+	query := `
+		SELECT p.id, p.login, p.password_hash, p.firstname, p.surname, p.patronymic, p.gender, p.birthday, p.phone_number, p.description 
+		FROM profile p
+		WHERE login = $1
+	`
+
+	var userModelDb database.User
+
+	start := time.Now()
+
+	err := r.DB.Get(&userModelDb, query, login)
+
+	args := []interface{}{login}
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("user with login %s not found", login)
+		}
+
+		return nil, err
+	}
+
+	return converters.UserConvertDbInCore(userModelDb), nil
+}

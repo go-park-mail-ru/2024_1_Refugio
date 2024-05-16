@@ -76,7 +76,6 @@ func (as *AuthServer) Login(ctx context.Context, input *proto.LoginRequest) (*pr
 
 // LoginVK handles user login.
 func (as *AuthServer) LoginVK(ctx context.Context, input *proto.LoginVKRequest) (*proto.LoginReply, error) {
-	fmt.Println("LoginVK")
 	if input.VkId <= 0 {
 		return nil, fmt.Errorf("bad vkId = %d", input.VkId)
 	}
@@ -94,7 +93,6 @@ func (as *AuthServer) LoginVK(ctx context.Context, input *proto.LoginVKRequest) 
 	}
 	value := md.Get("requestID")
 
-	fmt.Println("VKID: ", input.VkId)
 	userServiceClient := user_proto.NewUserServiceClient(conn)
 	user, errId := userServiceClient.GetUserByVKId(
 		metadata.NewOutgoingContext(ctx,
@@ -278,4 +276,90 @@ func (as *AuthServer) Logout(ctx context.Context, input *proto.LogoutRequest) (*
 	}
 
 	return &proto.LogoutReply{}, nil
+}
+
+// SignupOtherMail handles user signup.
+func (as *AuthServer) SignupOtherMail(ctx context.Context, input *proto.SignupOtherMailRequest) (*proto.SignupReply, error) {
+	input.Login = sanitize.SanitizeString(input.Login)
+	input.Firstname = sanitize.SanitizeString(input.Firstname)
+	input.Surname = sanitize.SanitizeString(input.Surname)
+	input.Patronymic = sanitize.SanitizeString(input.Patronymic)
+	input.PhoneNumber = sanitize.SanitizeString(input.PhoneNumber)
+	input.Description = sanitize.SanitizeString(input.Description)
+	input.Avatar = sanitize.SanitizeString(input.Avatar)
+
+	if validUtil.IsEmpty(input.Login) || validUtil.IsEmpty(input.Firstname) || validUtil.IsEmpty(input.Surname) {
+		return nil, fmt.Errorf("all fields must be filled in")
+	}
+
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("metadata error")
+	}
+	value := md.Get("requestID")
+
+	_, errLogin := as.userServiceClient.IsLoginUnique(
+		metadata.NewOutgoingContext(ctx,
+			metadata.New(map[string]string{"requestID": value[0]})),
+		&user_proto.IsLoginUniqueRequest{Login: input.Login},
+	)
+	if errLogin != nil {
+		return nil, fmt.Errorf("such a login already exists")
+	}
+
+	_, errCreate := as.userServiceClient.CreateUserOtherMail(
+		metadata.NewOutgoingContext(ctx,
+			metadata.New(map[string]string{"requestID": value[0]})),
+		&user_proto.CreateUserRequest{User: &user_proto.User{
+			Login:       input.Login,
+			Password:    "password",
+			Firstname:   input.Firstname,
+			Surname:     input.Surname,
+			Patronymic:  input.Patronymic,
+			Birthday:    input.Birthday,
+			Gender:      input.Gender,
+			Avatar:      input.Avatar,
+			PhoneNumber: input.PhoneNumber,
+			Description: input.Description,
+		}},
+	)
+	if errCreate != nil {
+		return nil, fmt.Errorf("failed to add user")
+	}
+
+	return &proto.SignupReply{SignupStatus: true}, nil
+}
+
+// LoginOtherMail handles user login.
+func (as *AuthServer) LoginOtherMail(ctx context.Context, input *proto.LoginOtherMailRequest) (*proto.LoginReply, error) {
+	if input.Id <= 0 {
+		return nil, fmt.Errorf("bad Id = %d", input.Id)
+	}
+	conn2, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.SessionService))
+	if err != nil {
+		return nil, fmt.Errorf("invalid connection")
+	}
+	defer conn2.Close()
+
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		fmt.Println("metadata error")
+		return nil, fmt.Errorf("metadata error")
+	}
+	value := md.Get("requestID")
+
+	sessionServiceClient := session_proto.NewSessionServiceClient(conn2)
+	session, errStatus := sessionServiceClient.CreateSession(
+		metadata.NewOutgoingContext(ctx, metadata.New(map[string]string{"requestID": value[0]})),
+		&session_proto.CreateSessionRequest{Session: &session_proto.Session{UserId: input.Id,
+			Device:   "",
+			LifeTime: 60 * 60 * 24},
+		},
+	)
+	if errStatus != nil {
+		fmt.Println("create session failed\"")
+		return &proto.LoginReply{LoginStatus: false}, fmt.Errorf("create session failed")
+	}
+
+	return &proto.LoginReply{LoginStatus: true, SessionId: session.SessionId}, nil
 }

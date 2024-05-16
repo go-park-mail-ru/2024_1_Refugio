@@ -132,3 +132,8 @@ func (uc *UserUseCase) DeleteAvatarByUserID(userID uint32, ctx context.Context) 
 func (uc *UserUseCase) GetUserVkID(vkId uint32, ctx context.Context) (*domain_models.User, error) {
 	return uc.repo.GetByVKID(vkId, ctx)
 }
+
+// GetUserByOnlyLogin get user by login.
+func (uc *UserUseCase) GetUserByOnlyLogin(login string, ctx context.Context) (*domain_models.User, error) {
+	return uc.repo.GetByOnlyLogin(login, ctx)
+}
