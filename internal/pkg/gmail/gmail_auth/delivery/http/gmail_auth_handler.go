@@ -15,10 +15,8 @@ import (
 	domain "mail/internal/microservice/models/domain_models"
 	user_proto "mail/internal/microservice/user/proto"
 	api "mail/internal/models/delivery_models"
-	"mail/internal/models/microservice_ports"
 	"mail/internal/models/response"
 	domainSession "mail/internal/pkg/session/interface"
-	"mail/internal/pkg/utils/connect_microservice"
 	"mail/internal/pkg/utils/sanitize"
 	validUtil "mail/internal/pkg/utils/validators"
 	"net/http"
@@ -45,6 +43,7 @@ type GMailAuthHandler struct {
 // @Produce json
 // @Param code query string true "code from oauth"
 // @Success 200 {object} response.Response "Auth successful"
+// @Failure 404 {object} response.Response "User not fount"
 // @Failure 400 {object} response.ErrorResponse "Invalid request body"
 // @Failure 401 {object} response.ErrorResponse "Invalid credentials"
 // @Failure 500 {object} response.ErrorResponse "Failed to create session"
@@ -54,17 +53,20 @@ func (g *GMailAuthHandler) GoogleAuth(w http.ResponseWriter, r *http.Request) {
 
 	b, err := os.ReadFile("cmd/configs/credentials.json")
 	if err != nil {
-		log.Fatalf("Unable to read client secret file: %v", err)
+		response.HandleError(w, http.StatusInternalServerError, "Unable to read client secret file")
+		return
 	}
 
 	config, err := google.ConfigFromJSON(b, gmail.GmailReadonlyScope)
 	if err != nil {
-		log.Fatalf("Unable to parse client secret file to config: %v", err)
+		response.HandleError(w, http.StatusInternalServerError, "Unable to parse client secret file to config")
+		return
 	}
 
 	tok, err := config.Exchange(context.TODO(), authCode)
 	if err != nil {
-		log.Fatalf("Unable to retrieve token from web: %v", err)
+		response.HandleError(w, http.StatusInternalServerError, "Unable to retrieve token from web")
+		return
 	}
 
 	ctx := context.Background()
@@ -72,7 +74,8 @@ func (g *GMailAuthHandler) GoogleAuth(w http.ResponseWriter, r *http.Request) {
 
 	srv, err := gmail.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {
-		log.Fatalf("Unable to retrieve Gmail client: %v", err)
+		response.HandleError(w, http.StatusInternalServerError, "Unable to retrieve Gmail client")
+		return
 	}
 
 	profile, err := srv.Users.GetProfile("me").Do()
@@ -80,22 +83,24 @@ func (g *GMailAuthHandler) GoogleAuth(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
+	tokFile := "token.json"
+	err = saveToken(tokFile, tok)
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Unable to cache oauth token")
+		return
+	}
+
+	MapOAuthCongig[profile.EmailAddress] = srv
+
 	userDataProto, err := g.UserServiceClient.GetUserByOnlyLogin(
 		metadata.NewOutgoingContext(r.Context(),
 			metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 		&user_proto.GetUserByOnlyLoginRequest{Login: profile.EmailAddress},
 	)
 	if userDataProto == nil || err != nil {
-		response.HandleError(w, http.StatusBadRequest, "User not found")
+		response.HandleSuccess(w, http.StatusNotFound, map[string]interface{}{"Status": "UserNotFound", "Login": profile.EmailAddress})
 		return
 	}
-
-	connAuth, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.AuthService))
-	if err != nil {
-		response.HandleError(w, http.StatusInternalServerError, "connection fail")
-		return
-	}
-	defer connAuth.Close()
 
 	sessionId, errStatus := g.AuthServiceClient.LoginOtherMail(
 		metadata.NewOutgoingContext(r.Context(),
@@ -116,10 +121,6 @@ func (g *GMailAuthHandler) GoogleAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokFile := "token.json"
-	saveToken(tokFile, tok)
-	MapOAuthCongig[profile.EmailAddress] = srv
-	fmt.Println(MapOAuthCongig)
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Status": "OK", "User": userDataProto})
 }
 
@@ -175,28 +176,36 @@ func (g *GMailAuthHandler) SugnupGMail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userDataProto, err := g.UserServiceClient.GetUserByOnlyLogin(
+		metadata.NewOutgoingContext(r.Context(),
+			metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		&user_proto.GetUserByOnlyLoginRequest{Login: newUser.Login},
+	)
+	if userDataProto == nil || err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Failed to get user by only login")
+		return
+	}
+
+	sessionId, errStatus := g.AuthServiceClient.LoginOtherMail(
+		metadata.NewOutgoingContext(r.Context(),
+			metadata.New(map[string]string{"requestID": r.Context().Value("requestID").(string)})),
+		&auth_proto.LoginOtherMailRequest{
+			Id: userDataProto.User.Id,
+		},
+	)
+
+	if errStatus != nil {
+		response.HandleError(w, http.StatusUnauthorized, "Login failed")
+		return
+	}
+
+	er := g.Sessions.SetSession(sessionId.SessionId, w, r, r.Context())
+	if er != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Failed to create session")
+		return
+	}
+
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "Signup successful"})
-
-	/*
-		authServiceClient := auth_proto.NewAuthServiceClient(conn)
-		sessionId, errStatus := authServiceClient.LoginVK(
-			metadata.NewOutgoingContext(r.Context(),
-				metadata.New(map[string]string{"requestID": r.Context().Value("requestID").(string)})),
-			&auth_proto.LoginVKRequest{VkId: userVK.VKId},
-		)
-		if errStatus != nil {
-			response.HandleError(w, http.StatusUnauthorized, "Login failed")
-			return
-		}
-
-		er := g.Sessions.SetSession(sessionId.SessionId, w, r, r.Context())
-		if er != nil {
-			response.HandleError(w, http.StatusInternalServerError, "Failed to create session")
-			return
-		}
-
-		response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "Login successful"})
-	*/
 }
 
 // GetAuthURL handles get url gmail auth.
@@ -211,26 +220,28 @@ func (g *GMailAuthHandler) SugnupGMail(w http.ResponseWriter, r *http.Request) {
 func (g *GMailAuthHandler) GetAuthURL(w http.ResponseWriter, r *http.Request) {
 	b, err := os.ReadFile("cmd/configs/credentials.json")
 	if err != nil {
-		log.Fatalf("Unable to read client secret file: %v", err)
+		response.HandleError(w, http.StatusInternalServerError, "Unable to read client secret file")
+		return
 	}
 
 	config, err := google.ConfigFromJSON(b, gmail.MailGoogleComScope) // google.ConfigFromJSON(b, gmail.GmailReadonlyScope)
 	if err != nil {
-		log.Fatalf("Unable to parse client secret file to config: %v", err)
+		response.HandleError(w, http.StatusInternalServerError, "Unable to parse client secret file to config")
+		return
 	}
 
 	authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
 
-	fmt.Println(authURL)
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"AuthURL": authURL})
 }
 
-func saveToken(path string, token *oauth2.Token) {
+func saveToken(path string, token *oauth2.Token) error {
 	fmt.Printf("Saving credential file to: %s\n", path)
 	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
-		log.Fatalf("Unable to cache oauth token: %v", err)
+		return fmt.Errorf("Unable to cache oauth token: %v", err)
 	}
 	defer f.Close()
 	json.NewEncoder(f).Encode(token)
+	return nil
 }

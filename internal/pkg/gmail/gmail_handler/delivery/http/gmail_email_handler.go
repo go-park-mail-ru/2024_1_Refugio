@@ -9,18 +9,13 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
 	"github.com/microcosm-cc/bluemonday"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
 	"google.golang.org/api/gmail/v1"
-	"io/ioutil"
-	"log"
 	apiModels "mail/internal/models/delivery_models"
 	"mail/internal/models/response"
 	gmailAuth "mail/internal/pkg/gmail/gmail_auth/delivery/http"
 	domainSession "mail/internal/pkg/session/interface"
 	"mail/internal/pkg/utils/validators"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 )
@@ -73,7 +68,11 @@ func (g *GMailEmailHandler) GetIncoming(w http.ResponseWriter, r *http.Request) 
 			response.HandleError(w, http.StatusInternalServerError, "Error receiving messages")
 			return
 		}
-		email := CreateEmailStruct(msg)
+		email, err := CreateEmailStruct(msg)
+		if err != nil {
+			response.HandleError(w, http.StatusInternalServerError, "Error decoding body data")
+			return
+		}
 		text := p.Sanitize(email.Text)
 		text = strings.ReplaceAll(text, "\n", "")
 		fields := strings.Fields(text)
@@ -126,7 +125,11 @@ func (g *GMailEmailHandler) GetSent(w http.ResponseWriter, r *http.Request) {
 			response.HandleError(w, http.StatusInternalServerError, "Error receiving messages")
 			return
 		}
-		email := CreateEmailStruct(msg)
+		email, err := CreateEmailStruct(msg)
+		if err != nil {
+			response.HandleError(w, http.StatusInternalServerError, "Error decoding body data")
+			return
+		}
 		text := p.Sanitize(email.Text)
 		text = strings.ReplaceAll(text, "\n", "")
 		fields := strings.Fields(text)
@@ -178,7 +181,11 @@ func (g *GMailEmailHandler) GetSpam(w http.ResponseWriter, r *http.Request) {
 			response.HandleError(w, http.StatusInternalServerError, "Error receiving messages")
 			return
 		}
-		email := CreateEmailStruct(msg)
+		email, err := CreateEmailStruct(msg)
+		if err != nil {
+			response.HandleError(w, http.StatusInternalServerError, "Error decoding body data")
+			return
+		}
 		text := p.Sanitize(email.Text)
 		text = strings.ReplaceAll(text, "\n", "")
 		fields := strings.Fields(text)
@@ -235,7 +242,11 @@ func (g *GMailEmailHandler) GetById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	email := CreateEmailStruct(msg)
+	email, err := CreateEmailStruct(msg)
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Error decoding body data")
+		return
+	}
 
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": email})
 }
@@ -282,13 +293,6 @@ func (g *GMailEmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 	}
 
 	input := base64.RawStdEncoding.EncodeToString([]byte(fmt.Sprintf("From: %v\r\nTo: %v\r\nSubject: %v\r\n\r\n%v", newEmail.SenderEmail, newEmail.RecipientEmail, newEmail.Topic, newEmail.Text)))
-	/*
-		input := base64.RawStdEncoding.EncodeToString([]byte(
-			"From: fedasovsergey00@gmail.com\r\n" +
-				"To: fedasov03@inbox.ru\r\n" +
-				fmt.Sprintf("Subject: Hello\n\n", sub) +
-				"Это тестовое сообщение, отправленное через Gmail API."))
-	*/
 
 	message := &gmail.Message{
 		Raw: input,
@@ -431,23 +435,22 @@ func (g *GMailEmailHandler) Update(w http.ResponseWriter, r *http.Request) {
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": newEmail})
 }
 
-func CreateEmailStruct(msg *gmail.Message) *apiModels.OtherEmail {
+func CreateEmailStruct(msg *gmail.Message) (*apiModels.OtherEmail, error) {
 	email := &apiModels.OtherEmail{}
 	email.ID = msg.Id
 	email.DateOfDispatch = time.Unix(msg.InternalDate/1000, 0)
 
-	fmt.Println(msg.Payload.MimeType)
 	if msg.Payload.MimeType == "text/plain" {
 		email = ParserMessageHeadres(email, msg)
 		data, err := base64.URLEncoding.DecodeString(msg.Payload.Body.Data)
 		if err != nil {
-			fmt.Println("Error: ", err)
+			return nil, fmt.Errorf("Error decoding body data")
 		}
 		email.Text = striphtmltags.StripTags(string(data))
 	} else if msg.Payload.MimeType == "text/html" {
 		data, err := base64.URLEncoding.DecodeString(msg.Payload.Body.Data)
 		if err != nil {
-			fmt.Println("Error: ", err)
+			return nil, fmt.Errorf("Error decoding body data")
 		}
 		email.Text = string(data)
 		email = ParserMessageHeadres(email, msg)
@@ -456,7 +459,7 @@ func CreateEmailStruct(msg *gmail.Message) *apiModels.OtherEmail {
 			if part.MimeType == "text/html" {
 				data, err := base64.URLEncoding.DecodeString(part.Body.Data)
 				if err != nil {
-					fmt.Println("Error: ", err)
+					return nil, fmt.Errorf("Error decoding body data")
 				}
 				email.Text = string(data)
 				email = ParserMessageHeadres(email, msg)
@@ -464,7 +467,7 @@ func CreateEmailStruct(msg *gmail.Message) *apiModels.OtherEmail {
 		}
 	}
 
-	return email
+	return email, nil
 }
 
 func ParserMessageHeadres(email *apiModels.OtherEmail, msg *gmail.Message) *apiModels.OtherEmail {
@@ -480,26 +483,6 @@ func ParserMessageHeadres(email *apiModels.OtherEmail, msg *gmail.Message) *apiM
 		}
 	}
 	return email
-}
-
-func getClient() (*oauth2.Config, *oauth2.Token) {
-	b, err := os.ReadFile("cmd/configs/credentials.json")
-	if err != nil {
-		log.Fatalf("Unable to read client secret file: %v", err)
-	}
-
-	config, err := google.ConfigFromJSON(b, gmail.GmailReadonlyScope)
-	if err != nil {
-		log.Fatalf("Unable to parse client secret file to config: %v", err)
-	}
-
-	tok := &oauth2.Token{}
-	data, _ := ioutil.ReadFile("token.json")
-	err = json.Unmarshal(data, tok)
-	if err != nil {
-		fmt.Println("Error:", err)
-	}
-	return config, tok
 }
 
 func GetSRV(login string) (*gmail.Service, error) {

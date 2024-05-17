@@ -421,11 +421,12 @@ func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.
 
 	logRouter.HandleFunc("/gmail/labels", emailGMailHandler.GetLabels).Methods("GET", "OPTIONS")
 	logRouter.HandleFunc("/gmail/labels/email/{id}", emailGMailHandler.GetAllNameLabels).Methods("GET", "OPTIONS")
-	logRouter.HandleFunc("/gmail/label/{id}/emails", emailGMailHandler.GetAllEmailsInLabel).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/gmail/label/{name}/emails", emailGMailHandler.GetAllEmailsInLabel).Methods("GET", "OPTIONS")
 	logRouter.HandleFunc("/gmail/label/create", emailGMailHandler.CreateLabel).Methods("POST", "OPTIONS")
 	logRouter.HandleFunc("/gmail/label/delete/{id}", emailGMailHandler.DeleteLabel).Methods("DELETE", "OPTIONS")
 	logRouter.HandleFunc("/gmail/label/update/{id}", emailGMailHandler.UpdateLabel).Methods("PUT", "OPTIONS")
 	logRouter.HandleFunc("/gmail/label/add_email", emailGMailHandler.AddEmailInLabel).Methods("POST", "OPTIONS")
+	logRouter.HandleFunc("/gmail/label/delete_email", emailGMailHandler.DeleteEmailInLabel).Methods("DELETE", "OPTIONS")
 
 	return logRouter
 }

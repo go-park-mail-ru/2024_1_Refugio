@@ -72,6 +72,13 @@ definitions:
       error:
         type: string
     type: object
+  response.FolderEmailGoogleSwag:
+    properties:
+      emailId:
+        type: string
+      folderId:
+        type: string
+    type: object
   response.FolderEmailSwag:
     properties:
       emailId:
@@ -1612,6 +1619,304 @@ paths:
       summary: Display the list of email messages
       tags:
       - emails-gmail
+  /api/v1/gmail/label/{name}/emails:
+    get:
+      description: Get a list of all emails in label
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      - description: Name of the label message
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of all emails in label
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: JSON encoding error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Display the list of emails in label
+      tags:
+      - labels-gmail
+  /api/v1/gmail/label/add_email:
+    post:
+      consumes:
+      - application/json
+      description: AddEmailInLabel a email in label to the system
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      - description: Label message in JSON format
+        in: body
+        name: label
+        required: true
+        schema:
+          $ref: '#/definitions/response.FolderEmailGoogleSwag'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success of the add email in label
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad JSON in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to add email in label
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: AddEmailInLabel a email om label
+      tags:
+      - labels-gmail
+  /api/v1/gmail/label/create:
+    post:
+      consumes:
+      - application/json
+      description: Send a new label to the system
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      - description: Label message in JSON format
+        in: body
+        name: label
+        required: true
+        schema:
+          $ref: '#/definitions/response.FolderSwag'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ID of the create label
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad JSON in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to add email message
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Send a new label
+      tags:
+      - labels-gmail
+  /api/v1/gmail/label/delete/{id}:
+    delete:
+      description: DeleteLabel label a user
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      - description: ID of the label
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Deletion success status
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad id
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to delete label
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: DeleteLabel label a user
+      tags:
+      - labels-gmail
+  /api/v1/gmail/label/delete_email:
+    delete:
+      consumes:
+      - application/json
+      description: DeleteEmailInLabel a email in label to the system
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      - description: Label message in JSON format
+        in: body
+        name: label
+        required: true
+        schema:
+          $ref: '#/definitions/response.FolderEmailGoogleSwag'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success of the delete email in label
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad JSON in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to delete email in label
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: DeleteEmailInLabel a email in label
+      tags:
+      - labels-gmail
+  /api/v1/gmail/label/update/{id}:
+    put:
+      description: Update label a user
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      - description: ID of the label message
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Label message in JSON format
+        in: body
+        name: label
+        required: true
+        schema:
+          $ref: '#/definitions/response.FolderSwag'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Update success status
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad id
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to update label
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Update label a user
+      tags:
+      - labels-gmail
+  /api/v1/gmail/labels:
+    get:
+      description: Get a list of all labels
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of all labels
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: JSON encoding error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Display the list of labels
+      tags:
+      - labels-gmail
+  /api/v1/gmail/labels/email/{id}:
+    get:
+      description: Get a list of all labels
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      - description: ID of the email message
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of all labels
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: JSON encoding error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Display the list of labels
+      tags:
+      - labels-gmail
   /api/v1/questions:
     get:
       consumes:
@@ -1709,6 +2014,10 @@ paths:
           description: Invalid credentials
           schema:
             $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: User not fount
+          schema:
+            $ref: '#/definitions/response.Response'
         "500":
           description: Failed to create session
           schema:

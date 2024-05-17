@@ -1,14 +1,12 @@
 package http
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
 	"github.com/microcosm-cc/bluemonday"
 	"google.golang.org/api/gmail/v1"
-	"google.golang.org/api/option"
 	"log"
 	apiModels "mail/internal/models/delivery_models"
 	"mail/internal/models/response"
@@ -61,7 +59,7 @@ func (g *GMailEmailHandler) GetLabels(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"folders": labelsApi})
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"labels": labelsApi})
 }
 
 // GetAllEmailsInLabel displays the list of emails in label.
@@ -75,10 +73,10 @@ func (g *GMailEmailHandler) GetLabels(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} response.Response "Bad request"
 // @Failure 401 {object} response.Response "Not Authorized"
 // @Failure 500 {object} response.Response "JSON encoding error"
-// @Router /api/v1/gmail/label/{id}/emails [get]
+// @Router /api/v1/gmail/label/{name}/emails [get]
 func (g *GMailEmailHandler) GetAllEmailsInLabel(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	folderName, ok := vars["name"]
+	labelName, ok := vars["name"]
 	if !ok {
 		response.HandleError(w, http.StatusBadRequest, "Bad name in request")
 		return
@@ -101,7 +99,7 @@ func (g *GMailEmailHandler) GetAllEmailsInLabel(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	req, err := srv.Users.Messages.List("me").Q(fmt.Sprintf("label:%v", folderName)).Do()
+	req, err := srv.Users.Messages.List("me").Q(fmt.Sprintf("label:%v", labelName)).Do()
 	if err != nil {
 		log.Fatalf("Error: %v", err)
 	}
@@ -110,7 +108,11 @@ func (g *GMailEmailHandler) GetAllEmailsInLabel(w http.ResponseWriter, r *http.R
 	emailsApi := make([]*apiModels.OtherEmail, len(req.Messages))
 	for i, m := range req.Messages {
 		msg, _ := srv.Users.Messages.Get("me", m.Id).Format("full").Do()
-		email := CreateEmailStruct(msg)
+		email, err := CreateEmailStruct(msg)
+		if err != nil {
+			response.HandleError(w, http.StatusInternalServerError, "Error decoding body data")
+			return
+		}
 		text := p.Sanitize(email.Text)
 		text = strings.ReplaceAll(text, "\n", "")
 		fields := strings.Fields(text)
@@ -178,7 +180,7 @@ func (g *GMailEmailHandler) GetAllNameLabels(w http.ResponseWriter, r *http.Requ
 		}
 	}
 
-	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"folders": labelsApi})
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"labels": labelsApi})
 
 }
 
@@ -189,14 +191,14 @@ func (g *GMailEmailHandler) GetAllNameLabels(w http.ResponseWriter, r *http.Requ
 // @Accept json
 // @Produce json
 // @Param X-Csrf-Token header string true "CSRF Token"
-// @Param folder body response.FolderSwag true "Folder message in JSON format"
+// @Param label body response.FolderSwag true "Label message in JSON format"
 // @Success 200 {object} response.Response "ID of the create label"
 // @Failure 400 {object} response.Response "Bad JSON in request"
 // @Failure 401 {object} response.Response "Not Authorized"
 // @Failure 500 {object} response.Response "Failed to add email message"
 // @Router /api/v1/gmail/label/create [post]
 func (g *GMailEmailHandler) CreateLabel(w http.ResponseWriter, r *http.Request) {
-	var newLabel apiModels.Folder
+	var newLabel apiModels.OtherLabel
 	decoder := schema.NewDecoder()
 	decoder.IgnoreUnknownKeys(true)
 	err := json.NewDecoder(r.Body).Decode(&newLabel)
@@ -238,7 +240,7 @@ func (g *GMailEmailHandler) CreateLabel(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"folder": newLabel})
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"label": newLabel})
 }
 
 // DeleteLabel label a user.
@@ -294,7 +296,7 @@ func (g *GMailEmailHandler) DeleteLabel(w http.ResponseWriter, r *http.Request) 
 // @Produce json
 // @Param X-Csrf-Token header string true "CSRF Token"
 // @Param id path string true "ID of the label message"
-// @Param folder body response.FolderSwag true "Folder message in JSON format"
+// @Param label body response.FolderSwag true "Label message in JSON format"
 // @Success 200 {object} response.Response "Update success status"
 // @Failure 400 {object} response.Response "Bad id"
 // @Failure 401 {object} response.Response "Not Authorized"
@@ -308,7 +310,7 @@ func (g *GMailEmailHandler) UpdateLabel(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var newLabel apiModels.Folder
+	var newLabel apiModels.OtherLabel
 	decoder := schema.NewDecoder()
 	decoder.IgnoreUnknownKeys(true)
 	err := json.NewDecoder(r.Body).Decode(&newLabel)
@@ -354,8 +356,8 @@ func (g *GMailEmailHandler) UpdateLabel(w http.ResponseWriter, r *http.Request) 
 }
 
 // AddEmailInLabel adds a email in label.
-// @Summary AddEmailInFolder a email om label
-// @Description AddEmailInFolder a email in label to the system
+// @Summary AddEmailInLabel a email om label
+// @Description AddEmailInLabel a email in label to the system
 // @Tags labels-gmail
 // @Accept json
 // @Produce json
@@ -365,7 +367,7 @@ func (g *GMailEmailHandler) UpdateLabel(w http.ResponseWriter, r *http.Request) 
 // @Failure 400 {object} response.Response "Bad JSON in request"
 // @Failure 401 {object} response.Response "Not Authorized"
 // @Failure 500 {object} response.Response "Failed to add email in label"
-// @Router /api/v1//gmail/label/add_email [post]
+// @Router /api/v1/gmail/label/add_email [post]
 func (g *GMailEmailHandler) AddEmailInLabel(w http.ResponseWriter, r *http.Request) {
 	var newLabelEmail apiModels.LabelEmail
 	decoder := schema.NewDecoder()
@@ -406,33 +408,55 @@ func (g *GMailEmailHandler) AddEmailInLabel(w http.ResponseWriter, r *http.Reque
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": true})
 }
 
-func DeleteEmailInLabel(w http.ResponseWriter, r *http.Request) {
-	// data
-	/*
-		vars := mux.Vars(r)
-		messageID := vars["messageID"]
-		labelID := vars["labelID"]
-	*/
-	messageID := "18f7c19bdb35123a"
-	labelID := []string{"Label_5002769241877771600"}
-
-	ctx := context.Background()
-	config, tok := getClient()
-	client := config.Client(context.Background(), tok)
-
-	srv, err := gmail.NewService(ctx, option.WithHTTPClient(client))
+// DeleteEmailInLabel delete email in label.
+// @Summary DeleteEmailInLabel a email in label
+// @Description DeleteEmailInLabel a email in label to the system
+// @Tags labels-gmail
+// @Accept json
+// @Produce json
+// @Param X-Csrf-Token header string true "CSRF Token"
+// @Param label body response.FolderEmailGoogleSwag true "Label message in JSON format"
+// @Success 200 {object} response.Response "Success of the delete email in label"
+// @Failure 400 {object} response.Response "Bad JSON in request"
+// @Failure 401 {object} response.Response "Not Authorized"
+// @Failure 500 {object} response.Response "Failed to delete email in label"
+// @Router /api/v1/gmail/label/delete_email [delete]
+func (g *GMailEmailHandler) DeleteEmailInLabel(w http.ResponseWriter, r *http.Request) {
+	var newLabelEmail apiModels.LabelEmail
+	decoder := schema.NewDecoder()
+	decoder.IgnoreUnknownKeys(true)
+	err := json.NewDecoder(r.Body).Decode(&newLabelEmail)
 	if err != nil {
-		log.Fatalf("Unable to retrieve Gmail client: %v", err)
+		response.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
+		return
+	}
+
+	login, err := g.Sessions.GetLoginBySession(r, r.Context())
+	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Bad user session")
+		return
+	}
+
+	if !validators.IsValidEmailFormatGmail(login) {
+		response.HandleError(w, http.StatusBadRequest, "Login must end with @gmail.com")
+		return
+	}
+
+	srv, err := GetSRV(login)
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Unable to retrieve Gmail client")
+		return
 	}
 
 	modifyRequest := &gmail.ModifyMessageRequest{
-		RemoveLabelIds: labelID,
+		RemoveLabelIds: []string{newLabelEmail.LabelID},
 	}
 
-	_, err = srv.Users.Messages.Modify("me", messageID, modifyRequest).Do()
+	_, err = srv.Users.Messages.Modify("me", newLabelEmail.EmailID, modifyRequest).Do()
 	if err != nil {
-		fmt.Println("Error: ", err)
+		response.HandleError(w, http.StatusInternalServerError, "Failed to delete LabelEmail message")
+		return
 	}
 
-	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Status": "OK"})
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": true})
 }
