@@ -232,7 +232,7 @@ func (g *GMailEmailHandler) GetDrafts(w http.ResponseWriter, r *http.Request) {
 // @Description Get an email message by its unique identifier
 // @Tags emails-gmail
 // @Produce json
-// @Param id path integer true "ID of the email message"
+// @Param id path string true "ID of the email message"
 // @Param X-Csrf-Token header string true "CSRF Token"
 // @Success 200 {object} response.Response "Email message data"
 // @Failure 400 {object} response.Response "Bad id in request"
@@ -281,7 +281,7 @@ func (g *GMailEmailHandler) GetById(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param X-Csrf-Token header string true "CSRF Token"
-// @Param email body response.EmailSwag true "Email message in JSON format"
+// @Param email body response.EmailOtherSwag true "Email message in JSON format"
 // @Success 200 {object} response.Response "ID of the send email message"
 // @Failure 400 {object} response.Response "Bad JSON in request"
 // @Failure 401 {object} response.Response "Not Authorized"
@@ -342,7 +342,7 @@ func (g *GMailEmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 // @Description Delete an email message based on its identifier
 // @Tags emails-gmail
 // @Produce json
-// @Param id path integer true "ID of the email message"
+// @Param id path string true "ID of the email message"
 // @Param X-Csrf-Token header string true "CSRF Token"
 // @Success 200 {object} response.Response "Deletion success status"
 // @Failure 400 {object} response.Response "Bad id"

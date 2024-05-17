@@ -13,6 +13,33 @@ definitions:
       text:
         type: string
     type: object
+  response.EmailOtherSwag:
+    properties:
+      dateOfDispatch:
+        type: string
+      deleted:
+        type: boolean
+      draftStatus:
+        type: boolean
+      id:
+        type: string
+      mark:
+        type: boolean
+      readStatus:
+        type: boolean
+      recipientEmail:
+        type: string
+      replyToEmailId:
+        type: integer
+      senderEmail:
+        type: string
+      spamStatus:
+        type: boolean
+      text:
+        type: string
+      topic:
+        type: string
+    type: object
   response.EmailSwag:
     properties:
       dateOfDispatch:
@@ -1153,7 +1180,7 @@ paths:
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       - description: CSRF Token
         in: header
         name: X-Csrf-Token
@@ -1189,7 +1216,7 @@ paths:
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       - description: CSRF Token
         in: header
         name: X-Csrf-Token
@@ -1233,7 +1260,7 @@ paths:
         name: email
         required: true
         schema:
-          $ref: '#/definitions/response.EmailSwag'
+          $ref: '#/definitions/response.EmailOtherSwag'
       produces:
       - application/json
       responses:

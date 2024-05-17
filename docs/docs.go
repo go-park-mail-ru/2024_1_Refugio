@@ -1515,7 +1515,7 @@ const docTemplate = `{
                 "summary": "Delete an email message",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "ID of the email message",
                         "name": "id",
                         "in": "path",
@@ -1584,7 +1584,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/response.EmailSwag"
+                            "$ref": "#/definitions/response.EmailOtherSwag"
                         }
                     }
                 ],
@@ -1628,7 +1628,7 @@ const docTemplate = `{
                 "summary": "Get an email message by ID",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "ID of the email message",
                         "name": "id",
                         "in": "path",
@@ -2556,6 +2556,47 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "text": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.EmailOtherSwag": {
+            "type": "object",
+            "properties": {
+                "dateOfDispatch": {
+                    "type": "string"
+                },
+                "deleted": {
+                    "type": "boolean"
+                },
+                "draftStatus": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "mark": {
+                    "type": "boolean"
+                },
+                "readStatus": {
+                    "type": "boolean"
+                },
+                "recipientEmail": {
+                    "type": "string"
+                },
+                "replyToEmailId": {
+                    "type": "integer"
+                },
+                "senderEmail": {
+                    "type": "string"
+                },
+                "spamStatus": {
+                    "type": "boolean"
+                },
+                "text": {
+                    "type": "string"
+                },
+                "topic": {
                     "type": "string"
                 }
             }

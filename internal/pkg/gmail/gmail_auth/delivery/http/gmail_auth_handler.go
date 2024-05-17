@@ -119,6 +119,7 @@ func (g *GMailAuthHandler) GoogleAuth(w http.ResponseWriter, r *http.Request) {
 	tokFile := "token.json"
 	saveToken(tokFile, tok)
 	MapOAuthCongig[profile.EmailAddress] = srv
+	fmt.Println(MapOAuthCongig)
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Status": "OK", "User": userDataProto})
 }
 

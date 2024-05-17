@@ -408,8 +408,8 @@ func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.
 	logRouter.HandleFunc("/gmail/emails/spam", emailGMailHandler.GetSpam).Methods("GET", "OPTIONS")
 	logRouter.HandleFunc("/gmail/email/{id}", emailGMailHandler.GetById).Methods("GET", "OPTIONS")
 	// update???
-	logRouter.HandleFunc("/gmail/email/delete/{id}", emailGMailHandler.Delete).Methods("GET", "OPTIONS")
-	logRouter.HandleFunc("/gmail/email/send", emailGMailHandler.Send).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/gmail/email/delete/{id}", emailGMailHandler.Delete).Methods("DELETE", "OPTIONS")
+	logRouter.HandleFunc("/gmail/email/send", emailGMailHandler.Send).Methods("POST", "OPTIONS")
 	// addDraft
 
 	return logRouter
