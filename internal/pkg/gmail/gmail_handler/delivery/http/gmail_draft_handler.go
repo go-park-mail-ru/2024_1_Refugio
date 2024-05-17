@@ -7,11 +7,13 @@ import (
 	"github.com/denisbrodbeck/striphtmltags"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
+	"github.com/microcosm-cc/bluemonday"
 	"google.golang.org/api/gmail/v1"
 	apiModels "mail/internal/models/delivery_models"
 	"mail/internal/models/response"
 	"mail/internal/pkg/utils/validators"
 	"net/http"
+	"strings"
 )
 
 // AddDraft adds a new draft email message.
@@ -192,17 +194,17 @@ func (g *GMailEmailHandler) GetByIdDraft(w http.ResponseWriter, r *http.Request)
 
 // UpdateDraft update a draft message.
 // @Summary SendDraft a update draft message
-// @Description AddDraft a nupdate draft message to the system
+// @Description AddDraft a update draft message to the system
 // @Tags drafts-gmail
 // @Accept json
 // @Produce json
 // @Param X-Csrf-Token header string true "CSRF Token"
-// @Param id path string true "ID of the folder message"
-// @Param email body response.EmailOtherSwag true "Email message in JSON format"
-// @Success 200 {object} response.Response "ID of the send email message"
+// @Param id path string true "ID of the draft message"
+// @Param email body response.EmailOtherSwag true "Draft message in JSON format"
+// @Success 200 {object} response.Response "ID of the update draft message"
 // @Failure 400 {object} response.Response "Bad JSON in request"
 // @Failure 401 {object} response.Response "Not Authorized"
-// @Failure 500 {object} response.Response "Failed to add email message"
+// @Failure 500 {object} response.Response "Failed to update draft message"
 // @Router /api/v1/gmail/draft/update/{id} [put]
 func (g *GMailEmailHandler) UpdateDraft(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -298,6 +300,7 @@ func (g *GMailEmailHandler) GetDrafts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	p := bluemonday.StripTagsPolicy()
 	emailsApi := make([]*apiModels.OtherEmail, len(req.Drafts))
 	for i, d := range req.Drafts {
 		dr, err := srv.Users.Drafts.Get("me", d.Id).Format("full").Do()
@@ -306,6 +309,10 @@ func (g *GMailEmailHandler) GetDrafts(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		email := CreateEmailStructDraft(dr)
+		text := p.Sanitize(email.Text)
+		text = strings.ReplaceAll(text, "\n", "")
+		fields := strings.Fields(text)
+		email.Text = strings.Join(fields, " ")
 		emailsApi[i] = email
 	}
 

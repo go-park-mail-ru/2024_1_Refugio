@@ -1627,7 +1627,7 @@ const docTemplate = `{
         },
         "/api/v1/gmail/draft/update/{id}": {
             "put": {
-                "description": "AddDraft a nupdate draft message to the system",
+                "description": "AddDraft a update draft message to the system",
                 "consumes": [
                     "application/json"
                 ],
@@ -1648,13 +1648,13 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "ID of the folder message",
+                        "description": "ID of the draft message",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Email message in JSON format",
+                        "description": "Draft message in JSON format",
                         "name": "email",
                         "in": "body",
                         "required": true,
@@ -1665,7 +1665,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "ID of the send email message",
+                        "description": "ID of the update draft message",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -1683,7 +1683,7 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "Failed to add email message",
+                        "description": "Failed to update draft message",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -1898,6 +1898,72 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Failed to add email message",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/gmail/email/update/{id}": {
+            "put": {
+                "description": "AddDraft a update email message to the system",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "emails-gmail"
+                ],
+                "summary": "SendDraft a email draft message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID of the email message",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Email message in JSON format",
+                        "name": "email",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/response.EmailOtherSwag"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ID of the update email message",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad JSON in request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Not Authorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to update email message",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }

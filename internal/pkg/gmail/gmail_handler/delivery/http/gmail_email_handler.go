@@ -8,6 +8,7 @@ import (
 	"github.com/denisbrodbeck/striphtmltags"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
+	"github.com/microcosm-cc/bluemonday"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/gmail/v1"
@@ -20,6 +21,7 @@ import (
 	"mail/internal/pkg/utils/validators"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -63,6 +65,7 @@ func (g *GMailEmailHandler) GetIncoming(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	p := bluemonday.StripTagsPolicy()
 	emailsApi := make([]*apiModels.OtherEmail, len(req.Messages))
 	for i, m := range req.Messages {
 		msg, err := srv.Users.Messages.Get("me", m.Id).Format("full").Do()
@@ -71,7 +74,12 @@ func (g *GMailEmailHandler) GetIncoming(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 		email := CreateEmailStruct(msg)
+		text := p.Sanitize(email.Text)
+		text = strings.ReplaceAll(text, "\n", "")
+		fields := strings.Fields(text)
+		email.Text = strings.Join(fields, " ")
 		emailsApi[i] = email
+		// \n            .
 	}
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"emails": emailsApi})
 }
@@ -110,6 +118,7 @@ func (g *GMailEmailHandler) GetSent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	p := bluemonday.StripTagsPolicy()
 	emailsApi := make([]*apiModels.OtherEmail, len(req.Messages))
 	for i, m := range req.Messages {
 		msg, err := srv.Users.Messages.Get("me", m.Id).Format("full").Do()
@@ -118,6 +127,10 @@ func (g *GMailEmailHandler) GetSent(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		email := CreateEmailStruct(msg)
+		text := p.Sanitize(email.Text)
+		text = strings.ReplaceAll(text, "\n", "")
+		fields := strings.Fields(text)
+		email.Text = strings.Join(fields, " ")
 		emailsApi[i] = email
 	}
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"emails": emailsApi})
@@ -157,6 +170,7 @@ func (g *GMailEmailHandler) GetSpam(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	p := bluemonday.StripTagsPolicy()
 	emailsApi := make([]*apiModels.OtherEmail, len(req.Messages))
 	for i, m := range req.Messages {
 		msg, err := srv.Users.Messages.Get("me", m.Id).Format("full").Do()
@@ -165,6 +179,10 @@ func (g *GMailEmailHandler) GetSpam(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		email := CreateEmailStruct(msg)
+		text := p.Sanitize(email.Text)
+		text = strings.ReplaceAll(text, "\n", "")
+		fields := strings.Fields(text)
+		email.Text = strings.Join(fields, " ")
 		emailsApi[i] = email
 	}
 
@@ -328,6 +346,89 @@ func (g *GMailEmailHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": true})
+}
+
+// Update update a email message.
+// @Summary SendDraft a email draft message
+// @Description AddDraft a update email message to the system
+// @Tags emails-gmail
+// @Accept json
+// @Produce json
+// @Param X-Csrf-Token header string true "CSRF Token"
+// @Param id path string true "ID of the email message"
+// @Param email body response.EmailOtherSwag true "Email message in JSON format"
+// @Success 200 {object} response.Response "ID of the update email message"
+// @Failure 400 {object} response.Response "Bad JSON in request"
+// @Failure 401 {object} response.Response "Not Authorized"
+// @Failure 500 {object} response.Response "Failed to update email message"
+// @Router /api/v1/gmail/email/update/{id} [put]
+func (g *GMailEmailHandler) Update(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	messageID, ok := vars["id"]
+	if !ok {
+		response.HandleError(w, http.StatusBadRequest, "Bad id in request")
+		return
+	}
+
+	var newEmail apiModels.OtherEmail
+	decoder := schema.NewDecoder()
+	decoder.IgnoreUnknownKeys(true)
+	err := json.NewDecoder(r.Body).Decode(&newEmail)
+	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
+		return
+	}
+
+	login, err := g.Sessions.GetLoginBySession(r, r.Context())
+	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Bad sender session")
+		return
+	}
+
+	err = g.Sessions.CheckLogin(newEmail.SenderEmail, r, r.Context())
+	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Bad sender login")
+		return
+	}
+
+	srv, err := GetSRV(login)
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Unable to retrieve Gmail client")
+		return
+	}
+
+	var addModify []string
+	var removeModify []string
+	if newEmail.SpamStatus {
+		addModify = append(addModify, "SPAM")
+	} else {
+		addModify = append(addModify, "INBOX")
+		removeModify = append(removeModify, "SPAM")
+	}
+
+	if !newEmail.ReadStatus {
+		addModify = append(addModify, "UNREAD")
+	} else {
+		removeModify = append(removeModify, "UNREAD")
+	}
+
+	if newEmail.Flag {
+		addModify = append(addModify, "IMPORTANT")
+	} else {
+		removeModify = append(removeModify, "IMPORTANT")
+	}
+
+	modifyRequest := &gmail.ModifyMessageRequest{
+		RemoveLabelIds: removeModify,
+		AddLabelIds:    addModify,
+	}
+	_, err = srv.Users.Messages.Modify("me", messageID, modifyRequest).Do()
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Error update the draft")
+		return
+	}
+
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": newEmail})
 }
 
 func CreateEmailStruct(msg *gmail.Message) *apiModels.OtherEmail {

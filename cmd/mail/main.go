@@ -406,9 +406,11 @@ func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.
 	logRouter.HandleFunc("/gmail/emails/sent", emailGMailHandler.GetSent).Methods("GET", "OPTIONS")
 	logRouter.HandleFunc("/gmail/emails/spam", emailGMailHandler.GetSpam).Methods("GET", "OPTIONS")
 	logRouter.HandleFunc("/gmail/email/{id}", emailGMailHandler.GetById).Methods("GET", "OPTIONS")
-	// update???
+	logRouter.HandleFunc("/gmail/email/update/{id}", emailGMailHandler.Update).Methods("PUT", "OPTIONS")
 	logRouter.HandleFunc("/gmail/email/delete/{id}", emailGMailHandler.Delete).Methods("DELETE", "OPTIONS")
 	logRouter.HandleFunc("/gmail/email/send", emailGMailHandler.Send).Methods("POST", "OPTIONS")
+	// AddAttachment ???
+	// File
 
 	logRouter.HandleFunc("/gmail/drafts", emailGMailHandler.GetDrafts).Methods("GET", "OPTIONS")
 	logRouter.HandleFunc("/gmail/draft/adddraft", emailGMailHandler.AddDraft).Methods("POST", "OPTIONS")
@@ -416,6 +418,14 @@ func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.
 	logRouter.HandleFunc("/gmail/draft/{id}", emailGMailHandler.GetByIdDraft).Methods("GET", "OPTIONS")
 	logRouter.HandleFunc("/gmail/draft/update/{id}", emailGMailHandler.UpdateDraft).Methods("PUT", "OPTIONS")
 	logRouter.HandleFunc("/gmail/draft/delete/{id}", emailGMailHandler.DeleteDraft).Methods("DELETE", "OPTIONS")
+
+	logRouter.HandleFunc("/gmail/labels", emailGMailHandler.GetLabels).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/gmail/labels/email/{id}", emailGMailHandler.GetAllNameLabels).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/gmail/label/{id}/emails", emailGMailHandler.GetAllEmailsInLabel).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/gmail/label/create", emailGMailHandler.CreateLabel).Methods("POST", "OPTIONS")
+	logRouter.HandleFunc("/gmail/label/delete/{id}", emailGMailHandler.DeleteLabel).Methods("DELETE", "OPTIONS")
+	logRouter.HandleFunc("/gmail/label/update/{id}", emailGMailHandler.UpdateLabel).Methods("PUT", "OPTIONS")
+	logRouter.HandleFunc("/gmail/label/add_email", emailGMailHandler.AddEmailInLabel).Methods("POST", "OPTIONS")
 
 	return logRouter
 }

@@ -123,6 +123,11 @@ type FolderEmailSwag struct {
 	EmailID  uint32 `json:"emailId"`
 }
 
+type FolderEmailGoogleSwag struct {
+	FolderID string `json:"folderId"`
+	EmailID  string `json:"emailId"`
+}
+
 type QuestionSwag struct {
 	ID          uint32 `json:"id,omitempty"`
 	Text        string `json:"text,omitempty"`
