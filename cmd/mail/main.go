@@ -404,13 +404,18 @@ func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.
 
 	logRouter.HandleFunc("/gmail/emails/incoming", emailGMailHandler.GetIncoming).Methods("GET", "OPTIONS")
 	logRouter.HandleFunc("/gmail/emails/sent", emailGMailHandler.GetSent).Methods("GET", "OPTIONS")
-	logRouter.HandleFunc("/gmail/emails/draft", emailGMailHandler.GetDrafts).Methods("GET", "OPTIONS")
 	logRouter.HandleFunc("/gmail/emails/spam", emailGMailHandler.GetSpam).Methods("GET", "OPTIONS")
 	logRouter.HandleFunc("/gmail/email/{id}", emailGMailHandler.GetById).Methods("GET", "OPTIONS")
 	// update???
 	logRouter.HandleFunc("/gmail/email/delete/{id}", emailGMailHandler.Delete).Methods("DELETE", "OPTIONS")
 	logRouter.HandleFunc("/gmail/email/send", emailGMailHandler.Send).Methods("POST", "OPTIONS")
-	// addDraft
+
+	logRouter.HandleFunc("/gmail/drafts", emailGMailHandler.GetDrafts).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/gmail/draft/adddraft", emailGMailHandler.AddDraft).Methods("POST", "OPTIONS")
+	logRouter.HandleFunc("/gmail/draft/sendDraft", emailGMailHandler.SendDraft).Methods("POST", "OPTIONS")
+	logRouter.HandleFunc("/gmail/draft/{id}", emailGMailHandler.GetByIdDraft).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/gmail/draft/update/{id}", emailGMailHandler.UpdateDraft).Methods("PUT", "OPTIONS")
+	logRouter.HandleFunc("/gmail/draft/delete/{id}", emailGMailHandler.DeleteDraft).Methods("DELETE", "OPTIONS")
 
 	return logRouter
 }

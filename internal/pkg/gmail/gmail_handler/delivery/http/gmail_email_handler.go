@@ -175,58 +175,6 @@ func (g *GMailEmailHandler) GetSpam(w http.ResponseWriter, r *http.Request) {
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"emails": emailsApi})
 }
 
-// GetDrafts displays the list of email messages.
-// @Summary Display the list of email messages
-// @Description Get a list of all email messages
-// @Tags emails-gmail
-// @Produce json
-// @Param X-Csrf-Token header string true "CSRF Token"
-// @Success 200 {object} response.Response "List of all email messages"
-// @Failure 400 {object} response.Response "Bad request"
-// @Failure 401 {object} response.Response "Not Authorized"
-// @Failure 500 {object} response.Response "JSON encoding error"
-// @Router /api/v1/gmail/emails/draft [get]
-func (g *GMailEmailHandler) GetDrafts(w http.ResponseWriter, r *http.Request) {
-	login, err := g.Sessions.GetLoginBySession(r, r.Context())
-	if err != nil {
-		response.HandleError(w, http.StatusBadRequest, "Bad user session")
-		return
-	}
-	if !validators.IsValidEmailFormatGmail(login) {
-		response.HandleError(w, http.StatusBadRequest, "Login must end with @gmail.com")
-		return
-	}
-
-	srv, err := GetSRV(login)
-	if err != nil {
-		response.HandleError(w, http.StatusInternalServerError, "Unable to retrieve Gmail client")
-		return
-	}
-
-	req, err := srv.Users.Messages.List("me").Q("label:drafts").Do()
-	if err != nil {
-		response.HandleError(w, http.StatusInternalServerError, "Error receiving list messages")
-		return
-	}
-
-	emailsApi := make([]*apiModels.OtherEmail, len(req.Messages))
-	for i, m := range req.Messages {
-		msg, err := srv.Users.Messages.Get("me", m.Id).Format("full").Do()
-		if err != nil {
-			response.HandleError(w, http.StatusInternalServerError, "Error receiving messages")
-			return
-		}
-		email := CreateEmailStruct(msg)
-		emailsApi[i] = email
-	}
-
-	for i, _ := range emailsApi {
-		emailsApi[i].DraftStatus = true
-	}
-
-	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"emails": emailsApi})
-}
-
 // GetById returns an email message by its ID.
 // @Summary Get an email message by ID
 // @Description Get an email message by its unique identifier

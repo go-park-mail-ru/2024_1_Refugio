@@ -224,39 +224,6 @@ paths:
       summary: Add answer
       tags:
       - question
-  /api/v1/auth/gAuth:
-    get:
-      consumes:
-      - application/json
-      description: GoogleAuth Handles user.
-      parameters:
-      - description: code from oauth
-        in: query
-        name: code
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Auth successful
-          schema:
-            $ref: '#/definitions/response.Response'
-        "400":
-          description: Invalid request body
-          schema:
-            $ref: '#/definitions/response.ErrorResponse'
-        "401":
-          description: Invalid credentials
-          schema:
-            $ref: '#/definitions/response.ErrorResponse'
-        "500":
-          description: Failed to create session
-          schema:
-            $ref: '#/definitions/response.ErrorResponse'
-      summary: GoogleAuth User
-      tags:
-      - auth-gmail
   /api/v1/auth/getAuthURL:
     get:
       consumes:
@@ -1172,6 +1139,231 @@ paths:
       summary: Update folder a user
       tags:
       - folders
+  /api/v1/gmail/draft/{id}:
+    get:
+      description: Get an email message by its unique identifier
+      parameters:
+      - description: ID of the draft message
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Email message data
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad id in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Email not found
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Get an draft message by ID
+      tags:
+      - drafts-gmail
+  /api/v1/gmail/draft/adddraft:
+    post:
+      consumes:
+      - application/json
+      description: AddDraft a new draft email message to the system
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      - description: Email message in JSON format
+        in: body
+        name: email
+        required: true
+        schema:
+          $ref: '#/definitions/response.EmailOtherSwag'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ID of the send email message
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad JSON in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to add email message
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: AddDraft a new draft email message
+      tags:
+      - drafts-gmail
+  /api/v1/gmail/draft/delete/{id}:
+    delete:
+      description: Delete an draft message based on its identifier
+      parameters:
+      - description: ID of the draft message
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Deletion success status
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad id
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to delete email message
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Delete an draft message
+      tags:
+      - drafts-gmail
+  /api/v1/gmail/draft/sendDraft:
+    post:
+      consumes:
+      - application/json
+      description: AddDraft a new sent email message to the system
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      - description: Email message in JSON format
+        in: body
+        name: email
+        required: true
+        schema:
+          $ref: '#/definitions/response.EmailOtherSwag'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ID of the send email message
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad JSON in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to add email message
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: SendDraft a new sent email message
+      tags:
+      - drafts-gmail
+  /api/v1/gmail/draft/update/{id}:
+    put:
+      consumes:
+      - application/json
+      description: AddDraft a nupdate draft message to the system
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      - description: ID of the folder message
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Email message in JSON format
+        in: body
+        name: email
+        required: true
+        schema:
+          $ref: '#/definitions/response.EmailOtherSwag'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ID of the send email message
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad JSON in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to add email message
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: SendDraft a update draft message
+      tags:
+      - drafts-gmail
+  /api/v1/gmail/drafts:
+    get:
+      description: Get a list of all email messages
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of all email messages
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: JSON encoding error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Display the list of email messages
+      tags:
+      - drafts-gmail
   /api/v1/gmail/email/{id}:
     get:
       description: Get an email message by its unique identifier
@@ -1281,37 +1473,6 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       summary: Send a new email message
-      tags:
-      - emails-gmail
-  /api/v1/gmail/emails/draft:
-    get:
-      description: Get a list of all email messages
-      parameters:
-      - description: CSRF Token
-        in: header
-        name: X-Csrf-Token
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: List of all email messages
-          schema:
-            $ref: '#/definitions/response.Response'
-        "400":
-          description: Bad request
-          schema:
-            $ref: '#/definitions/response.Response'
-        "401":
-          description: Not Authorized
-          schema:
-            $ref: '#/definitions/response.Response'
-        "500":
-          description: JSON encoding error
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: Display the list of email messages
       tags:
       - emails-gmail
   /api/v1/gmail/emails/incoming:
@@ -1478,6 +1639,39 @@ paths:
       summary: Add question
       tags:
       - question
+  /api/v1/sauth/gAuth:
+    get:
+      consumes:
+      - application/json
+      description: GoogleAuth Handles user.
+      parameters:
+      - description: code from oauth
+        in: query
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Auth successful
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Invalid credentials
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to create session
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: GoogleAuth User
+      tags:
+      - auth-gmail
   /api/v1/statistics:
     get:
       consumes:
