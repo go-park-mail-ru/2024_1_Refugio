@@ -744,6 +744,61 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/email/{id}/file/{file-id}": {
+            "post": {
+                "description": "Adds a file as an attachment to a specified email message",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "files"
+                ],
+                "summary": "Add a file to an email message",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Email ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "File ID",
+                        "name": "file-id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "CSRF Token",
+                        "name": "X-Csrf-Token",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "File added successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad ID in request or error processing file",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Failed to add file",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/email/{id}/get/files/": {
             "get": {
                 "description": "Retrieve files associated with an email by its ID from the email service",

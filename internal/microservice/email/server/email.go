@@ -338,3 +338,20 @@ func (es *EmailServer) AddFile(ctx context.Context, input *proto.AddFileRequest)
 
 	return &proto.AddFileReply{FileId: fileId}, nil
 }
+
+func (es *EmailServer) AddFileToEmail(ctx context.Context, input *proto.AddFileToEmailRequest) (*proto.AddFileToEmailReply, error) {
+	if input == nil {
+		return nil, fmt.Errorf("invalid file format: %s", input)
+	}
+
+	if input.EmailId <= 0 || input.FileId <= 0 {
+		return nil, fmt.Errorf("invalid file id")
+	}
+
+	err := es.EmailUseCase.AddFileToEmail(input.EmailId, input.FileId, ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed add attachment")
+	}
+
+	return &proto.AddFileToEmailReply{Status: true}, nil
+}

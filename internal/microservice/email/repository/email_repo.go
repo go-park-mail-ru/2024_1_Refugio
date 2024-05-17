@@ -141,10 +141,8 @@ func (r *EmailRepository) FindEmail(login string, ctx context.Context) error {
 // GetAllIncoming returns all emails incoming from the storage.
 func (r *EmailRepository) GetAllIncoming(login string, offset, limit int64, ctx context.Context) ([]*domain.Email, error) {
 	query := `
-		SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+		SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important
 		FROM email e
-		LEFT JOIN email_file ef ON e.id = ef.email_id
-		LEFT JOIN file f ON ef.file_id = f.id
 		JOIN profile_email pe ON e.id = pe.email_id
 		JOIN profile p ON pe.profile_id = (
 			SELECT id FROM profile WHERE login = $1
@@ -188,10 +186,8 @@ func (r *EmailRepository) GetAllIncoming(login string, offset, limit int64, ctx 
 // GetAllSent returns all emails sent from the storage.
 func (r *EmailRepository) GetAllSent(login string, offset, limit int64, ctx context.Context) ([]*domain.Email, error) {
 	query := `
-		SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+		SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important
 		FROM email e
-		LEFT JOIN email_file ef ON e.id = ef.email_id
-		LEFT JOIN file f ON ef.file_id = f.id
 		JOIN profile_email pe ON e.id = pe.email_id
 		JOIN profile p ON pe.profile_id = (
 			SELECT id FROM profile WHERE login = $1
@@ -236,10 +232,8 @@ func (r *EmailRepository) GetAllSent(login string, offset, limit int64, ctx cont
 // GetAllDraft returns all draft emails from the storage.
 func (r *EmailRepository) GetAllDraft(login string, offset, limit int64, ctx context.Context) ([]*domain.Email, error) {
 	query := `
-		SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+		SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important
 		FROM email e
-		LEFT JOIN email_file ef ON e.id = ef.email_id
-		LEFT JOIN file f ON ef.file_id = f.id
 		JOIN profile_email pe ON e.id = pe.email_id
 		JOIN profile p ON pe.profile_id = (
 			SELECT id FROM profile WHERE login = $1
@@ -283,10 +277,8 @@ func (r *EmailRepository) GetAllDraft(login string, offset, limit int64, ctx con
 // GetAllSpam returns all draft emails from the storage.
 func (r *EmailRepository) GetAllSpam(login string, offset, limit int64, ctx context.Context) ([]*domain.Email, error) {
 	query := `
-		SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+		SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important
 		FROM email e
-		LEFT JOIN email_file ef ON e.id = ef.email_id
-		LEFT JOIN file f ON ef.file_id = f.id
 		JOIN profile_email pe ON e.id = pe.email_id
 		JOIN profile p ON pe.profile_id = (
 			SELECT id FROM profile WHERE login = $1
@@ -330,10 +322,8 @@ func (r *EmailRepository) GetAllSpam(login string, offset, limit int64, ctx cont
 // GetByID returns the email by its unique identifier.
 func (r *EmailRepository) GetByID(id uint64, login string, ctx context.Context) (*domain.Email, error) {
 	query := `
-		SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+		SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important
 		FROM email e
-		LEFT JOIN email_file ef ON e.id = ef.email_id
-		LEFT JOIN file f ON ef.file_id = f.id
 		JOIN profile_email pe ON e.id = pe.email_id
 		JOIN profile p ON pe.profile_id = (
 			SELECT id FROM profile WHERE login = $2
@@ -356,6 +346,36 @@ func (r *EmailRepository) GetByID(id uint64, login string, ctx context.Context) 
 	}
 
 	return converters.EmailConvertDbInCore(emailModelDb), nil
+}
+
+// GetAvatarFileIDByLogin getting an avatar by login.
+func (r *EmailRepository) GetAvatarFileIDByLogin(login string, ctx context.Context) (string, error) {
+	query := `
+		SELECT f.file_id
+		FROM file f
+		LEFT JOIN profile p ON p.avatar_id = f.id
+		WHERE p.login = $1
+	`
+
+	var fileID sql.NullString
+	start := time.Now()
+	err := r.DB.Get(&fileID, query, login)
+
+	args := []interface{}{login}
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", fmt.Errorf("no avatar found for login %s", login)
+		}
+		return "", err
+	}
+
+	if !fileID.Valid {
+		return "", nil
+	}
+
+	return fileID.String, nil
 }
 
 // Update updates the information of an email in the storage based on the provided new email.

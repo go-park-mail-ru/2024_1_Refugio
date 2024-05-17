@@ -16,7 +16,6 @@ const SECRETACCESSKEY = "minioadmin"
 
 const PROTOCOL = "http://"
 */
-
 // FOR PROD
 
 const IP_ADDRESS = "89.208.223.140"

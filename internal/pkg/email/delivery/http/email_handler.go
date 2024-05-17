@@ -1166,3 +1166,42 @@ func (h *EmailHandler) AddFile(w http.ResponseWriter, r *http.Request) {
 
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"FileId": fileId.FileId})
 }
+
+// AddFileToEmail adds a file to an email message.
+// @Summary Add a file to an email message
+// @Description Adds a file as an attachment to a specified email message
+// @Tags files
+// @Produce json
+// @Param id path uint64 true "Email ID"
+// @Param file-id path uint64 true "File ID"
+// @Param X-Csrf-Token header string true "CSRF Token"
+// @Success 200 {object} response.Response "File added successfully"
+// @Failure 400 {object} response.Response "Bad ID in request or error processing file"
+// @Failure 404 {object} response.Response "Failed to add file"
+// @Router /api/v1/email/{id}/file/{file-id} [post]
+func (h *EmailHandler) AddFileToEmail(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	email_id, err := strconv.ParseUint(vars["id"], 10, 64)
+	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Bad ID in request")
+		return
+	}
+
+	file_id, err := strconv.ParseUint(vars["file-id"], 10, 64)
+	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Bad ID in request")
+		return
+	}
+
+	status, err := h.EmailServiceClient.AddFileToEmail(
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		&proto.AddFileToEmailRequest{EmailId: email_id, FileId: file_id},
+	)
+	if err != nil {
+		response.HandleError(w, http.StatusNotFound, fmt.Sprintf("Failed to add file: %s", err.Error()))
+		return
+	}
+
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Status": status.Status})
+}

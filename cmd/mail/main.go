@@ -368,6 +368,7 @@ func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.
 
 	logRouter.HandleFunc("/email/{id}/addattachment", emailHandler.AddAttachment).Methods("POST", "OPTIONS")
 	logRouter.HandleFunc("/email/addfile", emailHandler.AddFile).Methods("POST", "OPTIONS")
+	logRouter.HandleFunc("/email/{id}/file/{file-id}", emailHandler.AddFileToEmail).Methods("POST", "OPTIONS")
 	logRouter.HandleFunc("/email/get/file/{id}", emailHandler.GetFileByID).Methods("GET", "OPTIONS")
 	logRouter.HandleFunc("/email/{id}/get/files/", emailHandler.GetFilesByEmailID).Methods("GET", "OPTIONS")
 	logRouter.HandleFunc("/email/delete/file/{id}", emailHandler.DeleteFileByID).Methods("DELETE", "OPTIONS")

@@ -57,4 +57,7 @@ type EmailUseCase interface {
 
 	// AddFile add an file to database.
 	AddFile(fileID string, fileType string, ctx context.Context) (uint64, error)
+
+	// AddFileToEmail add a file to an email.
+	AddFileToEmail(emailID uint64, fileID uint64, ctx context.Context) (error)
 }

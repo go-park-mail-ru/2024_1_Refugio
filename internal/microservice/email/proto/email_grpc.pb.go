@@ -38,6 +38,7 @@ const (
 	EmailService_DeleteFileByID_FullMethodName      = "/proto.EmailService/DeleteFileByID"
 	EmailService_UpdateFileByID_FullMethodName      = "/proto.EmailService/UpdateFileByID"
 	EmailService_AddFile_FullMethodName             = "/proto.EmailService/AddFile"
+	EmailService_AddFileToEmail_FullMethodName      = "/proto.EmailService/AddFileToEmail"
 )
 
 // EmailServiceClient is the client API for EmailService service.
@@ -61,6 +62,7 @@ type EmailServiceClient interface {
 	DeleteFileByID(ctx context.Context, in *DeleteFileByIDRequest, opts ...grpc.CallOption) (*DeleteFileByIDReply, error)
 	UpdateFileByID(ctx context.Context, in *UpdateFileByIDRequest, opts ...grpc.CallOption) (*UpdateFileByIDReply, error)
 	AddFile(ctx context.Context, in *AddFileRequest, opts ...grpc.CallOption) (*AddFileReply, error)
+	AddFileToEmail(ctx context.Context, in *AddFileToEmailRequest, opts ...grpc.CallOption) (*AddFileToEmailReply, error)
 }
 
 type emailServiceClient struct {
@@ -224,6 +226,15 @@ func (c *emailServiceClient) AddFile(ctx context.Context, in *AddFileRequest, op
 	return out, nil
 }
 
+func (c *emailServiceClient) AddFileToEmail(ctx context.Context, in *AddFileToEmailRequest, opts ...grpc.CallOption) (*AddFileToEmailReply, error) {
+	out := new(AddFileToEmailReply)
+	err := c.cc.Invoke(ctx, EmailService_AddFileToEmail_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // EmailServiceServer is the server API for EmailService service.
 // All implementations must embed UnimplementedEmailServiceServer
 // for forward compatibility
@@ -245,6 +256,7 @@ type EmailServiceServer interface {
 	DeleteFileByID(context.Context, *DeleteFileByIDRequest) (*DeleteFileByIDReply, error)
 	UpdateFileByID(context.Context, *UpdateFileByIDRequest) (*UpdateFileByIDReply, error)
 	AddFile(context.Context, *AddFileRequest) (*AddFileReply, error)
+	AddFileToEmail(context.Context, *AddFileToEmailRequest) (*AddFileToEmailReply, error)
 	mustEmbedUnimplementedEmailServiceServer()
 }
 
@@ -302,6 +314,9 @@ func (UnimplementedEmailServiceServer) UpdateFileByID(context.Context, *UpdateFi
 }
 func (UnimplementedEmailServiceServer) AddFile(context.Context, *AddFileRequest) (*AddFileReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddFile not implemented")
+}
+func (UnimplementedEmailServiceServer) AddFileToEmail(context.Context, *AddFileToEmailRequest) (*AddFileToEmailReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddFileToEmail not implemented")
 }
 func (UnimplementedEmailServiceServer) mustEmbedUnimplementedEmailServiceServer() {}
 
@@ -622,6 +637,24 @@ func _EmailService_AddFile_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _EmailService_AddFileToEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddFileToEmailRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EmailServiceServer).AddFileToEmail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EmailService_AddFileToEmail_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EmailServiceServer).AddFileToEmail(ctx, req.(*AddFileToEmailRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // EmailService_ServiceDesc is the grpc.ServiceDesc for EmailService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -696,6 +729,10 @@ var EmailService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddFile",
 			Handler:    _EmailService_AddFile_Handler,
+		},
+		{
+			MethodName: "AddFileToEmail",
+			Handler:    _EmailService_AddFileToEmail_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

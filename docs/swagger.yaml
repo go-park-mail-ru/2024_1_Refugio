@@ -326,6 +326,43 @@ paths:
       summary: Add an attachment to an email message
       tags:
       - files
+  /api/v1/email/{id}/file/{file-id}:
+    post:
+      description: Adds a file as an attachment to a specified email message
+      parameters:
+      - description: Email ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: File ID
+        in: path
+        name: file-id
+        required: true
+        type: integer
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: File added successfully
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad ID in request or error processing file
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Failed to add file
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Add a file to an email message
+      tags:
+      - files
   /api/v1/email/{id}/get/files/:
     get:
       description: Retrieve files associated with an email by its ID from the email

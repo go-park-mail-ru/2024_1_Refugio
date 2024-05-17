@@ -24,7 +24,10 @@ type EmailRepository interface {
 	// GetByID returns the email by its unique identifier.
 	GetByID(id uint64, login string, ctx context.Context) (*domain.Email, error)
 
-	// Add adds a new email to the storage and returns its assigned unique identifier.
+	// GetAvatarFileIDByLogin getting an avatar by login.
+	GetAvatarFileIDByLogin(login string, ctx context.Context) (string, error)
+
+// Add adds a new email to the storage and returns its assigned unique identifier.
 	Add(email *domain.Email, ctx context.Context) (uint64, *domain.Email, error)
 
 	// AddProfileEmail links an email to one or more profiles based on sender and recipient information.

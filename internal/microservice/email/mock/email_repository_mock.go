@@ -211,6 +211,21 @@ func (mr *MockEmailRepositoryMockRecorder) GetAllSpam(login, offset, limit, ctx 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllSpam", reflect.TypeOf((*MockEmailRepository)(nil).GetAllSpam), login, offset, limit, ctx)
 }
 
+// GetAvatarFileIDByLogin mocks base method.
+func (m *MockEmailRepository) GetAvatarFileIDByLogin(login string, ctx context.Context) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAvatarFileIDByLogin", login, ctx)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAvatarFileIDByLogin indicates an expected call of GetAvatarFileIDByLogin.
+func (mr *MockEmailRepositoryMockRecorder) GetAvatarFileIDByLogin(login, ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAvatarFileIDByLogin", reflect.TypeOf((*MockEmailRepository)(nil).GetAvatarFileIDByLogin), login, ctx)
+}
+
 // GetByID mocks base method.
 func (m *MockEmailRepository) GetByID(id uint64, login string, ctx context.Context) (*domain_models.Email, error) {
 	m.ctrl.T.Helper()
