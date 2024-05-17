@@ -54,4 +54,7 @@ type EmailUseCase interface {
 
 	// UpdateFileByID updates the information of the specified file.
 	UpdateFileByID(fileID uint64, newFileID string, newFileType string, ctx context.Context) (bool, error)
+
+	// AddFile add an file to database.
+	AddFile(fileID string, fileType string, ctx context.Context) (uint64, error)
 }

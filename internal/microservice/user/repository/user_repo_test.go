@@ -406,10 +406,11 @@ func TestAddUser(t *testing.T) {
 			AvatarID:    "avatar123",
 			PhoneNumber: "123456789",
 			Description: "Тестовый пользователь",
+			VKId:        1,
 		}
 
 		mock.ExpectExec(`INSERT INTO profile`).
-			WithArgs(user.Login, user.Password, user.FirstName, user.Surname, user.Patronymic, user.Gender, user.Birthday, sqlmock.AnyArg(), user.PhoneNumber, user.Description).
+			WithArgs(user.Login, user.Password, user.FirstName, user.Surname, user.Patronymic, user.Gender, user.Birthday, sqlmock.AnyArg(), user.PhoneNumber, user.Description, user.VKId).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		createUser, err := repo.Add(user, ctx)

@@ -1108,3 +1108,61 @@ func (h *EmailHandler) UpdateFileByID(w http.ResponseWriter, r *http.Request) {
 
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": true})
 }
+
+// AddFile add a file to an email message.
+// @Summary Add a file to an email message
+// @Description Add a file to an email message
+// @Tags files
+// @Accept multipart/form-data
+// @Produce json
+// @Param file formData file true "Attachment file to upload"
+// @Param X-Csrf-Token header string true "CSRF Token"
+// @Success 200 {object} response.Response "File added successfully"
+// @Failure 400 {object} response.Response "Bad id in request or bad JSON in request"
+// @Failure 404 {object} response.Response "Failed to add file"
+// @Router /api/v1/email/addfile [post]
+func (h *EmailHandler) AddFile(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseMultipartForm(20 * 1024 * 1024)
+	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Error processing file")
+		return
+	}
+
+	file, handler, err := r.FormFile("file")
+	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Failed to get file")
+		return
+	}
+	defer file.Close()
+
+	if handler.Size > (20 * 1024 * 1024) {
+		response.HandleError(w, http.StatusInternalServerError, "Failed to get file")
+		return
+	}
+
+	fileExt := filepath.Ext(handler.Filename)
+	contentType := handler.Header.Get("Content-Type")
+
+	fileType := check_file_type.GetFileType(contentType)
+
+	uniqueFileName := generate_filename.GenerateUniqueFileName(fileExt)
+
+	_, err = h.MinioClient.PutObject(r.Context(), "files", uniqueFileName, file, -1, minio.PutObjectOptions{ContentType: contentType})
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Error uploading file to MinIO")
+		return
+	}
+
+	fileURL := fmt.Sprintf(configs.PROTOCOL+"0.0.0.0:9000"+"/files/%s", uniqueFileName)
+
+	fileId, err := h.EmailServiceClient.AddFile(
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		&proto.AddFileRequest{FileId: fileURL, FileType: fileType},
+	)
+	if err != nil {
+		response.HandleError(w, http.StatusNotFound, fmt.Sprintf("Failed to add file: %s", err.Error()))
+		return
+	}
+
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"FileId": fileId.FileId})
+}

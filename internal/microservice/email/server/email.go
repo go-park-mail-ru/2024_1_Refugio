@@ -321,3 +321,20 @@ func (es *EmailServer) UpdateFileByID(ctx context.Context, input *proto.UpdateFi
 
 	return &proto.UpdateFileByIDReply{Status: updated}, nil
 }
+
+func (es *EmailServer) AddFile(ctx context.Context, input *proto.AddFileRequest) (*proto.AddFileReply, error) {
+	if input == nil {
+		return nil, fmt.Errorf("invalid file format: %s", input)
+	}
+
+	if validators.IsEmpty(input.FileId) || validators.IsEmpty(input.FileType) {
+		return nil, fmt.Errorf("file id or file type is empty")
+	}
+
+	fileId, err := es.EmailUseCase.AddFile(input.FileId, input.FileType, ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed add attachment")
+	}
+
+	return &proto.AddFileReply{FileId: fileId}, nil
+}

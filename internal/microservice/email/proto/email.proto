@@ -25,6 +25,7 @@ service EmailService {
   rpc GetFilesByEmailID(GetFilesByEmailIDRequest) returns(GetFilesByEmailIDReply) {}
   rpc DeleteFileByID(DeleteFileByIDRequest) returns(DeleteFileByIDReply) {}
   rpc UpdateFileByID(UpdateFileByIDRequest) returns(UpdateFileByIDReply) {}
+  rpc AddFile(AddFileRequest) returns(AddFileReply) {}
 }
 
 message EmailIdAndLogin {
@@ -134,6 +135,15 @@ message UpdateFileByIDRequest {
 
 message UpdateFileByIDReply {
   bool status = 1;
+}
+
+message AddFileRequest {
+  string fileId = 1;
+  string fileType = 2;
+}
+
+message AddFileReply {
+  uint64 fileId = 1;
 }
 
 

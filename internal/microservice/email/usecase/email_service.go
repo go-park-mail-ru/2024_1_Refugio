@@ -179,3 +179,17 @@ func (uc *EmailUseCase) UpdateFileByID(fileID uint64, newFileID string, newFileT
 
 	return true, nil
 }
+
+// AddFile add an file to database.
+func (uc *EmailUseCase) AddFile(fileID string, fileType string, ctx context.Context) (uint64, error) {
+	if validators.IsEmpty(fileID) || validators.IsEmpty(fileType) {
+		return 0, fmt.Errorf("file id or file type is empty")
+	}
+
+	file_id, err := uc.repo.AddFile(fileID, fileType, ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to add file")
+	}
+
+	return file_id, nil
+}

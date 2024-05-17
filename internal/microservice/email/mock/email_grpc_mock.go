@@ -76,6 +76,26 @@ func (mr *MockEmailServiceClientMockRecorder) AddEmailDraft(ctx, in interface{},
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddEmailDraft", reflect.TypeOf((*MockEmailServiceClient)(nil).AddEmailDraft), varargs...)
 }
 
+// AddFile mocks base method.
+func (m *MockEmailServiceClient) AddFile(ctx context.Context, in *proto.AddFileRequest, opts ...grpc.CallOption) (*proto.AddFileReply, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "AddFile", varargs...)
+	ret0, _ := ret[0].(*proto.AddFileReply)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddFile indicates an expected call of AddFile.
+func (mr *MockEmailServiceClientMockRecorder) AddFile(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddFile", reflect.TypeOf((*MockEmailServiceClient)(nil).AddFile), varargs...)
+}
+
 // CheckRecipientEmail mocks base method.
 func (m *MockEmailServiceClient) CheckRecipientEmail(ctx context.Context, in *proto.Recipient, opts ...grpc.CallOption) (*proto.EmptyEmail, error) {
 	m.ctrl.T.Helper()
@@ -407,6 +427,21 @@ func (m *MockEmailServiceServer) AddEmailDraft(arg0 context.Context, arg1 *proto
 func (mr *MockEmailServiceServerMockRecorder) AddEmailDraft(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddEmailDraft", reflect.TypeOf((*MockEmailServiceServer)(nil).AddEmailDraft), arg0, arg1)
+}
+
+// AddFile mocks base method.
+func (m *MockEmailServiceServer) AddFile(arg0 context.Context, arg1 *proto.AddFileRequest) (*proto.AddFileReply, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddFile", arg0, arg1)
+	ret0, _ := ret[0].(*proto.AddFileReply)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddFile indicates an expected call of AddFile.
+func (mr *MockEmailServiceServerMockRecorder) AddFile(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddFile", reflect.TypeOf((*MockEmailServiceServer)(nil).AddFile), arg0, arg1)
 }
 
 // CheckRecipientEmail mocks base method.

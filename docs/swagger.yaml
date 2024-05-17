@@ -398,6 +398,40 @@ paths:
       summary: AddDraft a new draft email message
       tags:
       - emails
+  /api/v1/email/addfile:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Add a file to an email message
+      parameters:
+      - description: Attachment file to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: File added successfully
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad id in request or bad JSON in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Failed to add file
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Add a file to an email message
+      tags:
+      - files
   /api/v1/email/delete/{id}:
     delete:
       description: Delete an email message based on its identifier
