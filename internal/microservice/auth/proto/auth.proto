@@ -14,6 +14,8 @@ service AuthService {
   rpc Signup(SignupRequest) returns(SignupReply) {}
   rpc SignupVK(SignupVKRequest) returns(SignupReply) {}
   rpc Logout(LogoutRequest) returns(LogoutReply) {}
+  rpc LoginOtherMail(LoginOtherMailRequest) returns(LoginReply) {}
+  rpc SignupOtherMail(SignupOtherMailRequest) returns(SignupReply) {}
 }
 
 message LoginRequest {
@@ -62,4 +64,20 @@ message LogoutRequest {
 
 message LogoutReply {
 
+}
+
+message LoginOtherMailRequest {
+  uint32 id = 1;
+}
+
+message SignupOtherMailRequest {
+  string firstname = 1;
+  string surname = 2;
+  string patronymic = 3;
+  string gender = 4;
+  google.protobuf.Timestamp birthday = 5;
+  string login = 6;
+  string avatar = 8;
+  string phone_number = 9;
+  string description = 10;
 }

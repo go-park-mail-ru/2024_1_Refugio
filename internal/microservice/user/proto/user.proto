@@ -19,6 +19,8 @@ service UserService {
   rpc DeleteUserAvatar(DeleteUserAvatarRequest) returns(DeleteUserAvatarReply) {}
   rpc CreateUser(CreateUserRequest) returns(CreateUserReply) {}
   rpc GetUserByVKId(GetUserVKIdRequest) returns(GetUserReply) {}
+  rpc GetUserByOnlyLogin(GetUserByOnlyLoginRequest) returns(GetUserByOnlyLoginReply) {}
+  rpc CreateUserOtherMail(CreateUserRequest) returns(CreateUserReply) {}
 }
 
 message User {
@@ -112,4 +114,12 @@ message CreateUserReply {
 
 message GetUserVKIdRequest {
   uint32 vkId = 1;
+}
+
+message GetUserByOnlyLoginRequest {
+  string login = 1;
+}
+
+message GetUserByOnlyLoginReply {
+  User user = 1;
 }

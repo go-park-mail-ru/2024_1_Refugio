@@ -185,7 +185,7 @@ func (us *UserServer) CreateUser(ctx context.Context, input *proto.CreateUserReq
 	return &proto.CreateUserReply{User: converters.UserConvertCoreInProto(*user)}, nil
 }
 
-// CreateUser creates user.
+// GetUserByVKId get vkId.
 func (us *UserServer) GetUserByVKId(ctx context.Context, input *proto.GetUserVKIdRequest) (*proto.GetUserReply, error) {
 	if input.VkId <= 0 {
 		return nil, fmt.Errorf("bad vkId")
@@ -198,4 +198,42 @@ func (us *UserServer) GetUserByVKId(ctx context.Context, input *proto.GetUserVKI
 	}
 
 	return &proto.GetUserReply{User: converters.UserConvertCoreInProto(*user)}, nil
+}
+
+// GetUserByOnlyLogin retrieves information about a user by their login.
+func (us *UserServer) GetUserByOnlyLogin(ctx context.Context, input *proto.GetUserByOnlyLoginRequest) (*proto.GetUserByOnlyLoginReply, error) {
+	if strings.TrimSpace(input.Login) == "" {
+		return nil, fmt.Errorf("invalid user login: %s", input.Login)
+	}
+
+	user, err := us.UserUseCase.GetUserByOnlyLogin(input.Login, ctx)
+	if err != nil {
+		return nil, fmt.Errorf("user not found")
+	}
+
+	return &proto.GetUserByOnlyLoginReply{User: converters.UserConvertCoreInProto(*user)}, nil
+}
+
+// CreateUserOtherMail creates user.
+func (us *UserServer) CreateUserOtherMail(ctx context.Context, input *proto.CreateUserRequest) (*proto.CreateUserReply, error) {
+	userDomain := converters.UserConvertProtoInCore(*input.User)
+
+	userDomain.Login = sanitize.SanitizeString(userDomain.Login)
+	userDomain.FirstName = sanitize.SanitizeString(userDomain.FirstName)
+	userDomain.Surname = sanitize.SanitizeString(userDomain.Surname)
+	userDomain.Patronymic = sanitize.SanitizeString(userDomain.Patronymic)
+	userDomain.AvatarID = sanitize.SanitizeString(userDomain.AvatarID)
+	userDomain.PhoneNumber = sanitize.SanitizeString(userDomain.PhoneNumber)
+	userDomain.Description = sanitize.SanitizeString(userDomain.Description)
+
+	if validUtil.IsEmpty(userDomain.Login) || validUtil.IsEmpty(userDomain.Password) || validUtil.IsEmpty(userDomain.FirstName) || validUtil.IsEmpty(userDomain.Surname) {
+		return nil, fmt.Errorf("all fields must be filled in")
+	}
+
+	user, err := us.UserUseCase.CreateUser(userDomain, ctx)
+	if err != nil {
+		return nil, fmt.Errorf("user with login %s create fail", userDomain.Login)
+	}
+
+	return &proto.CreateUserReply{User: converters.UserConvertCoreInProto(*user)}, nil
 }

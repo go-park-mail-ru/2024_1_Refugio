@@ -39,4 +39,7 @@ type UserRepository interface {
 
 	// GetByVKID returns the user by its unique identifier.
 	GetByVKID(vkId uint32, ctx context.Context) (*domain.User, error)
+
+	// GetByOnlyLogin returns the user by its unique identifier.
+	GetByOnlyLogin(login string, ctx context.Context) (*domain.User, error)
 }

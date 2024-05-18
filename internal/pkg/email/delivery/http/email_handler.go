@@ -416,7 +416,6 @@ func getMXRecord(to string) (mx string, err error) {
 	return
 }
 
-// Never fails, tries to format the address if possible
 func formatEmailAddress(addr string) string {
 	e, err := mail.ParseAddress(addr)
 	if err != nil {

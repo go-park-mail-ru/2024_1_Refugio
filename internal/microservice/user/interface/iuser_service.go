@@ -39,4 +39,7 @@ type UserUseCase interface {
 
 	// GetUserVkID get user by VK Id.
 	GetUserVkID(vkId uint32, ctx context.Context) (*domain.User, error)
+
+	// GetUserByOnlyLogin get user by login.
+	GetUserByOnlyLogin(login string, ctx context.Context) (*domain.User, error)
 }
