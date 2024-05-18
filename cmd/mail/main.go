@@ -311,7 +311,7 @@ func setupRouter(authHandler *authHand.AuthHandler, oauthHandler *oauthHand.OAut
 	router.HandleFunc("/api/v1/testAuth/auth-vk/loginVK", oauthHandler.LoginVK).Methods("GET", "OPTIONS")
 	router.HandleFunc("/api/v1/testAuth/auth-vk/signupVK", oauthHandler.SignupVK).Methods("POST", "OPTIONS")
 
-	auth := setupAuthRouter(authHandler, oauthHandler, logger)
+	auth := setupAuthRouter(authHandler, oauthHandler, emailHandler, logger)
 	router.PathPrefix("/api/v1/auth").Handler(auth)
 
 	logRouter := setupLogRouter(emailHandler, userHandler, folderHandler, questionHandler, logger)
@@ -329,13 +329,14 @@ func setupRouter(authHandler *authHand.AuthHandler, oauthHandler *oauthHand.OAut
 }
 
 // setupAuthRouter configuring authorization router
-func setupAuthRouter(authHandler *authHand.AuthHandler, oauthHandler *oauthHand.OAuthHandler, logger *middleware.Logger) http.Handler {
+func setupAuthRouter(authHandler *authHand.AuthHandler, oauthHandler *oauthHand.OAuthHandler, emailHandler *emailHand.EmailHandler, logger *middleware.Logger) http.Handler {
 	auth := mux.NewRouter().PathPrefix("/api/v1/auth").Subrouter()
 	auth.Use(logger.AccessLogMiddleware, middleware.PanicMiddleware)
 
 	auth.HandleFunc("/login", authHandler.Login).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/signup", authHandler.Signup).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/logout", authHandler.Logout).Methods("POST", "OPTIONS")
+	auth.HandleFunc("/sendOther", emailHandler.SendFromAnotherDomain).Methods("POST", "OPTIONS")
 
 	//auth.HandleFunc("/getAuthUrlVK", oauthHandler.GetSignUpURLVK).Methods("GET", "OPTIONS")
 	//auth.HandleFunc("/auth-vk/signupVK", oauthHandler.SignupVK).Methods("GET", "OPTIONS")

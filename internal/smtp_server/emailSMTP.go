@@ -1,6 +1,6 @@
 package main
 
-// Email represents the information about an email.
+// EmailSMTP represents the information about an email.
 type EmailSMTP struct {
 	Topic          string `json:"topic"`          // Topic is the subject of the email.
 	Text           string `json:"text"`           // Text is the body of the email.

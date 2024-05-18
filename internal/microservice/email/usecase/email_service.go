@@ -105,7 +105,7 @@ func (uc *EmailUseCase) GetEmailByID(id uint64, login string, ctx context.Contex
 		return nil, err
 	}
 
-	if validators.IsValidEmailFormat(email.SenderEmail) {
+	if validators.IsValidEmailFormat(email.SenderEmail) && validators.IsValidEmailFormat(email.RecipientEmail) {
 		if email.SenderEmail == login {
 			email.PhotoID, err = uc.repo.GetAvatarFileIDByLogin(email.RecipientEmail, ctx)
 			if err != nil {

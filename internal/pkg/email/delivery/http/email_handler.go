@@ -340,6 +340,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 		response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*emailData)})
 		return
 	case validators.IsValidEmailFormat(sender) == false && validators.IsValidEmailFormat(recipient) == true:
+		fmt.Println("-----START_1----")
 		_, err = h.EmailServiceClient.CheckRecipientEmail(
 			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 			&proto.Recipient{Recipient: recipient},
@@ -349,6 +350,8 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		fmt.Println("-----START_2----")
+		fmt.Println(newEmail)
 		emailDataProto, err := h.EmailServiceClient.CreateEmail(
 			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 			&proto.Email{
@@ -374,6 +377,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 		emailData := proto_converters.EmailConvertProtoInCore(*emailDataProto.Email)
 		emailData.ID = emailDataProto.Id
 
+		fmt.Println("-----START_3----")
 		_, err = h.EmailServiceClient.CreateProfileEmail(
 			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
 			&proto.IdSenderRecipient{Id: emailData.ID, Sender: emailData.SenderEmail, Recipient: emailData.RecipientEmail},
