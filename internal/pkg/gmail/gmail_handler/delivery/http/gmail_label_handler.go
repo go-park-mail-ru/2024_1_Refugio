@@ -82,6 +82,8 @@ func (g *GMailEmailHandler) GetAllEmailsInLabel(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	labelName = sanitizeString(labelName)
+
 	login, err := g.Sessions.GetLoginBySession(r, r.Context())
 	if err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad user session")
@@ -185,8 +187,8 @@ func (g *GMailEmailHandler) GetAllNameLabels(w http.ResponseWriter, r *http.Requ
 }
 
 // CreateLabel adds a new label.
-// @Summary Send a new label
-// @Description Send a new label to the system
+// @Summary CreateLabel a new label
+// @Description CreateLabel a new label to the system
 // @Tags labels-gmail
 // @Accept json
 // @Produce json
@@ -206,6 +208,8 @@ func (g *GMailEmailHandler) CreateLabel(w http.ResponseWriter, r *http.Request) 
 		response.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
 		return
 	}
+
+	newLabel.Name = sanitizeString(newLabel.Name)
 
 	login, err := g.Sessions.GetLoginBySession(r, r.Context())
 	if err != nil {
@@ -234,13 +238,18 @@ func (g *GMailEmailHandler) CreateLabel(w http.ResponseWriter, r *http.Request) 
 		Color: color,
 	}
 
-	_, err = srv.Users.Labels.Create("me", label).Do()
+	nLabel, err := srv.Users.Labels.Create("me", label).Do()
 	if err != nil {
 		response.HandleError(w, http.StatusInternalServerError, "Error create label")
 		return
 	}
 
-	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"label": newLabel})
+	resultLabel := apiModels.OtherLabel{
+		ID:   nLabel.Id,
+		Name: nLabel.Name,
+	}
+
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"label": resultLabel})
 }
 
 // DeleteLabel label a user.
@@ -290,8 +299,8 @@ func (g *GMailEmailHandler) DeleteLabel(w http.ResponseWriter, r *http.Request) 
 }
 
 // UpdateLabel label a user.
-// @Summary Update label a user
-// @Description Update label a user
+// @Summary UpdateLabel label a user
+// @Description UpdateLabel label a user
 // @Tags labels-gmail
 // @Produce json
 // @Param X-Csrf-Token header string true "CSRF Token"

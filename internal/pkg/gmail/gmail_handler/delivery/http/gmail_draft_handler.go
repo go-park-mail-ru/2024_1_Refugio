@@ -16,28 +16,33 @@ import (
 	"strings"
 )
 
-// AddDraft adds a new draft email message.
-// @Summary AddDraft a new draft email message
-// @Description AddDraft a new draft email message to the system
+// AddDraft adds a new draft message.
+// @Summary AddDraft a new draft message
+// @Description AddDraft a new draft message to the system
 // @Tags drafts-gmail
 // @Accept json
 // @Produce json
 // @Param X-Csrf-Token header string true "CSRF Token"
-// @Param email body response.EmailOtherSwag true "Email message in JSON format"
-// @Success 200 {object} response.Response "ID of the send email message"
+// @Param draft body response.EmailOtherSwag true "Draft message in JSON format"
+// @Success 200 {object} response.Response "ID of the draft message"
 // @Failure 400 {object} response.Response "Bad JSON in request"
 // @Failure 401 {object} response.Response "Not Authorized"
-// @Failure 500 {object} response.Response "Failed to add email message"
+// @Failure 500 {object} response.Response "Failed to add draft message"
 // @Router /api/v1/gmail/draft/adddraft [post]
 func (g *GMailEmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
-	var newEmail apiModels.OtherEmail
+	var newDraft apiModels.OtherEmail
 	decoder := schema.NewDecoder()
 	decoder.IgnoreUnknownKeys(true)
-	err := json.NewDecoder(r.Body).Decode(&newEmail)
+	err := json.NewDecoder(r.Body).Decode(&newDraft)
 	if err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
 		return
 	}
+
+	newDraft.Topic = sanitizeString(newDraft.Topic)
+	newDraft.Text = sanitizeString(newDraft.Text)
+	newDraft.SenderEmail = sanitizeString(newDraft.SenderEmail)
+	newDraft.RecipientEmail = sanitizeString(newDraft.RecipientEmail)
 
 	login, err := g.Sessions.GetLoginBySession(r, r.Context())
 	if err != nil {
@@ -45,7 +50,7 @@ func (g *GMailEmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = g.Sessions.CheckLogin(newEmail.SenderEmail, r, r.Context())
+	err = g.Sessions.CheckLogin(newDraft.SenderEmail, r, r.Context())
 	if err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad sender login")
 		return
@@ -57,11 +62,11 @@ func (g *GMailEmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	strRaw := fmt.Sprintf("From: %v\r\n", newEmail.SenderEmail)
-	if !validators.IsEmpty(newEmail.RecipientEmail) {
-		strRaw += fmt.Sprintf("To: %v\r\n", newEmail.RecipientEmail)
+	strRaw := fmt.Sprintf("From: %v\r\n", newDraft.SenderEmail)
+	if !validators.IsEmpty(newDraft.RecipientEmail) {
+		strRaw += fmt.Sprintf("To: %v\r\n", newDraft.RecipientEmail)
 	}
-	strRaw += fmt.Sprintf("Subject: %v\r\n\r\n%v", newEmail.Topic, newEmail.Text)
+	strRaw += fmt.Sprintf("Subject: %v\r\n\r\n%v", newDraft.Topic, newDraft.Text)
 
 	input := base64.RawStdEncoding.EncodeToString([]byte(strRaw))
 
@@ -77,31 +82,36 @@ func (g *GMailEmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": newEmail})
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": newDraft})
 }
 
-// SendDraft adds a new sent email message.
-// @Summary SendDraft a new sent email message
-// @Description AddDraft a new sent email message to the system
+// SendDraft adds a new sent draft message.
+// @Summary SendDraft a new sent draft message
+// @Description SendDraft a new sent draft message to the system
 // @Tags drafts-gmail
 // @Accept json
 // @Produce json
 // @Param X-Csrf-Token header string true "CSRF Token"
-// @Param email body response.EmailOtherSwag true "Email message in JSON format"
-// @Success 200 {object} response.Response "ID of the send email message"
+// @Param draft body response.EmailOtherSwag true "Draft message in JSON format"
+// @Success 200 {object} response.Response "ID of the send draft message"
 // @Failure 400 {object} response.Response "Bad JSON in request"
 // @Failure 401 {object} response.Response "Not Authorized"
-// @Failure 500 {object} response.Response "Failed to add email message"
+// @Failure 500 {object} response.Response "Failed to send draft message"
 // @Router /api/v1/gmail/draft/sendDraft [post]
 func (g *GMailEmailHandler) SendDraft(w http.ResponseWriter, r *http.Request) {
-	var newEmail apiModels.OtherEmail
+	var newDraft apiModels.OtherEmail
 	decoder := schema.NewDecoder()
 	decoder.IgnoreUnknownKeys(true)
-	err := json.NewDecoder(r.Body).Decode(&newEmail)
+	err := json.NewDecoder(r.Body).Decode(&newDraft)
 	if err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
 		return
 	}
+
+	newDraft.Topic = sanitizeString(newDraft.Topic)
+	newDraft.Text = sanitizeString(newDraft.Text)
+	newDraft.SenderEmail = sanitizeString(newDraft.SenderEmail)
+	newDraft.RecipientEmail = sanitizeString(newDraft.RecipientEmail)
 
 	login, err := g.Sessions.GetLoginBySession(r, r.Context())
 	if err != nil {
@@ -109,13 +119,13 @@ func (g *GMailEmailHandler) SendDraft(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = g.Sessions.CheckLogin(newEmail.SenderEmail, r, r.Context())
+	err = g.Sessions.CheckLogin(newDraft.SenderEmail, r, r.Context())
 	if err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad sender login")
 		return
 	}
 
-	if validators.IsEmpty(newEmail.RecipientEmail) {
+	if validators.IsEmpty(newDraft.RecipientEmail) {
 		response.HandleError(w, http.StatusBadRequest, "Empty login recipient")
 		return
 	}
@@ -126,9 +136,9 @@ func (g *GMailEmailHandler) SendDraft(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	input := base64.RawStdEncoding.EncodeToString([]byte(fmt.Sprintf("From: %v\r\nTo: %v\r\nSubject: %v\r\n\r\n%v", newEmail.SenderEmail, newEmail.RecipientEmail, newEmail.Topic, newEmail.Text)))
+	input := base64.RawStdEncoding.EncodeToString([]byte(fmt.Sprintf("From: %v\r\nTo: %v\r\nSubject: %v\r\n\r\n%v", newDraft.SenderEmail, newDraft.RecipientEmail, newDraft.Topic, newDraft.Text)))
 	draft := &gmail.Draft{
-		Id: newEmail.ID,
+		Id: newDraft.ID,
 		Message: &gmail.Message{
 			Raw: input,
 		},
@@ -141,17 +151,17 @@ func (g *GMailEmailHandler) SendDraft(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": newEmail})
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": newDraft})
 }
 
 // GetByIdDraft returns an draft message by its ID.
 // @Summary Get an draft message by ID
-// @Description Get an email message by its unique identifier
+// @Description Get an draft message by its unique identifier
 // @Tags drafts-gmail
 // @Produce json
 // @Param id path string true "ID of the draft message"
 // @Param X-Csrf-Token header string true "CSRF Token"
-// @Success 200 {object} response.Response "Email message data"
+// @Success 200 {object} response.Response "Draft message data"
 // @Failure 400 {object} response.Response "Bad id in request"
 // @Failure 401 {object} response.Response "Not Authorized"
 // @Failure 404 {object} response.Response "Email not found"
@@ -187,20 +197,20 @@ func (g *GMailEmailHandler) GetByIdDraft(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	email := CreateEmailStructDraft(draft)
+	draftResult := CreateEmailStructDraft(draft)
 
-	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": email})
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": draftResult})
 }
 
 // UpdateDraft update a draft message.
-// @Summary SendDraft a update draft message
-// @Description AddDraft a update draft message to the system
+// @Summary UpdateDraft a update draft message
+// @Description UpdateDraft a update draft message to the system
 // @Tags drafts-gmail
 // @Accept json
 // @Produce json
 // @Param X-Csrf-Token header string true "CSRF Token"
 // @Param id path string true "ID of the draft message"
-// @Param email body response.EmailOtherSwag true "Draft message in JSON format"
+// @Param draft body response.EmailOtherSwag true "Draft message in JSON format"
 // @Success 200 {object} response.Response "ID of the update draft message"
 // @Failure 400 {object} response.Response "Bad JSON in request"
 // @Failure 401 {object} response.Response "Not Authorized"
@@ -214,14 +224,19 @@ func (g *GMailEmailHandler) UpdateDraft(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var newEmail apiModels.OtherEmail
+	var newDraft apiModels.OtherEmail
 	decoder := schema.NewDecoder()
 	decoder.IgnoreUnknownKeys(true)
-	err := json.NewDecoder(r.Body).Decode(&newEmail)
+	err := json.NewDecoder(r.Body).Decode(&newDraft)
 	if err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
 		return
 	}
+
+	newDraft.Topic = sanitizeString(newDraft.Topic)
+	newDraft.Text = sanitizeString(newDraft.Text)
+	newDraft.SenderEmail = sanitizeString(newDraft.SenderEmail)
+	newDraft.RecipientEmail = sanitizeString(newDraft.RecipientEmail)
 
 	login, err := g.Sessions.GetLoginBySession(r, r.Context())
 	if err != nil {
@@ -229,7 +244,7 @@ func (g *GMailEmailHandler) UpdateDraft(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = g.Sessions.CheckLogin(newEmail.SenderEmail, r, r.Context())
+	err = g.Sessions.CheckLogin(newDraft.SenderEmail, r, r.Context())
 	if err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad sender login")
 		return
@@ -241,11 +256,11 @@ func (g *GMailEmailHandler) UpdateDraft(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	strRaw := fmt.Sprintf("From: %v\r\n", newEmail.SenderEmail)
-	if !validators.IsEmpty(newEmail.RecipientEmail) {
-		strRaw += fmt.Sprintf("To: %v\r\n", newEmail.RecipientEmail)
+	strRaw := fmt.Sprintf("From: %v\r\n", newDraft.SenderEmail)
+	if !validators.IsEmpty(newDraft.RecipientEmail) {
+		strRaw += fmt.Sprintf("To: %v\r\n", newDraft.RecipientEmail)
 	}
-	strRaw += fmt.Sprintf("Subject: %v\r\n\r\n%v", newEmail.Topic, newEmail.Text)
+	strRaw += fmt.Sprintf("Subject: %v\r\n\r\n%v", newDraft.Topic, newDraft.Text)
 
 	input := base64.RawStdEncoding.EncodeToString([]byte(strRaw))
 
@@ -263,16 +278,16 @@ func (g *GMailEmailHandler) UpdateDraft(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": newEmail})
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": newDraft})
 }
 
-// GetDrafts displays the list of email messages.
-// @Summary Display the list of email messages
-// @Description Get a list of all email messages
+// GetDrafts displays the list of draft messages.
+// @Summary Display the list of draft messages
+// @Description Get a list of all draft messages
 // @Tags drafts-gmail
 // @Produce json
 // @Param X-Csrf-Token header string true "CSRF Token"
-// @Success 200 {object} response.Response "List of all email messages"
+// @Success 200 {object} response.Response "List of all draft messages"
 // @Failure 400 {object} response.Response "Bad request"
 // @Failure 401 {object} response.Response "Not Authorized"
 // @Failure 500 {object} response.Response "JSON encoding error"
@@ -283,6 +298,7 @@ func (g *GMailEmailHandler) GetDrafts(w http.ResponseWriter, r *http.Request) {
 		response.HandleError(w, http.StatusBadRequest, "Bad user session")
 		return
 	}
+
 	if !validators.IsValidEmailFormatGmail(login) {
 		response.HandleError(w, http.StatusBadRequest, "Login must end with @gmail.com")
 		return
@@ -301,7 +317,7 @@ func (g *GMailEmailHandler) GetDrafts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	p := bluemonday.StripTagsPolicy()
-	emailsApi := make([]*apiModels.OtherEmail, len(req.Drafts))
+	draftsApi := make([]*apiModels.OtherEmail, len(req.Drafts))
 	for i, d := range req.Drafts {
 		dr, err := srv.Users.Drafts.Get("me", d.Id).Format("full").Do()
 		if err != nil {
@@ -313,19 +329,19 @@ func (g *GMailEmailHandler) GetDrafts(w http.ResponseWriter, r *http.Request) {
 		text = strings.ReplaceAll(text, "\n", "")
 		fields := strings.Fields(text)
 		email.Text = strings.Join(fields, " ")
-		emailsApi[i] = email
+		draftsApi[i] = email
 	}
 
-	for i, _ := range emailsApi {
-		emailsApi[i].DraftStatus = true
+	for i, _ := range draftsApi {
+		draftsApi[i].DraftStatus = true
 	}
 
-	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"emails": emailsApi})
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"emails": draftsApi})
 }
 
 // DeleteDraft deletes an draft message.
-// @Summary Delete an draft message
-// @Description Delete an draft message based on its identifier
+// @Summary DeleteDraft an draft message
+// @Description DeleteDraft an draft message based on its identifier
 // @Tags drafts-gmail
 // @Produce json
 // @Param id path string true "ID of the draft message"
@@ -333,7 +349,7 @@ func (g *GMailEmailHandler) GetDrafts(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} response.Response "Deletion success status"
 // @Failure 400 {object} response.Response "Bad id"
 // @Failure 401 {object} response.Response "Not Authorized"
-// @Failure 500 {object} response.Response "Failed to delete email message"
+// @Failure 500 {object} response.Response "Failed to delete draft message"
 // @Router /api/v1/gmail/draft/delete/{id} [delete]
 func (g *GMailEmailHandler) DeleteDraft(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)

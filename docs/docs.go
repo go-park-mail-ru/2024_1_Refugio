@@ -1455,7 +1455,7 @@ const docTemplate = `{
         },
         "/api/v1/gmail/draft/adddraft": {
             "post": {
-                "description": "AddDraft a new draft email message to the system",
+                "description": "AddDraft a new draft message to the system",
                 "consumes": [
                     "application/json"
                 ],
@@ -1465,7 +1465,7 @@ const docTemplate = `{
                 "tags": [
                     "drafts-gmail"
                 ],
-                "summary": "AddDraft a new draft email message",
+                "summary": "AddDraft a new draft message",
                 "parameters": [
                     {
                         "type": "string",
@@ -1475,8 +1475,8 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Email message in JSON format",
-                        "name": "email",
+                        "description": "Draft message in JSON format",
+                        "name": "draft",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -1486,7 +1486,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "ID of the send email message",
+                        "description": "ID of the draft message",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -1504,7 +1504,7 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "Failed to add email message",
+                        "description": "Failed to add draft message",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -1514,14 +1514,14 @@ const docTemplate = `{
         },
         "/api/v1/gmail/draft/delete/{id}": {
             "delete": {
-                "description": "Delete an draft message based on its identifier",
+                "description": "DeleteDraft an draft message based on its identifier",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "drafts-gmail"
                 ],
-                "summary": "Delete an draft message",
+                "summary": "DeleteDraft an draft message",
                 "parameters": [
                     {
                         "type": "string",
@@ -1558,7 +1558,7 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "Failed to delete email message",
+                        "description": "Failed to delete draft message",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -1568,7 +1568,7 @@ const docTemplate = `{
         },
         "/api/v1/gmail/draft/sendDraft": {
             "post": {
-                "description": "AddDraft a new sent email message to the system",
+                "description": "SendDraft a new sent draft message to the system",
                 "consumes": [
                     "application/json"
                 ],
@@ -1578,7 +1578,7 @@ const docTemplate = `{
                 "tags": [
                     "drafts-gmail"
                 ],
-                "summary": "SendDraft a new sent email message",
+                "summary": "SendDraft a new sent draft message",
                 "parameters": [
                     {
                         "type": "string",
@@ -1588,8 +1588,8 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Email message in JSON format",
-                        "name": "email",
+                        "description": "Draft message in JSON format",
+                        "name": "draft",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -1599,7 +1599,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "ID of the send email message",
+                        "description": "ID of the send draft message",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -1617,7 +1617,7 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "Failed to add email message",
+                        "description": "Failed to send draft message",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -1627,7 +1627,7 @@ const docTemplate = `{
         },
         "/api/v1/gmail/draft/update/{id}": {
             "put": {
-                "description": "AddDraft a update draft message to the system",
+                "description": "UpdateDraft a update draft message to the system",
                 "consumes": [
                     "application/json"
                 ],
@@ -1637,7 +1637,7 @@ const docTemplate = `{
                 "tags": [
                     "drafts-gmail"
                 ],
-                "summary": "SendDraft a update draft message",
+                "summary": "UpdateDraft a update draft message",
                 "parameters": [
                     {
                         "type": "string",
@@ -1655,7 +1655,7 @@ const docTemplate = `{
                     },
                     {
                         "description": "Draft message in JSON format",
-                        "name": "email",
+                        "name": "draft",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -1693,7 +1693,7 @@ const docTemplate = `{
         },
         "/api/v1/gmail/draft/{id}": {
             "get": {
-                "description": "Get an email message by its unique identifier",
+                "description": "Get an draft message by its unique identifier",
                 "produces": [
                     "application/json"
                 ],
@@ -1719,7 +1719,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Email message data",
+                        "description": "Draft message data",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -1747,14 +1747,14 @@ const docTemplate = `{
         },
         "/api/v1/gmail/drafts": {
             "get": {
-                "description": "Get a list of all email messages",
+                "description": "Get a list of all draft messages",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "drafts-gmail"
                 ],
-                "summary": "Display the list of email messages",
+                "summary": "Display the list of draft messages",
                 "parameters": [
                     {
                         "type": "string",
@@ -1766,7 +1766,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "List of all email messages",
+                        "description": "List of all draft messages",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -1907,7 +1907,7 @@ const docTemplate = `{
         },
         "/api/v1/gmail/email/update/{id}": {
             "put": {
-                "description": "AddDraft a update email message to the system",
+                "description": "Update a update email message to the system",
                 "consumes": [
                     "application/json"
                 ],
@@ -1917,7 +1917,7 @@ const docTemplate = `{
                 "tags": [
                     "emails-gmail"
                 ],
-                "summary": "SendDraft a email draft message",
+                "summary": "Update a email draft message",
                 "parameters": [
                     {
                         "type": "string",
@@ -2227,7 +2227,7 @@ const docTemplate = `{
         },
         "/api/v1/gmail/label/create": {
             "post": {
-                "description": "Send a new label to the system",
+                "description": "CreateLabel a new label to the system",
                 "consumes": [
                     "application/json"
                 ],
@@ -2237,7 +2237,7 @@ const docTemplate = `{
                 "tags": [
                     "labels-gmail"
                 ],
-                "summary": "Send a new label",
+                "summary": "CreateLabel a new label",
                 "parameters": [
                     {
                         "type": "string",
@@ -2399,14 +2399,14 @@ const docTemplate = `{
         },
         "/api/v1/gmail/label/update/{id}": {
             "put": {
-                "description": "Update label a user",
+                "description": "UpdateLabel label a user",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "labels-gmail"
                 ],
-                "summary": "Update label a user",
+                "summary": "UpdateLabel label a user",
                 "parameters": [
                     {
                         "type": "string",
@@ -2749,12 +2749,6 @@ const docTemplate = `{
                         "description": "Auth successful",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request body",
-                        "schema": {
-                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {

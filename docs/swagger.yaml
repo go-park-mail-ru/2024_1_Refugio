@@ -1148,7 +1148,7 @@ paths:
       - folders
   /api/v1/gmail/draft/{id}:
     get:
-      description: Get an email message by its unique identifier
+      description: Get an draft message by its unique identifier
       parameters:
       - description: ID of the draft message
         in: path
@@ -1164,7 +1164,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: Email message data
+          description: Draft message data
           schema:
             $ref: '#/definitions/response.Response'
         "400":
@@ -1186,16 +1186,16 @@ paths:
     post:
       consumes:
       - application/json
-      description: AddDraft a new draft email message to the system
+      description: AddDraft a new draft message to the system
       parameters:
       - description: CSRF Token
         in: header
         name: X-Csrf-Token
         required: true
         type: string
-      - description: Email message in JSON format
+      - description: Draft message in JSON format
         in: body
-        name: email
+        name: draft
         required: true
         schema:
           $ref: '#/definitions/response.EmailOtherSwag'
@@ -1203,7 +1203,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: ID of the send email message
+          description: ID of the draft message
           schema:
             $ref: '#/definitions/response.Response'
         "400":
@@ -1215,15 +1215,15 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
         "500":
-          description: Failed to add email message
+          description: Failed to add draft message
           schema:
             $ref: '#/definitions/response.Response'
-      summary: AddDraft a new draft email message
+      summary: AddDraft a new draft message
       tags:
       - drafts-gmail
   /api/v1/gmail/draft/delete/{id}:
     delete:
-      description: Delete an draft message based on its identifier
+      description: DeleteDraft an draft message based on its identifier
       parameters:
       - description: ID of the draft message
         in: path
@@ -1251,26 +1251,26 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
         "500":
-          description: Failed to delete email message
+          description: Failed to delete draft message
           schema:
             $ref: '#/definitions/response.Response'
-      summary: Delete an draft message
+      summary: DeleteDraft an draft message
       tags:
       - drafts-gmail
   /api/v1/gmail/draft/sendDraft:
     post:
       consumes:
       - application/json
-      description: AddDraft a new sent email message to the system
+      description: SendDraft a new sent draft message to the system
       parameters:
       - description: CSRF Token
         in: header
         name: X-Csrf-Token
         required: true
         type: string
-      - description: Email message in JSON format
+      - description: Draft message in JSON format
         in: body
-        name: email
+        name: draft
         required: true
         schema:
           $ref: '#/definitions/response.EmailOtherSwag'
@@ -1278,7 +1278,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: ID of the send email message
+          description: ID of the send draft message
           schema:
             $ref: '#/definitions/response.Response'
         "400":
@@ -1290,17 +1290,17 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
         "500":
-          description: Failed to add email message
+          description: Failed to send draft message
           schema:
             $ref: '#/definitions/response.Response'
-      summary: SendDraft a new sent email message
+      summary: SendDraft a new sent draft message
       tags:
       - drafts-gmail
   /api/v1/gmail/draft/update/{id}:
     put:
       consumes:
       - application/json
-      description: AddDraft a update draft message to the system
+      description: UpdateDraft a update draft message to the system
       parameters:
       - description: CSRF Token
         in: header
@@ -1314,7 +1314,7 @@ paths:
         type: string
       - description: Draft message in JSON format
         in: body
-        name: email
+        name: draft
         required: true
         schema:
           $ref: '#/definitions/response.EmailOtherSwag'
@@ -1337,12 +1337,12 @@ paths:
           description: Failed to update draft message
           schema:
             $ref: '#/definitions/response.Response'
-      summary: SendDraft a update draft message
+      summary: UpdateDraft a update draft message
       tags:
       - drafts-gmail
   /api/v1/gmail/drafts:
     get:
-      description: Get a list of all email messages
+      description: Get a list of all draft messages
       parameters:
       - description: CSRF Token
         in: header
@@ -1353,7 +1353,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: List of all email messages
+          description: List of all draft messages
           schema:
             $ref: '#/definitions/response.Response'
         "400":
@@ -1368,7 +1368,7 @@ paths:
           description: JSON encoding error
           schema:
             $ref: '#/definitions/response.Response'
-      summary: Display the list of email messages
+      summary: Display the list of draft messages
       tags:
       - drafts-gmail
   /api/v1/gmail/email/{id}:
@@ -1486,7 +1486,7 @@ paths:
     put:
       consumes:
       - application/json
-      description: AddDraft a update email message to the system
+      description: Update a update email message to the system
       parameters:
       - description: CSRF Token
         in: header
@@ -1523,7 +1523,7 @@ paths:
           description: Failed to update email message
           schema:
             $ref: '#/definitions/response.Response'
-      summary: SendDraft a email draft message
+      summary: Update a email draft message
       tags:
       - emails-gmail
   /api/v1/gmail/emails/incoming:
@@ -1698,7 +1698,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Send a new label to the system
+      description: CreateLabel a new label to the system
       parameters:
       - description: CSRF Token
         in: header
@@ -1730,7 +1730,7 @@ paths:
           description: Failed to add email message
           schema:
             $ref: '#/definitions/response.Response'
-      summary: Send a new label
+      summary: CreateLabel a new label
       tags:
       - labels-gmail
   /api/v1/gmail/label/delete/{id}:
@@ -1810,7 +1810,7 @@ paths:
       - labels-gmail
   /api/v1/gmail/label/update/{id}:
     put:
-      description: Update label a user
+      description: UpdateLabel label a user
       parameters:
       - description: CSRF Token
         in: header
@@ -1847,7 +1847,7 @@ paths:
           description: Failed to update label
           schema:
             $ref: '#/definitions/response.Response'
-      summary: Update label a user
+      summary: UpdateLabel label a user
       tags:
       - labels-gmail
   /api/v1/gmail/labels:
@@ -2006,10 +2006,6 @@ paths:
           description: Auth successful
           schema:
             $ref: '#/definitions/response.Response'
-        "400":
-          description: Invalid request body
-          schema:
-            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Invalid credentials
           schema:

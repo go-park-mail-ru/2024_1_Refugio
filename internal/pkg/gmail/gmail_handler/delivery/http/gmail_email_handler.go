@@ -26,6 +26,12 @@ type GMailEmailHandler struct {
 	GMailService *gmail.Service
 }
 
+func sanitizeString(str string) string {
+	p := bluemonday.UGCPolicy()
+	p.AllowElements("b", "i", "a", "strong", "em", "p", "br", "span", "ul", "ol", "li", "h1", "h2", "h3", "div")
+	return p.Sanitize(str)
+}
+
 // GetIncoming displays the list of email messages.
 // @Summary Display the list of email messages
 // @Description Get a list of all email messages
@@ -43,6 +49,7 @@ func (g *GMailEmailHandler) GetIncoming(w http.ResponseWriter, r *http.Request) 
 		response.HandleError(w, http.StatusBadRequest, "Bad user session")
 		return
 	}
+
 	if !validators.IsValidEmailFormatGmail(login) {
 		response.HandleError(w, http.StatusBadRequest, "Login must end with @gmail.com")
 		return
@@ -68,17 +75,31 @@ func (g *GMailEmailHandler) GetIncoming(w http.ResponseWriter, r *http.Request) 
 			response.HandleError(w, http.StatusInternalServerError, "Error receiving messages")
 			return
 		}
+
 		email, err := CreateEmailStruct(msg)
 		if err != nil {
 			response.HandleError(w, http.StatusInternalServerError, "Error decoding body data")
 			return
 		}
+
 		text := p.Sanitize(email.Text)
 		text = strings.ReplaceAll(text, "\n", "")
 		fields := strings.Fields(text)
 		email.Text = strings.Join(fields, " ")
+		for _, l := range msg.LabelIds {
+			label, err := srv.Users.Labels.Get("me", l).Do()
+			if err != nil {
+				response.HandleError(w, http.StatusInternalServerError, "Failed get label")
+				return
+			}
+			if label.Name == "UNREAD" {
+				email.ReadStatus = false
+				break
+			} else {
+				email.ReadStatus = true
+			}
+		}
 		emailsApi[i] = email
-		// \n            .
 	}
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"emails": emailsApi})
 }
@@ -134,6 +155,19 @@ func (g *GMailEmailHandler) GetSent(w http.ResponseWriter, r *http.Request) {
 		text = strings.ReplaceAll(text, "\n", "")
 		fields := strings.Fields(text)
 		email.Text = strings.Join(fields, " ")
+		for _, l := range msg.LabelIds {
+			label, err := srv.Users.Labels.Get("me", l).Do()
+			if err != nil {
+				response.HandleError(w, http.StatusInternalServerError, "Failed get label")
+				return
+			}
+			if label.Name == "UNREAD" {
+				email.ReadStatus = false
+				break
+			} else {
+				email.ReadStatus = true
+			}
+		}
 		emailsApi[i] = email
 	}
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"emails": emailsApi})
@@ -190,6 +224,20 @@ func (g *GMailEmailHandler) GetSpam(w http.ResponseWriter, r *http.Request) {
 		text = strings.ReplaceAll(text, "\n", "")
 		fields := strings.Fields(text)
 		email.Text = strings.Join(fields, " ")
+		for _, l := range msg.LabelIds {
+			label, err := srv.Users.Labels.Get("me", l).Do()
+			if err != nil {
+				response.HandleError(w, http.StatusInternalServerError, "Failed get label")
+				return
+			}
+			if label.Name == "UNREAD" {
+				email.ReadStatus = false
+				break
+			} else {
+				email.ReadStatus = true
+			}
+		}
+		email.SpamStatus = true
 		emailsApi[i] = email
 	}
 
@@ -248,6 +296,32 @@ func (g *GMailEmailHandler) GetById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	read := true
+	spam := true
+	for _, l := range msg.LabelIds {
+		label, err := srv.Users.Labels.Get("me", l).Do()
+		if err != nil {
+			response.HandleError(w, http.StatusInternalServerError, "Failed get label")
+			return
+		}
+		if read {
+			if label.Name == "UNREAD" {
+				read = false
+			}
+		}
+		if spam {
+			if label.Name == "SPAM" {
+				spam = false
+			}
+		}
+	}
+	if read {
+		email.ReadStatus = true
+	}
+	if !spam {
+		email.SpamStatus = true
+	}
+
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": email})
 }
 
@@ -274,6 +348,11 @@ func (g *GMailEmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	newEmail.Topic = sanitizeString(newEmail.Topic)
+	newEmail.Text = sanitizeString(newEmail.Text)
+	newEmail.SenderEmail = sanitizeString(newEmail.SenderEmail)
+	newEmail.RecipientEmail = sanitizeString(newEmail.RecipientEmail)
+
 	login, err := g.Sessions.GetLoginBySession(r, r.Context())
 	if err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad sender session")
@@ -283,6 +362,11 @@ func (g *GMailEmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 	err = g.Sessions.CheckLogin(newEmail.SenderEmail, r, r.Context())
 	if err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad sender login")
+		return
+	}
+
+	if validators.IsEmpty(newEmail.RecipientEmail) {
+		response.HandleError(w, http.StatusBadRequest, "Recipient is empty")
 		return
 	}
 
@@ -332,6 +416,7 @@ func (g *GMailEmailHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		response.HandleError(w, http.StatusBadRequest, "Bad user session")
 		return
 	}
+
 	if !validators.IsValidEmailFormatGmail(login) {
 		response.HandleError(w, http.StatusBadRequest, "Login must end with @gmail.com")
 		return
@@ -353,8 +438,8 @@ func (g *GMailEmailHandler) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 // Update update a email message.
-// @Summary SendDraft a email draft message
-// @Description AddDraft a update email message to the system
+// @Summary Update a email draft message
+// @Description Update a update email message to the system
 // @Tags emails-gmail
 // @Accept json
 // @Produce json

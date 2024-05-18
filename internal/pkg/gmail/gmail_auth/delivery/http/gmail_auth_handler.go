@@ -10,7 +10,6 @@ import (
 	"google.golang.org/api/option"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"log"
 	auth_proto "mail/internal/microservice/auth/proto"
 	domain "mail/internal/microservice/models/domain_models"
 	user_proto "mail/internal/microservice/user/proto"
@@ -44,7 +43,6 @@ type GMailAuthHandler struct {
 // @Param code query string true "code from oauth"
 // @Success 200 {object} response.Response "Auth successful"
 // @Failure 404 {object} response.Response "User not fount"
-// @Failure 400 {object} response.ErrorResponse "Invalid request body"
 // @Failure 401 {object} response.ErrorResponse "Invalid credentials"
 // @Failure 500 {object} response.ErrorResponse "Failed to create session"
 // @Router /api/v1/sauth/gAuth [get]
@@ -80,7 +78,8 @@ func (g *GMailAuthHandler) GoogleAuth(w http.ResponseWriter, r *http.Request) {
 
 	profile, err := srv.Users.GetProfile("me").Do()
 	if err != nil {
-		log.Fatal(err)
+		response.HandleError(w, http.StatusInternalServerError, "Unable to retrieve profile user")
+		return
 	}
 
 	tokFile := "token.json"
