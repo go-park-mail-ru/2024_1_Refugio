@@ -199,6 +199,21 @@ func (g *GMailEmailHandler) GetByIdDraft(w http.ResponseWriter, r *http.Request)
 
 	draftResult := CreateEmailStructDraft(draft)
 
+	for _, l := range draft.Message.LabelIds {
+		label, err := srv.Users.Labels.Get("me", l).Do()
+		if err != nil {
+			response.HandleError(w, http.StatusInternalServerError, "Failed get label")
+			return
+		}
+		if label.Name == "UNREAD" {
+			draftResult.ReadStatus = false
+			break
+		} else {
+			draftResult.ReadStatus = true
+		}
+	}
+	draftResult.DraftStatus = true
+
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": draftResult})
 }
 
@@ -271,10 +286,27 @@ func (g *GMailEmailHandler) UpdateDraft(w http.ResponseWriter, r *http.Request) 
 		},
 	}
 
-	_, err = srv.Users.Drafts.Update("me", draftID, draft).Do()
+	updateDraft, err := srv.Users.Drafts.Update("me", draftID, draft).Do()
 	if err != nil {
 		fmt.Println(err)
 		response.HandleError(w, http.StatusInternalServerError, "Error update the draft")
+		return
+	}
+
+	var modifyRequest *gmail.ModifyMessageRequest
+	if newDraft.ReadStatus == false {
+		modifyRequest = &gmail.ModifyMessageRequest{
+			AddLabelIds: []string{"UNREAD"},
+		}
+	} else {
+		modifyRequest = &gmail.ModifyMessageRequest{
+			RemoveLabelIds: []string{"UNREAD"},
+		}
+	}
+	_, err = srv.Users.Messages.Modify("me", updateDraft.Message.Id, modifyRequest).Do()
+	if err != nil {
+		fmt.Println(err)
+		response.HandleError(w, http.StatusInternalServerError, "Error update read/unread the draft")
 		return
 	}
 
@@ -329,6 +361,20 @@ func (g *GMailEmailHandler) GetDrafts(w http.ResponseWriter, r *http.Request) {
 		text = strings.ReplaceAll(text, "\n", "")
 		fields := strings.Fields(text)
 		email.Text = strings.Join(fields, " ")
+		for _, l := range dr.Message.LabelIds {
+			label, err := srv.Users.Labels.Get("me", l).Do()
+			if err != nil {
+				response.HandleError(w, http.StatusInternalServerError, "Failed get label")
+				return
+			}
+			if label.Name == "UNREAD" {
+				email.ReadStatus = false
+				break
+			} else {
+				email.ReadStatus = true
+			}
+		}
+		email.DraftStatus = true
 		draftsApi[i] = email
 	}
 
