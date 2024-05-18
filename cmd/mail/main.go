@@ -409,8 +409,6 @@ func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.
 	logRouter.HandleFunc("/gmail/email/update/{id}", emailGMailHandler.Update).Methods("PUT", "OPTIONS")
 	logRouter.HandleFunc("/gmail/email/delete/{id}", emailGMailHandler.Delete).Methods("DELETE", "OPTIONS")
 	logRouter.HandleFunc("/gmail/email/send", emailGMailHandler.Send).Methods("POST", "OPTIONS")
-	// AddAttachment ???
-	// File
 
 	logRouter.HandleFunc("/gmail/drafts", emailGMailHandler.GetDrafts).Methods("GET", "OPTIONS")
 	logRouter.HandleFunc("/gmail/draft/adddraft", emailGMailHandler.AddDraft).Methods("POST", "OPTIONS")

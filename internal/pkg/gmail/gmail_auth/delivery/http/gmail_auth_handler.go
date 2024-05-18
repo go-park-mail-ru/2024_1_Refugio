@@ -49,7 +49,7 @@ type GMailAuthHandler struct {
 func (g *GMailAuthHandler) GoogleAuth(w http.ResponseWriter, r *http.Request) {
 	authCode := r.URL.Query().Get("code")
 
-	b, err := os.ReadFile("cmd/configs/credentials.json")
+	b, err := os.ReadFile("cmd/configs/credentials_localhost.json")
 	if err != nil {
 		response.HandleError(w, http.StatusInternalServerError, "Unable to read client secret file")
 		return
@@ -217,7 +217,11 @@ func (g *GMailAuthHandler) SugnupGMail(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} response.ErrorResponse "Failed to create url"
 // @Router /api/v1/auth/getAuthURL [get]
 func (g *GMailAuthHandler) GetAuthURL(w http.ResponseWriter, r *http.Request) {
-	b, err := os.ReadFile("cmd/configs/credentials.json")
+	// localhost:8080:
+	// b, err := os.ReadFile("cmd/configs/credentials_localhost.json")
+
+	// deploy:
+	b, err := os.ReadFile("cmd/configs/credentials_deploy.json")
 	if err != nil {
 		response.HandleError(w, http.StatusInternalServerError, "Unable to read client secret file")
 		return

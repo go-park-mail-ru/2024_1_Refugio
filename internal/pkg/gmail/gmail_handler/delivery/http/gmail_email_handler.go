@@ -290,6 +290,15 @@ func (g *GMailEmailHandler) GetById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	for _, header := range msg.Payload.Headers {
+		fmt.Println("Name: ", header.Name, "   Value: ", header.Value)
+		if header.Name == "References" {
+			references := strings.Split(header.Value, " ")
+			parentMessageId := strings.TrimPrefix(references[0], "message-id:")
+			fmt.Println("Идентификатор родительского сообщения:", parentMessageId)
+		}
+	}
+
 	email, err := CreateEmailStruct(msg)
 	if err != nil {
 		response.HandleError(w, http.StatusInternalServerError, "Error decoding body data")
