@@ -15,7 +15,6 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
-    needs: build
     steps:
        - name: Pull docker image
          uses: appleboy/ssh-action@master
