@@ -95,7 +95,7 @@ jobs:
 
   deploy:
     name: Backend deploy
-    if: github.event_name == 'push' && github.event_name == 'pull_request' && github.event.action == 'closed'
+    if: github.event_name == 'push'
     needs: [ build ]
     runs-on: ubuntu-latest
     steps:

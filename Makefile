@@ -26,9 +26,16 @@ tests:
     go tool cover -func coverprofile.tmp
 
 mock:
-	mockgen -source=internal/microservice/email/proto/email_grpc.pb.go -destination=internal/microservice/email/mock/email_grpc_mock.go -package=mock proto EmailServiceClient \
+	mockgen -source=internal/microservice/auth/proto/auth_grpc.pb.go -destination=internal/microservice/auth/mock/auth_grpc_mock.go -package=mock proto AuthServiceClient \
+	&& mockgen -source=internal/microservice/email/proto/email_grpc.pb.go -destination=internal/microservice/email/mock/email_grpc_mock.go -package=mock proto EmailServiceClient \
 	&& mockgen -source=internal/microservice/email/interface/iemail_repo.go -destination=internal/microservice/email/mock/email_repository_mock.go -package=mock \
-	&& mockgen -source=internal/microservice/email/interface/iemail_service.go -destination=internal/microservice/email/mock/email_service_mock.go -package=mock
+	&& mockgen -source=internal/microservice/email/interface/iemail_service.go -destination=internal/microservice/email/mock/email_service_mock.go -package=mock \
+	&& mockgen -source=internal/microservice/folder/interface/ifolder_repo.go -destination=internal/microservice/folder/mock/folder_repo_mock.go -package=mock \
+	&& mockgen -source=internal/microservice/folder/interface/ifolder_service.go -destination=internal/microservice/folder/mock/folder_service_mock.go -package=mock \
+	&& mockgen -source=internal/microservice/folder/proto/folder_grpc.pb.go -destination=internal/microservice/folder/mock/folder_grpc_mock.go -package=mock proto FolderServiceClient \
+	&& mockgen -source=internal/microservice/questionnaire/interface/iquestion_repo.go -destination=internal/microservice/questionnaire/mock/question_repository_mock.go -package=mock \
+	&& mockgen -source=internal/microservice/questionnaire/interface/iquestion_service.go -destination=internal/microservice/questionnaire/mock/question_service_mock.go -package=mock \
+	&& mockgen -source=internal/microservice/questionnaire/proto/question-answer_grpc.pb.go -destination=internal/microservice/questionnaire/mock/question-answer_grpc_mock.go -package=mock proto QuestionServiceClient
 
 swag:
 	swag init -g cmd/mail/main.go
