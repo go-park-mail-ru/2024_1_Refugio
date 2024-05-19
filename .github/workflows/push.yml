@@ -2,8 +2,9 @@ name: CI
 
 on:
   push:
-    branches-ignore:
+    branches:
       - '*'
+  pull_request:
 
 jobs:
   tests:
