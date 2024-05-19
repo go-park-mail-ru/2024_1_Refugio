@@ -18,7 +18,7 @@ jobs:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
-       - name: Pull docker image
+       - name: git pull
          uses: appleboy/ssh-action@master
          with:
            host: ${{ secrets.HOST }}
@@ -27,3 +27,13 @@ jobs:
            script: | 
              cd backend_4/2024_1_Refugio/
              sudo git pull
+       - name: Docker container stop
+         uses: appleboy/ssh-action@master
+         with:
+           host: ${{ secrets.HOST }}
+           username: ${{ secrets.USER }}
+           key: ${{ secrets.SSH_PRIVATE_KEY }}
+           script: |
+             cd backend_4/2024_1_Refugio/
+             sudo docker stop $(docker ps -a -q)
+             sudo docker rm $(docker ps -a -q)
