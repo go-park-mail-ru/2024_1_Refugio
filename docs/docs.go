@@ -74,6 +74,56 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/auth/gAuth": {
+            "get": {
+                "description": "GoogleAuth Handles user.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth-gmail"
+                ],
+                "summary": "GoogleAuth User",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "code from oauth",
+                        "name": "code",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Auth successful",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not fount",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to create session",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/auth/getAuthURL": {
             "get": {
                 "description": "GetAuthURL Handles url.",
@@ -2821,56 +2871,6 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Failed to add question",
-                        "schema": {
-                            "$ref": "#/definitions/response.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/sauth/gAuth": {
-            "get": {
-                "description": "GoogleAuth Handles user.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "auth-gmail"
-                ],
-                "summary": "GoogleAuth User",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "code from oauth",
-                        "name": "code",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Auth successful",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    },
-                    "401": {
-                        "description": "Invalid credentials",
-                        "schema": {
-                            "$ref": "#/definitions/response.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "User not fount",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Failed to create session",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }

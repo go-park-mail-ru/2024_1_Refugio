@@ -231,6 +231,39 @@ paths:
       summary: Add answer
       tags:
       - question
+  /api/v1/auth/gAuth:
+    get:
+      consumes:
+      - application/json
+      description: GoogleAuth Handles user.
+      parameters:
+      - description: code from oauth
+        in: query
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Auth successful
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Invalid credentials
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: User not fount
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to create session
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: GoogleAuth User
+      tags:
+      - auth-gmail
   /api/v1/auth/getAuthURL:
     get:
       consumes:
@@ -2059,39 +2092,6 @@ paths:
       summary: Add question
       tags:
       - question
-  /api/v1/sauth/gAuth:
-    get:
-      consumes:
-      - application/json
-      description: GoogleAuth Handles user.
-      parameters:
-      - description: code from oauth
-        in: query
-        name: code
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Auth successful
-          schema:
-            $ref: '#/definitions/response.Response'
-        "401":
-          description: Invalid credentials
-          schema:
-            $ref: '#/definitions/response.ErrorResponse'
-        "404":
-          description: User not fount
-          schema:
-            $ref: '#/definitions/response.Response'
-        "500":
-          description: Failed to create session
-          schema:
-            $ref: '#/definitions/response.ErrorResponse'
-      summary: GoogleAuth User
-      tags:
-      - auth-gmail
   /api/v1/statistics:
     get:
       consumes:
