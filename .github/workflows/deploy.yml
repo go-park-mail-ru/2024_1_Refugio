@@ -99,6 +99,18 @@ jobs:
     needs: [ build ]
     runs-on: ubuntu-latest
     steps:
+      - name: Setup SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Deploy backend
+        run: |
+          ssh ubuntu@89.208.223.140 "cd ~/backend_4/2024_1_Refugio/ && git pull"
+          ssh ubuntu@89.208.223.140 "cd ~/backend_4/2024_1_Refugio/ && docker-compose build && docker-compose up -d"
+
       - name: git pull
         uses: appleboy/ssh-action@master
         with:
