@@ -58,7 +58,7 @@ jobs:
            key: ${{ secrets.SSH_PRIVATE_KEY }}
            script: |
              cd backend_4/2024_1_Refugio/
-             sudo docker-compose -f docker-compose-cd.yml up --build -d
+             sudo docker-compose -f docker-compose-cd.yml up --build
        - name: Clear old images and containers
          uses: appleboy/ssh-action@master
          with:
