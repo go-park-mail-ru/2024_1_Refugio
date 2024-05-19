@@ -167,6 +167,25 @@ services:
       timeout: 20s
       retries: 3
 
+  nginx:
+    image: nginx:latest
+    build:
+      context: .
+      dockerfile: nginx.Dockerfile
+    restart: unless-stopped
+    tty: true
+    container_name: nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - /etc/ssl/mailhub.crt:/etc/keys/mailhub.su/mailhub.crt
+      - /etc/ssl/mailhub.key:/etc/keys/mailhub.su/mailhub.key
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8050:8050"
+    depends_on:
+      - backend
+
 volumes:
   db_postgres_data:
   db_question_postgres_data:
