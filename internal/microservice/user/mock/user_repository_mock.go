@@ -124,6 +124,21 @@ func (mr *MockUserRepositoryMockRecorder) GetByID(id, ctx interface{}) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockUserRepository)(nil).GetByID), id, ctx)
 }
 
+// GetByOnlyLogin mocks base method.
+func (m *MockUserRepository) GetByOnlyLogin(login string, ctx context.Context) (*domain_models.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByOnlyLogin", login, ctx)
+	ret0, _ := ret[0].(*domain_models.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByOnlyLogin indicates an expected call of GetByOnlyLogin.
+func (mr *MockUserRepositoryMockRecorder) GetByOnlyLogin(login, ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByOnlyLogin", reflect.TypeOf((*MockUserRepository)(nil).GetByOnlyLogin), login, ctx)
+}
+
 // GetByVKID mocks base method.
 func (m *MockUserRepository) GetByVKID(vkId uint32, ctx context.Context) (*domain_models.User, error) {
 	m.ctrl.T.Helper()

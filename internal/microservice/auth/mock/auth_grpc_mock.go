@@ -56,6 +56,26 @@ func (mr *MockAuthServiceClientMockRecorder) Login(ctx, in interface{}, opts ...
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockAuthServiceClient)(nil).Login), varargs...)
 }
 
+// LoginOtherMail mocks base method.
+func (m *MockAuthServiceClient) LoginOtherMail(ctx context.Context, in *proto.LoginOtherMailRequest, opts ...grpc.CallOption) (*proto.LoginReply, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "LoginOtherMail", varargs...)
+	ret0, _ := ret[0].(*proto.LoginReply)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// LoginOtherMail indicates an expected call of LoginOtherMail.
+func (mr *MockAuthServiceClientMockRecorder) LoginOtherMail(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoginOtherMail", reflect.TypeOf((*MockAuthServiceClient)(nil).LoginOtherMail), varargs...)
+}
+
 // LoginVK mocks base method.
 func (m *MockAuthServiceClient) LoginVK(ctx context.Context, in *proto.LoginVKRequest, opts ...grpc.CallOption) (*proto.LoginReply, error) {
 	m.ctrl.T.Helper()
@@ -116,6 +136,26 @@ func (mr *MockAuthServiceClientMockRecorder) Signup(ctx, in interface{}, opts ..
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Signup", reflect.TypeOf((*MockAuthServiceClient)(nil).Signup), varargs...)
 }
 
+// SignupOtherMail mocks base method.
+func (m *MockAuthServiceClient) SignupOtherMail(ctx context.Context, in *proto.SignupOtherMailRequest, opts ...grpc.CallOption) (*proto.SignupReply, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "SignupOtherMail", varargs...)
+	ret0, _ := ret[0].(*proto.SignupReply)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SignupOtherMail indicates an expected call of SignupOtherMail.
+func (mr *MockAuthServiceClientMockRecorder) SignupOtherMail(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SignupOtherMail", reflect.TypeOf((*MockAuthServiceClient)(nil).SignupOtherMail), varargs...)
+}
+
 // SignupVK mocks base method.
 func (m *MockAuthServiceClient) SignupVK(ctx context.Context, in *proto.SignupVKRequest, opts ...grpc.CallOption) (*proto.SignupReply, error) {
 	m.ctrl.T.Helper()
@@ -174,6 +214,21 @@ func (mr *MockAuthServiceServerMockRecorder) Login(arg0, arg1 interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockAuthServiceServer)(nil).Login), arg0, arg1)
 }
 
+// LoginOtherMail mocks base method.
+func (m *MockAuthServiceServer) LoginOtherMail(arg0 context.Context, arg1 *proto.LoginOtherMailRequest) (*proto.LoginReply, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LoginOtherMail", arg0, arg1)
+	ret0, _ := ret[0].(*proto.LoginReply)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// LoginOtherMail indicates an expected call of LoginOtherMail.
+func (mr *MockAuthServiceServerMockRecorder) LoginOtherMail(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoginOtherMail", reflect.TypeOf((*MockAuthServiceServer)(nil).LoginOtherMail), arg0, arg1)
+}
+
 // LoginVK mocks base method.
 func (m *MockAuthServiceServer) LoginVK(arg0 context.Context, arg1 *proto.LoginVKRequest) (*proto.LoginReply, error) {
 	m.ctrl.T.Helper()
@@ -217,6 +272,21 @@ func (m *MockAuthServiceServer) Signup(arg0 context.Context, arg1 *proto.SignupR
 func (mr *MockAuthServiceServerMockRecorder) Signup(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Signup", reflect.TypeOf((*MockAuthServiceServer)(nil).Signup), arg0, arg1)
+}
+
+// SignupOtherMail mocks base method.
+func (m *MockAuthServiceServer) SignupOtherMail(arg0 context.Context, arg1 *proto.SignupOtherMailRequest) (*proto.SignupReply, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SignupOtherMail", arg0, arg1)
+	ret0, _ := ret[0].(*proto.SignupReply)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SignupOtherMail indicates an expected call of SignupOtherMail.
+func (mr *MockAuthServiceServerMockRecorder) SignupOtherMail(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SignupOtherMail", reflect.TypeOf((*MockAuthServiceServer)(nil).SignupOtherMail), arg0, arg1)
 }
 
 // SignupVK mocks base method.

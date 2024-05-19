@@ -56,6 +56,26 @@ func (mr *MockUserServiceClientMockRecorder) CreateUser(ctx, in interface{}, opt
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockUserServiceClient)(nil).CreateUser), varargs...)
 }
 
+// CreateUserOtherMail mocks base method.
+func (m *MockUserServiceClient) CreateUserOtherMail(ctx context.Context, in *proto.CreateUserRequest, opts ...grpc.CallOption) (*proto.CreateUserReply, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CreateUserOtherMail", varargs...)
+	ret0, _ := ret[0].(*proto.CreateUserReply)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateUserOtherMail indicates an expected call of CreateUserOtherMail.
+func (mr *MockUserServiceClientMockRecorder) CreateUserOtherMail(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUserOtherMail", reflect.TypeOf((*MockUserServiceClient)(nil).CreateUserOtherMail), varargs...)
+}
+
 // DeleteUserAvatar mocks base method.
 func (m *MockUserServiceClient) DeleteUserAvatar(ctx context.Context, in *proto.DeleteUserAvatarRequest, opts ...grpc.CallOption) (*proto.DeleteUserAvatarReply, error) {
 	m.ctrl.T.Helper()
@@ -134,6 +154,26 @@ func (mr *MockUserServiceClientMockRecorder) GetUserByLogin(ctx, in interface{},
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByLogin", reflect.TypeOf((*MockUserServiceClient)(nil).GetUserByLogin), varargs...)
+}
+
+// GetUserByOnlyLogin mocks base method.
+func (m *MockUserServiceClient) GetUserByOnlyLogin(ctx context.Context, in *proto.GetUserByOnlyLoginRequest, opts ...grpc.CallOption) (*proto.GetUserByOnlyLoginReply, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetUserByOnlyLogin", varargs...)
+	ret0, _ := ret[0].(*proto.GetUserByOnlyLoginReply)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserByOnlyLogin indicates an expected call of GetUserByOnlyLogin.
+func (mr *MockUserServiceClientMockRecorder) GetUserByOnlyLogin(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByOnlyLogin", reflect.TypeOf((*MockUserServiceClient)(nil).GetUserByOnlyLogin), varargs...)
 }
 
 // GetUserByVKId mocks base method.
@@ -274,6 +314,21 @@ func (mr *MockUserServiceServerMockRecorder) CreateUser(arg0, arg1 interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockUserServiceServer)(nil).CreateUser), arg0, arg1)
 }
 
+// CreateUserOtherMail mocks base method.
+func (m *MockUserServiceServer) CreateUserOtherMail(arg0 context.Context, arg1 *proto.CreateUserRequest) (*proto.CreateUserReply, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateUserOtherMail", arg0, arg1)
+	ret0, _ := ret[0].(*proto.CreateUserReply)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateUserOtherMail indicates an expected call of CreateUserOtherMail.
+func (mr *MockUserServiceServerMockRecorder) CreateUserOtherMail(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUserOtherMail", reflect.TypeOf((*MockUserServiceServer)(nil).CreateUserOtherMail), arg0, arg1)
+}
+
 // DeleteUserAvatar mocks base method.
 func (m *MockUserServiceServer) DeleteUserAvatar(arg0 context.Context, arg1 *proto.DeleteUserAvatarRequest) (*proto.DeleteUserAvatarReply, error) {
 	m.ctrl.T.Helper()
@@ -332,6 +387,21 @@ func (m *MockUserServiceServer) GetUserByLogin(arg0 context.Context, arg1 *proto
 func (mr *MockUserServiceServerMockRecorder) GetUserByLogin(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByLogin", reflect.TypeOf((*MockUserServiceServer)(nil).GetUserByLogin), arg0, arg1)
+}
+
+// GetUserByOnlyLogin mocks base method.
+func (m *MockUserServiceServer) GetUserByOnlyLogin(arg0 context.Context, arg1 *proto.GetUserByOnlyLoginRequest) (*proto.GetUserByOnlyLoginReply, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserByOnlyLogin", arg0, arg1)
+	ret0, _ := ret[0].(*proto.GetUserByOnlyLoginReply)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserByOnlyLogin indicates an expected call of GetUserByOnlyLogin.
+func (mr *MockUserServiceServerMockRecorder) GetUserByOnlyLogin(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByOnlyLogin", reflect.TypeOf((*MockUserServiceServer)(nil).GetUserByOnlyLogin), arg0, arg1)
 }
 
 // GetUserByVKId mocks base method.
