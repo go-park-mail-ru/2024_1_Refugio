@@ -35,7 +35,7 @@ services:
 
   backend:
     container_name: backend
-    image: iakarpov17/mailhub-mail:latest
+    image: fedasov03/mailhub-mail:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -48,7 +48,7 @@ services:
 
   smtp:
     container_name: smtp
-    image: iakarpov17/mailhub-smtp:latest
+    image: fedasov03/mailhub-smtp:latest
     build:
       context: ./internal/smtp_server
       dockerfile: Dockerfile
@@ -59,7 +59,7 @@ services:
 
   auth:
     container_name: auth
-    image: iakarpov17/mailhub-auth:latest
+    image: fedasov03/mailhub-auth:latest
     build:
       context: .
       dockerfile: ./cmd/auth/Dockerfile
@@ -72,7 +72,7 @@ services:
 
   email:
     container_name: email
-    image: iakarpov17/mailhub-email:latest
+    image: fedasov03/mailhub-email:latest
     build:
       context: .
       dockerfile: ./cmd/email/Dockerfile
@@ -85,7 +85,7 @@ services:
 
   session:
     container_name: session
-    image: iakarpov17/mailhub-session:latest
+    image: fedasov03/mailhub-session:latest
     build:
       context: .
       dockerfile: ./cmd/session/Dockerfile
@@ -98,7 +98,7 @@ services:
 
   user:
     container_name: user
-    image: iakarpov17/mailhub-user:latest
+    image: fedasov03/mailhub-user:latest
     build:
       context: .
       dockerfile: ./cmd/user/Dockerfile
@@ -111,7 +111,7 @@ services:
 
   folder:
     container_name: folder
-    image: iakarpov17/mailhub-folder:latest
+    image: fedasov03/mailhub-folder:latest
     build:
       context: .
       dockerfile: ./cmd/folder/Dockerfile
@@ -124,7 +124,7 @@ services:
 
   questionnaire:
     container_name: questionnaire
-    image: iakarpov17/mailhub-questionnaire:latest
+    image: fedasov03/mailhub-questionnaire:latest
     build:
       context: .
       dockerfile: ./cmd/questionnaire/Dockerfile
