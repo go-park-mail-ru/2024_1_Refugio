@@ -25,5 +25,4 @@ jobs:
            username: ${{ secrets.USER }}
            key: ${{ secrets.SSH_PRIVATE_KEY }}
            script: |
-             sudo cd backend_4/2024_1_Refugio/
-             sudo mkdir test
+             sudo mkdir -p backend_4/2024_1_Refugio/test
