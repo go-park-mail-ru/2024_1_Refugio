@@ -45,7 +45,7 @@ type GMailAuthHandler struct {
 // @Failure 404 {object} response.Response "User not fount"
 // @Failure 401 {object} response.ErrorResponse "Invalid credentials"
 // @Failure 500 {object} response.ErrorResponse "Failed to create session"
-// @Router /api/v1/sauth/gAuth [get]
+// @Router /api/v1/auth/gAuth [get]
 func (g *GMailAuthHandler) GoogleAuth(w http.ResponseWriter, r *http.Request) {
 	authCode := r.URL.Query().Get("code")
 
