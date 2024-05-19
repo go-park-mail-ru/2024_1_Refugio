@@ -45,8 +45,13 @@ jobs:
            key: ${{ secrets.SSH_PRIVATE_KEY }}
            script: |
              cd backend_4/2024_1_Refugio/
-             sudo docker stop $(sudo docker ps -a -q)
-             sudo docker rm $(sudo docker ps -a -q)
+             if [ -z "$(sudo docker ps -q)" ]; then
+               echo "No running containers found. Exiting."
+               exit 0
+             else
+               sudo docker stop $(sudo docker ps -a -q)
+               sudo docker rm $(sudo docker ps -a -q)
+             fi
        - name: Pull docker images
          uses: appleboy/ssh-action@master
          with:
