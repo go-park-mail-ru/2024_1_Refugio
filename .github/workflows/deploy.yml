@@ -108,6 +108,7 @@ jobs:
           script: |
             sudo -i
             cd backend_4/2024_1_Refugio/
+            git config --global --add safe.directory /home/***/backend_4/2024_1_Refugio
             git pull
       - name: Pull docker images
         uses: appleboy/ssh-action@master
