@@ -35,5 +35,5 @@ jobs:
            key: ${{ secrets.SSH_PRIVATE_KEY }}
            script: |
              cd backend_4/2024_1_Refugio/
-             sudo docker stop $(docker ps -a -q)
-             sudo docker rm $(docker ps -a -q)
+             sudo docker stop $(sudo docker ps -a -q)
+             sudo docker rm $(sudo docker ps -a -q)
