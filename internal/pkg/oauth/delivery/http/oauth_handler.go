@@ -101,6 +101,24 @@ func (ah *OAuthHandler) AuthVK(w http.ResponseWriter, r *http.Request) {
 	code := r.FormValue("code")
 	conf := GetConfOauth2(REDIRECT_URL_SIGNUP)
 
+	// vk_mock
+	if code == "855ab871bba885204e" {
+		vkUser := &api.VKUser{
+			FirstName: "Max",
+			Surname:   "Frelih",
+			Gender:    domain_models.GetGenderTypeInt(2),
+			// Birthday:  birthdayTime,
+			VKId: uint32(1234567),
+		}
+		randToken := make([]byte, 16)
+		rand.Read(randToken)
+		authToken := fmt.Sprintf("%x", randToken)
+		mapVKIDToken[vkUser.VKId] = authToken
+		w.Header().Set("AuthToken", authToken)
+		response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"VKUser": vkUser})
+		return
+	}
+
 	if code == "" {
 		response.HandleError(w, http.StatusBadRequest, "wrong code")
 		return
