@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"mail/internal/pkg/utils/validators"
 
 	repository "mail/internal/microservice/folder/interface"
 	domain "mail/internal/microservice/models/domain_models"
@@ -61,7 +62,21 @@ func (uc *FolderUseCase) CheckEmailProfile(emailID uint32, profileID uint32, ctx
 
 // GetAllEmailsInFolder get all emails in folder as user.
 func (uc *FolderUseCase) GetAllEmailsInFolder(folderID, profileID, limit, offset uint32, ctx context.Context) ([]*domain.Email, error) {
-	return uc.repo.GetAllEmails(folderID, profileID, limit, offset, ctx)
+	emails, err := uc.repo.GetAllEmails(folderID, profileID, limit, offset, ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, email := range emails {
+		if validators.IsValidEmailFormat(email.SenderEmail) {
+			email.PhotoID, err = uc.repo.GetAvatarFileIDByLogin(email.SenderEmail, ctx)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return emails, nil
 }
 
 // GetAllFolderName retrieves the names of all folders associated with a given email ID.

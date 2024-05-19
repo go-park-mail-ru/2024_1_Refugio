@@ -238,10 +238,8 @@ func (r *FolderRepository) CheckEmail(emailID uint32, profileID uint32, ctx cont
 
 func (r *FolderRepository) GetAllEmails(folderID, profileID, limit, offset uint32, ctx context.Context) ([]*domain.Email, error) {
 	query := `
-		SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+		SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important
 		FROM email e
-		LEFT JOIN email_file ef ON e.id = ef.email_id
-		LEFT JOIN file f ON ef.file_id = f.id
 		JOIN profile_email pe ON e.id = pe.email_id
 		JOIN profile p ON pe.profile_id = $1 
 		LEFT JOIN folder_email ON e.id = folder_email.email_id
@@ -278,6 +276,36 @@ func (r *FolderRepository) GetAllEmails(folderID, profileID, limit, offset uint3
 	}
 
 	return emailsModelCore, nil
+}
+
+// GetAvatarFileIDByLogin getting an avatar by login.
+func (r *FolderRepository) GetAvatarFileIDByLogin(login string, ctx context.Context) (string, error) {
+	query := `
+		SELECT f.file_id
+		FROM file f
+		LEFT JOIN profile p ON p.avatar_id = f.id
+		WHERE p.login = $1
+	`
+
+	var fileID sql.NullString
+	start := time.Now()
+	err := r.DB.Get(&fileID, query, login)
+
+	args := []interface{}{login}
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", fmt.Errorf("no avatar found for login %s", login)
+		}
+		return "", err
+	}
+
+	if !fileID.Valid {
+		return "", nil
+	}
+
+	return fileID.String, nil
 }
 
 // GetAllFolderName retrieves the names of all folders associated with a given email ID.
