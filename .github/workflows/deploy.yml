@@ -25,4 +25,5 @@ jobs:
            username: ${{ secrets.USER }}
            key: ${{ secrets.SSH_PRIVATE_KEY }}
            script: |
-             sudo mkdir -p backend_4/2024_1_Refugio/test
+             cd backend_4/2024_1_Refugio/
+             git pull
