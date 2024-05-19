@@ -1,0 +1,200 @@
+version: '3'
+
+networks:
+  deploy-guide-dev:
+    driver: bridge
+
+services:
+  db:
+    container_name: db
+    image: postgres:16
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: Mail
+    networks:
+      - deploy-guide-dev
+    volumes:
+      - db_postgres_data:/var/lib/postgresql/data
+
+  db_question:
+    container_name: db_question
+    image: postgres:16
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: Question
+    networks:
+      - deploy-guide-dev
+    volumes:
+      - db_question_postgres_data:/var/lib/postgresql/data
+
+  backend:
+    container_name: backend
+    image: iakarpov17/mailhub-mail:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    networks:
+      - deploy-guide-dev
+    depends_on:
+      - db
+
+  smtp:
+    container_name: smtp
+    image: iakarpov17/mailhub-smtp:latest
+    build:
+      context: ./internal/smtp_server
+      dockerfile: Dockerfile
+    ports:
+      - "25:587"
+    networks:
+      - deploy-guide-dev
+
+  auth:
+    container_name: auth
+    image: iakarpov17/mailhub-auth:latest
+    build:
+      context: .
+      dockerfile: ./cmd/auth/Dockerfile
+    ports:
+      - "8004:8004"
+    networks:
+      - deploy-guide-dev
+    depends_on:
+      - db
+
+  email:
+    container_name: email
+    image: iakarpov17/mailhub-email:latest
+    build:
+      context: .
+      dockerfile: ./cmd/email/Dockerfile
+    ports:
+      - "8002:8002"
+    networks:
+      - deploy-guide-dev
+    depends_on:
+      - db
+
+  session:
+    container_name: session
+    image: iakarpov17/mailhub-session:latest
+    build:
+      context: .
+      dockerfile: ./cmd/session/Dockerfile
+    ports:
+      - "8003:8003"
+    networks:
+      - deploy-guide-dev
+    depends_on:
+      - db
+
+  user:
+    container_name: user
+    image: iakarpov17/mailhub-user:latest
+    build:
+      context: .
+      dockerfile: ./cmd/user/Dockerfile
+    ports:
+      - "8001:8001"
+    networks:
+      - deploy-guide-dev
+    depends_on:
+      - db
+
+  folder:
+    container_name: folder
+    image: iakarpov17/mailhub-folder:latest
+    build:
+      context: .
+      dockerfile: ./cmd/folder/Dockerfile
+    ports:
+      - "8005:8005"
+    networks:
+      - deploy-guide-dev
+    depends_on:
+      - db
+
+  questionnaire:
+    container_name: questionnaire
+    image: iakarpov17/mailhub-questionnaire:latest
+    build:
+      context: .
+      dockerfile: ./cmd/questionnaire/Dockerfile
+    ports:
+      - "8006:8006"
+    networks:
+      - deploy-guide-dev
+    depends_on:
+      - db_question
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - deploy-guide-dev
+    volumes:
+      - ./monitoring/prometheus:/etc/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - deploy-guide-dev
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+  node-exporter:
+    image: prom/node-exporter
+    container_name: node-exporter
+    ports:
+      - "9100:9100"
+    networks:
+      - deploy-guide-dev
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --address ":9000" --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    networks:
+      - deploy-guide-dev
+    volumes:
+      - ./minio/data:/data
+      - ./minio/config:/root/.minio
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+volumes:
+  db_postgres_data:
+  db_question_postgres_data:
+  prometheus_data:
+  grafana_data:
+  minio_data:
+  minio_config:
