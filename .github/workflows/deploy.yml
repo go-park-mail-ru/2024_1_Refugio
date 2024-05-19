@@ -56,7 +56,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
-          file: ./cmd/mail/Dockerfile
+          file: Dockerfile
           platforms: linux/amd64
           push: true
           tags: fedasov03/mailhub-mail:latest

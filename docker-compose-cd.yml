@@ -36,9 +36,6 @@ services:
   backend:
     container_name: backend
     image: fedasov03/mailhub-mail:latest
-    build:
-      context: .
-      dockerfile: Dockerfile
     ports:
       - "8080:8080"
     networks:
@@ -49,9 +46,6 @@ services:
   smtp:
     container_name: smtp
     image: fedasov03/mailhub-smtp:latest
-    build:
-      context: ./internal/smtp_server
-      dockerfile: Dockerfile
     ports:
       - "25:587"
     networks:
@@ -60,9 +54,6 @@ services:
   auth:
     container_name: auth
     image: fedasov03/mailhub-auth:latest
-    build:
-      context: .
-      dockerfile: ./cmd/auth/Dockerfile
     ports:
       - "8004:8004"
     networks:
@@ -73,9 +64,6 @@ services:
   email:
     container_name: email
     image: fedasov03/mailhub-email:latest
-    build:
-      context: .
-      dockerfile: ./cmd/email/Dockerfile
     ports:
       - "8002:8002"
     networks:
@@ -86,9 +74,6 @@ services:
   session:
     container_name: session
     image: fedasov03/mailhub-session:latest
-    build:
-      context: .
-      dockerfile: ./cmd/session/Dockerfile
     ports:
       - "8003:8003"
     networks:
@@ -99,9 +84,6 @@ services:
   user:
     container_name: user
     image: fedasov03/mailhub-user:latest
-    build:
-      context: .
-      dockerfile: ./cmd/user/Dockerfile
     ports:
       - "8001:8001"
     networks:
@@ -112,9 +94,6 @@ services:
   folder:
     container_name: folder
     image: fedasov03/mailhub-folder:latest
-    build:
-      context: .
-      dockerfile: ./cmd/folder/Dockerfile
     ports:
       - "8005:8005"
     networks:
@@ -125,9 +104,6 @@ services:
   questionnaire:
     container_name: questionnaire
     image: fedasov03/mailhub-questionnaire:latest
-    build:
-      context: .
-      dockerfile: ./cmd/questionnaire/Dockerfile
     ports:
       - "8006:8006"
     networks:
