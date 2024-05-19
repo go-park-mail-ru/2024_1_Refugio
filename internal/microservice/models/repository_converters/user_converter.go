@@ -23,6 +23,7 @@ func UserConvertDbInCore(userModelDb database.User) *domain.User {
 		AvatarID:    avatar,
 		PhoneNumber: userModelDb.PhoneNumber,
 		Description: userModelDb.Description,
+		VKId:        userModelDb.VKId,
 	}
 }
 
@@ -40,5 +41,6 @@ func UserConvertCoreInDb(userModelCore domain.User) *database.User {
 		AvatarID:    &userModelCore.AvatarID,
 		PhoneNumber: userModelCore.PhoneNumber,
 		Description: userModelCore.Description,
+		VKId:        userModelCore.VKId,
 	}
 }

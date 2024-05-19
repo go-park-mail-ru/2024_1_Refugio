@@ -4,14 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"google.golang.org/grpc/metadata"
-	"io"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"github.com/minio/minio-go/v7"
 
+	"mail/cmd/configs"
 	"mail/internal/microservice/models/proto_converters"
 	"mail/internal/microservice/user/proto"
 	"mail/internal/pkg/utils/check_image"
@@ -34,6 +34,7 @@ var (
 type UserHandler struct {
 	Sessions          domainSession.SessionsManager
 	UserServiceClient user_proto.UserServiceClient
+	MinioClient       *minio.Client
 }
 
 // VerifyAuth verifies user authentication.
@@ -221,27 +222,19 @@ func (uh *UserHandler) UploadUserAvatar(w http.ResponseWriter, r *http.Request) 
 	}
 
 	uniqueFileName := generate_filename.GenerateUniqueFileName(fileExt)
-	outFile, err := os.Create("./avatars/" + uniqueFileName)
-	fmt.Println(err)
+	_, err = uh.MinioClient.PutObject(r.Context(), "photos", uniqueFileName, file, -1, minio.PutObjectOptions{ContentType: handler.Header.Get("Content-Type")})
 	if err != nil {
-		response.HandleError(w, http.StatusInternalServerError, "Error creating file")
-		return
-	}
-	defer outFile.Close()
-
-	_, err = io.Copy(outFile, file)
-	if err != nil {
-		response.HandleError(w, http.StatusInternalServerError, "Error saving file")
+		response.HandleError(w, http.StatusInternalServerError, "Error uploading file to MinIO")
 		return
 	}
 
 	sessionUser := uh.Sessions.GetSession(r, r.Context())
 
-	avatar := "https://mailhub.su/media/" + uniqueFileName
+	avatarURL := fmt.Sprintf(configs.PROTOCOL+"mailhub.su"+"/photos/%s", uniqueFileName)
 	_, errAvatar := uh.UserServiceClient.UploadUserAvatar(
 		metadata.NewOutgoingContext(r.Context(),
 			metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
-		&proto.UploadUserAvatarRequest{Id: sessionUser.UserID, Avatar: avatar},
+		&proto.UploadUserAvatarRequest{Id: sessionUser.UserID, Avatar: avatarURL},
 	)
 	if errAvatar != nil {
 		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
@@ -281,4 +274,29 @@ func (uh *UserHandler) DeleteUserAvatar(w http.ResponseWriter, r *http.Request) 
 	}
 
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"message": "User avatar deleted successfully"})
+}
+
+// GetCountUsers handles requests to get count users.
+// @Summary Get count user
+// @Description Handles requests to get count user.
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param X-Csrf-Token header string true "CSRF Token"
+// @Failure 400 {object} response.ErrorResponse "Invalid user ID"
+// @Failure 401 {object} response.ErrorResponse "Not authorized"
+// @Failure 500 {object} response.ErrorResponse "Internal Server Error"
+// @Router /api/v1/user/count [get]
+func (uh *UserHandler) GetCountUsers(w http.ResponseWriter, r *http.Request) {
+	usersProto, err := uh.UserServiceClient.GetUsers(
+		metadata.NewOutgoingContext(r.Context(),
+			metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		&proto.GetUsersRequest{},
+	)
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"count": len(usersProto.Users)})
 }

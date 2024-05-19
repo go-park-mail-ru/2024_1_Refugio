@@ -4,13 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
-	mock_repository "mail/internal/microservice/email/mock"
-	domain "mail/internal/microservice/models/domain_models"
-	"mail/internal/pkg/logger"
 	"os"
 	"testing"
+
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
+
+	"mail/internal/pkg/logger"
+
+	mock_repository "mail/internal/microservice/email/mock"
+	domain "mail/internal/microservice/models/domain_models"
 )
 
 func GetCTX() context.Context {
@@ -352,4 +355,413 @@ func TestDeleteEmail_ErrorFromRepository(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, true, emailRes)
+}
+
+func TestAddAttachment_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockEmailRepository(ctrl)
+	useCase := NewEmailUseCase(mockRepo)
+
+	fileID := "test_file_id"
+	fileType := "pdf"
+	emailID := uint64(123)
+	ctx := context.Background()
+
+	mockRepo.EXPECT().AddFile(fileID, fileType, ctx).Return(uint64(456), nil)
+	mockRepo.EXPECT().AddAttachment(emailID, uint64(456), ctx).Return(nil)
+
+	result, err := useCase.AddAttachment(fileID, fileType, emailID, ctx)
+
+	assert.NoError(t, err)
+	assert.Equal(t, uint64(456), result)
+}
+
+func TestAddAttachment_EmptyFileID(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockEmailRepository(ctrl)
+	useCase := NewEmailUseCase(mockRepo)
+
+	fileID := ""
+	fileType := "pdf"
+	emailID := uint64(123)
+	ctx := context.Background()
+
+	result, err := useCase.AddAttachment(fileID, fileType, emailID, ctx)
+
+	assert.Error(t, err)
+	assert.Zero(t, result)
+}
+
+func TestAddAttachment_EmptyFileType(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockEmailRepository(ctrl)
+	useCase := NewEmailUseCase(mockRepo)
+
+	fileID := "test_file_id"
+	fileType := ""
+	emailID := uint64(123)
+	ctx := context.Background()
+
+	result, err := useCase.AddAttachment(fileID, fileType, emailID, ctx)
+
+	assert.Error(t, err)
+	assert.Zero(t, result)
+}
+
+func TestAddAttachment_InvalidEmailID(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockEmailRepository(ctrl)
+	useCase := NewEmailUseCase(mockRepo)
+
+	fileID := "test_file_id"
+	fileType := "pdf"
+	emailID := uint64(0)
+	ctx := context.Background()
+
+	result, err := useCase.AddAttachment(fileID, fileType, emailID, ctx)
+
+	assert.Error(t, err)
+	assert.Zero(t, result)
+}
+
+func TestAddAttachment_ErrorAddingFile(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockEmailRepository(ctrl)
+	useCase := NewEmailUseCase(mockRepo)
+
+	fileID := "test_file_id"
+	fileType := "pdf"
+	emailID := uint64(123)
+	ctx := context.Background()
+
+	mockRepo.EXPECT().AddFile(fileID, fileType, ctx).Return(uint64(0), errors.New("file adding error"))
+
+	result, err := useCase.AddAttachment(fileID, fileType, emailID, ctx)
+
+	assert.Error(t, err)
+	assert.Zero(t, result)
+}
+
+func TestAddAttachment_ErrorAddingAttachment(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockEmailRepository(ctrl)
+	useCase := NewEmailUseCase(mockRepo)
+
+	fileID := "test_file_id"
+	fileType := "pdf"
+	emailID := uint64(123)
+	ctx := context.Background()
+
+	mockRepo.EXPECT().AddFile(fileID, fileType, ctx).Return(uint64(456), nil)
+	mockRepo.EXPECT().AddAttachment(emailID, uint64(456), ctx).Return(errors.New("attachment adding error"))
+
+	result, err := useCase.AddAttachment(fileID, fileType, emailID, ctx)
+
+	assert.Error(t, err)
+	assert.Zero(t, result)
+}
+
+func TestGetFileByID_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockEmailRepository(ctrl)
+	useCase := NewEmailUseCase(mockRepo)
+
+	fileID := uint64(123)
+	expectedFile := &domain.File{ID: fileID, FileId: "test_file"}
+
+	ctx := context.Background()
+
+	mockRepo.EXPECT().GetFileByID(fileID, ctx).Return(expectedFile, nil)
+
+	file, err := useCase.GetFileByID(fileID, ctx)
+
+	assert.NoError(t, err)
+	assert.Equal(t, expectedFile, file)
+}
+
+func TestGetFileByID_InvalidFileID(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockEmailRepository(ctrl)
+	useCase := NewEmailUseCase(mockRepo)
+
+	fileID := uint64(0)
+	ctx := context.Background()
+
+	file, err := useCase.GetFileByID(fileID, ctx)
+
+	assert.Error(t, err)
+	assert.Nil(t, file)
+}
+
+func TestGetFileByID_ErrorGettingFile(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockEmailRepository(ctrl)
+	useCase := NewEmailUseCase(mockRepo)
+
+	fileID := uint64(123)
+	ctx := context.Background()
+
+	mockRepo.EXPECT().GetFileByID(fileID, ctx).Return(nil, errors.New("file retrieval error"))
+
+	file, err := useCase.GetFileByID(fileID, ctx)
+
+	assert.Error(t, err)
+	assert.Nil(t, file)
+}
+
+func TestGetFilesByEmailID_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockEmailRepository(ctrl)
+	useCase := NewEmailUseCase(mockRepo)
+
+	emailID := uint64(123)
+	expectedFiles := []*domain.File{
+		{ID: 1, FileId: "file1.pdf"},
+		{ID: 2, FileId: "file2.pdf"},
+	}
+
+	ctx := context.Background()
+
+	mockRepo.EXPECT().GetFilesByEmailID(emailID, ctx).Return(expectedFiles, nil)
+
+	files, err := useCase.GetFilesByEmailID(emailID, ctx)
+
+	assert.NoError(t, err)
+	assert.Equal(t, expectedFiles, files)
+}
+
+func TestGetFilesByEmailID_InvalidEmailID(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockEmailRepository(ctrl)
+	useCase := NewEmailUseCase(mockRepo)
+
+	emailID := uint64(0)
+	ctx := context.Background()
+
+	files, err := useCase.GetFilesByEmailID(emailID, ctx)
+
+	assert.Error(t, err)
+	assert.Nil(t, files)
+}
+
+func TestGetFilesByEmailID_ErrorGettingFiles(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockEmailRepository(ctrl)
+	useCase := NewEmailUseCase(mockRepo)
+
+	emailID := uint64(123)
+	ctx := context.Background()
+
+	mockRepo.EXPECT().GetFilesByEmailID(emailID, ctx).Return(nil, errors.New("file retrieval error"))
+
+	files, err := useCase.GetFilesByEmailID(emailID, ctx)
+
+	assert.Error(t, err)
+	assert.Nil(t, files)
+}
+
+func TestDeleteFileByID_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockEmailRepository(ctrl)
+	useCase := NewEmailUseCase(mockRepo)
+
+	fileID := uint64(123)
+	ctx := context.Background()
+
+	mockRepo.EXPECT().DeleteFileByID(fileID, ctx).Return(nil)
+
+	deleted, err := useCase.DeleteFileByID(fileID, ctx)
+
+	assert.NoError(t, err)
+	assert.True(t, deleted)
+}
+
+func TestDeleteFileByID_InvalidFileID(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockEmailRepository(ctrl)
+	useCase := NewEmailUseCase(mockRepo)
+
+	fileID := uint64(0)
+	ctx := context.Background()
+
+	deleted, err := useCase.DeleteFileByID(fileID, ctx)
+
+	assert.Error(t, err)
+	assert.False(t, deleted)
+}
+
+func TestDeleteFileByID_ErrorDeletingFile(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockEmailRepository(ctrl)
+	useCase := NewEmailUseCase(mockRepo)
+
+	fileID := uint64(123)
+	ctx := context.Background()
+
+	mockRepo.EXPECT().DeleteFileByID(fileID, ctx).Return(errors.New("file deletion error"))
+
+	deleted, err := useCase.DeleteFileByID(fileID, ctx)
+
+	assert.Error(t, err)
+	assert.False(t, deleted)
+}
+
+func TestUpdateFileByID_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockEmailRepository(ctrl)
+	useCase := NewEmailUseCase(mockRepo)
+
+	fileID := uint64(123)
+	newFileID := "new_file_id"
+	newFileType := "pdf"
+	ctx := context.Background()
+
+	oldFile := &domain.File{
+		ID:       fileID,
+		FileId:   "old_file_id",
+		FileType: "old_type",
+	}
+
+	mockRepo.EXPECT().GetFileByID(fileID, ctx).Return(oldFile, nil)
+	mockRepo.EXPECT().UpdateFileByID(fileID, newFileID, newFileType, ctx).Return(nil)
+
+	updated, err := useCase.UpdateFileByID(fileID, newFileID, newFileType, ctx)
+
+	assert.NoError(t, err)
+	assert.True(t, updated)
+	assert.Equal(t, newFileID, oldFile.FileId)
+	assert.Equal(t, newFileType, oldFile.FileType)
+}
+
+func TestUpdateFileByID_InvalidFileID(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockEmailRepository(ctrl)
+	useCase := NewEmailUseCase(mockRepo)
+
+	fileID := uint64(0)
+	newFileID := "new_file_id"
+	newFileType := "pdf"
+	ctx := context.Background()
+
+	updated, err := useCase.UpdateFileByID(fileID, newFileID, newFileType, ctx)
+
+	assert.Error(t, err)
+	assert.False(t, updated)
+}
+
+func TestUpdateFileByID_EmptyNewFileID(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockEmailRepository(ctrl)
+	useCase := NewEmailUseCase(mockRepo)
+
+	fileID := uint64(123)
+	newFileID := ""
+	newFileType := "pdf"
+	ctx := context.Background()
+
+	updated, err := useCase.UpdateFileByID(fileID, newFileID, newFileType, ctx)
+
+	assert.Error(t, err)
+	assert.False(t, updated)
+}
+
+func TestUpdateFileByID_EmptyNewFileType(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockEmailRepository(ctrl)
+	useCase := NewEmailUseCase(mockRepo)
+
+	fileID := uint64(123)
+	newFileID := "new_file_id"
+	newFileType := ""
+	ctx := context.Background()
+
+	updated, err := useCase.UpdateFileByID(fileID, newFileID, newFileType, ctx)
+
+	assert.Error(t, err)
+	assert.False(t, updated)
+}
+
+func TestUpdateFileByID_ErrorGettingFile(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockEmailRepository(ctrl)
+	useCase := NewEmailUseCase(mockRepo)
+
+	fileID := uint64(123)
+	newFileID := "new_file_id"
+	newFileType := "pdf"
+	ctx := context.Background()
+
+	mockRepo.EXPECT().GetFileByID(fileID, ctx).Return(nil, errors.New("file retrieval error"))
+
+	updated, err := useCase.UpdateFileByID(fileID, newFileID, newFileType, ctx)
+
+	assert.Error(t, err)
+	assert.False(t, updated)
+}
+
+func TestUpdateFileByID_ErrorUpdatingFile(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockEmailRepository(ctrl)
+	useCase := NewEmailUseCase(mockRepo)
+
+	fileID := uint64(123)
+	newFileID := "new_file_id"
+	newFileType := "pdf"
+	ctx := context.Background()
+
+	oldFile := &domain.File{
+		ID:       fileID,
+		FileId:   "old_file_id",
+		FileType: "old_type",
+	}
+
+	mockRepo.EXPECT().GetFileByID(fileID, ctx).Return(oldFile, nil)
+	mockRepo.EXPECT().UpdateFileByID(fileID, newFileID, newFileType, ctx).Return(errors.New("file update error"))
+
+	updated, err := useCase.UpdateFileByID(fileID, newFileID, newFileType, ctx)
+
+	assert.Error(t, err)
+	assert.False(t, updated)
 }

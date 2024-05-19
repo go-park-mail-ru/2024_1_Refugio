@@ -196,3 +196,27 @@ func (es *FolderServer) GetAllEmailsInFolder(ctx context.Context, input *proto.G
 	emailProto.Emails = emailsProto
 	return emailProto, nil
 }
+
+func (es *FolderServer) GetAllNameFolders(ctx context.Context, input *proto.GetAllNameFoldersRequest) (*proto.Folders, error) {
+	if input == nil {
+		return nil, fmt.Errorf("invalid folder format: %s", input)
+	}
+
+	if input.EmailId <= 0 {
+		return nil, fmt.Errorf("invalid emailID=%s", strconv.Itoa(int(input.EmailId)))
+	}
+
+	foldersCore, err := es.FolderUseCase.GetAllFolderName(input.EmailId, ctx)
+	if err != nil {
+		return nil, fmt.Errorf("emails not found")
+	}
+
+	foldersProto := make([]*proto.Folder, len(foldersCore))
+	for i, f := range foldersCore {
+		foldersProto[i] = converters.FolderConvertCoreInProto(*f)
+	}
+
+	folderProto := new(proto.Folders)
+	folderProto.Folders = foldersProto
+	return folderProto, nil
+}

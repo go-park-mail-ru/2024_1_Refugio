@@ -15,6 +15,8 @@ import (
 	"github.com/gorilla/mux"
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/kataras/requestid"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
 
@@ -38,15 +40,16 @@ import (
 	authHand "mail/internal/pkg/auth/delivery/http"
 	emailHand "mail/internal/pkg/email/delivery/http"
 	folderHand "mail/internal/pkg/folder/delivery/http"
+	oauthHand "mail/internal/pkg/oauth/delivery/http"
 	questionHand "mail/internal/pkg/questionnairy/delivery/http"
 	userHand "mail/internal/pkg/user/delivery/http"
 
 	_ "mail/docs"
 )
 
-// @title API Mailhub
+// @title API MailHub
 // @version 1.0
-// @description API server for Mailhub
+// @description API server for MailHub
 
 // @host mailhub.su
 // @BasePath /
@@ -108,7 +111,9 @@ func main() {
 	defer questionServiceConn.Close()
 	questionHandler := initializeQuestionHandler(sessionsManager, question_proto.NewQuestionServiceClient(questionServiceConn))
 
-	router := setupRouter(authHandler, userHandler, emailHandler, folderHandler, questionHandler, loggerMiddlewareAccess)
+	oauthHandler := initializeOAuthHandler(sessionsManager)
+
+	router := setupRouter(authHandler, oauthHandler, userHandler, emailHandler, folderHandler, questionHandler, loggerMiddlewareAccess)
 
 	startServer(router)
 }
@@ -170,20 +175,100 @@ func initializeAuthHandler(sessionsManager *session.SessionsManager, authService
 	}
 }
 
+// initializeOAuthHandler initializing authorization handler
+func initializeOAuthHandler(sessionsManager *session.SessionsManager) *oauthHand.OAuthHandler {
+	return &oauthHand.OAuthHandler{
+		Sessions: sessionsManager,
+	}
+}
+
 // initializeEmailHandler initializing email handler
 func initializeEmailHandler(sessionsManager *session.SessionsManager, emailServiceClient email_proto.EmailServiceClient) *emailHand.EmailHandler {
+	minioClient, err := minio.New(configs.ENDPOINT, &minio.Options{
+		Creds:  credentials.NewStaticV4(configs.ACCESSKEYID, configs.SECRETACCESSKEY, ""),
+		Secure: false,
+	})
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	ctx := context.Background()
+	bucketName := "files"
+	location := "eu-central-1"
+
+	exists, err := minioClient.BucketExists(ctx, bucketName)
+	if err != nil {
+		fmt.Println("failed to check bucket existence")
+	}
+	if !exists {
+		err = minioClient.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{Region: location})
+		if err != nil {
+			fmt.Println("failed to create bucket")
+		}
+		fmt.Printf("Bucket has been successfully created: %s\n", bucketName)
+	} else {
+		fmt.Printf("Bucket %s already exists\n", bucketName)
+	}
+
+	err = minioClient.SetBucketPolicy(ctx, bucketName, generatePolicy(bucketName))
+	if err != nil {
+		fmt.Println("failed to set bucket policy")
+	} else {
+		fmt.Println("bucket policy set successfully")
+	}
+
 	return &emailHand.EmailHandler{
 		Sessions:           sessionsManager,
 		EmailServiceClient: emailServiceClient,
+		MinioClient:        minioClient,
 	}
 }
 
 // initializeUserHandler initializing user handler
 func initializeUserHandler(sessionsManager *session.SessionsManager, userServiceClient user_proto.UserServiceClient) *userHand.UserHandler {
+	minioClient, err := minio.New(configs.ENDPOINT, &minio.Options{
+		Creds:  credentials.NewStaticV4(configs.ACCESSKEYID, configs.SECRETACCESSKEY, ""),
+		Secure: false,
+	})
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	ctx := context.Background()
+	bucketName := "photos"
+	location := "eu-central-1"
+
+	exists, err := minioClient.BucketExists(ctx, bucketName)
+	if err != nil {
+		fmt.Println("failed to check bucket existence")
+	}
+	if !exists {
+		err = minioClient.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{Region: location})
+		if err != nil {
+			fmt.Println("failed to create bucket")
+		}
+		fmt.Printf("Bucket has been successfully created: %s\n", bucketName)
+	} else {
+		fmt.Printf("Bucket %s already exists\n", bucketName)
+	}
+
+	err = minioClient.SetBucketPolicy(ctx, bucketName, generatePolicy(bucketName))
+	if err != nil {
+		fmt.Println("failed to set bucket policy")
+	} else {
+		fmt.Println("bucket policy set successfully")
+	}
+
 	return &userHand.UserHandler{
 		Sessions:          sessionsManager,
 		UserServiceClient: userServiceClient,
+		MinioClient:       minioClient,
 	}
+}
+
+// generatePolicy policy generation for minio
+func generatePolicy(bucketName string) string {
+	return fmt.Sprintf(`{"Version": "2012-10-17","Statement": [{"Effect": "Allow","Principal": {"AWS": ["*"]},"Action": ["s3:GetBucketLocation"],"Resource": ["arn:aws:s3:::%s"]},{"Effect": "Allow","Principal": {"AWS": ["*"]},"Action": ["s3:GetObject"],"Resource": ["arn:aws:s3:::%s/*"]}]}`, bucketName, bucketName)
 }
 
 // initializeFolderHandler initializing folder handler
@@ -217,10 +302,16 @@ func initializeMiddlewareLogger() *middleware.Logger {
 }
 
 // setupRouter configuring routers
-func setupRouter(authHandler *authHand.AuthHandler, userHandler *userHand.UserHandler, emailHandler *emailHand.EmailHandler, folderHandler *folderHand.FolderHandler, questionHandler *questionHand.QuestionHandler, logger *middleware.Logger) http.Handler {
+func setupRouter(authHandler *authHand.AuthHandler, oauthHandler *oauthHand.OAuthHandler, userHandler *userHand.UserHandler, emailHandler *emailHand.EmailHandler, folderHandler *folderHand.FolderHandler, questionHandler *questionHand.QuestionHandler, logger *middleware.Logger) http.Handler {
 	router := mux.NewRouter()
 
-	auth := setupAuthRouter(authHandler, emailHandler, logger)
+	router.HandleFunc("/api/v1/testAuth/auth-vk/getAuthUrlSignUpVK", oauthHandler.GetSignUpURLVK).Methods("GET", "OPTIONS")
+	router.HandleFunc("/api/v1/testAuth/auth-vk/getAuthUrlLoginVK", oauthHandler.GetLoginURLVK).Methods("GET", "OPTIONS")
+	router.HandleFunc("/api/v1/testAuth/auth-vk/auth", oauthHandler.AuthVK).Methods("GET", "OPTIONS")
+	router.HandleFunc("/api/v1/testAuth/auth-vk/loginVK", oauthHandler.LoginVK).Methods("GET", "OPTIONS")
+	router.HandleFunc("/api/v1/testAuth/auth-vk/signupVK", oauthHandler.SignupVK).Methods("POST", "OPTIONS")
+
+	auth := setupAuthRouter(authHandler, oauthHandler, emailHandler, logger)
 	router.PathPrefix("/api/v1/auth").Handler(auth)
 
 	logRouter := setupLogRouter(emailHandler, userHandler, folderHandler, questionHandler, logger)
@@ -238,7 +329,7 @@ func setupRouter(authHandler *authHand.AuthHandler, userHandler *userHand.UserHa
 }
 
 // setupAuthRouter configuring authorization router
-func setupAuthRouter(authHandler *authHand.AuthHandler, emailHandler *emailHand.EmailHandler, logger *middleware.Logger) http.Handler {
+func setupAuthRouter(authHandler *authHand.AuthHandler, oauthHandler *oauthHand.OAuthHandler, emailHandler *emailHand.EmailHandler, logger *middleware.Logger) http.Handler {
 	auth := mux.NewRouter().PathPrefix("/api/v1/auth").Subrouter()
 	auth.Use(logger.AccessLogMiddleware, middleware.PanicMiddleware)
 
@@ -247,6 +338,9 @@ func setupAuthRouter(authHandler *authHand.AuthHandler, emailHandler *emailHand.
 	auth.HandleFunc("/logout", authHandler.Logout).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/sendOther", emailHandler.SendFromAnotherDomain).Methods("POST", "OPTIONS")
 
+	//auth.HandleFunc("/getAuthUrlVK", oauthHandler.GetSignUpURLVK).Methods("GET", "OPTIONS")
+	//auth.HandleFunc("/auth-vk/signupVK", oauthHandler.SignupVK).Methods("GET", "OPTIONS")
+	//auth.HandleFunc("/auth-vk/loginVK", oauthHandler.LoginVK).Methods("GET", "OPTIONS")
 	return auth
 }
 
@@ -261,6 +355,7 @@ func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.
 	logRouter.HandleFunc("/user/delete/{id}", userHandler.DeleteUserData).Methods("DELETE", "OPTIONS")
 	logRouter.HandleFunc("/user/avatar/upload", userHandler.UploadUserAvatar).Methods("POST", "OPTIONS")
 	logRouter.HandleFunc("/user/avatar/delete", userHandler.DeleteUserAvatar).Methods("DELETE", "OPTIONS")
+	logRouter.HandleFunc("/user/count", userHandler.GetCountUsers).Methods("GET", "OPTIONS")
 
 	logRouter.HandleFunc("/emails/incoming", emailHandler.Incoming).Methods("GET", "OPTIONS")
 	logRouter.HandleFunc("/emails/sent", emailHandler.Sent).Methods("GET", "OPTIONS")
@@ -270,6 +365,15 @@ func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.
 	logRouter.HandleFunc("/email/update/{id}", emailHandler.Update).Methods("PUT", "OPTIONS")
 	logRouter.HandleFunc("/email/delete/{id}", emailHandler.Delete).Methods("DELETE", "OPTIONS")
 	logRouter.HandleFunc("/email/send", emailHandler.Send).Methods("POST", "OPTIONS")
+	logRouter.HandleFunc("/email/adddraft", emailHandler.AddDraft).Methods("POST", "OPTIONS")
+
+	logRouter.HandleFunc("/email/{id}/addattachment", emailHandler.AddAttachment).Methods("POST", "OPTIONS")
+	logRouter.HandleFunc("/email/addfile", emailHandler.AddFile).Methods("POST", "OPTIONS")
+	logRouter.HandleFunc("/email/{id}/file/{file-id}", emailHandler.AddFileToEmail).Methods("POST", "OPTIONS")
+	logRouter.HandleFunc("/email/get/file/{id}", emailHandler.GetFileByID).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/email/{id}/get/files/", emailHandler.GetFilesByEmailID).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/email/delete/file/{id}", emailHandler.DeleteFileByID).Methods("DELETE", "OPTIONS")
+	logRouter.HandleFunc("/email/update/file/{id}", emailHandler.UpdateFileByID).Methods("PUT", "OPTIONS")
 
 	logRouter.HandleFunc("/questions", questionHandler.GetAllQuestions).Methods("GET", "OPTIONS")
 	logRouter.HandleFunc("/questions", questionHandler.AddQuestion).Methods("POST", "OPTIONS")
@@ -283,6 +387,7 @@ func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.
 	logRouter.HandleFunc("/folder/add_email", folderHandler.AddEmailInFolder).Methods("POST", "OPTIONS")
 	logRouter.HandleFunc("/folder/delete_email", folderHandler.DeleteEmailInFolder).Methods("DELETE", "OPTIONS")
 	logRouter.HandleFunc("/folder/all_emails/{id}", folderHandler.GetAllEmailsInFolder).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/folder/allname/{id}", folderHandler.GetAllName).Methods("GET", "OPTIONS")
 
 	return logRouter
 }

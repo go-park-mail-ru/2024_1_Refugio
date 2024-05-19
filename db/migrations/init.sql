@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS profile (
     registration_date DATE NOT NULL DEFAULT CURRENT_DATE,
     avatar_id INTEGER REFERENCES file(id) ON DELETE NO ACTION DEFAULT NULL,
     phone_number TEXT CHECK (LENGTH(phone_number) <= 20),
-    description TEXT CHECK (LENGTH(description) <= 300)
+    description TEXT CHECK (LENGTH(description) <= 300),
+    vkid INTEGER DEFAULT 0
 );
 
 -- Создание таблицы сессий (session)
@@ -97,12 +98,13 @@ VALUES
 
 -- Вставка начальных данных в таблицу users
 INSERT INTO profile
-(login, password_hash, firstname, surname, patronymic, gender, birthday, registration_date, phone_number, description, avatar_id)
+(login, password_hash, firstname, surname, patronymic, gender, birthday, registration_date, phone_number, description, avatar_id, vkid)
 VALUES
-    ('sergey@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Sergey', 'Fedasov', 'Aleksandrovich', 'Male', '2003-08-20', NOW(), '+77777777777', 'Description', 1),
-    ('ivan@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Ivan', 'Karpov', 'Aleksandrovich', 'Male', '2003-10-17', NOW(), '+79697045539', 'Description', 2),
-    ('max@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Maxim', 'Frelich', 'Aleksandrovich', 'Male', '2003-08-20', NOW(), '+79099099090', 'Description', 3),
-    ('alex@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Alexey', 'Khochevnikov', 'Aleksandrovich', 'Male', '2003-10-20', NOW(), '+79090007030', 'Description', 4)
+    ('sergey@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Sergey', 'Fedasov', 'Aleksandrovich', 'Male', '2003-08-20', NOW(), '+77777777777', 'Description', 1, 0),
+    ('ivan@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Ivan', 'Karpov', 'Aleksandrovich', 'Male', '2003-10-17', NOW(), '+79697045539', 'Description', 2, 0),
+    ('max@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Maxim', 'Frelich', 'Aleksandrovich', 'Male', '2003-08-20', NOW(), '+79099099090', 'Description', 3, 0),
+    ('alex@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Alexey', 'Khochevnikov', 'Aleksandrovich', 'Male', '2003-10-20', NOW(), '+79090007030', 'Description', 4, 0),
+    ('fedasov@mailhub.su', '$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe', 'Сергей', 'Федасов', 'Андреевич', 'Male', '2003-10-20', NOW(), '+79090007030', 'Description', 4, 344167564)
 ON CONFLICT (login) DO NOTHING;
 
 -- Вставка начальных данных в таблицу email

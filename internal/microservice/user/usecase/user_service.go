@@ -127,3 +127,8 @@ func (uc *UserUseCase) AddAvatar(id uint32, fileID string, ctx context.Context) 
 func (uc *UserUseCase) DeleteAvatarByUserID(userID uint32, ctx context.Context) error {
 	return uc.repo.DeleteAvatarByUserID(userID, ctx)
 }
+
+// GetUserVkID get user by VK Id.
+func (uc *UserUseCase) GetUserVkID(vkId uint32, ctx context.Context) (*domain_models.User, error) {
+	return uc.repo.GetByVKID(vkId, ctx)
+}

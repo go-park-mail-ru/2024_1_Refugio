@@ -421,3 +421,43 @@ func (h *FolderHandler) GetAllEmailsInFolder(w http.ResponseWriter, r *http.Requ
 
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"folders": emailsApi})
 }
+
+// GetAllName get all name folders.
+// @Summary GetAllName get all name folders
+// @Description GetAllName folders name users
+// @Tags folders
+// @Produce json
+// @Param id path integer true "ID of the email"
+// @Param X-Csrf-Token header string true "CSRF Token"
+// @Success 200 {object} response.Response "ID of the send folder message"
+// @Failure 400 {object} response.Response "Bad JSON in request"
+// @Failure 401 {object} response.Response "Not Authorized"
+// @Failure 500 {object} response.Response "Failed to get all folders"
+// @Router /api/v1/folder/allname/{id} [get]
+func (h *FolderHandler) GetAllName(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.ParseUint(vars["id"], 10, 64)
+	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Bad id in request")
+		return
+	}
+
+	folderDataProto, err := h.FolderServiceClient.GetAllNameFolders(
+		metadata.NewOutgoingContext(r.Context(),
+			metadata.New(map[string]string{"requestID": r.Context().Value("requestID").(string)})),
+		&proto.GetAllNameFoldersRequest{EmailId: uint32(id)},
+	)
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Failed to get all name folders")
+		return
+	}
+
+	foldersCore := proto_converters.FoldersConvertProtoInCore(folderDataProto)
+
+	foldersApi := make([]*folderApi.Folder, 0, len(foldersCore))
+	for _, folder := range foldersCore {
+		foldersApi = append(foldersApi, converters.FolderConvertCoreInApi(*folder))
+	}
+
+	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"folders": foldersApi})
+}

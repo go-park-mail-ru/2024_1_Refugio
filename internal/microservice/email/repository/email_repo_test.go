@@ -4,15 +4,18 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
+	"testing"
+	"time"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/golang/mock/gomock"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
-	domain "mail/internal/microservice/models/domain_models"
+
 	"mail/internal/pkg/logger"
-	"os"
-	"testing"
-	"time"
+
+	domain "mail/internal/microservice/models/domain_models"
 )
 
 func GetCTX() context.Context {
@@ -205,6 +208,53 @@ func TestAddProfileEmail(t *testing.T) {
 	})
 }
 
+func TestAddProfileEmailMyself(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer mockDB.Close()
+
+	repo := EmailRepository{
+		DB: sqlx.NewDb(mockDB, "sqlmock"),
+	}
+
+	ctx := GetCTX()
+
+	t.Run("ddProfileEmailSuccessfully different login", func(t *testing.T) {
+		emailID := int64(1)
+		sender := "sender_test@mailhub.su"
+
+		mock.ExpectExec(`
+			INSERT INTO profile_email \(profile_id, email_id\)
+			VALUES \(\(SELECT id FROM profile WHERE login=\$1\), \$2\)
+		`).
+			WithArgs(sender, emailID).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		err := repo.AddProfileEmailMyself(uint64(emailID), sender, ctx)
+		assert.NoError(t, err)
+	})
+
+	t.Run("ddProfileEmailFailed", func(t *testing.T) {
+		emailID := int64(1)
+		sender := "sender_test@mailhub.su"
+
+		mock.ExpectExec(`
+			INSERT INTO profile_email \(profile_id, email_id\)
+			VALUES \(\(SELECT id FROM profile WHERE login=\$1\), \$3\)
+		`).
+			WithArgs(sender, emailID).
+			WillReturnResult(sqlmock.NewResult(0, 0))
+
+		err := repo.AddProfileEmailMyself(uint64(emailID), sender, ctx)
+		assert.Error(t, err)
+	})
+}
+
 func TestFindEmail(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -272,10 +322,8 @@ func TestGetAllIncoming(t *testing.T) {
 			AddRow(3, "Topic 3", "Text 3", "test@mailhub.su")
 
 		mock.ExpectQuery(`
-			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important
 			FROM email e
-			LEFT JOIN email_file ef ON e.id = ef.email_id
-			LEFT JOIN file f ON ef.file_id = f.id
 			JOIN profile_email pe ON e.id = pe.email_id
 			JOIN profile p ON pe.profile_id = \(
 				SELECT id FROM profile WHERE login = \$1
@@ -301,10 +349,8 @@ func TestGetAllIncoming(t *testing.T) {
 			AddRow(3, "Topic 3", "Text 3", "test@mailhub.su")
 
 		mock.ExpectQuery(`
-			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important
 			FROM email e
-			LEFT JOIN email_file ef ON e.id = ef.email_id
-			LEFT JOIN file f ON ef.file_id = f.id
 			JOIN profile_email pe ON e.id = pe.email_id
 			JOIN profile p ON pe.profile_id = \(
 				SELECT id FROM profile WHERE login = \$1
@@ -321,10 +367,8 @@ func TestGetAllIncoming(t *testing.T) {
 
 	t.Run("Error", func(t *testing.T) {
 		mock.ExpectQuery(`
-			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid	й
+			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important
 			FROM email e
-			LEFT JOIN email_file ef ON e.id = ef.email_id
-			LEFT JOIN file f ON ef.file_id = f.id
 			JOIN profile_email pe ON e.id = pe.email_id
 			JOIN profile p ON pe.profile_id = \(
 				SELECT id FROM profile WHERE login = \$1
@@ -369,10 +413,8 @@ func TestGetAllSent(t *testing.T) {
 			AddRow(3, "Topic 3", "Text 3", "test@mailhub.su")
 
 		mock.ExpectQuery(`
-			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important
 			FROM email e
-			LEFT JOIN email_file ef ON e.id = ef.email_id
-			LEFT JOIN file f ON ef.file_id = f.id
 			JOIN profile_email pe ON e.id = pe.email_id
 			JOIN profile p ON pe.profile_id = \(
 				SELECT id FROM profile WHERE login = \$1
@@ -397,10 +439,8 @@ func TestGetAllSent(t *testing.T) {
 			AddRow(3, "Topic 3", "Text 3", "test@mailhub.su")
 
 		mock.ExpectQuery(`
-			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important
 			FROM email e
-			LEFT JOIN email_file ef ON e.id = ef.email_id
-			LEFT JOIN file f ON ef.file_id = f.id
 			JOIN profile_email pe ON e.id = pe.email_id
 			JOIN profile p ON pe.profile_id = \(
 				SELECT id FROM profile WHERE login = \$1
@@ -417,10 +457,8 @@ func TestGetAllSent(t *testing.T) {
 
 	t.Run("Error", func(t *testing.T) {
 		mock.ExpectQuery(`
-			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important
 			FROM email e
-			LEFT JOIN email_file ef ON e.id = ef.email_id
-			LEFT JOIN file f ON ef.file_id = f.id
 			JOIN profile_email pe ON e.id = pe.email_id
 			JOIN profile p ON pe.profile_id = \(
 				SELECT id FROM profile WHERE login = \$1
@@ -465,10 +503,8 @@ func TestGetAllDraft(t *testing.T) {
 			AddRow(3, "Topic 3", "Text 3", "test@mailhub.su", true)
 
 		mock.ExpectQuery(`
-			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important
 			FROM email e
-			LEFT JOIN email_file ef ON e.id = ef.email_id
-			LEFT JOIN file f ON ef.file_id = f.id
 			JOIN profile_email pe ON e.id = pe.email_id
 			JOIN profile p ON pe.profile_id = \(
 				SELECT id FROM profile WHERE login = \$1
@@ -493,10 +529,8 @@ func TestGetAllDraft(t *testing.T) {
 			AddRow(3, "Topic 3", "Text 3", "test@mailhub.su", true)
 
 		mock.ExpectQuery(`
-			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important
 			FROM email e
-			LEFT JOIN email_file ef ON e.id = ef.email_id
-			LEFT JOIN file f ON ef.file_id = f.id
 			JOIN profile_email pe ON e.id = pe.email_id
 			JOIN profile p ON pe.profile_id = \(
 				SELECT id FROM profile WHERE login = \$1
@@ -513,10 +547,8 @@ func TestGetAllDraft(t *testing.T) {
 
 	t.Run("Error", func(t *testing.T) {
 		mock.ExpectQuery(`
-			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important
 			FROM email e
-			LEFT JOIN email_file ef ON e.id = ef.email_id
-			LEFT JOIN file f ON ef.file_id = f.id
 			JOIN profile_email pe ON e.id = pe.email_id
 			JOIN profile p ON pe.profile_id = \(
 				SELECT id FROM profile WHERE login = \$1
@@ -561,10 +593,8 @@ func TestGetAllSpam(t *testing.T) {
 			AddRow(3, "Topic 3", "Text 3", "test@mailhub.su", true)
 
 		mock.ExpectQuery(`
-			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important
 			FROM email e
-			LEFT JOIN email_file ef ON e.id = ef.email_id
-			LEFT JOIN file f ON ef.file_id = f.id
 			JOIN profile_email pe ON e.id = pe.email_id
 			JOIN profile p ON pe.profile_id = \(
 				SELECT id FROM profile WHERE login = \$1
@@ -589,10 +619,8 @@ func TestGetAllSpam(t *testing.T) {
 			AddRow(3, "Topic 3", "Text 3", "test@mailhub.su", true)
 
 		mock.ExpectQuery(`
-			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important
 			FROM email e
-			LEFT JOIN email_file ef ON e.id = ef.email_id
-			LEFT JOIN file f ON ef.file_id = f.id
 			JOIN profile_email pe ON e.id = pe.email_id
 			JOIN profile p ON pe.profile_id = \(
 				SELECT id FROM profile WHERE login = \$1
@@ -609,10 +637,8 @@ func TestGetAllSpam(t *testing.T) {
 
 	t.Run("Error", func(t *testing.T) {
 		mock.ExpectQuery(`
-			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important
 			FROM email e
-			LEFT JOIN email_file ef ON e.id = ef.email_id
-			LEFT JOIN file f ON ef.file_id = f.id
 			JOIN profile_email pe ON e.id = pe.email_id
 			JOIN profile p ON pe.profile_id = \(
 				SELECT id FROM profile WHERE login = \$1
@@ -648,10 +674,8 @@ func TestGetByID(t *testing.T) {
 		expectedEmail := &domain.Email{ID: 1, Topic: "Topic 1", Text: "Text 1", SenderEmail: login}
 		rows := sqlmock.NewRows([]string{"id", "topic", "text", "sender_email"}).AddRow(expectedEmail.ID, expectedEmail.Topic, expectedEmail.Text, login)
 		mock.ExpectQuery(`
-			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important
 			FROM email e
-			LEFT JOIN email_file ef ON e.id = ef.email_id
-			LEFT JOIN file f ON ef.file_id = f.id
 			JOIN profile_email pe ON e.id = pe.email_id
 			JOIN profile p ON pe.profile_id = \(
 				SELECT id FROM profile WHERE login = \$2
@@ -666,10 +690,8 @@ func TestGetByID(t *testing.T) {
 
 	t.Run("EmailNotFound", func(t *testing.T) {
 		mock.ExpectQuery(`
-			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.isSpam, e.reply_to_email_id, e.is_important
 			FROM email e
-			LEFT JOIN email_file ef ON e.id = ef.email_id
-			LEFT JOIN file f ON ef.file_id = f.id
 			JOIN profile_email pe ON e.id = pe.email_id
 			JOIN profile p ON pe.profile_id = \(
 				SELECT id FROM profile WHERE login = \$2
@@ -894,5 +916,310 @@ func TestDeleteEmail(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.False(t, deleted)
+	})
+}
+
+func TestAddFile(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer mockDB.Close()
+
+	repo := EmailRepository{
+		DB: sqlx.NewDb(mockDB, "sqlmock"),
+	}
+
+	ctx := GetCTX()
+
+	t.Run("FileAddedSuccessfully", func(t *testing.T) {
+		fileID := "file123"
+		fileType := "text/plain"
+		expectedID := uint64(1)
+
+		mock.ExpectQuery("INSERT INTO file").
+			WithArgs(fileID, fileType).
+			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(expectedID))
+
+		id, err := repo.AddFile(fileID, fileType, ctx)
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedID, id)
+	})
+
+	t.Run("FileAddFailed", func(t *testing.T) {
+		fileID := "file123"
+		fileType := "text/plain"
+
+		mock.ExpectQuery("INSERT INTO file").
+			WithArgs(fileID, fileType).
+			WillReturnError(fmt.Errorf("database error"))
+
+		id, err := repo.AddFile(fileID, fileType, ctx)
+
+		assert.Error(t, err)
+		assert.Zero(t, id)
+	})
+}
+
+func TestAddAttachment(t *testing.T) {
+	mockDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer mockDB.Close()
+
+	repo := EmailRepository{
+		DB: sqlx.NewDb(mockDB, "sqlmock"),
+	}
+
+	ctx := GetCTX()
+
+	t.Run("AttachmentAddedSuccessfully", func(t *testing.T) {
+		emailID := uint64(1)
+		fileID := uint64(2)
+
+		mock.ExpectExec("INSERT INTO email_file").
+			WithArgs(emailID, fileID).
+			WillReturnResult(sqlmock.NewResult(0, 1))
+
+		err := repo.AddAttachment(emailID, fileID, ctx)
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("AttachmentAddFailed", func(t *testing.T) {
+		emailID := uint64(1)
+		fileID := uint64(2)
+
+		mock.ExpectExec("INSERT INTO email_file").
+			WithArgs(emailID, fileID).
+			WillReturnError(fmt.Errorf("database error"))
+
+		err := repo.AddAttachment(emailID, fileID, ctx)
+
+		assert.Error(t, err)
+	})
+}
+
+func TestGetFileByID(t *testing.T) {
+	mockDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer mockDB.Close()
+
+	repo := EmailRepository{
+		DB: sqlx.NewDb(mockDB, "sqlmock"),
+	}
+
+	ctx := GetCTX()
+
+	t.Run("FileFound", func(t *testing.T) {
+		Id := uint64(1)
+		fileID := "file123"
+		fileType := "text/plain"
+		expectedFile := &domain.File{ID: Id, FileId: fileID, FileType: fileType}
+
+		mock.ExpectQuery("SELECT file_id, file_type FROM file").
+			WithArgs(uint64(1)).
+			WillReturnRows(sqlmock.NewRows([]string{"file_id", "file_type"}).AddRow(fileID, fileType))
+
+		file, err := repo.GetFileByID(uint64(1), ctx)
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedFile, file)
+	})
+
+	t.Run("FileNotFound", func(t *testing.T) {
+		mock.ExpectQuery("SELECT file_id, file_type FROM file").
+			WithArgs(uint64(2)).
+			WillReturnError(sql.ErrNoRows)
+
+		file, err := repo.GetFileByID(uint64(2), ctx)
+
+		assert.Error(t, err)
+		assert.Nil(t, file)
+	})
+
+	t.Run("DBError", func(t *testing.T) {
+		mock.ExpectQuery("SELECT file_id, file_type FROM file").
+			WithArgs(uint64(3)).
+			WillReturnError(fmt.Errorf("database error"))
+
+		file, err := repo.GetFileByID(uint64(3), ctx)
+
+		assert.Error(t, err)
+		assert.Nil(t, file)
+	})
+}
+
+func TestGetFilesByEmailID(t *testing.T) {
+	mockDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer mockDB.Close()
+
+	repo := EmailRepository{
+		DB: sqlx.NewDb(mockDB, "sqlmock"),
+	}
+
+	ctx := GetCTX()
+
+	t.Run("FilesFound", func(t *testing.T) {
+		emailID := uint64(1)
+		expectedFiles := []*domain.File{
+			{ID: 1, FileId: "file123", FileType: "text/plain"},
+			{ID: 2, FileId: "file456", FileType: "image/jpeg"},
+		}
+
+		rows := sqlmock.NewRows([]string{"id", "file_id", "file_type"}).
+			AddRow(1, "file123", "text/plain").
+			AddRow(2, "file456", "image/jpeg")
+
+		mock.ExpectQuery("SELECT f.id, f.file_id, f.file_type FROM file").
+			WithArgs(emailID).
+			WillReturnRows(rows)
+
+		files, err := repo.GetFilesByEmailID(emailID, ctx)
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedFiles, files)
+	})
+
+	t.Run("NoFilesFound", func(t *testing.T) {
+		emailID := uint64(2)
+
+		mock.ExpectQuery("SELECT f.id, f.file_id, f.file_type FROM file").
+			WithArgs(emailID).
+			WillReturnError(sql.ErrNoRows)
+
+		files, err := repo.GetFilesByEmailID(emailID, ctx)
+
+		assert.Error(t, err)
+		assert.Empty(t, files)
+	})
+
+	t.Run("DBError", func(t *testing.T) {
+		emailID := uint64(3)
+
+		mock.ExpectQuery("SELECT f.id, f.file_id, f.file_type FROM file").
+			WithArgs(emailID).
+			WillReturnError(fmt.Errorf("database error"))
+
+		files, err := repo.GetFilesByEmailID(emailID, ctx)
+
+		assert.Error(t, err)
+		assert.Nil(t, files)
+	})
+}
+
+func TestDeleteFileByID(t *testing.T) {
+	mockDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer mockDB.Close()
+
+	repo := EmailRepository{
+		DB: sqlx.NewDb(mockDB, "sqlmock"),
+	}
+
+	ctx := GetCTX()
+
+	t.Run("FileDeletedSuccessfully", func(t *testing.T) {
+		fileID := uint64(1)
+
+		mock.ExpectExec("DELETE FROM file").
+			WithArgs(fileID).
+			WillReturnResult(sqlmock.NewResult(0, 1))
+
+		err := repo.DeleteFileByID(fileID, ctx)
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("FileDeleteFailedNoRowsAffected", func(t *testing.T) {
+		fileID := uint64(2)
+
+		mock.ExpectExec("DELETE FROM file").
+			WithArgs(fileID).
+			WillReturnResult(sqlmock.NewResult(0, 0))
+
+		err := repo.DeleteFileByID(fileID, ctx)
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("FileDeleteFailedDBError", func(t *testing.T) {
+		fileID := uint64(3)
+
+		mock.ExpectExec("DELETE FROM file").
+			WithArgs(fileID).
+			WillReturnError(fmt.Errorf("database error"))
+
+		err := repo.DeleteFileByID(fileID, ctx)
+
+		assert.Error(t, err)
+	})
+}
+
+func TestUpdateFileByID(t *testing.T) {
+	mockDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer mockDB.Close()
+
+	repo := EmailRepository{
+		DB: sqlx.NewDb(mockDB, "sqlmock"),
+	}
+
+	ctx := GetCTX()
+
+	t.Run("FileUpdatedSuccessfully", func(t *testing.T) {
+		fileID := uint64(1)
+		newFileID := "newFileID"
+		newFileType := "newFileType"
+
+		mock.ExpectExec("UPDATE file").
+			WithArgs(newFileID, newFileType, fileID).
+			WillReturnResult(sqlmock.NewResult(0, 1))
+
+		err := repo.UpdateFileByID(fileID, newFileID, newFileType, ctx)
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("FileUpdateFailedNoRowsAffected", func(t *testing.T) {
+		fileID := uint64(2)
+		newFileID := "newFileID"
+		newFileType := "newFileType"
+
+		mock.ExpectExec("UPDATE file").
+			WithArgs(newFileID, newFileType, fileID).
+			WillReturnResult(sqlmock.NewResult(0, 0))
+
+		err := repo.UpdateFileByID(fileID, newFileID, newFileType, ctx)
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("FileUpdateFailedDBError", func(t *testing.T) {
+		fileID := uint64(3)
+		newFileID := "newFileID"
+		newFileType := "newFileType"
+
+		mock.ExpectExec("UPDATE file").
+			WithArgs(newFileID, newFileType, fileID).
+			WillReturnError(fmt.Errorf("database error"))
+
+		err := repo.UpdateFileByID(fileID, newFileID, newFileType, ctx)
+
+		assert.Error(t, err)
 	})
 }

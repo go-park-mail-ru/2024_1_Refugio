@@ -111,11 +111,28 @@ definitions:
       surname:
         type: string
     type: object
+  response.UserVKSwag:
+    properties:
+      birthday:
+        type: string
+      firstname:
+        type: string
+      gender:
+        $ref: '#/definitions/response.UserGenderSwag'
+      id:
+        type: integer
+      login:
+        type: string
+      surname:
+        type: string
+      vkId:
+        type: integer
+    type: object
 host: mailhub.su
 info:
   contact: {}
-  description: API server for Mailhub
-  title: API Mailhub
+  description: API server for MailHub
+  title: API MailHub
   version: "1.0"
 paths:
   /api/v1/answers:
@@ -270,6 +287,188 @@ paths:
       summary: Get an email message by ID
       tags:
       - emails
+  /api/v1/email/{id}/addattachment:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Add an attachment to an email message by its ID
+      parameters:
+      - description: ID of the email message
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Attachment file to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Attachment added successfully
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad id in request or bad JSON in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Failed to add attachment
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Add an attachment to an email message
+      tags:
+      - files
+  /api/v1/email/{id}/file/{file-id}:
+    post:
+      description: Adds a file as an attachment to a specified email message
+      parameters:
+      - description: Email ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: File ID
+        in: path
+        name: file-id
+        required: true
+        type: integer
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: File added successfully
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad ID in request or error processing file
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Failed to add file
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Add a file to an email message
+      tags:
+      - files
+  /api/v1/email/{id}/get/files/:
+    get:
+      description: Retrieve files associated with an email by its ID from the email
+        service
+      parameters:
+      - description: ID of the email
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Files retrieved successfully
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad ID in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Files not found
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Retrieve files by email ID
+      tags:
+      - files
+  /api/v1/email/adddraft:
+    post:
+      consumes:
+      - application/json
+      description: AddDraft a new draft email message to the system
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      - description: Email message in JSON format
+        in: body
+        name: email
+        required: true
+        schema:
+          $ref: '#/definitions/response.EmailSwag'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ID of the send email message
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad JSON in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to add email message
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: AddDraft a new draft email message
+      tags:
+      - emails
+  /api/v1/email/addfile:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Add a file to an email message
+      parameters:
+      - description: Attachment file to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: File added successfully
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad id in request or bad JSON in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Failed to add file
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Add a file to an email message
+      tags:
+      - files
   /api/v1/email/delete/{id}:
     delete:
       description: Delete an email message based on its identifier
@@ -306,6 +505,70 @@ paths:
       summary: Delete an email message
       tags:
       - emails
+  /api/v1/email/delete/file/{id}:
+    delete:
+      description: Delete a file by its ID from the email service
+      parameters:
+      - description: ID of the file
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: File deleted successfully
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad ID in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Failed to delete file
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Delete a file by its ID
+      tags:
+      - files
+  /api/v1/email/get/file/{id}:
+    get:
+      description: Retrieve a file by its ID from the email service
+      parameters:
+      - description: ID of the file
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: File retrieved successfully
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad ID in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: File not found
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Retrieve a file by its ID
+      tags:
+      - files
   /api/v1/email/send:
     post:
       consumes:
@@ -389,6 +652,43 @@ paths:
       summary: Update an email message
       tags:
       - emails
+  /api/v1/email/update/file/{id}:
+    put:
+      description: Update a file by its ID in the email service
+      parameters:
+      - description: ID of the file
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated file to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: File updated successfully
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad ID in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Failed to update file
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Update a file by its ID
+      tags:
+      - files
   /api/v1/emails/draft:
     get:
       description: Get a list of all email messages
@@ -658,6 +958,42 @@ paths:
       summary: GetAllEmailsInFolder get all emails in folder
       tags:
       - folders
+  /api/v1/folder/allname/{id}:
+    get:
+      description: GetAllName folders name users
+      parameters:
+      - description: ID of the email
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ID of the send folder message
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad JSON in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to get all folders
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: GetAllName get all name folders
+      tags:
+      - folders
   /api/v1/folder/delete/{id}:
     delete:
       description: Delete folder a user
@@ -879,6 +1215,131 @@ paths:
       summary: Get statistics
       tags:
       - question
+  /api/v1/testAuth/auth-vk/auth:
+    get:
+      consumes:
+      - application/json
+      description: Handles user auth VK.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Auth successful
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to auth user
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: User auth VK
+      tags:
+      - auth-vk
+  /api/v1/testAuth/auth-vk/getAuthUrlLoginVK:
+    get:
+      consumes:
+      - application/json
+      description: Handles user login.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to get url
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: URL VK
+      tags:
+      - auth-vk
+  /api/v1/testAuth/auth-vk/getAuthUrlSignUpVK:
+    get:
+      consumes:
+      - application/json
+      description: Handles user signup.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to get url
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: URL VK
+      tags:
+      - auth-vk
+  /api/v1/testAuth/auth-vk/loginVK:
+    get:
+      consumes:
+      - application/json
+      description: LoginVK Handles user.
+      parameters:
+      - description: code from oauth
+        in: query
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login successful
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Invalid credentials
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to create session
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: LoginVK User
+      tags:
+      - auth-vk
+  /api/v1/testAuth/auth-vk/signupVK:
+    post:
+      consumes:
+      - application/json
+      description: Handles user signup VK.
+      parameters:
+      - description: Auth Token
+        in: header
+        name: Auth-Token
+        required: true
+        type: string
+      - description: New user details for signup
+        in: body
+        name: newUser
+        required: true
+        schema:
+          $ref: '#/definitions/response.UserVKSwag'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Signup successful
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Failed to add user
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: User signup VK
+      tags:
+      - auth-vk
   /api/v1/user/avatar/delete:
     delete:
       consumes:
@@ -946,6 +1407,35 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Upload user avatar
+      tags:
+      - users
+  /api/v1/user/count:
+    get:
+      consumes:
+      - application/json
+      description: Handles requests to get count user.
+      parameters:
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Invalid user ID
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Not authorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Get count user
       tags:
       - users
   /api/v1/user/delete/{id}:

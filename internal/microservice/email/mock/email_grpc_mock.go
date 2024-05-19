@@ -36,6 +36,86 @@ func (m *MockEmailServiceClient) EXPECT() *MockEmailServiceClientMockRecorder {
 	return m.recorder
 }
 
+// AddAttachment mocks base method.
+func (m *MockEmailServiceClient) AddAttachment(ctx context.Context, in *proto.AddAttachmentRequest, opts ...grpc.CallOption) (*proto.AddAttachmentReply, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "AddAttachment", varargs...)
+	ret0, _ := ret[0].(*proto.AddAttachmentReply)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddAttachment indicates an expected call of AddAttachment.
+func (mr *MockEmailServiceClientMockRecorder) AddAttachment(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddAttachment", reflect.TypeOf((*MockEmailServiceClient)(nil).AddAttachment), varargs...)
+}
+
+// AddEmailDraft mocks base method.
+func (m *MockEmailServiceClient) AddEmailDraft(ctx context.Context, in *proto.Email, opts ...grpc.CallOption) (*proto.EmailWithID, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "AddEmailDraft", varargs...)
+	ret0, _ := ret[0].(*proto.EmailWithID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddEmailDraft indicates an expected call of AddEmailDraft.
+func (mr *MockEmailServiceClientMockRecorder) AddEmailDraft(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddEmailDraft", reflect.TypeOf((*MockEmailServiceClient)(nil).AddEmailDraft), varargs...)
+}
+
+// AddFile mocks base method.
+func (m *MockEmailServiceClient) AddFile(ctx context.Context, in *proto.AddFileRequest, opts ...grpc.CallOption) (*proto.AddFileReply, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "AddFile", varargs...)
+	ret0, _ := ret[0].(*proto.AddFileReply)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddFile indicates an expected call of AddFile.
+func (mr *MockEmailServiceClientMockRecorder) AddFile(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddFile", reflect.TypeOf((*MockEmailServiceClient)(nil).AddFile), varargs...)
+}
+
+// AddFileToEmail mocks base method.
+func (m *MockEmailServiceClient) AddFileToEmail(ctx context.Context, in *proto.AddFileToEmailRequest, opts ...grpc.CallOption) (*proto.AddFileToEmailReply, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "AddFileToEmail", varargs...)
+	ret0, _ := ret[0].(*proto.AddFileToEmailReply)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddFileToEmail indicates an expected call of AddFileToEmail.
+func (mr *MockEmailServiceClientMockRecorder) AddFileToEmail(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddFileToEmail", reflect.TypeOf((*MockEmailServiceClient)(nil).AddFileToEmail), varargs...)
+}
+
 // CheckRecipientEmail mocks base method.
 func (m *MockEmailServiceClient) CheckRecipientEmail(ctx context.Context, in *proto.Recipient, opts ...grpc.CallOption) (*proto.EmptyEmail, error) {
 	m.ctrl.T.Helper()
@@ -114,6 +194,26 @@ func (mr *MockEmailServiceClientMockRecorder) DeleteEmail(ctx, in interface{}, o
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEmail", reflect.TypeOf((*MockEmailServiceClient)(nil).DeleteEmail), varargs...)
+}
+
+// DeleteFileByID mocks base method.
+func (m *MockEmailServiceClient) DeleteFileByID(ctx context.Context, in *proto.DeleteFileByIDRequest, opts ...grpc.CallOption) (*proto.DeleteFileByIDReply, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeleteFileByID", varargs...)
+	ret0, _ := ret[0].(*proto.DeleteFileByIDReply)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteFileByID indicates an expected call of DeleteFileByID.
+func (mr *MockEmailServiceClientMockRecorder) DeleteFileByID(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFileByID", reflect.TypeOf((*MockEmailServiceClient)(nil).DeleteFileByID), varargs...)
 }
 
 // GetAllIncoming mocks base method.
@@ -196,6 +296,46 @@ func (mr *MockEmailServiceClientMockRecorder) GetEmailByID(ctx, in interface{}, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEmailByID", reflect.TypeOf((*MockEmailServiceClient)(nil).GetEmailByID), varargs...)
 }
 
+// GetFileByID mocks base method.
+func (m *MockEmailServiceClient) GetFileByID(ctx context.Context, in *proto.GetFileByIDRequest, opts ...grpc.CallOption) (*proto.GetFileByIDReply, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetFileByID", varargs...)
+	ret0, _ := ret[0].(*proto.GetFileByIDReply)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFileByID indicates an expected call of GetFileByID.
+func (mr *MockEmailServiceClientMockRecorder) GetFileByID(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFileByID", reflect.TypeOf((*MockEmailServiceClient)(nil).GetFileByID), varargs...)
+}
+
+// GetFilesByEmailID mocks base method.
+func (m *MockEmailServiceClient) GetFilesByEmailID(ctx context.Context, in *proto.GetFilesByEmailIDRequest, opts ...grpc.CallOption) (*proto.GetFilesByEmailIDReply, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetFilesByEmailID", varargs...)
+	ret0, _ := ret[0].(*proto.GetFilesByEmailIDReply)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFilesByEmailID indicates an expected call of GetFilesByEmailID.
+func (mr *MockEmailServiceClientMockRecorder) GetFilesByEmailID(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFilesByEmailID", reflect.TypeOf((*MockEmailServiceClient)(nil).GetFilesByEmailID), varargs...)
+}
+
 // GetSpamEmails mocks base method.
 func (m *MockEmailServiceClient) GetSpamEmails(ctx context.Context, in *proto.LoginOffsetLimit, opts ...grpc.CallOption) (*proto.Emails, error) {
 	m.ctrl.T.Helper()
@@ -236,6 +376,26 @@ func (mr *MockEmailServiceClientMockRecorder) UpdateEmail(ctx, in interface{}, o
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEmail", reflect.TypeOf((*MockEmailServiceClient)(nil).UpdateEmail), varargs...)
 }
 
+// UpdateFileByID mocks base method.
+func (m *MockEmailServiceClient) UpdateFileByID(ctx context.Context, in *proto.UpdateFileByIDRequest, opts ...grpc.CallOption) (*proto.UpdateFileByIDReply, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "UpdateFileByID", varargs...)
+	ret0, _ := ret[0].(*proto.UpdateFileByIDReply)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateFileByID indicates an expected call of UpdateFileByID.
+func (mr *MockEmailServiceClientMockRecorder) UpdateFileByID(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFileByID", reflect.TypeOf((*MockEmailServiceClient)(nil).UpdateFileByID), varargs...)
+}
+
 // MockEmailServiceServer is a mock of EmailServiceServer interface.
 type MockEmailServiceServer struct {
 	ctrl     *gomock.Controller
@@ -257,6 +417,66 @@ func NewMockEmailServiceServer(ctrl *gomock.Controller) *MockEmailServiceServer 
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockEmailServiceServer) EXPECT() *MockEmailServiceServerMockRecorder {
 	return m.recorder
+}
+
+// AddAttachment mocks base method.
+func (m *MockEmailServiceServer) AddAttachment(arg0 context.Context, arg1 *proto.AddAttachmentRequest) (*proto.AddAttachmentReply, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddAttachment", arg0, arg1)
+	ret0, _ := ret[0].(*proto.AddAttachmentReply)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddAttachment indicates an expected call of AddAttachment.
+func (mr *MockEmailServiceServerMockRecorder) AddAttachment(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddAttachment", reflect.TypeOf((*MockEmailServiceServer)(nil).AddAttachment), arg0, arg1)
+}
+
+// AddEmailDraft mocks base method.
+func (m *MockEmailServiceServer) AddEmailDraft(arg0 context.Context, arg1 *proto.Email) (*proto.EmailWithID, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddEmailDraft", arg0, arg1)
+	ret0, _ := ret[0].(*proto.EmailWithID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddEmailDraft indicates an expected call of AddEmailDraft.
+func (mr *MockEmailServiceServerMockRecorder) AddEmailDraft(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddEmailDraft", reflect.TypeOf((*MockEmailServiceServer)(nil).AddEmailDraft), arg0, arg1)
+}
+
+// AddFile mocks base method.
+func (m *MockEmailServiceServer) AddFile(arg0 context.Context, arg1 *proto.AddFileRequest) (*proto.AddFileReply, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddFile", arg0, arg1)
+	ret0, _ := ret[0].(*proto.AddFileReply)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddFile indicates an expected call of AddFile.
+func (mr *MockEmailServiceServerMockRecorder) AddFile(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddFile", reflect.TypeOf((*MockEmailServiceServer)(nil).AddFile), arg0, arg1)
+}
+
+// AddFileToEmail mocks base method.
+func (m *MockEmailServiceServer) AddFileToEmail(arg0 context.Context, arg1 *proto.AddFileToEmailRequest) (*proto.AddFileToEmailReply, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddFileToEmail", arg0, arg1)
+	ret0, _ := ret[0].(*proto.AddFileToEmailReply)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddFileToEmail indicates an expected call of AddFileToEmail.
+func (mr *MockEmailServiceServerMockRecorder) AddFileToEmail(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddFileToEmail", reflect.TypeOf((*MockEmailServiceServer)(nil).AddFileToEmail), arg0, arg1)
 }
 
 // CheckRecipientEmail mocks base method.
@@ -319,6 +539,21 @@ func (mr *MockEmailServiceServerMockRecorder) DeleteEmail(arg0, arg1 interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEmail", reflect.TypeOf((*MockEmailServiceServer)(nil).DeleteEmail), arg0, arg1)
 }
 
+// DeleteFileByID mocks base method.
+func (m *MockEmailServiceServer) DeleteFileByID(arg0 context.Context, arg1 *proto.DeleteFileByIDRequest) (*proto.DeleteFileByIDReply, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteFileByID", arg0, arg1)
+	ret0, _ := ret[0].(*proto.DeleteFileByIDReply)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteFileByID indicates an expected call of DeleteFileByID.
+func (mr *MockEmailServiceServerMockRecorder) DeleteFileByID(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFileByID", reflect.TypeOf((*MockEmailServiceServer)(nil).DeleteFileByID), arg0, arg1)
+}
+
 // GetAllIncoming mocks base method.
 func (m *MockEmailServiceServer) GetAllIncoming(arg0 context.Context, arg1 *proto.LoginOffsetLimit) (*proto.Emails, error) {
 	m.ctrl.T.Helper()
@@ -379,6 +614,36 @@ func (mr *MockEmailServiceServerMockRecorder) GetEmailByID(arg0, arg1 interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEmailByID", reflect.TypeOf((*MockEmailServiceServer)(nil).GetEmailByID), arg0, arg1)
 }
 
+// GetFileByID mocks base method.
+func (m *MockEmailServiceServer) GetFileByID(arg0 context.Context, arg1 *proto.GetFileByIDRequest) (*proto.GetFileByIDReply, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFileByID", arg0, arg1)
+	ret0, _ := ret[0].(*proto.GetFileByIDReply)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFileByID indicates an expected call of GetFileByID.
+func (mr *MockEmailServiceServerMockRecorder) GetFileByID(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFileByID", reflect.TypeOf((*MockEmailServiceServer)(nil).GetFileByID), arg0, arg1)
+}
+
+// GetFilesByEmailID mocks base method.
+func (m *MockEmailServiceServer) GetFilesByEmailID(arg0 context.Context, arg1 *proto.GetFilesByEmailIDRequest) (*proto.GetFilesByEmailIDReply, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFilesByEmailID", arg0, arg1)
+	ret0, _ := ret[0].(*proto.GetFilesByEmailIDReply)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFilesByEmailID indicates an expected call of GetFilesByEmailID.
+func (mr *MockEmailServiceServerMockRecorder) GetFilesByEmailID(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFilesByEmailID", reflect.TypeOf((*MockEmailServiceServer)(nil).GetFilesByEmailID), arg0, arg1)
+}
+
 // GetSpamEmails mocks base method.
 func (m *MockEmailServiceServer) GetSpamEmails(arg0 context.Context, arg1 *proto.LoginOffsetLimit) (*proto.Emails, error) {
 	m.ctrl.T.Helper()
@@ -407,6 +672,21 @@ func (m *MockEmailServiceServer) UpdateEmail(arg0 context.Context, arg1 *proto.E
 func (mr *MockEmailServiceServerMockRecorder) UpdateEmail(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEmail", reflect.TypeOf((*MockEmailServiceServer)(nil).UpdateEmail), arg0, arg1)
+}
+
+// UpdateFileByID mocks base method.
+func (m *MockEmailServiceServer) UpdateFileByID(arg0 context.Context, arg1 *proto.UpdateFileByIDRequest) (*proto.UpdateFileByIDReply, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateFileByID", arg0, arg1)
+	ret0, _ := ret[0].(*proto.UpdateFileByIDReply)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateFileByID indicates an expected call of UpdateFileByID.
+func (mr *MockEmailServiceServerMockRecorder) UpdateFileByID(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFileByID", reflect.TypeOf((*MockEmailServiceServer)(nil).UpdateFileByID), arg0, arg1)
 }
 
 // mustEmbedUnimplementedEmailServiceServer mocks base method.

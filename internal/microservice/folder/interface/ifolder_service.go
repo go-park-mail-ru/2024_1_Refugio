@@ -4,6 +4,7 @@ package _interface
 
 import (
 	"context"
+
 	folderCore "mail/internal/microservice/models/domain_models"
 )
 
@@ -35,4 +36,7 @@ type FolderUseCase interface {
 
 	// DeleteEmailInFolder delete email in folder.
 	DeleteEmailInFolder(folderID uint32, emailID uint32, ctx context.Context) (bool, error)
+
+	// GetAllFolderName retrieves the names of all folders associated with a given email ID.
+	GetAllFolderName(emailID uint32, ctx context.Context) ([]*folderCore.Folder, error)
 }

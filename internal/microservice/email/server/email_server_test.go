@@ -3,15 +3,18 @@ package server
 import (
 	"context"
 	"fmt"
+	"os"
+	"testing"
+
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+
 	"mail/internal/microservice/email/mock"
 	"mail/internal/microservice/email/proto"
 	"mail/internal/microservice/models/domain_models"
-	converters "mail/internal/microservice/models/proto_converters"
 	"mail/internal/pkg/logger"
-	"os"
-	"testing"
+
+	converters "mail/internal/microservice/models/proto_converters"
 )
 
 func GetCTX() context.Context {
@@ -472,5 +475,414 @@ func TestCheckRecipientEmail(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Equal(t, fmt.Errorf("Recipient login not found"), err)
+	})
+}
+
+func TestAddAttachment(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockEmailUseCase := mock.NewMockEmailUseCase(ctrl)
+
+	server := NewEmailServer(mockEmailUseCase)
+
+	ctx := GetCTX()
+
+	fileID := "test_file_id"
+	fileType := "pdf"
+	emailID := uint64(123)
+
+	t.Run("AddAttachment_Success", func(t *testing.T) {
+		mockEmailUseCase.EXPECT().AddAttachment(fileID, fileType, emailID, ctx).Return(uint64(456), nil)
+
+		request := &proto.AddAttachmentRequest{
+			FileId:   fileID,
+			FileType: fileType,
+			EmailId:  emailID,
+		}
+
+		reply, err := server.AddAttachment(ctx, request)
+
+		assert.NoError(t, err)
+		assert.Equal(t, uint64(456), reply.FileId)
+	})
+
+	t.Run("AddAttachment_NilInput", func(t *testing.T) {
+		request := (*proto.AddAttachmentRequest)(nil)
+
+		reply, err := server.AddAttachment(ctx, request)
+
+		assert.Error(t, err)
+		assert.Nil(t, reply)
+	})
+
+	t.Run("AddAttachment_EmptyFileID", func(t *testing.T) {
+		request := &proto.AddAttachmentRequest{
+			FileId:   "",
+			FileType: fileType,
+			EmailId:  emailID,
+		}
+
+		reply, err := server.AddAttachment(ctx, request)
+
+		assert.Error(t, err)
+		assert.Nil(t, reply)
+	})
+
+	t.Run("AddAttachment_EmptyFileType", func(t *testing.T) {
+		request := &proto.AddAttachmentRequest{
+			FileId:   fileID,
+			FileType: "",
+			EmailId:  emailID,
+		}
+
+		reply, err := server.AddAttachment(ctx, request)
+
+		assert.Error(t, err)
+		assert.Nil(t, reply)
+	})
+
+	t.Run("AddAttachment_InvalidEmailID", func(t *testing.T) {
+		request := &proto.AddAttachmentRequest{
+			FileId:   fileID,
+			FileType: fileType,
+			EmailId:  uint64(0),
+		}
+
+		reply, err := server.AddAttachment(ctx, request)
+
+		assert.Error(t, err)
+		assert.Nil(t, reply)
+	})
+
+	t.Run("AddAttachment_FailedToAddAttachment", func(t *testing.T) {
+		mockEmailUseCase.EXPECT().AddAttachment(fileID, fileType, emailID, ctx).Return(uint64(0), fmt.Errorf("failed to add attachment"))
+
+		request := &proto.AddAttachmentRequest{
+			FileId:   fileID,
+			FileType: fileType,
+			EmailId:  emailID,
+		}
+
+		reply, err := server.AddAttachment(ctx, request)
+
+		assert.Error(t, err)
+		assert.Nil(t, reply)
+	})
+}
+
+func TestGetFileByID(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockEmailUseCase := mock.NewMockEmailUseCase(ctrl)
+
+	server := NewEmailServer(mockEmailUseCase)
+
+	ctx := GetCTX()
+
+	fileID := uint64(123)
+
+	t.Run("GetFileByID_Success", func(t *testing.T) {
+		mockEmailUseCase.EXPECT().GetFileByID(fileID, ctx).Return(&domain_models.File{
+			ID:       fileID,
+			FileId:   "test_file_id",
+			FileType: "pdf",
+		}, nil)
+
+		request := &proto.GetFileByIDRequest{
+			FileId: fileID,
+		}
+
+		reply, err := server.GetFileByID(ctx, request)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, reply)
+	})
+
+	t.Run("GetFileByID_NilInput", func(t *testing.T) {
+		request := (*proto.GetFileByIDRequest)(nil)
+
+		reply, err := server.GetFileByID(ctx, request)
+
+		assert.Error(t, err)
+		assert.Nil(t, reply)
+	})
+
+	t.Run("GetFileByID_InvalidFileID", func(t *testing.T) {
+		request := &proto.GetFileByIDRequest{
+			FileId: uint64(0),
+		}
+
+		reply, err := server.GetFileByID(ctx, request)
+
+		assert.Error(t, err)
+		assert.Nil(t, reply)
+	})
+
+	t.Run("GetFileByID_FailedToGetFile", func(t *testing.T) {
+		mockEmailUseCase.EXPECT().GetFileByID(fileID, ctx).Return(nil, fmt.Errorf("failed to get file"))
+
+		request := &proto.GetFileByIDRequest{
+			FileId: fileID,
+		}
+
+		reply, err := server.GetFileByID(ctx, request)
+
+		assert.Error(t, err)
+		assert.Nil(t, reply)
+	})
+}
+
+func TestGetFilesByEmailID(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockEmailUseCase := mock.NewMockEmailUseCase(ctrl)
+
+	server := NewEmailServer(mockEmailUseCase)
+
+	ctx := GetCTX()
+
+	emailID := uint64(123)
+
+	t.Run("GetFilesByEmailID_Success", func(t *testing.T) {
+		mockEmailUseCase.EXPECT().GetFilesByEmailID(emailID, ctx).Return([]*domain_models.File{
+			{
+				ID:       1,
+				FileId:   "file_id_1",
+				FileType: "pdf",
+			},
+			{
+				ID:       2,
+				FileId:   "file_id_2",
+				FileType: "docx",
+			},
+		}, nil)
+
+		request := &proto.GetFilesByEmailIDRequest{
+			EmailId: emailID,
+		}
+
+		reply, err := server.GetFilesByEmailID(ctx, request)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, reply)
+		assert.Len(t, reply.Files, 2)
+	})
+
+	t.Run("GetFilesByEmailID_NilInput", func(t *testing.T) {
+		request := (*proto.GetFilesByEmailIDRequest)(nil)
+
+		reply, err := server.GetFilesByEmailID(ctx, request)
+
+		assert.Error(t, err)
+		assert.Nil(t, reply)
+	})
+
+	t.Run("GetFilesByEmailID_InvalidEmailID", func(t *testing.T) {
+		request := &proto.GetFilesByEmailIDRequest{
+			EmailId: 0,
+		}
+
+		reply, err := server.GetFilesByEmailID(ctx, request)
+
+		assert.Error(t, err)
+		assert.Nil(t, reply)
+	})
+
+	t.Run("GetFilesByEmailID_FailedToGetFiles", func(t *testing.T) {
+		mockEmailUseCase.EXPECT().GetFilesByEmailID(emailID, ctx).Return(nil, fmt.Errorf("failed to get files"))
+
+		request := &proto.GetFilesByEmailIDRequest{
+			EmailId: emailID,
+		}
+
+		reply, err := server.GetFilesByEmailID(ctx, request)
+
+		assert.Error(t, err)
+		assert.Nil(t, reply)
+	})
+}
+
+func TestDeleteFileByID(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockEmailUseCase := mock.NewMockEmailUseCase(ctrl)
+
+	server := NewEmailServer(mockEmailUseCase)
+
+	ctx := GetCTX()
+
+	fileID := uint64(123)
+
+	t.Run("DeleteFileByID_Success", func(t *testing.T) {
+		mockEmailUseCase.EXPECT().DeleteFileByID(fileID, ctx).Return(true, nil)
+
+		request := &proto.DeleteFileByIDRequest{
+			FileId: fileID,
+		}
+
+		reply, err := server.DeleteFileByID(ctx, request)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, reply)
+		assert.True(t, reply.Status)
+	})
+
+	t.Run("DeleteFileByID_NilInput", func(t *testing.T) {
+		request := (*proto.DeleteFileByIDRequest)(nil)
+
+		reply, err := server.DeleteFileByID(ctx, request)
+
+		assert.Error(t, err)
+		assert.Nil(t, reply)
+	})
+
+	t.Run("DeleteFileByID_InvalidFileID", func(t *testing.T) {
+		request := &proto.DeleteFileByIDRequest{
+			FileId: uint64(0),
+		}
+
+		reply, err := server.DeleteFileByID(ctx, request)
+
+		assert.Error(t, err)
+		assert.Nil(t, reply)
+	})
+
+	t.Run("DeleteFileByID_FailedToDeleteFile", func(t *testing.T) {
+		mockEmailUseCase.EXPECT().DeleteFileByID(fileID, ctx).Return(false, nil)
+
+		request := &proto.DeleteFileByIDRequest{
+			FileId: fileID,
+		}
+
+		reply, err := server.DeleteFileByID(ctx, request)
+
+		assert.Error(t, err)
+		assert.Nil(t, reply)
+	})
+
+	t.Run("DeleteFileByID_FileNotDeleted", func(t *testing.T) {
+		mockEmailUseCase.EXPECT().DeleteFileByID(fileID, ctx).Return(false, nil)
+
+		request := &proto.DeleteFileByIDRequest{
+			FileId: fileID,
+		}
+
+		reply, err := server.DeleteFileByID(ctx, request)
+
+		assert.Error(t, err)
+		assert.Nil(t, reply)
+	})
+}
+
+func TestUpdateFileByID(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockEmailUseCase := mock.NewMockEmailUseCase(ctrl)
+
+	server := NewEmailServer(mockEmailUseCase)
+
+	ctx := context.Background()
+
+	fileID := uint64(123)
+	newFileID := "new_file_id"
+	newFileType := "pdf"
+
+	t.Run("UpdateFileByID_Success", func(t *testing.T) {
+		mockEmailUseCase.EXPECT().UpdateFileByID(fileID, newFileID, newFileType, ctx).Return(true, nil)
+
+		request := &proto.UpdateFileByIDRequest{
+			Id:          fileID,
+			NewFileId:   newFileID,
+			NewFileType: newFileType,
+		}
+
+		reply, err := server.UpdateFileByID(ctx, request)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, reply)
+		assert.True(t, reply.Status)
+	})
+
+	t.Run("UpdateFileByID_NilInput", func(t *testing.T) {
+		request := (*proto.UpdateFileByIDRequest)(nil)
+
+		reply, err := server.UpdateFileByID(ctx, request)
+
+		assert.Error(t, err)
+		assert.Nil(t, reply)
+	})
+
+	t.Run("UpdateFileByID_InvalidFileID", func(t *testing.T) {
+		request := &proto.UpdateFileByIDRequest{
+			Id:          uint64(0),
+			NewFileId:   newFileID,
+			NewFileType: newFileType,
+		}
+
+		reply, err := server.UpdateFileByID(ctx, request)
+
+		assert.Error(t, err)
+		assert.Nil(t, reply)
+	})
+
+	t.Run("UpdateFileByID_EmptyNewFileId", func(t *testing.T) {
+		request := &proto.UpdateFileByIDRequest{
+			Id:          fileID,
+			NewFileId:   "",
+			NewFileType: newFileType,
+		}
+
+		reply, err := server.UpdateFileByID(ctx, request)
+
+		assert.Error(t, err)
+		assert.Nil(t, reply)
+	})
+
+	t.Run("UpdateFileByID_EmptyNewFileType", func(t *testing.T) {
+		request := &proto.UpdateFileByIDRequest{
+			Id:          fileID,
+			NewFileId:   newFileID,
+			NewFileType: "",
+		}
+
+		reply, err := server.UpdateFileByID(ctx, request)
+
+		assert.Error(t, err)
+		assert.Nil(t, reply)
+	})
+
+	t.Run("UpdateFileByID_FailedToUpdateFile", func(t *testing.T) {
+		mockEmailUseCase.EXPECT().UpdateFileByID(fileID, newFileID, newFileType, ctx).Return(false, nil)
+
+		request := &proto.UpdateFileByIDRequest{
+			Id:          fileID,
+			NewFileId:   newFileID,
+			NewFileType: newFileType,
+		}
+
+		reply, err := server.UpdateFileByID(ctx, request)
+
+		assert.Error(t, err)
+		assert.Nil(t, reply)
+	})
+
+	t.Run("UpdateFileByID_FileNotUpdated", func(t *testing.T) {
+		mockEmailUseCase.EXPECT().UpdateFileByID(fileID, newFileID, newFileType, ctx).Return(false, nil)
+
+		request := &proto.UpdateFileByIDRequest{
+			Id:          fileID,
+			NewFileId:   newFileID,
+			NewFileType: newFileType,
+		}
+
+		reply, err := server.UpdateFileByID(ctx, request)
+
+		assert.Error(t, err)
+		assert.Nil(t, reply)
 	})
 }

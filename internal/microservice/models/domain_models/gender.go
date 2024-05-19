@@ -45,3 +45,17 @@ func GetGenderType(gender string) UserGender {
 		return Other
 	}
 }
+
+// GetGenderTypeInt returns a UserGender enum value.
+func GetGenderTypeInt(gender int) UserGender {
+	switch gender {
+	case 0:
+		return Other
+	case 1:
+		return Female
+	case 2:
+		return Male
+	default:
+		return Other
+	}
+}
