@@ -925,7 +925,7 @@ func (h *EmailHandler) AddAttachment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fileURL := fmt.Sprintf(configs.PROTOCOL+"0.0.0.0:9000"+"/files/%s", uniqueFileName)
+	fileURL := fmt.Sprintf(configs.PROTOCOL+"mailhub.su"+"/files/%s", uniqueFileName)
 
 	fileId, err := h.EmailServiceClient.AddAttachment(
 		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
@@ -1157,7 +1157,7 @@ func (h *EmailHandler) AddFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fileURL := fmt.Sprintf(configs.PROTOCOL+"0.0.0.0:9000"+"/files/%s", uniqueFileName)
+	fileURL := fmt.Sprintf(configs.PROTOCOL+"mailhub.su"+"/files/%s", uniqueFileName)
 
 	fileId, err := h.EmailServiceClient.AddFile(
 		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
