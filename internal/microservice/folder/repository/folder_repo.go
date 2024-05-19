@@ -283,7 +283,7 @@ func (r *FolderRepository) GetAllEmails(folderID, profileID, limit, offset uint3
 // GetAllFolderName retrieves the names of all folders associated with a given email ID.
 func (r *FolderRepository) GetAllFolderName(emailID uint32, ctx context.Context) ([]*domain.Folder, error) {
 	query := `
-		SELECT f.name
+		SELECT f.id, f.name
 		FROM folder f
 		INNER JOIN folder_email fe ON f.id = fe.folder_id
 		WHERE fe.email_id = $1
