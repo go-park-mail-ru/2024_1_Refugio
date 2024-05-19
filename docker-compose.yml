@@ -193,8 +193,8 @@ services:
     container_name: nginx
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
-      - /etc/ssl/mailhub.crt:/etc/keys/mailhub.su/mailhub.crt
-      - /etc/ssl/mailhub.key:/etc/keys/mailhub.su/mailhub.key
+      - /etc/ssl/mailhub.crt:/etc/ssl/mailhub.crt
+      - /etc/ssl/mailhub.key:/etc/ssl/mailhub.key
     ports:
       - "80:80"
       - "443:443"
