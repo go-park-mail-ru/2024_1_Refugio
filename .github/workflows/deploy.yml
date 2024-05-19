@@ -37,3 +37,22 @@ jobs:
              cd backend_4/2024_1_Refugio/
              sudo docker stop $(sudo docker ps -a -q)
              sudo docker rm $(sudo docker ps -a -q)
+       - name: Docker compose build
+         uses: appleboy/ssh-action@master
+         with:
+           host: ${{ secrets.HOST }}
+           username: ${{ secrets.USER }}
+           key: ${{ secrets.SSH_PRIVATE_KEY }}
+           script: |
+             cd backend_4/2024_1_Refugio/
+             sudo docker stop $(sudo docker ps -a -q)
+             sudo docker rm $(sudo docker ps -a -q)
+       - name: Pull docker images
+         uses: appleboy/ssh-action@master
+         with:
+           host: ${{ secrets.HOST }}
+           username: ${{ secrets.USER }}
+           key: ${{ secrets.SSH_PRIVATE_KEY }}
+           script: |
+             cd backend_4/2024_1_Refugio/
+             sudo docker-compose -f docker-compose-cd.yml pull
