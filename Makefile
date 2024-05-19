@@ -35,7 +35,13 @@ mock:
 	&& mockgen -source=internal/microservice/folder/proto/folder_grpc.pb.go -destination=internal/microservice/folder/mock/folder_grpc_mock.go -package=mock proto FolderServiceClient \
 	&& mockgen -source=internal/microservice/questionnaire/interface/iquestion_repo.go -destination=internal/microservice/questionnaire/mock/question_repository_mock.go -package=mock \
 	&& mockgen -source=internal/microservice/questionnaire/interface/iquestion_service.go -destination=internal/microservice/questionnaire/mock/question_service_mock.go -package=mock \
-	&& mockgen -source=internal/microservice/questionnaire/proto/question-answer_grpc.pb.go -destination=internal/microservice/questionnaire/mock/question-answer_grpc_mock.go -package=mock proto QuestionServiceClient
+	&& mockgen -source=internal/microservice/questionnaire/proto/question-answer_grpc.pb.go -destination=internal/microservice/questionnaire/mock/question-answer_grpc_mock.go -package=mock proto QuestionServiceClient \
+	&& mockgen -source=internal/microservice/session/interface/isession_repo.go -destination=internal/microservice/session/mock/session_repository_mock.go -package=mock \
+	&& mockgen -source=internal/microservice/session/interface/isession_service.go -destination=internal/microservice/session/mock/session_service_mock.go -package=mock \
+	&& mockgen -source=internal/microservice/session/proto/session_grpc.pb.go -destination=internal/microservice/session/mock/session_grpc_mock.go -package=mock proto SessionServiceClient \
+	&& mockgen -source=internal/microservice/user/interface/iuser_repo.go -destination=internal/microservice/user/mock/user_repository_mock.go -package=mock \
+	&& mockgen -source=internal/microservice/user/interface/iuser_service.go -destination=internal/microservice/user/mock/user_service_mock.go -package=mock \
+	&& mockgen -source=internal/microservice/user/proto/user_grpc.pb.go -destination=internal/microservice/user/mock/user_grpc_mock.go -package=mock proto UserServiceClient
 
 swag:
 	swag init -g cmd/mail/main.go
