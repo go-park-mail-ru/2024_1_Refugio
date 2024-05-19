@@ -43,14 +43,6 @@ services:
     depends_on:
       - db
 
-  smtp:
-    container_name: smtp
-    image: fedasov03/mailhub-smtp:latest
-    ports:
-      - "25:587"
-    networks:
-      - deploy-guide-dev
-
   auth:
     container_name: auth
     image: fedasov03/mailhub-auth:latest
