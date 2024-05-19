@@ -26,9 +26,9 @@ tests:
     go tool cover -func coverprofile.tmp
 
 mock:
-	mockgen -source=./email_grpc.pb.go -destination=../mock/email_grpc_mock.go -package=mock proto EmailServiceClient \
-	&& mockgen -source=./iemail_repo.go -destination=../mock/email_repository_mock.go -package=mock \
-	&& mockgen -source=./iemail_service.go -destination=../mock/email_service_mock.go -package=mock
+	mockgen -source=internal/microservice/email/proto/email_grpc.pb.go -destination=internal/microservice/email/mock/email_grpc_mock.go -package=mock proto EmailServiceClient \
+	&& mockgen -source=internal/microservice/email/interface/iemail_repo.go -destination=internal/microservice/email/mock/email_repository_mock.go -package=mock \
+	&& mockgen -source=internal/microservice/email/interface/iemail_service.go -destination=internal/microservice/email/mock/email_service_mock.go -package=mock
 
 swag:
 	swag init -g cmd/mail/main.go
