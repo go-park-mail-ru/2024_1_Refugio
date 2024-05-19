@@ -2,6 +2,7 @@ package response
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 )
@@ -25,7 +26,10 @@ func HandleSuccess(w http.ResponseWriter, status int, body interface{}) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(response)
+	err := json.NewEncoder(w).Encode(response)
+	if err != nil {
+		fmt.Println("Error encoding response")
+	}
 }
 
 // HandleError is a utility function to handle errors uniformly in the API responses.
@@ -36,7 +40,10 @@ func HandleError(w http.ResponseWriter, status int, message string) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(response)
+	err := json.NewEncoder(w).Encode(response)
+	if err != nil {
+		fmt.Println("Error encoding response")
+	}
 }
 
 type UserGenderSwag string

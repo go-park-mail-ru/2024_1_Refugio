@@ -311,7 +311,10 @@ func GetDataUser(conf oauth2.Config, code string, ctx context.Context) (*api.VKU
 	}
 
 	data := &Response{}
-	json.Unmarshal(body, data)
+	err = json.Unmarshal(body, data)
+	if err != nil {
+		return &api.VKUser{}, 400, fmt.Errorf("cannot unmarshal response")
+	}
 
 	fmt.Println("Data: ", data.Response[0].BirthDate)
 

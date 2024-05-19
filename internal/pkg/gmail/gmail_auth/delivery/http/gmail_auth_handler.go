@@ -245,6 +245,11 @@ func saveToken(path string, token *oauth2.Token) error {
 		return fmt.Errorf("Unable to cache oauth token: %v", err)
 	}
 	defer f.Close()
-	json.NewEncoder(f).Encode(token)
+
+	err = json.NewEncoder(f).Encode(token)
+	if err != nil {
+		return fmt.Errorf("Unable to cache oauth token: %v", err)
+	}
+
 	return nil
 }
