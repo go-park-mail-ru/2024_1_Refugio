@@ -47,7 +47,7 @@ jobs:
              cd backend_4/2024_1_Refugio/
              if [ -z "$(sudo docker ps -q)" ]; then
                 echo "No running containers found."
-              else
+             else
                 sudo docker stop $(sudo docker ps -a -q)
                 sudo docker rm $(sudo docker ps -a -q)
              fi
