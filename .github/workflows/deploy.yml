@@ -106,7 +106,7 @@ jobs:
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            sudo bash
+            sudo -i
             cd backend_4/2024_1_Refugio/
             git pull
       - name: Pull docker images
@@ -116,7 +116,7 @@ jobs:
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            sudo bash
+            sudo -i
             cd backend_4/2024_1_Refugio/
             sudo docker compose -f docker-compose-cd.yml pull
       - name: Run docker-compose
@@ -126,7 +126,7 @@ jobs:
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            sudo bash
+            sudo -i
             cd backend_4/2024_1_Refugio/
             sudo docker compose -f docker-compose-cd.yml up --renew-anon-volumes --build -d
       - name: Clear old images and containers
@@ -136,7 +136,7 @@ jobs:
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            sudo bash
+            sudo -i
             cd backend_4/2024_1_Refugio/
             sudo docker container prune -f
             sudo docker images prune
