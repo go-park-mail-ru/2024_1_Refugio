@@ -4,51 +4,27 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/jhillyerd/enmime"
-	"github.com/mhale/smtpd"
 	"log"
 	"mime"
 	"net"
 	"net/http"
 	"net/mail"
 	"regexp"
+
+	"github.com/jhillyerd/enmime"
+	"github.com/mhale/smtpd"
 )
 
 const sendEmailEndpoint = "https://mailhub.su/api/v1/auth/sendOther"
 
 func main() {
-	serverAddr := "0.0.0.0:587"
-
-	err := smtpd.ListenAndServe(serverAddr, mailHandler, "MailHubSMTP", "")
+	err := smtpd.ListenAndServe("0.0.0.0:587", mailHandler, "MailHubSMTP", "")
 	if err != nil {
 		log.Fatal("Error starting SMTP server:", err)
 	}
 }
 
-/*func ListenAndServe(addr string, handler smtpd.Handler, authHandler smtpd.AuthHandler) error {
-	srv := &smtpd.Server{
-		Addr:         addr,
-		Handler:      handler,
-		Appname:      "MailHubSMTP",
-		Hostname:     "",
-		AuthHandler:  authHandler,
-		AuthRequired: true,
-	}
-	return srv.ListenAndServe()
-}
-
-func authHandler(remoteAddr net.Addr, mechanism string, username []byte, password []byte, shared []byte) (bool, error) {
-	return true, nil
-	//return string(username) == "valid" && string(password) == "password", nil
-}*/
-
 func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
-	/*
-		if true {
-			return fmt.Errorf("domain in the login is not suitable")
-		}
-	*/
-
 	msg, err := mail.ReadMessage(bytes.NewReader(data))
 	if err != nil {
 		log.Println("Error reading message:", err)
@@ -125,7 +101,6 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 	return nil
 }
 
-// isValidEmailFormat checks if the provided email string matches the specific format for emails ending with "@mailhub.ru".
 func isValidEmailFormat(email string) bool {
 	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@mailhub\.su$`)
 
