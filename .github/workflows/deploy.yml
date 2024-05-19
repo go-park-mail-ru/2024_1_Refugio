@@ -24,6 +24,6 @@ jobs:
            host: ${{ secrets.HOST }}
            username: ${{ secrets.USER }}
            key: ${{ secrets.SSH_PRIVATE_KEY }}
-           script: |
+           script: | 
              cd backend_4/2024_1_Refugio/
-             git pull
+             sudo git pull
