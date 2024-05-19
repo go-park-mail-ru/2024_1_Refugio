@@ -87,8 +87,8 @@ jobs:
       - name: Build and push smtp
         uses: docker/build-push-action@v2
         with:
-          context: .
-          file: ./cmd/internal/smtp_server/Dockerfile
+          context: ./internal/smtp_server
+          file: Dockerfile
           platforms: linux/amd64
           push: true
           tags: fedasov03/mailhub-smtp:latest
