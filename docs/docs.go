@@ -2928,7 +2928,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/testAuth/auth-vk/auth": {
+        "/api/v1/testAuth/auth-vk/auth/{code}": {
             "get": {
                 "description": "Handles user auth VK.",
                 "consumes": [
@@ -2941,6 +2941,15 @@ const docTemplate = `{
                     "auth-vk"
                 ],
                 "summary": "User auth VK",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Code of the oauth message",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Auth successful",

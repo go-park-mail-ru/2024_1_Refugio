@@ -2125,11 +2125,17 @@ paths:
       summary: Get statistics
       tags:
       - question
-  /api/v1/testAuth/auth-vk/auth:
+  /api/v1/testAuth/auth-vk/auth/{code}:
     get:
       consumes:
       - application/json
       description: Handles user auth VK.
+      parameters:
+      - description: Code of the oauth message
+        in: path
+        name: code
+        required: true
+        type: string
       produces:
       - application/json
       responses:

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/mux"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -92,13 +93,22 @@ func (ah *OAuthHandler) GetLoginURLVK(w http.ResponseWriter, r *http.Request) {
 // @Tags auth-vk
 // @Accept json
 // @Produce json
+// @Param code path string true "Code of the oauth message"
 // @Success 200 {object} response.Response "Auth successful"
 // @Failure 500 {object} response.ErrorResponse "Failed to auth user"
-// @Router /api/v1/testAuth/auth-vk/auth [get]
+// @Router /api/v1/testAuth/auth-vk/auth/{code} [get]
 func (ah *OAuthHandler) AuthVK(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("AuthVK")
+	vars := mux.Vars(r)
+	code, ok := vars["code"]
+	if !ok {
+		response.HandleError(w, http.StatusBadRequest, "Bad id in request")
+		return
+	}
 	ctx := r.Context()
-	code := r.FormValue("code")
+	/*
+		fmt.Println("AuthVK")
+		code := r.FormValue("code")
+	*/
 	conf := GetConfOauth2(REDIRECT_URL_SIGNUP)
 
 	// vk_mock
