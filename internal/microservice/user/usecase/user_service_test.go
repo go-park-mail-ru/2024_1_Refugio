@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"mail/internal/pkg/logger"
+	"mail/internal/pkg/utils/constants"
 
 	domain "mail/internal/microservice/models/domain_models"
 	mock_repository "mail/internal/microservice/user/mock"
@@ -24,8 +25,8 @@ func GetCTX() context.Context {
 	}
 	defer f.Close()
 
-	ctx := context.WithValue(context.Background(), "logger", logger.InitializationBdLog(f))
-	ctx2 := context.WithValue(ctx, "requestID", []string{"testID"})
+	ctx := context.WithValue(context.Background(), constants.LoggerKey, logger.InitializationBdLog(f))
+	ctx2 := context.WithValue(ctx, constants.RequestIDKey, []string{"testID"})
 
 	return ctx2
 }

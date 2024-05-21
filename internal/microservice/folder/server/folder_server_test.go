@@ -3,15 +3,19 @@ package server
 import (
 	"context"
 	"fmt"
+	"os"
+	"testing"
+
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+
 	"mail/internal/microservice/folder/mock"
 	"mail/internal/microservice/folder/proto"
 	"mail/internal/microservice/models/domain_models"
-	converters "mail/internal/microservice/models/proto_converters"
 	"mail/internal/pkg/logger"
-	"os"
-	"testing"
+	"mail/internal/pkg/utils/constants"
+
+	converters "mail/internal/microservice/models/proto_converters"
 )
 
 func GetCTX() context.Context {
@@ -21,8 +25,8 @@ func GetCTX() context.Context {
 	}
 	defer f.Close()
 
-	ctx := context.WithValue(context.Background(), "logger", logger.InitializationBdLog(f))
-	ctx2 := context.WithValue(ctx, "requestID", []string{"testID"})
+	ctx := context.WithValue(context.Background(), constants.LoggerKey, logger.InitializationBdLog(f))
+	ctx2 := context.WithValue(ctx, constants.RequestIDKey, []string{"testID"})
 
 	return ctx2
 }
