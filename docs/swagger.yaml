@@ -2188,14 +2188,14 @@ paths:
       summary: URL VK
       tags:
       - auth-vk
-  /api/v1/testAuth/auth-vk/loginVK:
+  /api/v1/testAuth/auth-vk/loginVK/{code}:
     get:
       consumes:
       - application/json
       description: LoginVK Handles user.
       parameters:
-      - description: code from oauth
-        in: query
+      - description: Code of the oauth message
+        in: path
         name: code
         required: true
         type: string

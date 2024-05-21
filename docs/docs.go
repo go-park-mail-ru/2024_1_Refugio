@@ -3024,7 +3024,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/testAuth/auth-vk/loginVK": {
+        "/api/v1/testAuth/auth-vk/loginVK/{code}": {
             "get": {
                 "description": "LoginVK Handles user.",
                 "consumes": [
@@ -3040,9 +3040,9 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "code from oauth",
+                        "description": "Code of the oauth message",
                         "name": "code",
-                        "in": "query",
+                        "in": "path",
                         "required": true
                     }
                 ],

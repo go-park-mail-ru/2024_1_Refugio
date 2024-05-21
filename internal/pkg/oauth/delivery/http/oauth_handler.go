@@ -243,12 +243,12 @@ func (ah *OAuthHandler) SignupVK(w http.ResponseWriter, r *http.Request) {
 // @Tags auth-vk
 // @Accept json
 // @Produce json
-// @Param code query string true "code from oauth"
+// @Param code path string true "Code of the oauth message"
 // @Success 200 {object} response.Response "Login successful"
 // @Failure 400 {object} response.ErrorResponse "Invalid request body"
 // @Failure 401 {object} response.ErrorResponse "Invalid credentials"
 // @Failure 500 {object} response.ErrorResponse "Failed to create session"
-// @Router /api/v1/testAuth/auth-vk/loginVK [get]
+// @Router /api/v1/testAuth/auth-vk/loginVK/{code} [get]
 func (ah *OAuthHandler) LoginVK(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	code, ok := vars["code"]
