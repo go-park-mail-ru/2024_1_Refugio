@@ -5,17 +5,21 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/golang/mock/gomock"
-	"github.com/gorilla/mux"
-	"github.com/stretchr/testify/assert"
-	folder_mock "mail/internal/microservice/folder/mock"
-	folder_proto "mail/internal/microservice/folder/proto"
-	api "mail/internal/models/delivery_models"
-	session_mock "mail/internal/pkg/session/mock"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/golang/mock/gomock"
+	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
+
+	"mail/internal/pkg/utils/constants"
+
+	folder_mock "mail/internal/microservice/folder/mock"
+	folder_proto "mail/internal/microservice/folder/proto"
+	api "mail/internal/models/delivery_models"
+	session_mock "mail/internal/pkg/session/mock"
 )
 
 func TestFolderHandler_Add_Success(t *testing.T) {
@@ -39,7 +43,7 @@ func TestFolderHandler_Add_Success(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 
 	ctx := req.Context()
-	ctx = context.WithValue(ctx, "requestID", "testID")
+	ctx = context.WithValue(ctx, interface{}(string(constants.RequestIDKey)), "testID")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -138,7 +142,7 @@ func TestFolderHandler_Add_FailedToAddFolder(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 
 	ctx := req.Context()
-	ctx = context.WithValue(ctx, "requestID", "testID")
+	ctx = context.WithValue(ctx, interface{}(string(constants.RequestIDKey)), "testID")
 	req = req.WithContext(ctx)
 
 	rr := httptest.NewRecorder()
@@ -172,7 +176,7 @@ func TestFolderHandler_GetAll_Success(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 
 	ctx := req.Context()
-	ctx = context.WithValue(ctx, "requestID", "testID")
+	ctx = context.WithValue(ctx, interface{}(string(constants.RequestIDKey)), "testID")
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
@@ -234,7 +238,7 @@ func TestFolderHandler_GetAll_FailedToGetFolders(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 
 	ctx := req.Context()
-	ctx = context.WithValue(ctx, "requestID", "testID")
+	ctx = context.WithValue(ctx, interface{}(string(constants.RequestIDKey)), "testID")
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
@@ -266,7 +270,7 @@ func TestFolderHandler_Delete_Success(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 
 	ctx := req.Context()
-	ctx = context.WithValue(ctx, "requestID", "testID")
+	ctx = context.WithValue(ctx, interface{}(string(constants.RequestIDKey)), "testID")
 	r := req.WithContext(ctx)
 	vars := map[string]string{"id": "1"}
 	r = mux.SetURLVars(r, vars)
@@ -323,7 +327,7 @@ func TestFolderHandler_Delete_FailedToDeleteFolder(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 
 	ctx := req.Context()
-	ctx = context.WithValue(ctx, "requestID", "testID")
+	ctx = context.WithValue(ctx, interface{}(string(constants.RequestIDKey)), "testID")
 	r := req.WithContext(ctx)
 	vars := map[string]string{"id": "1"}
 	r = mux.SetURLVars(r, vars)
@@ -362,7 +366,7 @@ func TestFolderHandler_Update_Success(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 
 	ctx := req.Context()
-	ctx = context.WithValue(ctx, "requestID", "testID")
+	ctx = context.WithValue(ctx, interface{}(string(constants.RequestIDKey)), "testID")
 	r := req.WithContext(ctx)
 	vars := map[string]string{"id": "1"}
 	r = mux.SetURLVars(r, vars)
@@ -446,7 +450,7 @@ func TestFolderHandler_Update_FailedToUpdateFolder(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 
 	ctx := req.Context()
-	ctx = context.WithValue(ctx, "requestID", "testID")
+	ctx = context.WithValue(ctx, interface{}(string(constants.RequestIDKey)), "testID")
 	r := req.WithContext(ctx)
 	vars := map[string]string{"id": "1"}
 	r = mux.SetURLVars(r, vars)
@@ -481,7 +485,7 @@ func TestFolderHandler_AddEmailInFolder_Success(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 
 	ctx := req.Context()
-	ctx = context.WithValue(ctx, "requestID", "testID")
+	ctx = context.WithValue(ctx, interface{}(string(constants.RequestIDKey)), "testID")
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
@@ -566,7 +570,7 @@ func TestFolderHandler_AddEmailInFolder_CheckFolderProfileError(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 
 	ctx := req.Context()
-	ctx = context.WithValue(ctx, "requestID", "testID")
+	ctx = context.WithValue(ctx, interface{}(string(constants.RequestIDKey)), "testID")
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
@@ -598,7 +602,7 @@ func TestFolderHandler_AddEmailInFolder_CheckEmailProfileError(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 
 	ctx := req.Context()
-	ctx = context.WithValue(ctx, "requestID", "testID")
+	ctx = context.WithValue(ctx, interface{}(string(constants.RequestIDKey)), "testID")
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
@@ -632,7 +636,7 @@ func TestFolderHandler_AddEmailInFolder_AddEmailInFolderError(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 
 	ctx := req.Context()
-	ctx = context.WithValue(ctx, "requestID", "testID")
+	ctx = context.WithValue(ctx, interface{}(string(constants.RequestIDKey)), "testID")
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
@@ -668,7 +672,7 @@ func TestFolderHandler_DeleteEmailInFolder_Success(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 
 	ctx := req.Context()
-	ctx = context.WithValue(ctx, "requestID", "testID")
+	ctx = context.WithValue(ctx, interface{}(string(constants.RequestIDKey)), "testID")
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
@@ -704,7 +708,7 @@ func TestFolderHandler_DeleteEmailInFolder_BadJSONRequest(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 
 	ctx := req.Context()
-	ctx = context.WithValue(ctx, "requestID", "testID")
+	ctx = context.WithValue(ctx, interface{}(string(constants.RequestIDKey)), "testID")
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
@@ -732,7 +736,7 @@ func TestFolderHandler_DeleteEmailInFolder_BadSession(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 
 	ctx := req.Context()
-	ctx = context.WithValue(ctx, "requestID", "testID")
+	ctx = context.WithValue(ctx, interface{}(string(constants.RequestIDKey)), "testID")
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
@@ -762,7 +766,7 @@ func TestFolderHandler_DeleteEmailInFolder_CheckFolderProfileError(t *testing.T)
 	req.Header.Set("Content-Type", "application/json")
 
 	ctx := req.Context()
-	ctx = context.WithValue(ctx, "requestID", "testID")
+	ctx = context.WithValue(ctx, interface{}(string(constants.RequestIDKey)), "testID")
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
@@ -794,7 +798,7 @@ func TestFolderHandler_DeleteEmailInFolder_CheckEmailProfileError(t *testing.T) 
 	req.Header.Set("Content-Type", "application/json")
 
 	ctx := req.Context()
-	ctx = context.WithValue(ctx, "requestID", "testID")
+	ctx = context.WithValue(ctx, interface{}(string(constants.RequestIDKey)), "testID")
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
@@ -828,7 +832,7 @@ func TestFolderHandler_DeleteEmailInFolder_DeleteEmailInFolderError(t *testing.T
 	req.Header.Set("Content-Type", "application/json")
 
 	ctx := req.Context()
-	ctx = context.WithValue(ctx, "requestID", "testID")
+	ctx = context.WithValue(ctx, interface{}(string(constants.RequestIDKey)), "testID")
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
@@ -863,7 +867,7 @@ func TestFolderHandler_GetAllEmailsInFolder_Success(t *testing.T) {
 	req.Header.Set("X-Csrf-Token", "token")
 
 	ctx := req.Context()
-	ctx = context.WithValue(ctx, "requestID", "testID")
+	ctx = context.WithValue(ctx, interface{}(string(constants.RequestIDKey)), "testID")
 	r := req.WithContext(ctx)
 	vars := map[string]string{"id": "1"}
 	r = mux.SetURLVars(r, vars)
@@ -899,7 +903,7 @@ func TestFolderHandler_GetAllEmailsInFolder_BadID(t *testing.T) {
 	req.Header.Set("X-Csrf-Token", "token")
 
 	ctx := req.Context()
-	ctx = context.WithValue(ctx, "requestID", "testID")
+	ctx = context.WithValue(ctx, interface{}(string(constants.RequestIDKey)), "testID")
 	r := req.WithContext(ctx)
 	vars := map[string]string{"id": "i"}
 	r = mux.SetURLVars(r, vars)
@@ -928,7 +932,7 @@ func TestFolderHandler_GetAllEmailsInFolder_BadSession(t *testing.T) {
 	req.Header.Set("X-Csrf-Token", "token")
 
 	ctx := req.Context()
-	ctx = context.WithValue(ctx, "requestID", "testID")
+	ctx = context.WithValue(ctx, interface{}(string(constants.RequestIDKey)), "testID")
 	r := req.WithContext(ctx)
 	vars := map[string]string{"id": "1"}
 	r = mux.SetURLVars(r, vars)
@@ -959,7 +963,7 @@ func TestFolderHandler_GetAllEmailsInFolder_CheckFolderProfileError(t *testing.T
 	req.Header.Set("X-Csrf-Token", "token")
 
 	ctx := req.Context()
-	ctx = context.WithValue(ctx, "requestID", "testID")
+	ctx = context.WithValue(ctx, interface{}(string(constants.RequestIDKey)), "testID")
 	r := req.WithContext(ctx)
 	vars := map[string]string{"id": "1"}
 	r = mux.SetURLVars(r, vars)
@@ -992,7 +996,7 @@ func TestFolderHandler_GetAllEmailsInFolder_GetAllEmailsInFolderError(t *testing
 	req.Header.Set("X-Csrf-Token", "token")
 
 	ctx := req.Context()
-	ctx = context.WithValue(ctx, "requestID", "testID")
+	ctx = context.WithValue(ctx, interface{}(string(constants.RequestIDKey)), "testID")
 	r := req.WithContext(ctx)
 	vars := map[string]string{"id": "1"}
 	r = mux.SetURLVars(r, vars)

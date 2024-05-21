@@ -5,17 +5,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
-	emailApi "mail/internal/models/delivery_models"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
+
+	"mail/internal/pkg/utils/constants"
 
 	email_mock "mail/internal/microservice/email/mock"
 	email_proto "mail/internal/microservice/email/proto"
+	emailApi "mail/internal/models/delivery_models"
 	mockSession "mail/internal/pkg/session/mock"
 )
 
@@ -47,7 +49,7 @@ func TestGelAllIncoming(t *testing.T) {
 		}
 
 		req := httptest.NewRequest("GET", "/api/v1/emails/incoming", bytes.NewReader([]byte(``)))
-		ctx := context.WithValue(req.Context(), "requestid", "testID")
+		ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 		r := req.WithContext(ctx)
 
 		w := httptest.NewRecorder()
