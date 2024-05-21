@@ -2,13 +2,13 @@ package repository
 
 import (
 	"context"
+	"crypto/rand"
 	"database/sql"
 	"encoding/binary"
 	"errors"
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	"golang.org/x/crypto/bcrypt"
-	"math/rand"
 	"time"
 
 	"mail/internal/pkg/logger"
@@ -63,7 +63,6 @@ var GenerateRandomID RandomIDGenerator = func() uint32 {
 
 	_, err := rand.Read(randBytes)
 	if err != nil {
-		// В случае ошибки вернуть ноль, но это можно обработать в вашем приложении по-разному.
 		return 0
 	}
 

@@ -2,12 +2,13 @@ package http
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"io/ioutil"
+	"io"
 	auth_proto "mail/internal/microservice/auth/proto"
 	"mail/internal/microservice/models/domain_models"
 	domain "mail/internal/microservice/models/domain_models"
@@ -18,7 +19,6 @@ import (
 	"mail/internal/pkg/utils/connect_microservice"
 	"mail/internal/pkg/utils/sanitize"
 	validUtil "mail/internal/pkg/utils/validators"
-	"math/rand"
 	"net/http"
 )
 
@@ -113,7 +113,11 @@ func (ah *OAuthHandler) AuthVK(w http.ResponseWriter, r *http.Request) {
 	}
 
 	randToken := make([]byte, 16)
-	rand.Read(randToken)
+	_, err = rand.Read(randToken)
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "failed to generate random token")
+		return
+	}
 	authToken := fmt.Sprintf("%x", randToken)
 	mapVKIDToken[vkUser.VKId] = authToken
 	w.Header().Set("AuthToken", authToken)
@@ -304,7 +308,7 @@ func GetDataUser(conf oauth2.Config, code string, ctx context.Context) (*api.VKU
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println("cannot read buffer")
 		return &api.VKUser{}, 500, fmt.Errorf("cannot read buffer")

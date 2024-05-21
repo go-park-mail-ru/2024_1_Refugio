@@ -33,11 +33,11 @@ func (log *Logger) AccessLogInterceptor(ctx context.Context, req interface{}, in
 	}
 	defer f.Close()
 
-	ctx2 := context.WithValue(ctx, interface{}(string(constants.LoggerKey)), logger.InitializationBdLog(f))
-	ctx3 := context.WithValue(ctx2, interface{}(string(constants.RequestIDKey)), md.Get("requestID"))
+	ctxWithLogger := context.WithValue(ctx, interface{}(string(constants.LoggerKey)), logger.InitializationBdLog(f))
+	ctxWithRequestID := context.WithValue(ctxWithLogger, interface{}(string(constants.RequestIDKey)), md.Get("requestID"))
 
 	start := time.Now()
-	data, err := handler(ctx3, req)
+	data, err := handler(ctxWithRequestID, req)
 
 	en := log.Logger.InterceptorsLogger.WithFields(logrus.Fields{
 		"user-agent": md.Get("user-agent"),
