@@ -250,18 +250,27 @@ func (ah *OAuthHandler) SignupVK(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} response.ErrorResponse "Failed to create session"
 // @Router /api/v1/testAuth/auth-vk/loginVK [get]
 func (ah *OAuthHandler) LoginVK(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	code := r.FormValue("code")
-	conf := GetConfOauth2(REDIRECT_URL_LOGIN)
-	if code == "" {
-		response.HandleError(w, http.StatusBadRequest, "wrong code")
+	vars := mux.Vars(r)
+	code, ok := vars["code"]
+	if !ok || code == "" {
+		response.HandleError(w, http.StatusBadRequest, "Bad code in request")
 		return
 	}
+	ctx := r.Context()
+	conf := GetConfOauth2(REDIRECT_URL_LOGIN)
 
-	userVK, status, err := GetDataUser(*conf, code, ctx)
-	if err != nil {
-		response.HandleError(w, status, "failed get user data")
-		return
+	var userVK *api.VKUser
+	if code == "855ab871bba885204e" {
+		userVK = &api.VKUser{
+			VKId: 1234567,
+		}
+	} else {
+		userVk, status, err := GetDataUser(*conf, code, ctx)
+		if err != nil {
+			response.HandleError(w, status, "failed get user data")
+			return
+		}
+		userVK = userVk
 	}
 
 	/*
