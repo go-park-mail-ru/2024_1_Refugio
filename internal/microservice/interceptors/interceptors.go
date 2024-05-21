@@ -13,18 +13,12 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"mail/internal/pkg/logger"
+	"mail/internal/pkg/utils/constants"
 )
 
 type Logger struct {
 	Logger *InterceptorsLogger
 }
-
-type ContextKey string
-
-const (
-	LoggerKey    ContextKey = "logger"
-	RequestIDKey ContextKey = "requestID"
-)
 
 // AccessLogInterceptor intercepts panics, recovers, logs info, and sets up logging and requestID.
 func (log *Logger) AccessLogInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
@@ -39,8 +33,8 @@ func (log *Logger) AccessLogInterceptor(ctx context.Context, req interface{}, in
 	}
 	defer f.Close()
 
-	ctx2 := context.WithValue(ctx, LoggerKey, logger.InitializationBdLog(f))
-	ctx3 := context.WithValue(ctx2, RequestIDKey, md.Get("requestID"))
+	ctx2 := context.WithValue(ctx, constants.LoggerKey, logger.InitializationBdLog(f))
+	ctx3 := context.WithValue(ctx2, constants.RequestIDKey, md.Get("requestID"))
 
 	start := time.Now()
 	data, err := handler(ctx3, req)

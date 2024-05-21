@@ -27,6 +27,7 @@ import (
 	"mail/internal/pkg/middleware"
 	"mail/internal/pkg/session"
 	"mail/internal/pkg/utils/connect_microservice"
+	"mail/internal/pkg/utils/constants"
 
 	migrate "github.com/rubenv/sql-migrate"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
@@ -47,13 +48,6 @@ import (
 	userHand "mail/internal/pkg/user/delivery/http"
 
 	_ "mail/docs"
-)
-
-type ContextKey string
-
-const (
-	LoggerKey    ContextKey = "logger"
-	RequestIDKey ContextKey = "requestID"
 )
 
 // @title API MailHub
@@ -479,8 +473,8 @@ func startSessionCleaner(interval time.Duration, sessionServiceClient session_pr
 				}
 				defer f.Close()
 
-				c := context.WithValue(context.Background(), LoggerKey, logger.InitializationBdLog(f))
-				ctx := context.WithValue(c, RequestIDKey, "DeleteExpiredSessionsNULL")
+				c := context.WithValue(context.Background(), constants.LoggerKey, logger.InitializationBdLog(f))
+				ctx := context.WithValue(c, constants.RequestIDKey, "DeleteExpiredSessionsNULL")
 
 				req, err := sessionServiceClient.CleanupExpiredSessions(
 					metadata.NewOutgoingContext(ctx,
