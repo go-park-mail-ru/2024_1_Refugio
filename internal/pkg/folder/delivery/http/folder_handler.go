@@ -22,7 +22,7 @@ import (
 
 var (
 	FHandler                        = &FolderHandler{}
-	requestIDContextKey interface{} = "requestid"
+	requestIDContextKey interface{} = "requestID"
 )
 
 // FolderHandler represents the handler for folder operations.
@@ -402,10 +402,16 @@ func (h *FolderHandler) GetAllEmailsInFolder(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	loginUser, err := h.Sessions.GetLoginBySession(r, r.Context())
+	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Bad login")
+		return
+	}
+
 	emailsDataProto, err := h.FolderServiceClient.GetAllEmailsInFolder(
 		metadata.NewOutgoingContext(r.Context(),
 			metadata.New(map[string]string{"requestID": r.Context().Value("requestID").(string)})),
-		&proto.GetAllEmailsInFolderData{FolderID: uint32(id), ProfileID: profileId, Limit: 0, Offset: 0},
+		&proto.GetAllEmailsInFolderData{FolderID: uint32(id), ProfileID: profileId, Limit: 0, Offset: 0, Login: loginUser},
 	)
 	if err != nil {
 		response.HandleError(w, http.StatusInternalServerError, "Failed to get all emails in folder")

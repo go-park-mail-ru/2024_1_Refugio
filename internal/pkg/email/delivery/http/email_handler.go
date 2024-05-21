@@ -24,6 +24,7 @@ import (
 	"mail/internal/microservice/models/proto_converters"
 	"mail/internal/models/response"
 	"mail/internal/pkg/utils/check_file_type"
+	"mail/internal/pkg/utils/constants"
 	"mail/internal/pkg/utils/generate_filename"
 	"mail/internal/pkg/utils/validators"
 
@@ -35,7 +36,7 @@ import (
 
 var (
 	EHandler                        = &EmailHandler{}
-	requestIDContextKey interface{} = "requestid"
+	requestIDContextKey interface{} = string(constants.RequestIDKey)
 )
 
 // EmailHandler represents the handler for email operations.
@@ -76,7 +77,7 @@ func (h *EmailHandler) Incoming(w http.ResponseWriter, r *http.Request) {
 	}
 
 	emailDataProto, err := h.EmailServiceClient.GetAllIncoming(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 		&proto.LoginOffsetLimit{Login: login, Offset: 0, Limit: 0},
 	)
 	if err != nil {
@@ -119,7 +120,7 @@ func (h *EmailHandler) Sent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	emailDataProto, err := h.EmailServiceClient.GetAllSent(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 		&proto.LoginOffsetLimit{Login: login, Offset: 0, Limit: 0},
 	)
 	if err != nil {
@@ -170,7 +171,7 @@ func (h *EmailHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	emailDataProto, err := h.EmailServiceClient.GetEmailByID(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 		&proto.EmailIdAndLogin{Id: id, Login: login},
 	)
 	if err != nil {
@@ -228,7 +229,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 		}
 
 		_, err = h.EmailServiceClient.CheckRecipientEmail(
-			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 			&proto.Recipient{Recipient: recipient},
 		)
 		if err != nil {
@@ -237,7 +238,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 		}
 
 		emailDataProto, err := h.EmailServiceClient.CreateEmail(
-			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 			&proto.Email{
 				Id:             newEmail.ID,
 				Topic:          newEmail.Topic,
@@ -262,7 +263,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 		emailData.ID = emailDataProto.Id
 
 		_, err = h.EmailServiceClient.CreateProfileEmail(
-			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 			&proto.IdSenderRecipient{Id: emailData.ID, Sender: emailData.SenderEmail, Recipient: emailData.RecipientEmail},
 		)
 		if err != nil {
@@ -304,7 +305,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 		}
 
 		emailDataProto, err := h.EmailServiceClient.CreateEmail(
-			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 			&proto.Email{
 				Id:             newEmail.ID,
 				Topic:          newEmail.Topic,
@@ -329,7 +330,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 		emailData.ID = emailDataProto.Id
 
 		_, err = h.EmailServiceClient.CreateProfileEmail(
-			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 			&proto.IdSenderRecipient{Id: emailData.ID, Sender: emailData.SenderEmail, Recipient: emailData.RecipientEmail},
 		)
 		if err != nil {
@@ -342,7 +343,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 	case validators.IsValidEmailFormat(sender) == false && validators.IsValidEmailFormat(recipient) == true:
 		fmt.Println("-----START_1----")
 		_, err = h.EmailServiceClient.CheckRecipientEmail(
-			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 			&proto.Recipient{Recipient: recipient},
 		)
 		if err != nil {
@@ -353,7 +354,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("-----START_2----")
 		fmt.Println(newEmail)
 		emailDataProto, err := h.EmailServiceClient.CreateEmail(
-			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 			&proto.Email{
 				Id:             newEmail.ID,
 				Topic:          newEmail.Topic,
@@ -379,7 +380,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Println("-----START_3----")
 		_, err = h.EmailServiceClient.CreateProfileEmail(
-			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 			&proto.IdSenderRecipient{Id: emailData.ID, Sender: emailData.SenderEmail, Recipient: emailData.RecipientEmail},
 		)
 		if err != nil {
@@ -495,7 +496,7 @@ func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	emailDataProto, err := h.EmailServiceClient.UpdateEmail(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 		&proto.Email{
 			Id:             updatedEmail.ID,
 			Topic:          updatedEmail.Topic,
@@ -553,7 +554,7 @@ func (h *EmailHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	emailDataProto, err := h.EmailServiceClient.DeleteEmail(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 		&proto.LoginWithID{Id: id, Login: login},
 	)
 	if err != nil || !emailDataProto.Status {
@@ -589,7 +590,7 @@ func (h *EmailHandler) Draft(w http.ResponseWriter, r *http.Request) {
 	}
 
 	emailDataProto, err := h.EmailServiceClient.GetDraftEmails(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 		&proto.LoginOffsetLimit{Login: login, Offset: 0, Limit: 0},
 	)
 	if err != nil {
@@ -632,7 +633,7 @@ func (h *EmailHandler) Spam(w http.ResponseWriter, r *http.Request) {
 	}
 
 	emailDataProto, err := h.EmailServiceClient.GetSpamEmails(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 		&proto.LoginOffsetLimit{Login: login, Offset: 0, Limit: 0},
 	)
 	if err != nil {
@@ -699,7 +700,7 @@ func (h *EmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
 		}
 
 		emailDataProto, err := h.EmailServiceClient.AddEmailDraft(
-			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 			&proto.Email{
 				Id:             newEmail.ID,
 				Topic:          newEmail.Topic,
@@ -735,7 +736,7 @@ func (h *EmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
 			}
 
 			_, err = h.EmailServiceClient.CheckRecipientEmail(
-				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 				&proto.Recipient{Recipient: recipient},
 			)
 			if err != nil {
@@ -744,7 +745,7 @@ func (h *EmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
 			}
 
 			emailDataProto, err := h.EmailServiceClient.CreateEmail(
-				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 				&proto.Email{
 					Id:             newEmail.ID,
 					Topic:          newEmail.Topic,
@@ -769,7 +770,7 @@ func (h *EmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
 			emailData.ID = emailDataProto.Id
 
 			_, err = h.EmailServiceClient.CreateProfileEmail(
-				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 				&proto.IdSenderRecipient{Id: emailData.ID, Sender: emailData.SenderEmail, Recipient: emailData.RecipientEmail},
 			)
 			if err != nil {
@@ -787,7 +788,7 @@ func (h *EmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
 			}
 
 			emailDataProto, err := h.EmailServiceClient.CreateEmail(
-				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 				&proto.Email{
 					Id:             newEmail.ID,
 					Topic:          newEmail.Topic,
@@ -812,7 +813,7 @@ func (h *EmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
 			emailData.ID = emailDataProto.Id
 
 			_, err = h.EmailServiceClient.CreateProfileEmail(
-				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 				&proto.IdSenderRecipient{Id: emailData.ID, Sender: emailData.SenderEmail, Recipient: emailData.RecipientEmail},
 			)
 			if err != nil {
@@ -824,7 +825,7 @@ func (h *EmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
 			return
 		case validators.IsValidEmailFormat(sender) == false && validators.IsValidEmailFormat(recipient) == true:
 			_, err = h.EmailServiceClient.CheckRecipientEmail(
-				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 				&proto.Recipient{Recipient: recipient},
 			)
 			if err != nil {
@@ -833,7 +834,7 @@ func (h *EmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
 			}
 
 			emailDataProto, err := h.EmailServiceClient.CreateEmail(
-				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 				&proto.Email{
 					Id:             newEmail.ID,
 					Topic:          newEmail.Topic,
@@ -858,7 +859,7 @@ func (h *EmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
 			emailData.ID = emailDataProto.Id
 
 			_, err = h.EmailServiceClient.CreateProfileEmail(
-				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 				&proto.IdSenderRecipient{Id: emailData.ID, Sender: emailData.SenderEmail, Recipient: emailData.RecipientEmail},
 			)
 			if err != nil {
@@ -927,7 +928,7 @@ func (h *EmailHandler) AddAttachment(w http.ResponseWriter, r *http.Request) {
 	fileURL := fmt.Sprintf(configs.PROTOCOL+"0.0.0.0:9000"+"/files/%s", uniqueFileName)
 
 	fileId, err := h.EmailServiceClient.AddAttachment(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 		&proto.AddAttachmentRequest{EmailId: id, FileId: fileURL, FileType: fileType},
 	)
 	if err != nil {
@@ -958,7 +959,7 @@ func (h *EmailHandler) GetFileByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fileProto, err := h.EmailServiceClient.GetFileByID(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 		&proto.GetFileByIDRequest{FileId: id},
 	)
 	if err != nil {
@@ -995,7 +996,7 @@ func (h *EmailHandler) GetFilesByEmailID(w http.ResponseWriter, r *http.Request)
 	}
 
 	filesProto, err := h.EmailServiceClient.GetFilesByEmailID(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 		&proto.GetFilesByEmailIDRequest{EmailId: id},
 	)
 	if err != nil {
@@ -1035,7 +1036,7 @@ func (h *EmailHandler) DeleteFileByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	status, err := h.EmailServiceClient.DeleteFileByID(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 		&proto.DeleteFileByIDRequest{FileId: id},
 	)
 	if err != nil {
@@ -1089,7 +1090,7 @@ func (h *EmailHandler) UpdateFileByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fileProto, err := h.EmailServiceClient.GetFileByID(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 		&proto.GetFileByIDRequest{FileId: id},
 	)
 	if err != nil {
@@ -1159,7 +1160,7 @@ func (h *EmailHandler) AddFile(w http.ResponseWriter, r *http.Request) {
 	fileURL := fmt.Sprintf(configs.PROTOCOL+"0.0.0.0:9000"+"/files/%s", uniqueFileName)
 
 	fileId, err := h.EmailServiceClient.AddFile(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 		&proto.AddFileRequest{FileId: fileURL, FileType: fileType},
 	)
 	if err != nil {
@@ -1198,7 +1199,7 @@ func (h *EmailHandler) AddFileToEmail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	status, err := h.EmailServiceClient.AddFileToEmail(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 		&proto.AddFileToEmailRequest{EmailId: email_id, FileId: file_id},
 	)
 	if err != nil {

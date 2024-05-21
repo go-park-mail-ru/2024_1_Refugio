@@ -70,6 +70,7 @@ message GetAllEmailsInFolderData {
   uint32 profileID = 2;
   uint32 limit = 3;
   uint32 offset = 4;
+  string login = 5;
 }
 
 message EmailProfile {

@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"mail/internal/pkg/utils/validators"
 	"strconv"
 
 	usecase "mail/internal/microservice/folder/interface"
@@ -180,6 +181,10 @@ func (es *FolderServer) GetAllEmailsInFolder(ctx context.Context, input *proto.G
 
 	if input.FolderID <= 0 || input.ProfileID <= 0 {
 		return nil, fmt.Errorf("invalid folderID=%s or profileID=%s or limit=%s or offset=%s", strconv.Itoa(int(input.FolderID)), strconv.Itoa(int(input.ProfileID)), strconv.Itoa(int(input.Limit)), strconv.Itoa(int(input.Offset)))
+	}
+
+	if validators.IsEmpty(input.Login) {
+		return nil, fmt.Errorf("invalid login")
 	}
 
 	emailsCore, err := es.FolderUseCase.GetAllEmailsInFolder(input.FolderID, input.ProfileID, input.Limit, input.Offset, ctx)
