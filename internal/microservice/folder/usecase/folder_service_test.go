@@ -211,6 +211,7 @@ func TestGetAllEmailsInFolder(t *testing.T) {
 	folder_id := uint32(1)
 	profile_id := uint32(1)
 	zero := uint32(0)
+	login := "loginUser"
 
 	expectedFolders := []*domain.Email{
 		{ID: 1, Topic: "Test topic 1", Text: "Test text 1"},
@@ -219,7 +220,7 @@ func TestGetAllEmailsInFolder(t *testing.T) {
 
 	mockRepo.EXPECT().GetAllEmails(folder_id, profile_id, zero, zero, ctx).Return(expectedFolders, nil)
 
-	folders, err := useCase.GetAllEmailsInFolder(folder_id, profile_id, zero, zero, ctx)
+	folders, err := useCase.GetAllEmailsInFolder(folder_id, profile_id, zero, zero, login, ctx)
 
 	assert.NoError(t, err)
 	assert.Equal(t, expectedFolders, folders)

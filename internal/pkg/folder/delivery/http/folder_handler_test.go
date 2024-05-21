@@ -878,6 +878,8 @@ func TestFolderHandler_GetAllEmailsInFolder_Success(t *testing.T) {
 
 	mockFolderServiceClient.EXPECT().CheckFolderProfile(gomock.Any(), gomock.Any()).Return(&folder_proto.FolderEmailStatus{Status: true}, nil)
 
+	mockSessionsManager.EXPECT().GetLoginBySession(gomock.Any(), gomock.Any()).Return("loginUser", nil)
+
 	mockFolderServiceClient.EXPECT().GetAllEmailsInFolder(gomock.Any(), gomock.Any()).Return(&folder_proto.ObjectsEmail{
 		Emails: []*folder_proto.ObjectEmail{}}, nil)
 
@@ -1006,6 +1008,8 @@ func TestFolderHandler_GetAllEmailsInFolder_GetAllEmailsInFolderError(t *testing
 	mockSessionsManager.EXPECT().GetProfileIDBySessionID(gomock.Any(), gomock.Any()).Return(uint32(0), nil)
 
 	mockFolderServiceClient.EXPECT().CheckFolderProfile(gomock.Any(), gomock.Any()).Return(&folder_proto.FolderEmailStatus{Status: true}, nil)
+
+	mockSessionsManager.EXPECT().GetLoginBySession(gomock.Any(), gomock.Any()).Return("loginUser", nil)
 
 	mockFolderServiceClient.EXPECT().GetAllEmailsInFolder(gomock.Any(), gomock.Any()).Return(nil, errors.New("get all emails in folder error"))
 

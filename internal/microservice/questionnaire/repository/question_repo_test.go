@@ -24,8 +24,8 @@ func GetCTX() context.Context {
 	}
 	defer f.Close()
 
-	ctx := context.WithValue(context.Background(), constants.LoggerKey, logger.InitializationBdLog(f))
-	ctx2 := context.WithValue(ctx, constants.RequestIDKey, []string{"testID"})
+	ctx := context.WithValue(context.Background(), interface{}(string(constants.LoggerKey)), logger.InitializationBdLog(f))
+	ctx2 := context.WithValue(ctx, interface{}(string(constants.RequestIDKey)), []string{"testID"})
 
 	return ctx2
 }

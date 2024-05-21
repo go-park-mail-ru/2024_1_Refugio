@@ -392,7 +392,7 @@ func TestGetAllEmailsInFolder(t *testing.T) {
 
 	ctx := GetCTX()
 
-	data := &proto.GetAllEmailsInFolderData{FolderID: 1, ProfileID: 1, Limit: 0, Offset: 0}
+	data := &proto.GetAllEmailsInFolderData{FolderID: 1, ProfileID: 1, Limit: 0, Offset: 0, Login: "loginUser"}
 	emails := []*domain_models.Email{
 		{ID: 1, Topic: "Topic 1", Text: "Text 1"},
 		{ID: 2, Topic: "Topic 2", Text: "Text 2"},
@@ -408,7 +408,7 @@ func TestGetAllEmailsInFolder(t *testing.T) {
 	expectedObjectsEmail := &proto.ObjectsEmail{Emails: emailObArr}
 
 	t.Run("GetAllEmailsInFoldereSuccessfully", func(t *testing.T) {
-		mockFolderUseCase.EXPECT().GetAllEmailsInFolder(data.FolderID, data.ProfileID, data.Limit, data.Offset, ctx).Return(emails, nil)
+		mockFolderUseCase.EXPECT().GetAllEmailsInFolder(data.FolderID, data.ProfileID, data.Limit, data.Offset, data.Login, ctx).Return(emails, nil)
 
 		objectEmail, err := server.GetAllEmailsInFolder(ctx, data)
 
@@ -426,7 +426,7 @@ func TestGetAllEmailsInFolder(t *testing.T) {
 	})
 
 	t.Run("CheckEmailProfile failed create folder", func(t *testing.T) {
-		mockFolderUseCase.EXPECT().GetAllEmailsInFolder(data.FolderID, data.ProfileID, data.Limit, data.Offset, ctx).Return(emails, fmt.Errorf("emails not found"))
+		mockFolderUseCase.EXPECT().GetAllEmailsInFolder(data.FolderID, data.ProfileID, data.Limit, data.Offset, data.Login, ctx).Return(emails, fmt.Errorf("emails not found"))
 
 		objectEmail, err := server.GetAllEmailsInFolder(ctx, data)
 

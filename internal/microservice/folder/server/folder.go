@@ -187,7 +187,7 @@ func (es *FolderServer) GetAllEmailsInFolder(ctx context.Context, input *proto.G
 		return nil, fmt.Errorf("invalid login")
 	}
 
-	emailsCore, err := es.FolderUseCase.GetAllEmailsInFolder(input.FolderID, input.ProfileID, input.Limit, input.Offset, ctx)
+	emailsCore, err := es.FolderUseCase.GetAllEmailsInFolder(input.FolderID, input.ProfileID, input.Limit, input.Offset, input.Login, ctx)
 	if err != nil {
 		return nil, fmt.Errorf("emails not found")
 	}

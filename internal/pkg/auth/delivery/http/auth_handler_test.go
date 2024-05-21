@@ -35,7 +35,7 @@ func TestAuthHandler_Login_Success(t *testing.T) {
 	reqBody := `{"login": "user@mailhub.su", "password": "password123"}`
 
 	req := httptest.NewRequest("POST", "/api/v1/auth/login", strings.NewReader(reqBody))
-	ctx := context.WithValue(req.Context(), constants.RequestIDKey, "testID")
+	ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
@@ -163,7 +163,7 @@ func TestAuthHandler_Login_LoginFailed(t *testing.T) {
 	reqBody := `{"login": "user@mailhub.su", "password": "password123"}`
 
 	req := httptest.NewRequest("POST", "/api/v1/auth/login", strings.NewReader(reqBody))
-	ctx := context.WithValue(req.Context(), constants.RequestIDKey, "testID")
+	ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
@@ -197,7 +197,7 @@ func TestAuthHandler_Login_SessionFailed(t *testing.T) {
 	reqBody := `{"login": "user@mailhub.su", "password": "password123"}`
 
 	req := httptest.NewRequest("POST", "/api/v1/auth/login", strings.NewReader(reqBody))
-	ctx := context.WithValue(req.Context(), constants.RequestIDKey, "testID")
+	ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
@@ -235,7 +235,7 @@ func TestAuthHandler_Signup_Success(t *testing.T) {
 	reqBody := `{"login": "user@mailhub.su", "password": "password123", "firstName": "John", "surname": "Doe", "gender": "Male", "phoneNumber": "123456789"}`
 
 	req := httptest.NewRequest("POST", "/api/v1/auth/signup", strings.NewReader(reqBody))
-	ctx := context.WithValue(req.Context(), constants.RequestIDKey, "testID")
+	ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
@@ -359,7 +359,7 @@ func TestAuthHandler_Signup_FailedToAddUser(t *testing.T) {
 	reqBody := `{"login": "user@mailhub.su", "password": "password123", "firstName": "John", "surname": "Doe", "gender": "Male", "phoneNumber": "123456789"}`
 
 	req := httptest.NewRequest("POST", "/api/v1/auth/signup", strings.NewReader(reqBody))
-	ctx := context.WithValue(req.Context(), constants.RequestIDKey, "testID")
+	ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
