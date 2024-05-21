@@ -171,6 +171,21 @@ func (mr *MockFolderRepositoryMockRecorder) GetAllFolderName(emailID, ctx interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllFolderName", reflect.TypeOf((*MockFolderRepository)(nil).GetAllFolderName), emailID, ctx)
 }
 
+// GetAvatarFileIDByLogin mocks base method.
+func (m *MockFolderRepository) GetAvatarFileIDByLogin(login string, ctx context.Context) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAvatarFileIDByLogin", login, ctx)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAvatarFileIDByLogin indicates an expected call of GetAvatarFileIDByLogin.
+func (mr *MockFolderRepositoryMockRecorder) GetAvatarFileIDByLogin(login, ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAvatarFileIDByLogin", reflect.TypeOf((*MockFolderRepository)(nil).GetAvatarFileIDByLogin), login, ctx)
+}
+
 // Update mocks base method.
 func (m *MockFolderRepository) Update(newUpFolder *domain_models.Folder, ctx context.Context) (bool, error) {
 	m.ctrl.T.Helper()

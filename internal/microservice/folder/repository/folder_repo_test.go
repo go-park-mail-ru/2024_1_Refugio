@@ -527,10 +527,8 @@ func TestGetAllEmails(t *testing.T) {
 			AddRow(3, "Topic 3", "Text 3")
 
 		mock.ExpectQuery(`
-			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important
 			FROM email e
-			LEFT JOIN email_file ef ON e.id = ef.email_id
-			LEFT JOIN file f ON ef.file_id = f.id
 			JOIN profile_email pe ON e.id = pe.email_id
 			JOIN profile p ON pe.profile_id = \$1 
 			LEFT JOIN folder_email ON e.id = folder_email.email_id
@@ -554,10 +552,8 @@ func TestGetAllEmails(t *testing.T) {
 			AddRow(3, "Topic 3", "Text 3")
 
 		mock.ExpectQuery(`
-			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important
 			FROM email e
-			LEFT JOIN email_file ef ON e.id = ef.email_id
-			LEFT JOIN file f ON ef.file_id = f.id
 			JOIN profile_email pe ON e.id = pe.email_id
 			JOIN profile p ON pe.profile_id = \$1 
 			LEFT JOIN folder_email ON e.id = folder_email.email_id
@@ -573,10 +569,8 @@ func TestGetAllEmails(t *testing.T) {
 
 	t.Run("Error", func(t *testing.T) {
 		mock.ExpectQuery(`
-			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important
 			FROM email e
-			LEFT JOIN email_file ef ON e.id = ef.email_id
-			LEFT JOIN file f ON ef.file_id = f.id
 			JOIN profile_email pe ON e.id = pe.email_id
 			JOIN profile p ON pe.profile_id = \$1 
 			LEFT JOIN folder_email ON e.id = folder_email.email_id

@@ -37,6 +37,9 @@ type FolderRepository interface {
 	// GetAllEmails get list emails folder user.
 	GetAllEmails(folderID, profileId, limit, offset uint32, ctx context.Context) ([]*domain.Email, error)
 
+	// GetAvatarFileIDByLogin getting an avatar by login.
+	GetAvatarFileIDByLogin(login string, ctx context.Context) (string, error)
+
 	// GetAllFolderName retrieves the names of all folders associated with a given email ID.
 	GetAllFolderName(emailID uint32, ctx context.Context) ([]*domain.Folder, error)
 }
