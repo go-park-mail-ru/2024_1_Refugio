@@ -6,7 +6,7 @@ import (
 )
 
 // AnswerConvertDbInCore converts an answer model from the database format to the application core format.
-func AnswerConvertDbInCore(answerModelDb database.Answer) *domain.Answer {
+func AnswerConvertDbInCore(answerModelDb *database.Answer) *domain.Answer {
 	return &domain.Answer{
 		ID:         answerModelDb.ID,
 		QuestionID: answerModelDb.QuestionID,
@@ -17,7 +17,7 @@ func AnswerConvertDbInCore(answerModelDb database.Answer) *domain.Answer {
 }
 
 // AnswerConvertCoreInDb converts an answer model from the application core format to the database format.
-func AnswerConvertCoreInDb(answerModelDb domain.Answer) *database.Answer {
+func AnswerConvertCoreInDb(answerModelDb *domain.Answer) *database.Answer {
 	return &database.Answer{
 		ID:         answerModelDb.ID,
 		QuestionID: answerModelDb.QuestionID,

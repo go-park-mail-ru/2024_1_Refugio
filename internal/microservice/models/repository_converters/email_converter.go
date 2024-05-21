@@ -6,7 +6,7 @@ import (
 )
 
 // EmailConvertDbInCore converts an email model from database representation to core domain representation.
-func EmailConvertDbInCore(emailModelDb database.Email) *domain.Email {
+func EmailConvertDbInCore(emailModelDb *database.Email) *domain.Email {
 	var ReplyToEmailID uint64
 
 	if emailModelDb.ReplyToEmailID == nil {
@@ -38,7 +38,7 @@ func EmailConvertDbInCore(emailModelDb database.Email) *domain.Email {
 }
 
 // EmailConvertCoreInDb converts an email model from core domain representation to database representation.
-func EmailConvertCoreInDb(emailModelCore domain.Email) *database.Email {
+func EmailConvertCoreInDb(emailModelCore *domain.Email) *database.Email {
 	emailDB := &database.Email{
 		ID:             emailModelCore.ID,
 		Topic:          emailModelCore.Topic,

@@ -47,7 +47,7 @@ func (r *EmailRepository) Add(emailModelCore *domain.Email, ctx context.Context)
 	var id uint64
 	var err error
 	start := time.Now()
-	emailModelDb := converters.EmailConvertCoreInDb(*emailModelCore)
+	emailModelDb := converters.EmailConvertCoreInDb(emailModelCore)
 	format := "2006/01/02 15:04:05"
 
 	err = r.DB.QueryRow(insertEmailQuery, emailModelDb.Topic, emailModelDb.Text, time.Now().Format(format), emailModelDb.SenderEmail, emailModelDb.RecipientEmail, emailModelDb.ReadStatus, emailModelDb.Deleted, emailModelDb.DraftStatus, emailModelCore.SpamStatus, emailModelDb.ReplyToEmailID, emailModelDb.Flag).Scan(&id)
@@ -177,7 +177,7 @@ func (r *EmailRepository) GetAllIncoming(login string, offset, limit int64, ctx 
 
 	var emailsModelCore []*domain.Email
 	for _, e := range emailsModelDb {
-		emailsModelCore = append(emailsModelCore, converters.EmailConvertDbInCore(e))
+		emailsModelCore = append(emailsModelCore, converters.EmailConvertDbInCore(&e))
 	}
 
 	return emailsModelCore, nil
@@ -223,7 +223,7 @@ func (r *EmailRepository) GetAllSent(login string, offset, limit int64, ctx cont
 	var emailsModelCore []*domain.Email
 	for _, e := range emailsModelDb {
 		e.ReadStatus = true
-		emailsModelCore = append(emailsModelCore, converters.EmailConvertDbInCore(e))
+		emailsModelCore = append(emailsModelCore, converters.EmailConvertDbInCore(&e))
 	}
 
 	return emailsModelCore, nil
@@ -268,7 +268,7 @@ func (r *EmailRepository) GetAllDraft(login string, offset, limit int64, ctx con
 
 	var emailsModelCore []*domain.Email
 	for _, e := range emailsModelDb {
-		emailsModelCore = append(emailsModelCore, converters.EmailConvertDbInCore(e))
+		emailsModelCore = append(emailsModelCore, converters.EmailConvertDbInCore(&e))
 	}
 
 	return emailsModelCore, nil
@@ -313,7 +313,7 @@ func (r *EmailRepository) GetAllSpam(login string, offset, limit int64, ctx cont
 
 	var emailsModelCore []*domain.Email
 	for _, e := range emailsModelDb {
-		emailsModelCore = append(emailsModelCore, converters.EmailConvertDbInCore(e))
+		emailsModelCore = append(emailsModelCore, converters.EmailConvertDbInCore(&e))
 	}
 
 	return emailsModelCore, nil
@@ -345,7 +345,7 @@ func (r *EmailRepository) GetByID(id uint64, login string, ctx context.Context) 
 		return nil, err
 	}
 
-	return converters.EmailConvertDbInCore(emailModelDb), nil
+	return converters.EmailConvertDbInCore(&emailModelDb), nil
 }
 
 // GetAvatarFileIDByLogin getting an avatar by login.
@@ -380,7 +380,7 @@ func (r *EmailRepository) GetAvatarFileIDByLogin(login string, ctx context.Conte
 
 // Update updates the information of an email in the storage based on the provided new email.
 func (r *EmailRepository) Update(newEmail *domain.Email, ctx context.Context) (bool, error) {
-	newEmailDb := converters.EmailConvertCoreInDb(*newEmail)
+	newEmailDb := converters.EmailConvertCoreInDb(newEmail)
 
 	query := `
         UPDATE email

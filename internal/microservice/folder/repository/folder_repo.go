@@ -274,7 +274,7 @@ func (r *FolderRepository) GetAllEmails(folderID, profileID, limit, offset uint3
 
 	var emailsModelCore []*domain.Email
 	for _, e := range emailsModelDb {
-		emailsModelCore = append(emailsModelCore, converters.EmailConvertDbInCore(e))
+		emailsModelCore = append(emailsModelCore, converters.EmailConvertDbInCore(&e))
 	}
 
 	return emailsModelCore, nil

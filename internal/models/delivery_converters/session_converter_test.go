@@ -18,7 +18,7 @@ func TestSessionConvertCoreInApi(t *testing.T) {
 		CsrfToken:    "csrf_token",
 	}
 
-	sessionModelApi := SessionConvertCoreInApi(sessionModelCore)
+	sessionModelApi := SessionConvertCoreInApi(&sessionModelCore)
 
 	expectedSessionModelApi := &api.Session{
 		ID:           sessionModelCore.ID,
@@ -44,7 +44,7 @@ func TestSessionConvertApiInCore(t *testing.T) {
 		CsrfToken:    "csrf_token",
 	}
 
-	sessionModelCore := SessionConvertApiInCore(sessionModelApi)
+	sessionModelCore := SessionConvertApiInCore(&sessionModelApi)
 
 	expectedSessionModelCore := &domain.Session{
 		ID:           sessionModelApi.ID,
