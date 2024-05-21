@@ -49,11 +49,15 @@ import (
 	_ "mail/docs"
 )
 
+type ContextKey string
+
+const LoggerKey ContextKey = "logger"
+
 // @title API MailHub
 // @version 1.0
 // @description API server for MailHub
 
-// @host mailhub.su
+// @host localhost:8080
 // @BasePath /
 func main() {
 	settingTime()
@@ -472,7 +476,7 @@ func startSessionCleaner(interval time.Duration, sessionServiceClient session_pr
 				}
 				defer f.Close()
 
-				c := context.WithValue(context.Background(), "logger", logger.InitializationBdLog(f))
+				c := context.WithValue(context.Background(), LoggerKey, logger.InitializationBdLog(f))
 				ctx := context.WithValue(c, "requestID", "DeleteExpiredSessionsNULL")
 
 				req, err := sessionServiceClient.CleanupExpiredSessions(

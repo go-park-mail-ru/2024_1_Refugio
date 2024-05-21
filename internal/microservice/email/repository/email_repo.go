@@ -151,10 +151,10 @@ func (r *EmailRepository) GetAllIncoming(login string, offset, limit int64, ctx 
 		ORDER BY e.date_of_dispatch DESC
 	`
 
-	emailsModelDb := []repository_models.Email{}
+	var emailsModelDb []repository_models.Email
 
 	var err error
-	args := []interface{}{}
+	var args []interface{}
 	start := time.Now()
 
 	if offset >= 0 && limit > 0 {
@@ -196,10 +196,10 @@ func (r *EmailRepository) GetAllSent(login string, offset, limit int64, ctx cont
 		ORDER BY e.date_of_dispatch DESC
 	`
 
-	emailsModelDb := []repository_models.Email{}
+	var emailsModelDb []repository_models.Email
 
 	var err error
-	args := []interface{}{}
+	var args []interface{}
 	start := time.Now()
 
 	if offset >= 0 && limit > 0 {
@@ -242,10 +242,10 @@ func (r *EmailRepository) GetAllDraft(login string, offset, limit int64, ctx con
 		ORDER BY e.date_of_dispatch DESC
 	`
 
-	emailsModelDb := []repository_models.Email{}
+	var emailsModelDb []repository_models.Email
 
 	var err error
-	args := []interface{}{}
+	var args []interface{}
 	start := time.Now()
 
 	if offset >= 0 && limit > 0 {
@@ -287,10 +287,10 @@ func (r *EmailRepository) GetAllSpam(login string, offset, limit int64, ctx cont
 		ORDER BY e.date_of_dispatch DESC
 	`
 
-	emailsModelDb := []repository_models.Email{}
+	var emailsModelDb []repository_models.Email
 
 	var err error
-	args := []interface{}{}
+	var args []interface{}
 	start := time.Now()
 
 	if offset >= 0 && limit > 0 {

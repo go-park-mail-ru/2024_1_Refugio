@@ -3,19 +3,28 @@ package interceptors
 import (
 	"context"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"log"
-	"mail/internal/pkg/logger"
 	"os"
 	"runtime/debug"
 	"time"
+
+	"github.com/sirupsen/logrus"
+
+	"mail/internal/pkg/logger"
 )
 
 type Logger struct {
 	Logger *InterceptorsLogger
 }
+
+type ContextKey string
+
+const (
+	LoggerKey    ContextKey = "logger"
+	RequestIDKey ContextKey = "requestID"
+)
 
 // AccessLogInterceptor intercepts panics, recovers, logs info, and sets up logging and requestID.
 func (log *Logger) AccessLogInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
@@ -30,8 +39,8 @@ func (log *Logger) AccessLogInterceptor(ctx context.Context, req interface{}, in
 	}
 	defer f.Close()
 
-	ctx2 := context.WithValue(ctx, "logger", logger.InitializationBdLog(f))
-	ctx3 := context.WithValue(ctx2, "requestID", md.Get("requestID"))
+	ctx2 := context.WithValue(ctx, LoggerKey, logger.InitializationBdLog(f))
+	ctx3 := context.WithValue(ctx2, RequestIDKey, md.Get("requestID"))
 
 	start := time.Now()
 	data, err := handler(ctx3, req)
