@@ -51,7 +51,10 @@ import (
 
 type ContextKey string
 
-const LoggerKey ContextKey = "logger"
+const (
+	LoggerKey    ContextKey = "logger"
+	RequestIDKey ContextKey = "requestID"
+)
 
 // @title API MailHub
 // @version 1.0
@@ -477,7 +480,7 @@ func startSessionCleaner(interval time.Duration, sessionServiceClient session_pr
 				defer f.Close()
 
 				c := context.WithValue(context.Background(), LoggerKey, logger.InitializationBdLog(f))
-				ctx := context.WithValue(c, "requestID", "DeleteExpiredSessionsNULL")
+				ctx := context.WithValue(c, RequestIDKey, "DeleteExpiredSessionsNULL")
 
 				req, err := sessionServiceClient.CleanupExpiredSessions(
 					metadata.NewOutgoingContext(ctx,

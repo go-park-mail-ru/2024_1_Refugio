@@ -3,6 +3,7 @@ package connect_microservice
 import (
 	"fmt"
 	"google.golang.org/grpc"
+
 	"mail/cmd/configs"
 )
 

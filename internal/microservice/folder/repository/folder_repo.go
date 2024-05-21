@@ -53,11 +53,12 @@ func (r *FolderRepository) GetAll(profileID uint32, offset, limit int64, ctx con
 		WHERE profile_id = $1
 	`
 
-	foldersModelDb := []repository_models.Folder{}
+	var foldersModelDb []repository_models.Folder
 
 	var err error
-	args := []interface{}{}
+	var args []interface{}
 	start := time.Now()
+
 	if offset >= 0 && limit > 0 {
 		query += " OFFSET $2 LIMIT $3"
 		args = []interface{}{profileID, offset, limit}
@@ -249,12 +250,13 @@ func (r *FolderRepository) GetAllEmails(folderID, profileID, limit, offset uint3
 		ORDER BY e.date_of_dispatch DESC
 	`
 
-	emailsModelDb := []repository_models.Email{}
+	var emailsModelDb []repository_models.Email
 
 	var err error
-	args := []interface{}{}
+	var args []interface{}
 	start := time.Now()
-	if offset >= 0 && limit > 0 {
+
+	if offset > 0 && limit > 0 {
 		query += " OFFSET $3 LIMIT $4"
 		args = []interface{}{profileID, folderID, offset, limit}
 		err = r.DB.Select(&emailsModelDb, query, profileID, folderID, offset, limit)

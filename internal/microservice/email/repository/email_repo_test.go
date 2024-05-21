@@ -18,6 +18,13 @@ import (
 	domain "mail/internal/microservice/models/domain_models"
 )
 
+type ContextKey string
+
+const (
+	LoggerKey    ContextKey = "logger"
+	RequestIDKey ContextKey = "requestID"
+)
+
 func GetCTX() context.Context {
 	f, err := os.OpenFile("log_test.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
@@ -25,8 +32,8 @@ func GetCTX() context.Context {
 	}
 	defer f.Close()
 
-	ctx := context.WithValue(context.Background(), "logger", logger.InitializationBdLog(f))
-	ctx2 := context.WithValue(ctx, "requestID", []string{"testID"})
+	ctx := context.WithValue(context.Background(), LoggerKey, logger.InitializationBdLog(f))
+	ctx2 := context.WithValue(ctx, RequestIDKey, []string{"testID"})
 
 	return ctx2
 }
