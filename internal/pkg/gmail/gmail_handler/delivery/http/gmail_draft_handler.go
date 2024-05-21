@@ -2,13 +2,12 @@ package http
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"github.com/denisbrodbeck/striphtmltags"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/schema"
 	"github.com/microcosm-cc/bluemonday"
 	"google.golang.org/api/gmail/v1"
+	"io"
 	apiModels "mail/internal/models/delivery_models"
 	"mail/internal/models/response"
 	"mail/internal/pkg/utils/validators"
@@ -30,11 +29,13 @@ import (
 // @Failure 500 {object} response.Response "Failed to add draft message"
 // @Router /api/v1/gmail/draft/adddraft [post]
 func (g *GMailEmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
-	var newDraft apiModels.OtherEmail
-	decoder := schema.NewDecoder()
-	decoder.IgnoreUnknownKeys(true)
-	err := json.NewDecoder(r.Body).Decode(&newDraft)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Invalid input body")
+		return
+	}
+	var newDraft apiModels.OtherEmail
+	if err := newDraft.UnmarshalJSON(body); err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
 		return
 	}
@@ -99,11 +100,13 @@ func (g *GMailEmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} response.Response "Failed to send draft message"
 // @Router /api/v1/gmail/draft/sendDraft [post]
 func (g *GMailEmailHandler) SendDraft(w http.ResponseWriter, r *http.Request) {
-	var newDraft apiModels.OtherEmail
-	decoder := schema.NewDecoder()
-	decoder.IgnoreUnknownKeys(true)
-	err := json.NewDecoder(r.Body).Decode(&newDraft)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Invalid input body")
+		return
+	}
+	var newDraft apiModels.OtherEmail
+	if err := newDraft.UnmarshalJSON(body); err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
 		return
 	}
@@ -239,11 +242,13 @@ func (g *GMailEmailHandler) UpdateDraft(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var newDraft apiModels.OtherEmail
-	decoder := schema.NewDecoder()
-	decoder.IgnoreUnknownKeys(true)
-	err := json.NewDecoder(r.Body).Decode(&newDraft)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Invalid input body")
+		return
+	}
+	var newDraft apiModels.OtherEmail
+	if err := newDraft.UnmarshalJSON(body); err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
 		return
 	}

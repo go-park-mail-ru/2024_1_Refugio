@@ -8,6 +8,7 @@ import (
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"io"
 	"io/ioutil"
 	auth_proto "mail/internal/microservice/auth/proto"
 	"mail/internal/microservice/models/domain_models"
@@ -164,9 +165,13 @@ func (ah *OAuthHandler) AuthVK(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} response.ErrorResponse "Failed to add user"
 // @Router /api/v1/testAuth/auth-vk/signupVK [post]
 func (ah *OAuthHandler) SignupVK(w http.ResponseWriter, r *http.Request) {
-	var newUser api.VKUser
-	err := json.NewDecoder(r.Body).Decode(&newUser)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Invalid input body")
+		return
+	}
+	var newUser api.VKUser
+	if err := newUser.UnmarshalJSON(body); err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}

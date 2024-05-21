@@ -1,11 +1,9 @@
 package http
 
 import (
-	"encoding/json"
 	"google.golang.org/grpc/metadata"
+	"io"
 	"net/http"
-
-	"github.com/gorilla/schema"
 
 	"mail/internal/microservice/models/proto_converters"
 	"mail/internal/models/response"
@@ -29,9 +27,9 @@ type QuestionHandler struct {
 	QuestionServiceClient question_proto.QuestionServiceClient
 }
 
-// Get all questions.
-// @Summary Get questions
-// @Description Get Handles questions.
+// GetAllQuestions all questions.
+// @Summary GetAllQuestions questions
+// @Description GetAllQuestions Handles questions.
 // @Tags question
 // @Accept json
 // @Produce json
@@ -65,9 +63,9 @@ func (qh *QuestionHandler) GetAllQuestions(w http.ResponseWriter, r *http.Reques
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"questions": questionsApi})
 }
 
-// Add question.
-// @Summary Add question
-// @Description Add Handles question.
+// AddQuestion question.
+// @Summary AddQuestion question
+// @Description AddQuestion Handles question.
 // @Tags question
 // @Accept json
 // @Produce json
@@ -79,11 +77,13 @@ func (qh *QuestionHandler) GetAllQuestions(w http.ResponseWriter, r *http.Reques
 // @Failure 500 {object} response.ErrorResponse "Failed to add question"
 // @Router /api/v1/questions [post]
 func (qh *QuestionHandler) AddQuestion(w http.ResponseWriter, r *http.Request) {
-	var newQuestion api.Question
-	decoder := schema.NewDecoder()
-	decoder.IgnoreUnknownKeys(true)
-	err := json.NewDecoder(r.Body).Decode(&newQuestion)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Invalid input body")
+		return
+	}
+	var newQuestion api.Question
+	if err := newQuestion.UnmarshalJSON(body); err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
 		return
 	}
@@ -108,9 +108,9 @@ func (qh *QuestionHandler) AddQuestion(w http.ResponseWriter, r *http.Request) {
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": questionProto.Status})
 }
 
-// Add answer.
-// @Summary Add answer
-// @Description Add Handles answer.
+// AddAnswer answer.
+// @Summary AddAnswer answer
+// @Description AddAnswer Handles answer.
 // @Tags question
 // @Accept json
 // @Produce json
@@ -122,11 +122,13 @@ func (qh *QuestionHandler) AddQuestion(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} response.ErrorResponse "Failed to add answer"
 // @Router /api/v1/answers [post]
 func (qh *QuestionHandler) AddAnswer(w http.ResponseWriter, r *http.Request) {
-	var newAnswer api.Answer
-	decoder := schema.NewDecoder()
-	decoder.IgnoreUnknownKeys(true)
-	err := json.NewDecoder(r.Body).Decode(&newAnswer)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Invalid input body")
+		return
+	}
+	var newAnswer api.Answer
+	if err := newAnswer.UnmarshalJSON(body); err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
 		return
 	}
@@ -155,9 +157,9 @@ func (qh *QuestionHandler) AddAnswer(w http.ResponseWriter, r *http.Request) {
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": answerProto.Status})
 }
 
-// Get statistics.
-// @Summary Get statistics
-// @Description Get Handles statistics.
+// GetStatistics statistics.
+// @Summary GetStatistics statistics
+// @Description GetStatistics Handles statistics.
 // @Tags question
 // @Accept json
 // @Produce json

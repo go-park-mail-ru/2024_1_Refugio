@@ -11,7 +11,7 @@
     "paths": {
         "/api/v1/answers": {
             "post": {
-                "description": "Add Handles answer.",
+                "description": "AddAnswer Handles answer.",
                 "consumes": [
                     "application/json"
                 ],
@@ -21,7 +21,7 @@
                 "tags": [
                     "question"
                 ],
-                "summary": "Add answer",
+                "summary": "AddAnswer answer",
                 "parameters": [
                     {
                         "type": "string",
@@ -2767,7 +2767,7 @@
         },
         "/api/v1/questions": {
             "get": {
-                "description": "Get Handles questions.",
+                "description": "GetAllQuestions Handles questions.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2777,7 +2777,7 @@
                 "tags": [
                     "question"
                 ],
-                "summary": "Get questions",
+                "summary": "GetAllQuestions questions",
                 "parameters": [
                     {
                         "type": "string",
@@ -2815,7 +2815,7 @@
                 }
             },
             "post": {
-                "description": "Add Handles question.",
+                "description": "AddQuestion Handles question.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2825,7 +2825,7 @@
                 "tags": [
                     "question"
                 ],
-                "summary": "Add question",
+                "summary": "AddQuestion question",
                 "parameters": [
                     {
                         "type": "string",
@@ -2874,7 +2874,7 @@
         },
         "/api/v1/statistics": {
             "get": {
-                "description": "Get Handles statistics.",
+                "description": "GetStatistics Handles statistics.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2884,7 +2884,7 @@
                 "tags": [
                     "question"
                 ],
-                "summary": "Get statistics",
+                "summary": "GetStatistics statistics",
                 "parameters": [
                     {
                         "type": "string",

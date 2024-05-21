@@ -10,6 +10,7 @@ import (
 	"google.golang.org/api/option"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"io"
 	auth_proto "mail/internal/microservice/auth/proto"
 	domain "mail/internal/microservice/models/domain_models"
 	user_proto "mail/internal/microservice/user/proto"
@@ -135,9 +136,13 @@ func (g *GMailAuthHandler) GoogleAuth(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} response.ErrorResponse "Failed to add user"
 // @Router /api/v1/auth/signupGMailUser [post]
 func (g *GMailAuthHandler) SugnupGMail(w http.ResponseWriter, r *http.Request) {
-	var newUser api.OtherUser
-	err := json.NewDecoder(r.Body).Decode(&newUser)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Invalid input body")
+		return
+	}
+	var newUser api.OtherUser
+	if err := newUser.UnmarshalJSON(body); err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}

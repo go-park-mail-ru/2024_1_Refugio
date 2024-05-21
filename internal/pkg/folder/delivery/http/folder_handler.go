@@ -1,13 +1,12 @@
 package http
 
 import (
-	"encoding/json"
 	"google.golang.org/grpc/metadata"
+	"io"
 	"net/http"
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/gorilla/schema"
 	"github.com/microcosm-cc/bluemonday"
 
 	"mail/internal/microservice/folder/proto"
@@ -51,11 +50,13 @@ func sanitizeString(str string) string {
 // @Failure 500 {object} response.Response "Failed to add folder message"
 // @Router /api/v1/folder/add [post]
 func (h *FolderHandler) Add(w http.ResponseWriter, r *http.Request) {
-	var newFolder folderApi.Folder
-	decoder := schema.NewDecoder()
-	decoder.IgnoreUnknownKeys(true)
-	err := json.NewDecoder(r.Body).Decode(&newFolder)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Invalid input body")
+		return
+	}
+	var newFolder folderApi.Folder
+	if err := newFolder.UnmarshalJSON(body); err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
 		return
 	}
@@ -185,11 +186,13 @@ func (h *FolderHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var newFolder folderApi.Folder
-	decoder := schema.NewDecoder()
-	decoder.IgnoreUnknownKeys(true)
-	err = json.NewDecoder(r.Body).Decode(&newFolder)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Invalid input body")
+		return
+	}
+	var newFolder folderApi.Folder
+	if err := newFolder.UnmarshalJSON(body); err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
 		return
 	}
@@ -235,11 +238,13 @@ func (h *FolderHandler) Update(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} response.Response "Failed to add folder message"
 // @Router /api/v1/folder/add_email [post]
 func (h *FolderHandler) AddEmailInFolder(w http.ResponseWriter, r *http.Request) {
-	var newFolderEmail folderApi.FolderEmail
-	decoder := schema.NewDecoder()
-	decoder.IgnoreUnknownKeys(true)
-	err := json.NewDecoder(r.Body).Decode(&newFolderEmail)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Invalid input body")
+		return
+	}
+	var newFolderEmail folderApi.FolderEmail
+	if err := newFolderEmail.UnmarshalJSON(body); err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
 		return
 	}
@@ -306,11 +311,13 @@ func (h *FolderHandler) AddEmailInFolder(w http.ResponseWriter, r *http.Request)
 // @Failure 500 {object} response.Response "Failed to delete folder message"
 // @Router /api/v1/folder/delete_email [delete]
 func (h *FolderHandler) DeleteEmailInFolder(w http.ResponseWriter, r *http.Request) {
-	var newFolderEmail folderApi.FolderEmail
-	decoder := schema.NewDecoder()
-	decoder.IgnoreUnknownKeys(true)
-	err := json.NewDecoder(r.Body).Decode(&newFolderEmail)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Invalid input body")
+		return
+	}
+	var newFolderEmail folderApi.FolderEmail
+	if err := newFolderEmail.UnmarshalJSON(body); err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
 		return
 	}

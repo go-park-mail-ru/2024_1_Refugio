@@ -2,14 +2,13 @@ package http
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/denisbrodbeck/striphtmltags"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/schema"
 	"github.com/microcosm-cc/bluemonday"
 	"google.golang.org/api/gmail/v1"
+	"io"
 	apiModels "mail/internal/models/delivery_models"
 	"mail/internal/models/response"
 	gmailAuth "mail/internal/pkg/gmail/gmail_auth/delivery/http"
@@ -348,11 +347,13 @@ func (g *GMailEmailHandler) GetById(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} response.Response "Failed to add email message"
 // @Router /api/v1/gmail/email/send [post]
 func (g *GMailEmailHandler) Send(w http.ResponseWriter, r *http.Request) {
-	var newEmail apiModels.OtherEmail
-	decoder := schema.NewDecoder()
-	decoder.IgnoreUnknownKeys(true)
-	err := json.NewDecoder(r.Body).Decode(&newEmail)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Invalid input body")
+		return
+	}
+	var newEmail apiModels.OtherEmail
+	if err := newEmail.UnmarshalJSON(body); err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
 		return
 	}
@@ -468,11 +469,13 @@ func (g *GMailEmailHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var newEmail apiModels.OtherEmail
-	decoder := schema.NewDecoder()
-	decoder.IgnoreUnknownKeys(true)
-	err := json.NewDecoder(r.Body).Decode(&newEmail)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Invalid input body")
+		return
+	}
+	var newEmail apiModels.OtherEmail
+	if err := newEmail.UnmarshalJSON(body); err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
 		return
 	}

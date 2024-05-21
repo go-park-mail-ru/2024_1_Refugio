@@ -1,12 +1,11 @@
 package http
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/schema"
 	"github.com/microcosm-cc/bluemonday"
 	"google.golang.org/api/gmail/v1"
+	"io"
 	"log"
 	apiModels "mail/internal/models/delivery_models"
 	"mail/internal/models/response"
@@ -200,11 +199,13 @@ func (g *GMailEmailHandler) GetAllNameLabels(w http.ResponseWriter, r *http.Requ
 // @Failure 500 {object} response.Response "Failed to add email message"
 // @Router /api/v1/gmail/label/create [post]
 func (g *GMailEmailHandler) CreateLabel(w http.ResponseWriter, r *http.Request) {
-	var newLabel apiModels.OtherLabel
-	decoder := schema.NewDecoder()
-	decoder.IgnoreUnknownKeys(true)
-	err := json.NewDecoder(r.Body).Decode(&newLabel)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Invalid input body")
+		return
+	}
+	var newLabel apiModels.OtherLabel
+	if err := newLabel.UnmarshalJSON(body); err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
 		return
 	}
@@ -319,11 +320,13 @@ func (g *GMailEmailHandler) UpdateLabel(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var newLabel apiModels.OtherLabel
-	decoder := schema.NewDecoder()
-	decoder.IgnoreUnknownKeys(true)
-	err := json.NewDecoder(r.Body).Decode(&newLabel)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Invalid input body")
+		return
+	}
+	var newLabel apiModels.OtherLabel
+	if err := newLabel.UnmarshalJSON(body); err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
 		return
 	}
@@ -378,11 +381,13 @@ func (g *GMailEmailHandler) UpdateLabel(w http.ResponseWriter, r *http.Request) 
 // @Failure 500 {object} response.Response "Failed to add email in label"
 // @Router /api/v1/gmail/label/add_email [post]
 func (g *GMailEmailHandler) AddEmailInLabel(w http.ResponseWriter, r *http.Request) {
-	var newLabelEmail apiModels.LabelEmail
-	decoder := schema.NewDecoder()
-	decoder.IgnoreUnknownKeys(true)
-	err := json.NewDecoder(r.Body).Decode(&newLabelEmail)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Invalid input body")
+		return
+	}
+	var newLabelEmail apiModels.LabelEmail
+	if err := newLabelEmail.UnmarshalJSON(body); err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
 		return
 	}
@@ -431,11 +436,13 @@ func (g *GMailEmailHandler) AddEmailInLabel(w http.ResponseWriter, r *http.Reque
 // @Failure 500 {object} response.Response "Failed to delete email in label"
 // @Router /api/v1/gmail/label/delete_email [delete]
 func (g *GMailEmailHandler) DeleteEmailInLabel(w http.ResponseWriter, r *http.Request) {
-	var newLabelEmail apiModels.LabelEmail
-	decoder := schema.NewDecoder()
-	decoder.IgnoreUnknownKeys(true)
-	err := json.NewDecoder(r.Body).Decode(&newLabelEmail)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Invalid input body")
+		return
+	}
+	var newLabelEmail apiModels.LabelEmail
+	if err := newLabelEmail.UnmarshalJSON(body); err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
 		return
 	}

@@ -1,9 +1,9 @@
 package http
 
 import (
-	"encoding/json"
 	"fmt"
 	"google.golang.org/grpc/metadata"
+	"io"
 	"net/http"
 	"path/filepath"
 	"strconv"
@@ -93,9 +93,13 @@ func (uh *UserHandler) GetUserBySession(w http.ResponseWriter, r *http.Request) 
 // @Failure 500 {object} response.ErrorResponse "Internal Server Error"
 // @Router /api/v1/user/update [put]
 func (uh *UserHandler) UpdateUserData(w http.ResponseWriter, r *http.Request) {
-	var updatedUser api.User
-	err := json.NewDecoder(r.Body).Decode(&updatedUser)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Invalid input body")
+		return
+	}
+	var updatedUser api.User
+	if err := updatedUser.UnmarshalJSON(body); err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
