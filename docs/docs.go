@@ -3091,7 +3091,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Auth Token",
-                        "name": "Auth-Token",
+                        "name": "AuthToken",
                         "in": "header",
                         "required": true
                     },

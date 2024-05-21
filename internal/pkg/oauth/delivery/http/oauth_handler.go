@@ -157,7 +157,7 @@ func (ah *OAuthHandler) AuthVK(w http.ResponseWriter, r *http.Request) {
 // @Tags auth-vk
 // @Accept json
 // @Produce json
-// @Param Auth-Token header string true "Auth Token"
+// @Param AuthToken header string true "Auth Token"
 // @Param newUser body response.UserVKSwag true "New user details for signup"
 // @Success 200 {object} response.Response "Signup successful"
 // @Failure 400 {object} response.ErrorResponse "Invalid request body"
@@ -173,7 +173,7 @@ func (ah *OAuthHandler) SignupVK(w http.ResponseWriter, r *http.Request) {
 
 	//mepVKIDToken[123] = "123"
 
-	authToken := r.Header.Get("Auth-Token")
+	authToken := r.Header.Get("AuthToken")
 	if authToken != mapVKIDToken[newUser.VKId] {
 		response.HandleError(w, http.StatusBadRequest, "failed authToken")
 		return
