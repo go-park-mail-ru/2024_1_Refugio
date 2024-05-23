@@ -233,7 +233,7 @@ func (as *AuthServer) SignupVK(ctx context.Context, input *proto.SignupVKRequest
 		return nil, fmt.Errorf("A user with this VKId has already been registered")
 	}
 
-	_, errCreate := userServiceClient.CreateUser(
+	_, errCreate := userServiceClient.CreateUserOtherMail(
 		metadata.NewOutgoingContext(ctx,
 			metadata.New(map[string]string{"requestID": value[0]})),
 		&user_proto.CreateUserRequest{User: &user_proto.User{

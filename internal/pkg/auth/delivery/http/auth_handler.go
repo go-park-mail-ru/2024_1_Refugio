@@ -1,9 +1,9 @@
 package http
 
 import (
-	"encoding/json"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"io"
 	"net/http"
 
 	"mail/internal/pkg/utils/sanitize"
@@ -40,9 +40,13 @@ type AuthHandler struct {
 // @Failure 500 {object} response.ErrorResponse "Failed to create session"
 // @Router /api/v1/auth/login [post]
 func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
-	var credentials api.User
-	err := json.NewDecoder(r.Body).Decode(&credentials)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Invalid input body")
+		return
+	}
+	var credentials api.User
+	if err := credentials.UnmarshalJSON(body); err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
@@ -91,9 +95,13 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} response.ErrorResponse "Failed to add user"
 // @Router /api/v1/auth/signup [post]
 func (ah *AuthHandler) Signup(w http.ResponseWriter, r *http.Request) {
-	var newUser api.User
-	err := json.NewDecoder(r.Body).Decode(&newUser)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Invalid input body")
+		return
+	}
+	var newUser api.User
+	if err := newUser.UnmarshalJSON(body); err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}

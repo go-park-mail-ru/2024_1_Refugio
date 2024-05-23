@@ -15,6 +15,12 @@ const ACCESSKEYID = "minioadmin"
 const SECRETACCESSKEY = "minioadmin"
 
 const PROTOCOL = "http://"
+<<<<<<< HEAD
+=======
+*/
+
+// FOR PROD
+>>>>>>> easyjson
 
 // FOR PROD
 /*

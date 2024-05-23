@@ -226,7 +226,7 @@ func (us *UserServer) CreateUserOtherMail(ctx context.Context, input *proto.Crea
 	userDomain.PhoneNumber = sanitize.SanitizeString(userDomain.PhoneNumber)
 	userDomain.Description = sanitize.SanitizeString(userDomain.Description)
 
-	if validUtil.IsEmpty(userDomain.Login) || validUtil.IsEmpty(userDomain.Password) || validUtil.IsEmpty(userDomain.FirstName) || validUtil.IsEmpty(userDomain.Surname) {
+	if validUtil.IsEmpty(userDomain.Login) || validUtil.IsEmpty(userDomain.FirstName) || validUtil.IsEmpty(userDomain.Surname) {
 		return nil, fmt.Errorf("all fields must be filled in")
 	}
 

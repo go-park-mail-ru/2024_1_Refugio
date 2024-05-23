@@ -320,7 +320,7 @@ func setupRouter(authHandler *authHand.AuthHandler, oauthHandler *oauthHand.OAut
 
 	router.HandleFunc("/api/v1/testAuth/auth-vk/getAuthUrlSignUpVK", oauthHandler.GetSignUpURLVK).Methods("GET", "OPTIONS")
 	router.HandleFunc("/api/v1/testAuth/auth-vk/getAuthUrlLoginVK", oauthHandler.GetLoginURLVK).Methods("GET", "OPTIONS")
-	router.HandleFunc("/api/v1/testAuth/auth-vk/auth", oauthHandler.AuthVK).Methods("GET", "OPTIONS")
+	router.HandleFunc("/api/v1/testAuth/auth-vk/auth/{code}", oauthHandler.AuthVK).Methods("GET", "OPTIONS")
 	router.HandleFunc("/api/v1/testAuth/auth-vk/loginVK", oauthHandler.LoginVK).Methods("GET", "OPTIONS")
 	router.HandleFunc("/api/v1/testAuth/auth-vk/signupVK", oauthHandler.SignupVK).Methods("POST", "OPTIONS")
 
@@ -442,8 +442,8 @@ func startServer(router http.Handler) {
 			"https://127.0.0.1", "https://89.208.223.140", "https://mailhub.su", "https://mailhub.su", "https://localhost", "https://localhost", "https://89.208.223.140"},
 		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodDelete, http.MethodPut, http.MethodOptions},
 		AllowCredentials: true,
-		AllowedHeaders:   []string{"X-Csrf-Token", "Content-Type"},
-		ExposedHeaders:   []string{"X-Csrf-Token"},
+		AllowedHeaders:   []string{"X-Csrf-Token", "Content-Type", "AuthToken"},
+		ExposedHeaders:   []string{"X-Csrf-Token", "AuthToken"},
 	})
 
 	corsHandler := c.Handler(router)

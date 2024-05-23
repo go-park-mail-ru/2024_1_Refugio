@@ -17,7 +17,7 @@ const docTemplate = `{
     "paths": {
         "/api/v1/answers": {
             "post": {
-                "description": "Add Handles answer.",
+                "description": "AddAnswer Handles answer.",
                 "consumes": [
                     "application/json"
                 ],
@@ -27,7 +27,7 @@ const docTemplate = `{
                 "tags": [
                     "question"
                 ],
-                "summary": "Add answer",
+                "summary": "AddAnswer answer",
                 "parameters": [
                     {
                         "type": "string",
@@ -2773,7 +2773,7 @@ const docTemplate = `{
         },
         "/api/v1/questions": {
             "get": {
-                "description": "Get Handles questions.",
+                "description": "GetAllQuestions Handles questions.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2783,7 +2783,7 @@ const docTemplate = `{
                 "tags": [
                     "question"
                 ],
-                "summary": "Get questions",
+                "summary": "GetAllQuestions questions",
                 "parameters": [
                     {
                         "type": "string",
@@ -2821,7 +2821,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Add Handles question.",
+                "description": "AddQuestion Handles question.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2831,7 +2831,7 @@ const docTemplate = `{
                 "tags": [
                     "question"
                 ],
-                "summary": "Add question",
+                "summary": "AddQuestion question",
                 "parameters": [
                     {
                         "type": "string",
@@ -2880,7 +2880,7 @@ const docTemplate = `{
         },
         "/api/v1/statistics": {
             "get": {
-                "description": "Get Handles statistics.",
+                "description": "GetStatistics Handles statistics.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2890,7 +2890,7 @@ const docTemplate = `{
                 "tags": [
                     "question"
                 ],
-                "summary": "Get statistics",
+                "summary": "GetStatistics statistics",
                 "parameters": [
                     {
                         "type": "string",
@@ -2928,7 +2928,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/testAuth/auth-vk/auth": {
+        "/api/v1/testAuth/auth-vk/auth/{code}": {
             "get": {
                 "description": "Handles user auth VK.",
                 "consumes": [
@@ -2941,6 +2941,15 @@ const docTemplate = `{
                     "auth-vk"
                 ],
                 "summary": "User auth VK",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Code of the oauth message",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Auth successful",

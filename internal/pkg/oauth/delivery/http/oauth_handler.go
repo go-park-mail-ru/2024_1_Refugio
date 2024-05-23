@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/mux"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -92,14 +93,41 @@ func (ah *OAuthHandler) GetLoginURLVK(w http.ResponseWriter, r *http.Request) {
 // @Tags auth-vk
 // @Accept json
 // @Produce json
+// @Param code path string true "Code of the oauth message"
 // @Success 200 {object} response.Response "Auth successful"
 // @Failure 500 {object} response.ErrorResponse "Failed to auth user"
-// @Router /api/v1/testAuth/auth-vk/auth [get]
+// @Router /api/v1/testAuth/auth-vk/auth/{code} [get]
 func (ah *OAuthHandler) AuthVK(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("AuthVK")
+	vars := mux.Vars(r)
+	code, ok := vars["code"]
+	if !ok {
+		response.HandleError(w, http.StatusBadRequest, "Bad id in request")
+		return
+	}
 	ctx := r.Context()
-	code := r.FormValue("code")
+	/*
+		fmt.Println("AuthVK")
+		code := r.FormValue("code")
+	*/
 	conf := GetConfOauth2(REDIRECT_URL_SIGNUP)
+
+	// vk_mock
+	if code == "855ab871bba885204e" {
+		vkUser := &api.VKUser{
+			FirstName: "Max",
+			Surname:   "Frelih",
+			Gender:    domain_models.GetGenderTypeInt(2),
+			// Birthday:  birthdayTime,
+			VKId: uint32(1234567),
+		}
+		randToken := make([]byte, 16)
+		rand.Read(randToken)
+		authToken := fmt.Sprintf("%x", randToken)
+		mapVKIDToken[vkUser.VKId] = authToken
+		w.Header().Set("AuthToken", authToken)
+		response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"VKUser": vkUser})
+		return
+	}
 
 	if code == "" {
 		response.HandleError(w, http.StatusBadRequest, "wrong code")
@@ -140,9 +168,13 @@ func (ah *OAuthHandler) AuthVK(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} response.ErrorResponse "Failed to add user"
 // @Router /api/v1/testAuth/auth-vk/signupVK [post]
 func (ah *OAuthHandler) SignupVK(w http.ResponseWriter, r *http.Request) {
-	var newUser api.VKUser
-	err := json.NewDecoder(r.Body).Decode(&newUser)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Invalid input body")
+		return
+	}
+	var newUser api.VKUser
+	if err := newUser.UnmarshalJSON(body); err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}

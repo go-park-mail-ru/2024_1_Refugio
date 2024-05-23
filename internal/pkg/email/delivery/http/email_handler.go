@@ -2,10 +2,10 @@ package http
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"io"
 	"net"
 	"net/http"
 	"net/mail"
@@ -15,7 +15,6 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-	"github.com/gorilla/schema"
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/minio/minio-go/v7"
 
@@ -197,11 +196,13 @@ func (h *EmailHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} response.Response "Failed to add email message"
 // @Router /api/v1/email/send [post]
 func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
-	var newEmail emailApi.Email
-	decoder := schema.NewDecoder()
-	decoder.IgnoreUnknownKeys(true)
-	err := json.NewDecoder(r.Body).Decode(&newEmail)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Invalid input body")
+		return
+	}
+	var newEmail emailApi.Email
+	if err := newEmail.UnmarshalJSON(body); err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
 		return
 	}
@@ -471,11 +472,13 @@ func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var updatedEmail emailApi.Email
-	decoder := schema.NewDecoder()
-	decoder.IgnoreUnknownKeys(true)
-	err = json.NewDecoder(r.Body).Decode(&updatedEmail)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Invalid input body")
+		return
+	}
+	var updatedEmail emailApi.Email
+	if err := updatedEmail.UnmarshalJSON(body); err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
 		return
 	}
@@ -669,11 +672,13 @@ func (h *EmailHandler) SendFromAnotherDomain(w http.ResponseWriter, r *http.Requ
 // @Failure 500 {object} response.Response "Failed to add email message"
 // @Router /api/v1/email/adddraft [post]
 func (h *EmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
-	var newEmail emailApi.Email
-	decoder := schema.NewDecoder()
-	decoder.IgnoreUnknownKeys(true)
-	err := json.NewDecoder(r.Body).Decode(&newEmail)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Invalid input body")
+		return
+	}
+	var newEmail emailApi.Email
+	if err := newEmail.UnmarshalJSON(body); err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
 		return
 	}

@@ -196,7 +196,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Add Handles answer.
+      description: AddAnswer Handles answer.
       parameters:
       - description: CSRF Token
         in: header
@@ -228,7 +228,7 @@ paths:
           description: Failed to add answer
           schema:
             $ref: '#/definitions/response.ErrorResponse'
-      summary: Add answer
+      summary: AddAnswer answer
       tags:
       - question
   /api/v1/auth/gAuth:
@@ -2025,7 +2025,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get Handles questions.
+      description: GetAllQuestions Handles questions.
       parameters:
       - description: CSRF Token
         in: header
@@ -2051,13 +2051,13 @@ paths:
           description: Failed to get questions
           schema:
             $ref: '#/definitions/response.ErrorResponse'
-      summary: Get questions
+      summary: GetAllQuestions questions
       tags:
       - question
     post:
       consumes:
       - application/json
-      description: Add Handles question.
+      description: AddQuestion Handles question.
       parameters:
       - description: CSRF Token
         in: header
@@ -2089,14 +2089,14 @@ paths:
           description: Failed to add question
           schema:
             $ref: '#/definitions/response.ErrorResponse'
-      summary: Add question
+      summary: AddQuestion question
       tags:
       - question
   /api/v1/statistics:
     get:
       consumes:
       - application/json
-      description: Get Handles statistics.
+      description: GetStatistics Handles statistics.
       parameters:
       - description: CSRF Token
         in: header
@@ -2122,14 +2122,20 @@ paths:
           description: Failed to get statistics
           schema:
             $ref: '#/definitions/response.ErrorResponse'
-      summary: Get statistics
+      summary: GetStatistics statistics
       tags:
       - question
-  /api/v1/testAuth/auth-vk/auth:
+  /api/v1/testAuth/auth-vk/auth/{code}:
     get:
       consumes:
       - application/json
       description: Handles user auth VK.
+      parameters:
+      - description: Code of the oauth message
+        in: path
+        name: code
+        required: true
+        type: string
       produces:
       - application/json
       responses:
