@@ -11,6 +11,8 @@ func FileConvertCoreInProto(fileModelCore domain.File) *grpc.File {
 		Id:       fileModelCore.ID,
 		FileId:   fileModelCore.FileId,
 		FileType: fileModelCore.FileType,
+		FileName: fileModelCore.FileName,
+		FileSize: fileModelCore.FileSize,
 	}
 }
 
@@ -20,5 +22,7 @@ func FileConvertProtoInCore(fileModelProto grpc.File) *domain.File {
 		ID:       fileModelProto.Id,
 		FileId:   fileModelProto.FileId,
 		FileType: fileModelProto.FileType,
+		FileName: fileModelProto.FileName,
+		FileSize: fileModelProto.FileSize,
 	}
 }

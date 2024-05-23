@@ -29,7 +29,7 @@ type EmailUseCase interface {
 	CreateEmail(newEmail *emailCore.Email, ctx context.Context) (uint64, *emailCore.Email, error)
 
 	// CreateProfileEmail creates a new profile email.
-	CreateProfileEmail(emailID uint64, sender, recipient string, ctx context.Context) error
+	CreateProfileEmail(emailId uint64, sender, recipient string, ctx context.Context) error
 
 	// UpdateEmail updates the information of the specified email.
 	UpdateEmail(updatedEmail *emailCore.Email, ctx context.Context) (bool, error)
@@ -41,7 +41,7 @@ type EmailUseCase interface {
 	CheckRecipientEmail(recipient string, ctx context.Context) error
 
 	// AddAttachment adds an attachment to the specified email.
-	AddAttachment(fileID string, fileType string, emailID uint64, ctx context.Context) (uint64, error)
+	AddAttachment(fileID, fileType, fileName, fileSize string, emailID uint64, ctx context.Context) (uint64, error)
 
 	// GetFileByID returns the file with the specified ID.
 	GetFileByID(fileID uint64, ctx context.Context) (*emailCore.File, error)
@@ -53,11 +53,11 @@ type EmailUseCase interface {
 	DeleteFileByID(fileID uint64, ctx context.Context) (bool, error)
 
 	// UpdateFileByID updates the information of the specified file.
-	UpdateFileByID(fileID uint64, newFileID string, newFileType string, ctx context.Context) (bool, error)
+	UpdateFileByID(fileID uint64, newFileID, newFileType, newFileName, newFileSize string, ctx context.Context) (bool, error)
 
 	// AddFile add an file to database.
-	AddFile(fileID string, fileType string, ctx context.Context) (uint64, error)
+	AddFile(fileID, fileType, fileName, fileSize string, ctx context.Context) (uint64, error)
 
 	// AddFileToEmail add a file to an email.
-	AddFileToEmail(emailID uint64, fileID uint64, ctx context.Context) (error)
+	AddFileToEmail(emailID uint64, fileID uint64, ctx context.Context) error
 }

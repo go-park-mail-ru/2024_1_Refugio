@@ -458,19 +458,19 @@ func (r *EmailRepository) Delete(id uint64, login string, ctx context.Context) (
 	return true, nil
 }
 
-// AddFile adds a file entry to the database with the provided file ID and file type.
-func (r *EmailRepository) AddFile(fileID string, fileType string, ctx context.Context) (uint64, error) {
+// AddFile adds a file entry to the database with the provided file ID, file type, file name and file size.
+func (r *EmailRepository) AddFile(fileID string, fileType string, fileName string, fileSize string, ctx context.Context) (uint64, error) {
 	query := `
-        INSERT INTO file (file_id, file_type)
-        VALUES ($1, $2)
+        INSERT INTO file (file_id, file_type, file_name, file_size)
+        VALUES ($1, $2, $3, $4)
         RETURNING id
     `
 
 	var id uint64
 	start := time.Now()
-	err := r.DB.QueryRowContext(ctx, query, fileID, fileType).Scan(&id)
+	err := r.DB.QueryRowContext(ctx, query, fileID, fileType, fileName, fileSize).Scan(&id)
 
-	args := []interface{}{fileID, fileType}
+	args := []interface{}{fileID, fileType, fileName, fileSize}
 	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
 
 	if err != nil {
@@ -503,30 +503,32 @@ func (r *EmailRepository) AddAttachment(emailID uint64, fileID uint64, ctx conte
 // GetFileByID retrieves file information based on the provided file ID.
 func (r *EmailRepository) GetFileByID(id uint64, ctx context.Context) (*domain.File, error) {
 	query := `
-        SELECT file_id, file_type
+        SELECT file_id, file_type, file_name, file_size
         FROM file
         WHERE id = $1
     `
 
 	var fileID string
 	var fileType string
+	var fileName string
+	var fileSize string
 	start := time.Now()
-	err := r.DB.QueryRowContext(ctx, query, id).Scan(&fileID, &fileType)
+	err := r.DB.QueryRowContext(ctx, query, id).Scan(&fileID, &fileType, &fileName, &fileSize)
 
-	args := []interface{}{fileID}
+	args := []interface{}{id}
 	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get file: %v", err)
 	}
 
-	return &domain.File{ID: id, FileId: fileID, FileType: fileType}, nil
+	return &domain.File{ID: id, FileId: fileID, FileType: fileType, FileName: fileName, FileSize: fileSize}, nil
 }
 
 // GetFilesByEmailID retrieves all files associated with a given email ID.
 func (r *EmailRepository) GetFilesByEmailID(emailID uint64, ctx context.Context) ([]*domain.File, error) {
 	query := `
-        SELECT f.id, f.file_id, f.file_type
+        SELECT f.id, f.file_id, f.file_type, f.file_name, f.file_size
         FROM file f
         JOIN email_file ef ON f.id = ef.file_id
         WHERE ef.email_id = $1
@@ -545,7 +547,7 @@ func (r *EmailRepository) GetFilesByEmailID(emailID uint64, ctx context.Context)
 
 	for rows.Next() {
 		var file repository_models.File
-		err := rows.Scan(&file.ID, &file.FileId, &file.FileType)
+		err := rows.Scan(&file.ID, &file.FileId, &file.FileType, &file.FileName, &file.FileSize)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan file: %v", err)
 		}
@@ -587,18 +589,18 @@ func (r *EmailRepository) DeleteFileByID(fileID uint64, ctx context.Context) err
 	return nil
 }
 
-// UpdateFileByID updates the file ID and file type of a file entry in the database based on the provided file ID.
-func (r *EmailRepository) UpdateFileByID(fileID uint64, newFileID string, newFileType string, ctx context.Context) error {
+// UpdateFileByID updates the file ID, file type, file name and file size of a file entry in the database based on the provided file ID.
+func (r *EmailRepository) UpdateFileByID(fileID uint64, newFileID string, newFileType string, newFileName string, newFileSize string, ctx context.Context) error {
 	query := `
         UPDATE file
-        SET file_id = $1, file_type = $2
-        WHERE id = $3
+        SET file_id = $1, file_type = $2, file_name = $3, file_size = $3
+        WHERE id = $4
     `
 
 	start := time.Now()
-	_, err := r.DB.ExecContext(ctx, query, newFileID, newFileType, fileID)
+	_, err := r.DB.ExecContext(ctx, query, newFileID, newFileType, newFileName, newFileSize, fileID)
 
-	args := []interface{}{newFileID, newFileType, fileID}
+	args := []interface{}{newFileID, newFileType, newFileName, newFileSize, fileID}
 	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
 
 	if err != nil {

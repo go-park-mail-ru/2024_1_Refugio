@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"os"
 	"testing"
 	"time"
 
@@ -20,13 +19,7 @@ import (
 )
 
 func GetCTX() context.Context {
-	f, err := os.OpenFile("log_test.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		fmt.Println("Failed to create logfile" + "log.txt")
-	}
-	defer f.Close()
-
-	ctx := context.WithValue(context.Background(), interface{}(string(constants.LoggerKey)), logger.InitializationBdLog(f))
+	ctx := context.WithValue(context.Background(), interface{}(string(constants.LoggerKey)), logger.InitializationBdLog(nil))
 	ctx2 := context.WithValue(ctx, interface{}(string(constants.RequestIDKey)), []string{"testID"})
 
 	return ctx2
@@ -939,13 +932,15 @@ func TestAddFile(t *testing.T) {
 	t.Run("FileAddedSuccessfully", func(t *testing.T) {
 		fileID := "file123"
 		fileType := "text/plain"
+		fileName := "PDF"
+		fileSize := "10101010"
 		expectedID := uint64(1)
 
 		mock.ExpectQuery("INSERT INTO file").
-			WithArgs(fileID, fileType).
+			WithArgs(fileID, fileType, fileName, fileSize).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(expectedID))
 
-		id, err := repo.AddFile(fileID, fileType, ctx)
+		id, err := repo.AddFile(fileID, fileType, fileName, fileSize, ctx)
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedID, id)
@@ -954,12 +949,14 @@ func TestAddFile(t *testing.T) {
 	t.Run("FileAddFailed", func(t *testing.T) {
 		fileID := "file123"
 		fileType := "text/plain"
+		fileName := "PDF"
+		fileSize := "10101010"
 
 		mock.ExpectQuery("INSERT INTO file").
-			WithArgs(fileID, fileType).
+			WithArgs(fileID, fileType, fileName, fileSize).
 			WillReturnError(fmt.Errorf("database error"))
 
-		id, err := repo.AddFile(fileID, fileType, ctx)
+		id, err := repo.AddFile(fileID, fileType, fileName, fileSize, ctx)
 
 		assert.Error(t, err)
 		assert.Zero(t, id)
@@ -1023,11 +1020,13 @@ func TestGetFileByID(t *testing.T) {
 		Id := uint64(1)
 		fileID := "file123"
 		fileType := "text/plain"
-		expectedFile := &domain.File{ID: Id, FileId: fileID, FileType: fileType}
+		fileName := "PDF"
+		fileSize := "10101010"
+		expectedFile := &domain.File{ID: Id, FileId: fileID, FileType: fileType, FileName: fileName, FileSize: fileSize}
 
-		mock.ExpectQuery("SELECT file_id, file_type FROM file").
+		mock.ExpectQuery("SELECT file_id, file_type, file_name, file_size FROM file").
 			WithArgs(uint64(1)).
-			WillReturnRows(sqlmock.NewRows([]string{"file_id", "file_type"}).AddRow(fileID, fileType))
+			WillReturnRows(sqlmock.NewRows([]string{"file_id", "file_type", "file_name", "file_size"}).AddRow(fileID, fileType, fileName, fileSize))
 
 		file, err := repo.GetFileByID(uint64(1), ctx)
 
@@ -1036,7 +1035,7 @@ func TestGetFileByID(t *testing.T) {
 	})
 
 	t.Run("FileNotFound", func(t *testing.T) {
-		mock.ExpectQuery("SELECT file_id, file_type FROM file").
+		mock.ExpectQuery("SELECT file_id, file_type, file_name, file_size FROM file").
 			WithArgs(uint64(2)).
 			WillReturnError(sql.ErrNoRows)
 
@@ -1074,15 +1073,15 @@ func TestGetFilesByEmailID(t *testing.T) {
 	t.Run("FilesFound", func(t *testing.T) {
 		emailID := uint64(1)
 		expectedFiles := []*domain.File{
-			{ID: 1, FileId: "file123", FileType: "text/plain"},
-			{ID: 2, FileId: "file456", FileType: "image/jpeg"},
+			{ID: 1, FileId: "file123", FileType: "text/plain", FileName: "PDF", FileSize: "10101010"},
+			{ID: 2, FileId: "file456", FileType: "image/jpeg", FileName: "PDF", FileSize: "10101010"},
 		}
 
-		rows := sqlmock.NewRows([]string{"id", "file_id", "file_type"}).
-			AddRow(1, "file123", "text/plain").
-			AddRow(2, "file456", "image/jpeg")
+		rows := sqlmock.NewRows([]string{"id", "file_id", "file_type", "file_name", "file_size"}).
+			AddRow(1, "file123", "text/plain", "PDF", "10101010").
+			AddRow(2, "file456", "image/jpeg", "PDF", "10101010")
 
-		mock.ExpectQuery("SELECT f.id, f.file_id, f.file_type FROM file").
+		mock.ExpectQuery("SELECT f.id, f.file_id, f.file_type, f.file_name, f.file_size FROM file").
 			WithArgs(emailID).
 			WillReturnRows(rows)
 
@@ -1186,12 +1185,14 @@ func TestUpdateFileByID(t *testing.T) {
 		fileID := uint64(1)
 		newFileID := "newFileID"
 		newFileType := "newFileType"
+		newFileName := "PDF"
+		newFileSize := "10101010"
 
 		mock.ExpectExec("UPDATE file").
-			WithArgs(newFileID, newFileType, fileID).
+			WithArgs(newFileID, newFileType, newFileName, newFileSize, fileID).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
-		err := repo.UpdateFileByID(fileID, newFileID, newFileType, ctx)
+		err := repo.UpdateFileByID(fileID, newFileID, newFileType, newFileName, newFileSize, ctx)
 
 		assert.NoError(t, err)
 	})
@@ -1200,12 +1201,14 @@ func TestUpdateFileByID(t *testing.T) {
 		fileID := uint64(2)
 		newFileID := "newFileID"
 		newFileType := "newFileType"
+		newFileName := "PDF"
+		newFileSize := "10101010"
 
 		mock.ExpectExec("UPDATE file").
-			WithArgs(newFileID, newFileType, fileID).
+			WithArgs(newFileID, newFileType, newFileName, newFileSize, fileID).
 			WillReturnResult(sqlmock.NewResult(0, 0))
 
-		err := repo.UpdateFileByID(fileID, newFileID, newFileType, ctx)
+		err := repo.UpdateFileByID(fileID, newFileID, newFileType, newFileName, newFileSize, ctx)
 
 		assert.NoError(t, err)
 	})
@@ -1214,12 +1217,14 @@ func TestUpdateFileByID(t *testing.T) {
 		fileID := uint64(3)
 		newFileID := "newFileID"
 		newFileType := "newFileType"
+		newFileName := "PDF"
+		newFileSize := "10101010"
 
 		mock.ExpectExec("UPDATE file").
-			WithArgs(newFileID, newFileType, fileID).
+			WithArgs(newFileID, newFileType, newFileName, newFileSize, fileID).
 			WillReturnError(fmt.Errorf("database error"))
 
-		err := repo.UpdateFileByID(fileID, newFileID, newFileType, ctx)
+		err := repo.UpdateFileByID(fileID, newFileID, newFileType, newFileName, newFileSize, ctx)
 
 		assert.Error(t, err)
 	})

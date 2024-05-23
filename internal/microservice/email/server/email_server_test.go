@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -19,13 +18,7 @@ import (
 )
 
 func GetCTX() context.Context {
-	f, err := os.OpenFile("log_test.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		fmt.Println("Failed to create logfile" + "log.txt")
-	}
-	defer f.Close()
-
-	ctx := context.WithValue(context.Background(), constants.LoggerKey, logger.InitializationBdLog(f))
+	ctx := context.WithValue(context.Background(), constants.LoggerKey, logger.InitializationBdLog(nil))
 	ctx2 := context.WithValue(ctx, constants.RequestIDKey, []string{"testID"})
 
 	return ctx2
@@ -470,12 +463,12 @@ func TestCheckRecipientEmail(t *testing.T) {
 	})
 
 	t.Run("CheckRecipientEmailFail Recipient login not found", func(t *testing.T) {
-		mockEmailUseCase.EXPECT().CheckRecipientEmail(recipient.Recipient, ctx).Return(fmt.Errorf("Recipient login not found"))
+		mockEmailUseCase.EXPECT().CheckRecipientEmail(recipient.Recipient, ctx).Return(fmt.Errorf("recipient login not found"))
 
 		_, err := server.CheckRecipientEmail(ctx, recipient)
 
 		assert.Error(t, err)
-		assert.Equal(t, fmt.Errorf("Recipient login not found"), err)
+		assert.Equal(t, fmt.Errorf("recipient login not found"), err)
 	})
 }
 
@@ -491,14 +484,18 @@ func TestAddAttachment(t *testing.T) {
 
 	fileID := "test_file_id"
 	fileType := "pdf"
+	fileName := "PDF"
+	fileSize := "10101010"
 	emailID := uint64(123)
 
 	t.Run("AddAttachment_Success", func(t *testing.T) {
-		mockEmailUseCase.EXPECT().AddAttachment(fileID, fileType, emailID, ctx).Return(uint64(456), nil)
+		mockEmailUseCase.EXPECT().AddAttachment(fileID, fileType, fileName, fileSize, emailID, ctx).Return(uint64(456), nil)
 
 		request := &proto.AddAttachmentRequest{
 			FileId:   fileID,
 			FileType: fileType,
+			FileName: fileName,
+			FileSize: fileSize,
 			EmailId:  emailID,
 		}
 
@@ -557,11 +554,13 @@ func TestAddAttachment(t *testing.T) {
 	})
 
 	t.Run("AddAttachment_FailedToAddAttachment", func(t *testing.T) {
-		mockEmailUseCase.EXPECT().AddAttachment(fileID, fileType, emailID, ctx).Return(uint64(0), fmt.Errorf("failed to add attachment"))
+		mockEmailUseCase.EXPECT().AddAttachment(fileID, fileType, fileName, fileSize, emailID, ctx).Return(uint64(0), fmt.Errorf("failed to add attachment"))
 
 		request := &proto.AddAttachmentRequest{
 			FileId:   fileID,
 			FileType: fileType,
+			FileName: fileName,
+			FileSize: fileSize,
 			EmailId:  emailID,
 		}
 
@@ -792,14 +791,18 @@ func TestUpdateFileByID(t *testing.T) {
 	fileID := uint64(123)
 	newFileID := "new_file_id"
 	newFileType := "pdf"
+	newFileName := "PDF"
+	newFileSize := "10101010"
 
 	t.Run("UpdateFileByID_Success", func(t *testing.T) {
-		mockEmailUseCase.EXPECT().UpdateFileByID(fileID, newFileID, newFileType, ctx).Return(true, nil)
+		mockEmailUseCase.EXPECT().UpdateFileByID(fileID, newFileID, newFileType, newFileName, newFileSize, ctx).Return(true, nil)
 
 		request := &proto.UpdateFileByIDRequest{
 			Id:          fileID,
 			NewFileId:   newFileID,
 			NewFileType: newFileType,
+			NewFileName: newFileName,
+			NewFileSize: newFileSize,
 		}
 
 		reply, err := server.UpdateFileByID(ctx, request)
@@ -823,6 +826,8 @@ func TestUpdateFileByID(t *testing.T) {
 			Id:          uint64(0),
 			NewFileId:   newFileID,
 			NewFileType: newFileType,
+			NewFileSize: newFileSize,
+			NewFileName: newFileName,
 		}
 
 		reply, err := server.UpdateFileByID(ctx, request)
@@ -858,12 +863,14 @@ func TestUpdateFileByID(t *testing.T) {
 	})
 
 	t.Run("UpdateFileByID_FailedToUpdateFile", func(t *testing.T) {
-		mockEmailUseCase.EXPECT().UpdateFileByID(fileID, newFileID, newFileType, ctx).Return(false, nil)
+		mockEmailUseCase.EXPECT().UpdateFileByID(fileID, newFileID, newFileType, newFileName, newFileSize, ctx).Return(false, nil)
 
 		request := &proto.UpdateFileByIDRequest{
 			Id:          fileID,
 			NewFileId:   newFileID,
 			NewFileType: newFileType,
+			NewFileName: newFileName,
+			NewFileSize: newFileSize,
 		}
 
 		reply, err := server.UpdateFileByID(ctx, request)
@@ -873,12 +880,14 @@ func TestUpdateFileByID(t *testing.T) {
 	})
 
 	t.Run("UpdateFileByID_FileNotUpdated", func(t *testing.T) {
-		mockEmailUseCase.EXPECT().UpdateFileByID(fileID, newFileID, newFileType, ctx).Return(false, nil)
+		mockEmailUseCase.EXPECT().UpdateFileByID(fileID, newFileID, newFileType, newFileName, newFileSize, ctx).Return(false, nil)
 
 		request := &proto.UpdateFileByIDRequest{
 			Id:          fileID,
 			NewFileId:   newFileID,
 			NewFileType: newFileType,
+			NewFileName: newFileName,
+			NewFileSize: newFileSize,
 		}
 
 		reply, err := server.UpdateFileByID(ctx, request)

@@ -36,33 +36,33 @@ func (m *MockEmailUseCase) EXPECT() *MockEmailUseCaseMockRecorder {
 }
 
 // AddAttachment mocks base method.
-func (m *MockEmailUseCase) AddAttachment(fileID, fileType string, emailID uint64, ctx context.Context) (uint64, error) {
+func (m *MockEmailUseCase) AddAttachment(fileID, fileType, fileName, fileSize string, emailID uint64, ctx context.Context) (uint64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddAttachment", fileID, fileType, emailID, ctx)
+	ret := m.ctrl.Call(m, "AddAttachment", fileID, fileType, fileName, fileSize, emailID, ctx)
 	ret0, _ := ret[0].(uint64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // AddAttachment indicates an expected call of AddAttachment.
-func (mr *MockEmailUseCaseMockRecorder) AddAttachment(fileID, fileType, emailID, ctx interface{}) *gomock.Call {
+func (mr *MockEmailUseCaseMockRecorder) AddAttachment(fileID, fileType, fileName, fileSize, emailID, ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddAttachment", reflect.TypeOf((*MockEmailUseCase)(nil).AddAttachment), fileID, fileType, emailID, ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddAttachment", reflect.TypeOf((*MockEmailUseCase)(nil).AddAttachment), fileID, fileType, fileName, fileSize, emailID, ctx)
 }
 
 // AddFile mocks base method.
-func (m *MockEmailUseCase) AddFile(fileID, fileType string, ctx context.Context) (uint64, error) {
+func (m *MockEmailUseCase) AddFile(fileID, fileType, fileName, fileSize string, ctx context.Context) (uint64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddFile", fileID, fileType, ctx)
+	ret := m.ctrl.Call(m, "AddFile", fileID, fileType, fileName, fileSize, ctx)
 	ret0, _ := ret[0].(uint64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // AddFile indicates an expected call of AddFile.
-func (mr *MockEmailUseCaseMockRecorder) AddFile(fileID, fileType, ctx interface{}) *gomock.Call {
+func (mr *MockEmailUseCaseMockRecorder) AddFile(fileID, fileType, fileName, fileSize, ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddFile", reflect.TypeOf((*MockEmailUseCase)(nil).AddFile), fileID, fileType, ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddFile", reflect.TypeOf((*MockEmailUseCase)(nil).AddFile), fileID, fileType, fileName, fileSize, ctx)
 }
 
 // AddFileToEmail mocks base method.
@@ -110,17 +110,17 @@ func (mr *MockEmailUseCaseMockRecorder) CreateEmail(newEmail, ctx interface{}) *
 }
 
 // CreateProfileEmail mocks base method.
-func (m *MockEmailUseCase) CreateProfileEmail(emailID uint64, sender, recipient string, ctx context.Context) error {
+func (m *MockEmailUseCase) CreateProfileEmail(emailId uint64, sender, recipient string, ctx context.Context) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateProfileEmail", emailID, sender, recipient, ctx)
+	ret := m.ctrl.Call(m, "CreateProfileEmail", emailId, sender, recipient, ctx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CreateProfileEmail indicates an expected call of CreateProfileEmail.
-func (mr *MockEmailUseCaseMockRecorder) CreateProfileEmail(emailID, sender, recipient, ctx interface{}) *gomock.Call {
+func (mr *MockEmailUseCaseMockRecorder) CreateProfileEmail(emailId, sender, recipient, ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateProfileEmail", reflect.TypeOf((*MockEmailUseCase)(nil).CreateProfileEmail), emailID, sender, recipient, ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateProfileEmail", reflect.TypeOf((*MockEmailUseCase)(nil).CreateProfileEmail), emailId, sender, recipient, ctx)
 }
 
 // DeleteEmail mocks base method.
@@ -274,16 +274,16 @@ func (mr *MockEmailUseCaseMockRecorder) UpdateEmail(updatedEmail, ctx interface{
 }
 
 // UpdateFileByID mocks base method.
-func (m *MockEmailUseCase) UpdateFileByID(fileID uint64, newFileID, newFileType string, ctx context.Context) (bool, error) {
+func (m *MockEmailUseCase) UpdateFileByID(fileID uint64, newFileID, newFileType, newFileName, newFileSize string, ctx context.Context) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateFileByID", fileID, newFileID, newFileType, ctx)
+	ret := m.ctrl.Call(m, "UpdateFileByID", fileID, newFileID, newFileType, newFileName, newFileSize, ctx)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // UpdateFileByID indicates an expected call of UpdateFileByID.
-func (mr *MockEmailUseCaseMockRecorder) UpdateFileByID(fileID, newFileID, newFileType, ctx interface{}) *gomock.Call {
+func (mr *MockEmailUseCaseMockRecorder) UpdateFileByID(fileID, newFileID, newFileType, newFileName, newFileSize, ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFileByID", reflect.TypeOf((*MockEmailUseCase)(nil).UpdateFileByID), fileID, newFileID, newFileType, ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFileByID", reflect.TypeOf((*MockEmailUseCase)(nil).UpdateFileByID), fileID, newFileID, newFileType, newFileName, newFileSize, ctx)
 }

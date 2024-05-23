@@ -11,6 +11,8 @@ func FileConvertDbInCore(fileModelDb database.File) *domain.File {
 		ID:       fileModelDb.ID,
 		FileId:   fileModelDb.FileId,
 		FileType: fileModelDb.FileType,
+		FileName: fileModelDb.FileName,
+		FileSize: fileModelDb.FileSize,
 	}
 }
 
@@ -20,5 +22,7 @@ func FileConvertCoreInDb(fileModelCore domain.File) *database.File {
 		ID:       fileModelCore.ID,
 		FileId:   fileModelCore.FileId,
 		FileType: fileModelCore.FileType,
+		FileName: fileModelCore.FileName,
+		FileSize: fileModelCore.FileSize,
 	}
 }

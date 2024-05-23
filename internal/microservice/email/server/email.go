@@ -190,7 +190,7 @@ func (es *EmailServer) CheckRecipientEmail(ctx context.Context, input *proto.Rec
 
 	err := es.EmailUseCase.CheckRecipientEmail(input.Recipient, ctx)
 	if err != nil {
-		return nil, fmt.Errorf("Recipient login not found")
+		return nil, fmt.Errorf("recipient login not found")
 	}
 
 	emailEmpty := new(proto.EmptyEmail)
@@ -223,20 +223,20 @@ func (es *EmailServer) AddAttachment(ctx context.Context, input *proto.AddAttach
 		return nil, fmt.Errorf("invalid file format: %s", input)
 	}
 
-	if validators.IsEmpty(input.FileId) || validators.IsEmpty(input.FileType) {
-		return nil, fmt.Errorf("file id or file type is empty")
+	if validators.IsEmpty(input.FileId) || validators.IsEmpty(input.FileType) || validators.IsEmpty(input.FileName) || validators.IsEmpty(input.FileSize) {
+		return nil, fmt.Errorf("file id or file type or file name or file size is empty")
 	}
 
 	if input.EmailId <= 0 {
 		return nil, fmt.Errorf("invalid email id")
 	}
 
-	fileId, err := es.EmailUseCase.AddAttachment(input.FileId, input.FileType, input.EmailId, ctx)
+	fileID, err := es.EmailUseCase.AddAttachment(input.FileId, input.FileType, input.FileName, input.FileSize, input.EmailId, ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed add attachment")
 	}
 
-	return &proto.AddAttachmentReply{FileId: fileId}, nil
+	return &proto.AddAttachmentReply{FileId: fileID}, nil
 }
 
 func (es *EmailServer) GetFileByID(ctx context.Context, input *proto.GetFileByIDRequest) (*proto.GetFileByIDReply, error) {
@@ -303,15 +303,15 @@ func (es *EmailServer) UpdateFileByID(ctx context.Context, input *proto.UpdateFi
 		return nil, fmt.Errorf("invalid file format: %s", input)
 	}
 
-	if validators.IsEmpty(input.NewFileId) || validators.IsEmpty(input.NewFileType) {
-		return nil, fmt.Errorf("file id or file type is empty")
+	if validators.IsEmpty(input.NewFileId) || validators.IsEmpty(input.NewFileType) || validators.IsEmpty(input.NewFileName) || validators.IsEmpty(input.NewFileSize) {
+		return nil, fmt.Errorf("file id or file type or file name or file size is empty")
 	}
 
 	if input.Id <= 0 {
 		return nil, fmt.Errorf("invalid file id")
 	}
 
-	updated, err := es.EmailUseCase.UpdateFileByID(input.Id, input.NewFileId, input.NewFileType, ctx)
+	updated, err := es.EmailUseCase.UpdateFileByID(input.Id, input.NewFileId, input.NewFileType, input.NewFileName, input.NewFileSize, ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed update file by id")
 	}
@@ -327,11 +327,11 @@ func (es *EmailServer) AddFile(ctx context.Context, input *proto.AddFileRequest)
 		return nil, fmt.Errorf("invalid file format: %s", input)
 	}
 
-	if validators.IsEmpty(input.FileId) || validators.IsEmpty(input.FileType) {
-		return nil, fmt.Errorf("file id or file type is empty")
+	if validators.IsEmpty(input.FileId) || validators.IsEmpty(input.FileType) || validators.IsEmpty(input.FileName) || validators.IsEmpty(input.FileSize) {
+		return nil, fmt.Errorf("file id or file type or file name or file size is empty")
 	}
 
-	fileId, err := es.EmailUseCase.AddFile(input.FileId, input.FileType, ctx)
+	fileId, err := es.EmailUseCase.AddFile(input.FileId, input.FileType, input.FileName, input.FileSize, ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed add attachment")
 	}

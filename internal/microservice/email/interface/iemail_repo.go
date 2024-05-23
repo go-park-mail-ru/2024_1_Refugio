@@ -27,8 +27,8 @@ type EmailRepository interface {
 	// GetAvatarFileIDByLogin getting an avatar by login.
 	GetAvatarFileIDByLogin(login string, ctx context.Context) (string, error)
 
-// Add adds a new email to the storage and returns its assigned unique identifier.
-	Add(email *domain.Email, ctx context.Context) (uint64, *domain.Email, error)
+	// Add adds a new email to the storage and returns its assigned unique identifier.
+	Add(emailModelCore *domain.Email, ctx context.Context) (uint64, *domain.Email, error)
 
 	// AddProfileEmail links an email to one or more profiles based on sender and recipient information.
 	AddProfileEmail(email_id uint64, sender, recipient string, ctx context.Context) error
@@ -45,8 +45,8 @@ type EmailRepository interface {
 	// FindEmail searches for a user in the database based on their login.
 	FindEmail(login string, ctx context.Context) error
 
-	// AddFile adds a file entry to the database with the provided file ID and file type.
-	AddFile(fileID string, fileType string, ctx context.Context) (uint64, error)
+	// AddFile adds a file entry to the database with the provided file ID, file type, file name and file size.
+	AddFile(fileID string, fileType string, fileName string, fileSize string, ctx context.Context) (uint64, error)
 
 	// AddAttachment links a file to an email by inserting a record into the email_file table.
 	AddAttachment(emailID uint64, fileID uint64, ctx context.Context) error
@@ -60,6 +60,6 @@ type EmailRepository interface {
 	// DeleteFileByID deletes a file entry from the database based on the provided file ID.
 	DeleteFileByID(fileID uint64, ctx context.Context) error
 
-	// UpdateFileByID updates the file ID and file type of a file entry in the database based on the provided file ID.
-	UpdateFileByID(fileID uint64, newFileID string, newFileType string, ctx context.Context) error
+	// UpdateFileByID updates the file ID, file type, file name and file size of a file entry in the database based on the provided file ID.
+	UpdateFileByID(fileID uint64, newFileID string, newFileType string, newFileName string, newFileSize string, ctx context.Context) error
 }
