@@ -3,7 +3,9 @@
 CREATE TABLE IF NOT EXISTS file (
     id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     file_id TEXT CHECK (LENGTH(file_id) <= 200),
-    file_type TEXT CHECK (LENGTH(file_id) <= 200)
+    file_type TEXT CHECK (LENGTH(file_id) <= 200),
+    file_name TEXT CHECK (LENGTH(file_id) <= 200),
+    file_size TEXT CHECK (LENGTH(file_id) <= 200)
 );
 
 -- Создание таблицы пользователей (profile)
