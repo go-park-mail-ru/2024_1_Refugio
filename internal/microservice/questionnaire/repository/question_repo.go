@@ -88,7 +88,7 @@ func (r *QuestionAnswerRepository) GetAllAnswers(ctx context.Context) ([]*domain
 
 	var answersModelCore []*domain.Answer
 	for _, a := range answersModelDb {
-		answersModelCore = append(answersModelCore, converters.AnswerConvertDbInCore(a))
+		answersModelCore = append(answersModelCore, converters.AnswerConvertDbInCore(&a))
 	}
 
 	return answersModelCore, nil
@@ -128,7 +128,7 @@ func (r *QuestionAnswerRepository) AddAnswer(newAnswer *domain.Answer, ctx conte
 	`
 
 	var id uint64
-	answerModelDb := converters.AnswerConvertCoreInDb(*newAnswer)
+	answerModelDb := converters.AnswerConvertCoreInDb(newAnswer)
 
 	start := time.Now()
 
