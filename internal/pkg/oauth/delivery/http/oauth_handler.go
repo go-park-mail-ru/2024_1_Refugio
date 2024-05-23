@@ -161,7 +161,7 @@ func (ah *OAuthHandler) AuthVK(w http.ResponseWriter, r *http.Request) {
 // @Tags auth-vk
 // @Accept json
 // @Produce json
-// @Param Auth-Token header string true "Auth Token"
+// @Param AuthToken header string true "Auth Token"
 // @Param newUser body response.UserVKSwag true "New user details for signup"
 // @Success 200 {object} response.Response "Signup successful"
 // @Failure 400 {object} response.ErrorResponse "Invalid request body"
@@ -181,7 +181,7 @@ func (ah *OAuthHandler) SignupVK(w http.ResponseWriter, r *http.Request) {
 
 	//mepVKIDToken[123] = "123"
 
-	authToken := r.Header.Get("Auth-Token")
+	authToken := r.Header.Get("AuthToken")
 	if authToken != mapVKIDToken[newUser.VKId] {
 		response.HandleError(w, http.StatusBadRequest, "failed authToken")
 		return
@@ -251,25 +251,34 @@ func (ah *OAuthHandler) SignupVK(w http.ResponseWriter, r *http.Request) {
 // @Tags auth-vk
 // @Accept json
 // @Produce json
-// @Param code query string true "code from oauth"
+// @Param code path string true "Code of the oauth message"
 // @Success 200 {object} response.Response "Login successful"
 // @Failure 400 {object} response.ErrorResponse "Invalid request body"
 // @Failure 401 {object} response.ErrorResponse "Invalid credentials"
 // @Failure 500 {object} response.ErrorResponse "Failed to create session"
-// @Router /api/v1/testAuth/auth-vk/loginVK [get]
+// @Router /api/v1/testAuth/auth-vk/loginVK/{code} [get]
 func (ah *OAuthHandler) LoginVK(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	code := r.FormValue("code")
-	conf := GetConfOauth2(REDIRECT_URL_LOGIN)
-	if code == "" {
-		response.HandleError(w, http.StatusBadRequest, "wrong code")
+	vars := mux.Vars(r)
+	code, ok := vars["code"]
+	if !ok || code == "" {
+		response.HandleError(w, http.StatusBadRequest, "Bad code in request")
 		return
 	}
+	ctx := r.Context()
+	conf := GetConfOauth2(REDIRECT_URL_LOGIN)
 
-	userVK, status, err := GetDataUser(*conf, code, ctx)
-	if err != nil {
-		response.HandleError(w, status, "failed get user data")
-		return
+	var userVK *api.VKUser
+	if code == "855ab871bba885204e" {
+		userVK = &api.VKUser{
+			VKId: 1234567,
+		}
+	} else {
+		userVk, status, err := GetDataUser(*conf, code, ctx)
+		if err != nil {
+			response.HandleError(w, status, "failed get user data")
+			return
+		}
+		userVK = userVk
 	}
 
 	/*

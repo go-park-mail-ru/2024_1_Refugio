@@ -321,7 +321,7 @@ func setupRouter(authHandler *authHand.AuthHandler, oauthHandler *oauthHand.OAut
 	router.HandleFunc("/api/v1/testAuth/auth-vk/getAuthUrlSignUpVK", oauthHandler.GetSignUpURLVK).Methods("GET", "OPTIONS")
 	router.HandleFunc("/api/v1/testAuth/auth-vk/getAuthUrlLoginVK", oauthHandler.GetLoginURLVK).Methods("GET", "OPTIONS")
 	router.HandleFunc("/api/v1/testAuth/auth-vk/auth/{code}", oauthHandler.AuthVK).Methods("GET", "OPTIONS")
-	router.HandleFunc("/api/v1/testAuth/auth-vk/loginVK", oauthHandler.LoginVK).Methods("GET", "OPTIONS")
+	router.HandleFunc("/api/v1/testAuth/auth-vk/loginVK/{code}", oauthHandler.LoginVK).Methods("GET", "OPTIONS")
 	router.HandleFunc("/api/v1/testAuth/auth-vk/signupVK", oauthHandler.SignupVK).Methods("POST", "OPTIONS")
 
 	auth := setupAuthRouter(authHandler, oauthHandler, oauthGMailHandler, emailHandler, logger)
