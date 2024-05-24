@@ -307,7 +307,7 @@ func initializeMiddlewareLogger() *middleware.Logger {
 		fmt.Println("Failed to create logfile" + "log.txt")
 	}
 
-	logrusAccess := logger.InitializationAccesLog(f)
+	logrusAccess := logger.InitializationAccessLog(f)
 	loggerAccess := new(middleware.Logger)
 	loggerAccess.Logger = logrusAccess
 
@@ -464,29 +464,26 @@ func startServer(router http.Handler) {
 func startSessionCleaner(interval time.Duration, sessionServiceClient session_proto.SessionServiceClient) {
 	ticker := time.NewTicker(interval)
 	go func() {
-		for {
-			select {
-			case <-ticker.C:
-				f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-				if err != nil {
-					fmt.Println("Failed to create logfile" + "log.txt")
-				}
-				defer f.Close()
-
-				c := context.WithValue(context.Background(), constants.LoggerKey, logger.InitializationBdLog(f))
-				ctx := context.WithValue(c, constants.RequestIDKey, "DeleteExpiredSessionsNULL")
-
-				req, err := sessionServiceClient.CleanupExpiredSessions(
-					metadata.NewOutgoingContext(ctx,
-						metadata.New(map[string]string{"requestID": ctx.Value("requestID").(string)})),
-					&session_proto.CleanupExpiredSessionsRequest{},
-				)
-				if err != nil {
-					fmt.Printf("Error cleaning expired sessions: %v\n", err)
-					return
-				}
-				fmt.Println(req)
+		for range ticker.C {
+			f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+			if err != nil {
+				fmt.Println("Failed to create logfile" + "log.txt")
 			}
+			defer f.Close()
+
+			c := context.WithValue(context.Background(), constants.LoggerKey, logger.InitializationBdLog(f))
+			ctx := context.WithValue(c, constants.RequestIDKey, "DeleteExpiredSessionsNULL")
+
+			req, err := sessionServiceClient.CleanupExpiredSessions(
+				metadata.NewOutgoingContext(ctx,
+					metadata.New(map[string]string{"requestID": ctx.Value("requestID").(string)})),
+				&session_proto.CleanupExpiredSessionsRequest{},
+			)
+			if err != nil {
+				fmt.Printf("Error cleaning expired sessions: %v\n", err)
+				return
+			}
+			fmt.Println(req)
 		}
 	}()
 }

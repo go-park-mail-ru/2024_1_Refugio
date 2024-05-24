@@ -93,8 +93,8 @@ func InitializationBdLog(f *os.File) *LogrusLogger {
 	return log
 }
 
-// InitializationAccesLog initializes the logger for accessing resources.
-func InitializationAccesLog(f *os.File) *LogrusLogger {
+// InitializationAccessLog initializes the logger for accessing resources.
+func InitializationAccessLog(f *os.File) *LogrusLogger {
 	log := new(LogrusLogger)
 	log.LogrusLogger = &logrus.Logger{
 		Out:   io.MultiWriter(f, os.Stdout),
@@ -148,11 +148,8 @@ func GetRequestIDString(requestIDValue interface{}) string {
 	if requestIDValue != nil {
 		requestIDString, ok := requestIDValue.(string)
 		if !ok {
-			requestIDInterface, ok := requestIDValue.(interface{})
-			if ok {
-				requestIDString = fmt.Sprintf("%v", requestIDInterface)
-				requestIDString = strings.Trim(requestIDString, "[]")
-			}
+			requestIDString = fmt.Sprintf("%v", requestIDValue)
+			requestIDString = strings.Trim(requestIDString, "[]")
 		}
 
 		return requestIDString

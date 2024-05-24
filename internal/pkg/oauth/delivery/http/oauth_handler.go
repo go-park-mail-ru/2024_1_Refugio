@@ -5,22 +5,25 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"io"
-	auth_proto "mail/internal/microservice/auth/proto"
+	"net/http"
+
+	"github.com/gorilla/mux"
+
 	"mail/internal/microservice/models/domain_models"
-	domain "mail/internal/microservice/models/domain_models"
-	api "mail/internal/models/delivery_models"
 	"mail/internal/models/microservice_ports"
-	response "mail/internal/models/response"
-	domainSession "mail/internal/pkg/session/interface"
 	"mail/internal/pkg/utils/connect_microservice"
 	"mail/internal/pkg/utils/sanitize"
+
+	auth_proto "mail/internal/microservice/auth/proto"
+	domain "mail/internal/microservice/models/domain_models"
+	api "mail/internal/models/delivery_models"
+	response "mail/internal/models/response"
+	domainSession "mail/internal/pkg/session/interface"
 	validUtil "mail/internal/pkg/utils/validators"
-	"net/http"
 )
 
 var (

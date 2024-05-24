@@ -11,16 +11,18 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"io"
+	"net/http"
+	"os"
+
+	"mail/internal/models/response"
+	"mail/internal/pkg/utils/sanitize"
+
 	auth_proto "mail/internal/microservice/auth/proto"
 	domain "mail/internal/microservice/models/domain_models"
 	user_proto "mail/internal/microservice/user/proto"
 	api "mail/internal/models/delivery_models"
-	"mail/internal/models/response"
 	domainSession "mail/internal/pkg/session/interface"
-	"mail/internal/pkg/utils/sanitize"
 	validUtil "mail/internal/pkg/utils/validators"
-	"net/http"
-	"os"
 )
 
 var (

@@ -60,8 +60,7 @@ func EmailConvertCoreInDb(emailModelCore *domain.Email) *database.Email {
 	}
 
 	if emailModelCore.PhotoID != "" {
-		var photoId *string
-		photoId = &emailModelCore.PhotoID
+		photoId := &emailModelCore.PhotoID
 		emailDB.PhotoID = photoId
 	}
 

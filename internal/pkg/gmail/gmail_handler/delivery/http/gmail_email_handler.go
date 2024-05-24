@@ -4,19 +4,22 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/denisbrodbeck/striphtmltags"
-	"github.com/gorilla/mux"
-	"github.com/microcosm-cc/bluemonday"
 	"google.golang.org/api/gmail/v1"
 	"io"
-	apiModels "mail/internal/models/delivery_models"
-	"mail/internal/models/response"
-	gmailAuth "mail/internal/pkg/gmail/gmail_auth/delivery/http"
-	domainSession "mail/internal/pkg/session/interface"
-	"mail/internal/pkg/utils/validators"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/denisbrodbeck/striphtmltags"
+	"github.com/gorilla/mux"
+	"github.com/microcosm-cc/bluemonday"
+
+	"mail/internal/models/response"
+	"mail/internal/pkg/utils/validators"
+
+	apiModels "mail/internal/models/delivery_models"
+	gmailAuth "mail/internal/pkg/gmail/gmail_auth/delivery/http"
+	domainSession "mail/internal/pkg/session/interface"
 )
 
 // GMailEmailHandler handles user-related HTTP requests.
@@ -240,7 +243,7 @@ func (g *GMailEmailHandler) GetSpam(w http.ResponseWriter, r *http.Request) {
 		emailsApi[i] = email
 	}
 
-	for i, _ := range emailsApi {
+	for i := range emailsApi {
 		emailsApi[i].SpamStatus = true
 	}
 
@@ -447,9 +450,9 @@ func (g *GMailEmailHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": true})
 }
 
-// Update update a email message.
-// @Summary Update a email draft message
-// @Description Update a update email message to the system
+// Update an email message.
+// @Summary Update an email draft message
+// @Description Update an update email message to the system
 // @Tags emails-gmail
 // @Accept json
 // @Produce json
@@ -538,28 +541,28 @@ func CreateEmailStruct(msg *gmail.Message) (*apiModels.OtherEmail, error) {
 	email.DateOfDispatch = time.Unix(msg.InternalDate/1000, 0)
 
 	if msg.Payload.MimeType == "text/plain" {
-		email = ParserMessageHeadres(email, msg)
+		email = ParserMessageHeaders(email, msg)
 		data, err := base64.URLEncoding.DecodeString(msg.Payload.Body.Data)
 		if err != nil {
-			return nil, fmt.Errorf("Error decoding body data")
+			return nil, fmt.Errorf("error decoding body data")
 		}
 		email.Text = striphtmltags.StripTags(string(data))
 	} else if msg.Payload.MimeType == "text/html" {
 		data, err := base64.URLEncoding.DecodeString(msg.Payload.Body.Data)
 		if err != nil {
-			return nil, fmt.Errorf("Error decoding body data")
+			return nil, fmt.Errorf("error decoding body data")
 		}
 		email.Text = string(data)
-		email = ParserMessageHeadres(email, msg)
+		email = ParserMessageHeaders(email, msg)
 	} else if len(msg.Payload.Parts) != 0 {
 		for _, part := range msg.Payload.Parts {
 			if part.MimeType == "text/html" {
 				data, err := base64.URLEncoding.DecodeString(part.Body.Data)
 				if err != nil {
-					return nil, fmt.Errorf("Error decoding body data")
+					return nil, fmt.Errorf("error decoding body data")
 				}
 				email.Text = string(data)
-				email = ParserMessageHeadres(email, msg)
+				email = ParserMessageHeaders(email, msg)
 			}
 		}
 	}
@@ -567,7 +570,7 @@ func CreateEmailStruct(msg *gmail.Message) (*apiModels.OtherEmail, error) {
 	return email, nil
 }
 
-func ParserMessageHeadres(email *apiModels.OtherEmail, msg *gmail.Message) *apiModels.OtherEmail {
+func ParserMessageHeaders(email *apiModels.OtherEmail, msg *gmail.Message) *apiModels.OtherEmail {
 	for _, mes := range msg.Payload.Headers {
 		if mes.Name == "To" {
 			email.RecipientEmail = mes.Value
@@ -585,7 +588,7 @@ func ParserMessageHeadres(email *apiModels.OtherEmail, msg *gmail.Message) *apiM
 func GetSRV(login string) (*gmail.Service, error) {
 	srv, ok := gmailAuth.MapOAuthCongig[login]
 	if !ok {
-		return nil, errors.New("Unable to retrieve Gmail client")
+		return nil, errors.New("unable to retrieve Gmail client")
 	}
 	return srv, nil
 }

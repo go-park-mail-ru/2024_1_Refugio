@@ -274,7 +274,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 
 		response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*emailData)})
 		return
-	case validators.IsValidEmailFormat(sender) == true && validators.IsValidEmailFormat(recipient) == false:
+	case validators.IsValidEmailFormat(sender) && !validators.IsValidEmailFormat(recipient):
 		err = h.Sessions.CheckLogin(sender, r, r.Context())
 		if err != nil {
 			response.HandleError(w, http.StatusBadRequest, "Bad sender login")
@@ -341,7 +341,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 
 		response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*emailData)})
 		return
-	case validators.IsValidEmailFormat(sender) == false && validators.IsValidEmailFormat(recipient) == true:
+	case !validators.IsValidEmailFormat(sender) && validators.IsValidEmailFormat(recipient):
 		fmt.Println("-----START_1----")
 		_, err = h.EmailServiceClient.CheckRecipientEmail(
 			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
@@ -785,7 +785,7 @@ func (h *EmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
 
 			response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*emailData)})
 			return
-		case validators.IsValidEmailFormat(sender) == true && validators.IsValidEmailFormat(recipient) == false:
+		case validators.IsValidEmailFormat(sender) && !validators.IsValidEmailFormat(recipient):
 			err = h.Sessions.CheckLogin(sender, r, r.Context())
 			if err != nil {
 				response.HandleError(w, http.StatusBadRequest, "Bad sender login")
@@ -828,7 +828,7 @@ func (h *EmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
 
 			response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*emailData)})
 			return
-		case validators.IsValidEmailFormat(sender) == false && validators.IsValidEmailFormat(recipient) == true:
+		case !validators.IsValidEmailFormat(sender) && validators.IsValidEmailFormat(recipient):
 			_, err = h.EmailServiceClient.CheckRecipientEmail(
 				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 				&proto.Recipient{Recipient: recipient},
