@@ -17,8 +17,7 @@ import (
 )
 
 var (
-	AHandler                        = &AuthHandler{}
-	requestIDContextKey interface{} = "requestid"
+	AHandler = &AuthHandler{}
 )
 
 // AuthHandler handles user-related HTTP requests.
