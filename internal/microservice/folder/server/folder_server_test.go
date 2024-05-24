@@ -400,15 +400,15 @@ func TestGetAllEmailsInFolder(t *testing.T) {
 
 	expectedObjectsEmail := &proto.ObjectsEmail{Emails: emailObArr}
 
-	t.Run("GetAllEmailsInFoldereSuccessfully", func(t *testing.T) {
+	t.Run("GetAllEmailsInFolderSuccessfully", func(t *testing.T) {
 		mockFolderUseCase.EXPECT().GetAllEmailsInFolder(data.FolderID, data.ProfileID, data.Limit, data.Offset, data.Login, ctx).Return(emails, nil)
 
 		objectEmail, err := server.GetAllEmailsInFolder(ctx, data)
 
 		assert.NoError(t, err)
-		for i, _ := range objectEmail.Emails {
+		for i := range objectEmail.Emails {
 			objectEmail.Emails[i].DateOfDispatch = nil
-			assert.Equal(t, *expectedObjectsEmail.Emails[i], *objectEmail.Emails[i])
+			assert.Equal(t, expectedObjectsEmail.Emails[i], objectEmail.Emails[i])
 		}
 	})
 
