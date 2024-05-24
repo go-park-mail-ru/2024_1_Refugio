@@ -13,7 +13,7 @@ import (
 	"mail/internal/microservice/models/proto_converters"
 	"mail/internal/models/response"
 
-	folder_proto "mail/internal/microservice/folder/proto"
+	folderProto "mail/internal/microservice/folder/proto"
 	converters "mail/internal/models/delivery_converters"
 	folderApi "mail/internal/models/delivery_models"
 	domainSession "mail/internal/pkg/session/interface"
@@ -26,7 +26,7 @@ var (
 // FolderHandler represents the handler for folder operations.
 type FolderHandler struct {
 	Sessions            domainSession.SessionsManager
-	FolderServiceClient folder_proto.FolderServiceClient
+	FolderServiceClient folderProto.FolderServiceClient
 }
 
 func sanitizeString(str string) string {
