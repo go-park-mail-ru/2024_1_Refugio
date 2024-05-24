@@ -20,8 +20,7 @@ import (
 )
 
 var (
-	FHandler                        = &FolderHandler{}
-	requestIDContextKey interface{} = "requestID"
+	FHandler = &FolderHandler{}
 )
 
 // FolderHandler represents the handler for folder operations.
