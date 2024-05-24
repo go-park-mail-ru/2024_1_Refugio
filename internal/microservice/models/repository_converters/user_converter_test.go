@@ -24,7 +24,7 @@ func TestUserConvertDbInCore(t *testing.T) {
 		Description: "Test description",
 	}
 
-	userCore := UserConvertDbInCore(userModelDb)
+	userCore := UserConvertDbInCore(&userModelDb)
 
 	expectedUserCore := &domain.User{
 		ID:          userModelDb.ID,
@@ -57,7 +57,7 @@ func TestUserConvertCoreInDb(t *testing.T) {
 		Description: "Test description",
 	}
 
-	userDb := UserConvertCoreInDb(userModelCore)
+	userDb := UserConvertCoreInDb(&userModelCore)
 
 	assert.NotNil(t, userDb)
 }

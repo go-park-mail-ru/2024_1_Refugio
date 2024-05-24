@@ -31,7 +31,7 @@ func (es *EmailServer) GetEmailByID(ctx context.Context, input *proto.EmailIdAnd
 		return nil, fmt.Errorf("email not found")
 	}
 
-	return converters.EmailConvertCoreInProto(*email), nil
+	return converters.EmailConvertCoreInProto(email), nil
 }
 
 func (es *EmailServer) GetAllIncoming(ctx context.Context, input *proto.LoginOffsetLimit) (*proto.Emails, error) {
@@ -46,7 +46,7 @@ func (es *EmailServer) GetAllIncoming(ctx context.Context, input *proto.LoginOff
 
 	emailsProto := make([]*proto.Email, len(emailsCore))
 	for i, e := range emailsCore {
-		emailsProto[i] = converters.EmailConvertCoreInProto(*e)
+		emailsProto[i] = converters.EmailConvertCoreInProto(e)
 	}
 
 	emailProto := new(proto.Emails)
@@ -66,7 +66,7 @@ func (es *EmailServer) GetAllSent(ctx context.Context, input *proto.LoginOffsetL
 
 	emailsProto := make([]*proto.Email, len(emailsCore))
 	for i, e := range emailsCore {
-		emailsProto[i] = converters.EmailConvertCoreInProto(*e)
+		emailsProto[i] = converters.EmailConvertCoreInProto(e)
 	}
 
 	emailProto := new(proto.Emails)
@@ -86,7 +86,7 @@ func (es *EmailServer) GetDraftEmails(ctx context.Context, input *proto.LoginOff
 
 	emailsProto := make([]*proto.Email, len(emailsCore))
 	for i, e := range emailsCore {
-		emailsProto[i] = converters.EmailConvertCoreInProto(*e)
+		emailsProto[i] = converters.EmailConvertCoreInProto(e)
 	}
 
 	emailProto := new(proto.Emails)
@@ -106,7 +106,7 @@ func (es *EmailServer) GetSpamEmails(ctx context.Context, input *proto.LoginOffs
 
 	emailsProto := make([]*proto.Email, len(emailsCore))
 	for i, e := range emailsCore {
-		emailsProto[i] = converters.EmailConvertCoreInProto(*e)
+		emailsProto[i] = converters.EmailConvertCoreInProto(e)
 	}
 
 	emailProto := new(proto.Emails)
@@ -119,14 +119,14 @@ func (es *EmailServer) CreateEmail(ctx context.Context, input *proto.Email) (*pr
 		return nil, fmt.Errorf("invalid email format: %s", input)
 	}
 
-	id, email, err := es.EmailUseCase.CreateEmail(converters.EmailConvertProtoInCore(*input), ctx)
+	id, email, err := es.EmailUseCase.CreateEmail(converters.EmailConvertProtoInCore(input), ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed create email")
 	}
 
 	emailWithId := new(proto.EmailWithID)
 	emailWithId.Id = id
-	emailWithId.Email = converters.EmailConvertCoreInProto(*email)
+	emailWithId.Email = converters.EmailConvertCoreInProto(email)
 	return emailWithId, nil
 }
 
@@ -135,7 +135,7 @@ func (es *EmailServer) UpdateEmail(ctx context.Context, input *proto.Email) (*pr
 		return nil, fmt.Errorf("invalid email format: %s", input)
 	}
 
-	okStatus, err := es.EmailUseCase.UpdateEmail(converters.EmailConvertProtoInCore(*input), ctx)
+	okStatus, err := es.EmailUseCase.UpdateEmail(converters.EmailConvertProtoInCore(input), ctx)
 
 	if err != nil {
 		return nil, fmt.Errorf("email not found")
@@ -202,7 +202,7 @@ func (es *EmailServer) AddEmailDraft(ctx context.Context, input *proto.Email) (*
 		return nil, fmt.Errorf("invalid email format: %s", input)
 	}
 
-	id, email, err := es.EmailUseCase.CreateEmail(converters.EmailConvertProtoInCore(*input), ctx)
+	id, email, err := es.EmailUseCase.CreateEmail(converters.EmailConvertProtoInCore(input), ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed create email")
 	}
@@ -214,7 +214,7 @@ func (es *EmailServer) AddEmailDraft(ctx context.Context, input *proto.Email) (*
 
 	emailWithId := new(proto.EmailWithID)
 	emailWithId.Id = id
-	emailWithId.Email = converters.EmailConvertCoreInProto(*email)
+	emailWithId.Email = converters.EmailConvertCoreInProto(email)
 	return emailWithId, nil
 }
 
@@ -253,7 +253,7 @@ func (es *EmailServer) GetFileByID(ctx context.Context, input *proto.GetFileByID
 		return nil, fmt.Errorf("failed get file by id")
 	}
 
-	return &proto.GetFileByIDReply{File: converters.FileConvertCoreInProto(*file)}, nil
+	return &proto.GetFileByIDReply{File: converters.FileConvertCoreInProto(file)}, nil
 }
 
 func (es *EmailServer) GetFilesByEmailID(ctx context.Context, input *proto.GetFilesByEmailIDRequest) (*proto.GetFilesByEmailIDReply, error) {
@@ -272,7 +272,7 @@ func (es *EmailServer) GetFilesByEmailID(ctx context.Context, input *proto.GetFi
 
 	filesProto := make([]*proto.File, 0, len(files))
 	for _, file := range files {
-		filesProto = append(filesProto, converters.FileConvertCoreInProto(*file))
+		filesProto = append(filesProto, converters.FileConvertCoreInProto(file))
 	}
 
 	return &proto.GetFilesByEmailIDReply{Files: filesProto}, nil

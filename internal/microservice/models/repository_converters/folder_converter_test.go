@@ -22,7 +22,7 @@ func TestFolderConvertDbInCore(t *testing.T) {
 		Name:      "Inbox",
 	}
 
-	actualCore := FolderConvertDbInCore(folderModelDb)
+	actualCore := FolderConvertDbInCore(&folderModelDb)
 	assert.Equal(t, expectedCore, actualCore)
 }
 
@@ -39,6 +39,6 @@ func TestFolderConvertCoreInDb(t *testing.T) {
 		Name:      "Inbox",
 	}
 
-	actualDb := FolderConvertCoreInDb(folderModelCore)
+	actualDb := FolderConvertCoreInDb(&folderModelCore)
 	assert.Equal(t, expectedDb, actualDb)
 }

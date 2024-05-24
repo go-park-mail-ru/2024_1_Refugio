@@ -54,7 +54,7 @@ import (
 // @version 1.0
 // @description API server for MailHub
 
-// @host mailhub.su
+// @host localhost:8080
 // @BasePath /
 func main() {
 	settingTime()

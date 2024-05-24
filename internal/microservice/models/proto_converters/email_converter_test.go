@@ -44,7 +44,7 @@ func TestEmailConvertCoreInProto(t *testing.T) {
 		RecipientEmail: "recipient@example.com",
 	}
 
-	actualProto := EmailConvertCoreInProto(emailModelCore)
+	actualProto := EmailConvertCoreInProto(&emailModelCore)
 	assert.Equal(t, expectedProto, actualProto)
 }
 
@@ -81,7 +81,7 @@ func TestEmailConvertProtoInCore(t *testing.T) {
 		RecipientEmail: "recipient@example.com",
 	}
 
-	actualCore := EmailConvertProtoInCore(emailModelProto)
+	actualCore := EmailConvertProtoInCore(&emailModelProto)
 	assert.Equal(t, expectedCore, actualCore)
 }
 

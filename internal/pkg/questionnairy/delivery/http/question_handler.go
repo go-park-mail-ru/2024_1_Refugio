@@ -52,7 +52,7 @@ func (qh *QuestionHandler) GetAllQuestions(w http.ResponseWriter, r *http.Reques
 
 	questionsCore := make([]*domain.Question, 0, len(questionProto.Questions))
 	for _, question := range questionProto.Questions {
-		questionsCore = append(questionsCore, proto_converters.QuestionConvertProtoInCore(*question))
+		questionsCore = append(questionsCore, proto_converters.QuestionConvertProtoInCore(question))
 	}
 
 	questionsApi := make([]*api.Question, 0, len(questionsCore))
@@ -98,7 +98,7 @@ func (qh *QuestionHandler) AddQuestion(w http.ResponseWriter, r *http.Request) {
 	questionProto, errStatus := qh.QuestionServiceClient.AddQuestion(
 		metadata.NewOutgoingContext(r.Context(),
 			metadata.New(map[string]string{"requestID": r.Context().Value("requestID").(string)})),
-		&question_proto.AddQuestionRequest{Question: proto_converters.QuestionConvertCoreInProto(*question)},
+		&question_proto.AddQuestionRequest{Question: proto_converters.QuestionConvertCoreInProto(question)},
 	)
 	if errStatus != nil {
 		response.HandleError(w, http.StatusInternalServerError, "Add question failed")
@@ -147,7 +147,7 @@ func (qh *QuestionHandler) AddAnswer(w http.ResponseWriter, r *http.Request) {
 	answerProto, errStatus := qh.QuestionServiceClient.AddAnswer(
 		metadata.NewOutgoingContext(r.Context(),
 			metadata.New(map[string]string{"requestID": r.Context().Value("requestID").(string)})),
-		&question_proto.AddAnswerRequest{Answer: proto_converters.AnswerConvertCoreInProto(*answer)},
+		&question_proto.AddAnswerRequest{Answer: proto_converters.AnswerConvertCoreInProto(answer)},
 	)
 	if errStatus != nil {
 		response.HandleError(w, http.StatusInternalServerError, "Add answer failed")

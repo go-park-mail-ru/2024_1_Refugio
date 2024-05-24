@@ -8,7 +8,7 @@ import (
 )
 
 // EmailConvertCoreInProto converts an email model from the application core to the gRPC format.
-func EmailConvertCoreInProto(emailModelCore domain.Email) *grpc.Email {
+func EmailConvertCoreInProto(emailModelCore *domain.Email) *grpc.Email {
 	return &grpc.Email{
 		Id:             emailModelCore.ID,
 		Topic:          emailModelCore.Topic,
@@ -27,7 +27,7 @@ func EmailConvertCoreInProto(emailModelCore domain.Email) *grpc.Email {
 }
 
 // EmailConvertProtoInCore converts an email model from the gRPC format to the application core.
-func EmailConvertProtoInCore(emailModelProto grpc.Email) *domain.Email {
+func EmailConvertProtoInCore(emailModelProto *grpc.Email) *domain.Email {
 	return &domain.Email{
 		ID:             emailModelProto.Id,
 		Topic:          emailModelProto.Topic,
@@ -49,7 +49,7 @@ func EmailConvertProtoInCore(emailModelProto grpc.Email) *domain.Email {
 func EmailsConvertProtoInCore(emailModelProto *grpc.Emails) []*domain.Email {
 	emailsCore := make([]*domain.Email, 0, len(emailModelProto.Emails))
 	for _, email := range emailModelProto.Emails {
-		emailsCore = append(emailsCore, EmailConvertProtoInCore(*email))
+		emailsCore = append(emailsCore, EmailConvertProtoInCore(email))
 	}
 	return emailsCore
 }

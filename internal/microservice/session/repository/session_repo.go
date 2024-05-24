@@ -83,7 +83,7 @@ func (repo *SessionRepository) GetSessionByID(sessionID string, ctx context.Cont
 		return nil, fmt.Errorf("failed to get session: %v", err)
 	}
 
-	return converters.SessionConvertDbInCore(session), nil
+	return converters.SessionConvertDbInCore(&session), nil
 }
 
 // GetLoginBySessionID retrieves the login associated with the given session ID.

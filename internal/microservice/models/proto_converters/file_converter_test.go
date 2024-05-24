@@ -16,7 +16,7 @@ func TestFileConvertCoreInProto(t *testing.T) {
 		FileType: "pdf",
 	}
 
-	fileModelProto := FileConvertCoreInProto(fileModelCore)
+	fileModelProto := FileConvertCoreInProto(&fileModelCore)
 
 	assert.Equal(t, fileModelCore.ID, fileModelProto.Id)
 	assert.Equal(t, fileModelCore.FileId, fileModelProto.FileId)
@@ -30,7 +30,7 @@ func TestFileConvertProtoInCore(t *testing.T) {
 		FileType: "pdf",
 	}
 
-	fileModelCore := FileConvertProtoInCore(fileModelProto)
+	fileModelCore := FileConvertProtoInCore(&fileModelProto)
 
 	assert.Equal(t, fileModelProto.Id, fileModelCore.ID)
 	assert.Equal(t, fileModelProto.FileId, fileModelCore.FileId)

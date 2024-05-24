@@ -26,7 +26,7 @@ func TestQuestionConvertDbInCore(t *testing.T) {
 		DopQuestion: "Why do you like it?",
 	}
 
-	actualCore := QuestionConvertDbInCore(questionModelDb)
+	actualCore := QuestionConvertDbInCore(&questionModelDb)
 	assert.Equal(t, expectedCore, actualCore)
 }
 
@@ -47,6 +47,6 @@ func TestQuestionConvertCoreInDb(t *testing.T) {
 		DopQuestion: "Why do you like it?",
 	}
 
-	actualDb := QuestionConvertCoreInDb(questionModelCore)
+	actualDb := QuestionConvertCoreInDb(&questionModelCore)
 	assert.Equal(t, expectedDb, actualDb)
 }

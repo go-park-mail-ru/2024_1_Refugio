@@ -6,7 +6,7 @@ import (
 )
 
 // FolderConvertDbInCore converts a folder model from database representation to core domain representation.
-func FolderConvertDbInCore(folderModelDb database.Folder) *domain.Folder {
+func FolderConvertDbInCore(folderModelDb *database.Folder) *domain.Folder {
 	return &domain.Folder{
 		ID:        folderModelDb.ID,
 		ProfileId: folderModelDb.ProfileId,
@@ -15,7 +15,7 @@ func FolderConvertDbInCore(folderModelDb database.Folder) *domain.Folder {
 }
 
 // FolderConvertCoreInDb converts a folder model from core domain representation to database representation.
-func FolderConvertCoreInDb(folderModelCore domain.Folder) *database.Folder {
+func FolderConvertCoreInDb(folderModelCore *domain.Folder) *database.Folder {
 	return &database.Folder{
 		ID:        folderModelCore.ID,
 		ProfileId: folderModelCore.ProfileId,

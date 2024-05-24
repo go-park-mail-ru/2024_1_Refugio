@@ -83,7 +83,7 @@ func (h *FolderHandler) Add(w http.ResponseWriter, r *http.Request) {
 		response.HandleError(w, http.StatusInternalServerError, "Failed to add folder message")
 		return
 	}
-	folderData := proto_converters.FolderConvertProtoInCore(*folderDataProto.Folder)
+	folderData := proto_converters.FolderConvertProtoInCore(folderDataProto.Folder)
 
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"folder": converters.FolderConvertCoreInApi(*folderData)})
 }

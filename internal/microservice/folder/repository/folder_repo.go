@@ -30,7 +30,7 @@ func (r *FolderRepository) Create(folderModelCore *domain.Folder, ctx context.Co
 		RETURNING id
 	`
 
-	folderModelDb := converters.FolderConvertCoreInDb(*folderModelCore)
+	folderModelDb := converters.FolderConvertCoreInDb(folderModelCore)
 
 	var id uint32
 
@@ -79,7 +79,7 @@ func (r *FolderRepository) GetAll(profileID uint32, offset, limit int64, ctx con
 
 	var foldersModelCore []*domain.Folder
 	for _, e := range foldersModelDb {
-		foldersModelCore = append(foldersModelCore, converters.FolderConvertDbInCore(e))
+		foldersModelCore = append(foldersModelCore, converters.FolderConvertDbInCore(&e))
 	}
 
 	return foldersModelCore, nil
@@ -123,7 +123,7 @@ func (r *FolderRepository) Update(folderModelCore *domain.Folder, ctx context.Co
             folder.id = $2 AND folder.profile_id = $3
     `
 
-	newUdFolderDb := converters.FolderConvertCoreInDb(*folderModelCore)
+	newUdFolderDb := converters.FolderConvertCoreInDb(folderModelCore)
 
 	start := time.Now()
 	result, err := r.DB.Exec(query, newUdFolderDb.Name, newUdFolderDb.ID, newUdFolderDb.ProfileId)
@@ -336,7 +336,7 @@ func (r *FolderRepository) GetAllFolderName(emailID uint32, ctx context.Context)
 
 	var foldersModelCore []*domain.Folder
 	for _, e := range foldersModelDb {
-		foldersModelCore = append(foldersModelCore, converters.FolderConvertDbInCore(e))
+		foldersModelCore = append(foldersModelCore, converters.FolderConvertDbInCore(&e))
 	}
 
 	return foldersModelCore, nil

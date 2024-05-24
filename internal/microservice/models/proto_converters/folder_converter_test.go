@@ -24,7 +24,7 @@ func TestFolderConvertCoreInProto(t *testing.T) {
 		ProfileId: 123,
 	}
 
-	actualProto := FolderConvertCoreInProto(folderModelCore)
+	actualProto := FolderConvertCoreInProto(&folderModelCore)
 	assert.Equal(t, expectedProto, actualProto)
 }
 
@@ -41,7 +41,7 @@ func TestFolderConvertProtoInCore(t *testing.T) {
 		ProfileId: 123,
 	}
 
-	actualCore := FolderConvertProtoInCore(folderModelProto)
+	actualCore := FolderConvertProtoInCore(&folderModelProto)
 	assert.Equal(t, expectedCore, actualCore)
 }
 
@@ -111,7 +111,7 @@ func TestObjectEmailConvertProtoInCore(t *testing.T) {
 		RecipientEmail: "recipient@example.com",
 	}
 
-	actualCore := ObjectEmailConvertProtoInCore(folderEmailModelProto)
+	actualCore := ObjectEmailConvertProtoInCore(&folderEmailModelProto)
 	assert.Equal(t, expectedCore, actualCore)
 }
 
@@ -148,7 +148,7 @@ func TestObjectEmailConvertCoreInProto(t *testing.T) {
 		RecipientEmail: "recipient@example.com",
 	}
 
-	actualProto := ObjectEmailConvertCoreInProto(folderEmailModelCore)
+	actualProto := ObjectEmailConvertCoreInProto(&folderEmailModelCore)
 	assert.Equal(t, expectedProto, actualProto)
 }
 

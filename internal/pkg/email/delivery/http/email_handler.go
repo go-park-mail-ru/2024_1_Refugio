@@ -177,7 +177,7 @@ func (h *EmailHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		response.HandleError(w, http.StatusNotFound, "Email not found")
 		return
 	}
-	emailData := proto_converters.EmailConvertProtoInCore(*emailDataProto)
+	emailData := proto_converters.EmailConvertProtoInCore(emailDataProto)
 
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*emailData)})
 }
@@ -260,7 +260,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 			response.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
 			return
 		}
-		emailData := proto_converters.EmailConvertProtoInCore(*emailDataProto.Email)
+		emailData := proto_converters.EmailConvertProtoInCore(emailDataProto.Email)
 		emailData.ID = emailDataProto.Id
 
 		_, err = h.EmailServiceClient.CreateProfileEmail(
@@ -327,7 +327,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 			response.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
 			return
 		}
-		emailData := proto_converters.EmailConvertProtoInCore(*emailDataProto.Email)
+		emailData := proto_converters.EmailConvertProtoInCore(emailDataProto.Email)
 		emailData.ID = emailDataProto.Id
 
 		_, err = h.EmailServiceClient.CreateProfileEmail(
@@ -376,7 +376,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 			response.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
 			return
 		}
-		emailData := proto_converters.EmailConvertProtoInCore(*emailDataProto.Email)
+		emailData := proto_converters.EmailConvertProtoInCore(emailDataProto.Email)
 		emailData.ID = emailDataProto.Id
 
 		fmt.Println("-----START_3----")
@@ -726,7 +726,7 @@ func (h *EmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
 			response.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
 			return
 		}
-		emailData := proto_converters.EmailConvertProtoInCore(*emailDataProto.Email)
+		emailData := proto_converters.EmailConvertProtoInCore(emailDataProto.Email)
 		emailData.ID = emailDataProto.Id
 
 		response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*emailData)})
@@ -771,7 +771,7 @@ func (h *EmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
 				response.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
 				return
 			}
-			emailData := proto_converters.EmailConvertProtoInCore(*emailDataProto.Email)
+			emailData := proto_converters.EmailConvertProtoInCore(emailDataProto.Email)
 			emailData.ID = emailDataProto.Id
 
 			_, err = h.EmailServiceClient.CreateProfileEmail(
@@ -814,7 +814,7 @@ func (h *EmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
 				response.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
 				return
 			}
-			emailData := proto_converters.EmailConvertProtoInCore(*emailDataProto.Email)
+			emailData := proto_converters.EmailConvertProtoInCore(emailDataProto.Email)
 			emailData.ID = emailDataProto.Id
 
 			_, err = h.EmailServiceClient.CreateProfileEmail(
@@ -860,7 +860,7 @@ func (h *EmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
 				response.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
 				return
 			}
-			emailData := proto_converters.EmailConvertProtoInCore(*emailDataProto.Email)
+			emailData := proto_converters.EmailConvertProtoInCore(emailDataProto.Email)
 			emailData.ID = emailDataProto.Id
 
 			_, err = h.EmailServiceClient.CreateProfileEmail(

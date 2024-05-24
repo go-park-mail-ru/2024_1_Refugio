@@ -30,7 +30,7 @@ func (es *QuestionAnswerServer) GetQuestions(ctx context.Context, input *proto.G
 
 	questionsProto := make([]*proto.Question, len(questionsCore))
 	for i, q := range questionsCore {
-		questionsProto[i] = converters.QuestionConvertCoreInProto(*q)
+		questionsProto[i] = converters.QuestionConvertCoreInProto(q)
 	}
 
 	questionProto := new(proto.GetQuestionsReply)
@@ -45,7 +45,7 @@ func (es *QuestionAnswerServer) AddQuestion(ctx context.Context, input *proto.Ad
 		return nil, fmt.Errorf("Question bad request")
 	}
 
-	status, err := es.QuestionAnswerUseCase.AddQuestion(converters.QuestionConvertProtoInCore(*input.Question), ctx)
+	status, err := es.QuestionAnswerUseCase.AddQuestion(converters.QuestionConvertProtoInCore(input.Question), ctx)
 
 	statusProto := new(proto.AddQuestionReply)
 	statusProto.Status = status
@@ -62,7 +62,7 @@ func (es *QuestionAnswerServer) AddAnswer(ctx context.Context, input *proto.AddA
 		return nil, fmt.Errorf("Answer bad request")
 	}
 
-	status, err := es.QuestionAnswerUseCase.AddAnswer(converters.AnswerConvertProtoInCore(*input.Answer), ctx)
+	status, err := es.QuestionAnswerUseCase.AddAnswer(converters.AnswerConvertProtoInCore(input.Answer), ctx)
 
 	statusProto := new(proto.AddAnswerReply)
 	statusProto.Status = status
@@ -85,7 +85,7 @@ func (es *QuestionAnswerServer) GetStatistic(ctx context.Context, input *proto.G
 		if s == nil {
 			continue
 		}
-		statisticsProto[i] = converters.StatisticConvertCoreInProto(*s)
+		statisticsProto[i] = converters.StatisticConvertCoreInProto(s)
 	}
 
 	statisticProto := new(proto.GetStatisticReply)

@@ -74,7 +74,7 @@ func (sm *SessionsManager) GetSession(r *http.Request, ctx context.Context) *api
 		return nil
 	}
 
-	sessionCore := proto_converters.SessionConvertProtoInCore(*sessionProto.Session)
+	sessionCore := proto_converters.SessionConvertProtoInCore(sessionProto.Session)
 
 	return converters.SessionConvertCoreInApi(sessionCore)
 }
@@ -100,7 +100,7 @@ func (sm *SessionsManager) Check(r *http.Request, ctx context.Context) (*api.Ses
 		return nil, fmt.Errorf("no session found")
 	}
 
-	sessionCore := proto_converters.SessionConvertProtoInCore(*sessionProto.Session)
+	sessionCore := proto_converters.SessionConvertProtoInCore(sessionProto.Session)
 
 	if r.URL.Path != "/api/v1/verify-auth" && sessionCore.CsrfToken != csrfToken {
 		return nil, fmt.Errorf("CSRF token mismatch")
@@ -196,7 +196,7 @@ func (sm *SessionsManager) Create(w http.ResponseWriter, userID uint32, ctx cont
 	}
 	http.SetCookie(w, sessionCookie)
 
-	sessionCore := proto_converters.SessionConvertProtoInCore(*sess.Session)
+	sessionCore := proto_converters.SessionConvertProtoInCore(sess.Session)
 
 	return converters.SessionConvertCoreInApi(sessionCore), nil
 }

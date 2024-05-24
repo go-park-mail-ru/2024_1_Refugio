@@ -6,7 +6,7 @@ import (
 )
 
 // FileConvertCoreInProto converts a file model from the application core to the gRPC format.
-func FileConvertCoreInProto(fileModelCore domain.File) *grpc.File {
+func FileConvertCoreInProto(fileModelCore *domain.File) *grpc.File {
 	return &grpc.File{
 		Id:       fileModelCore.ID,
 		FileId:   fileModelCore.FileId,
@@ -17,7 +17,7 @@ func FileConvertCoreInProto(fileModelCore domain.File) *grpc.File {
 }
 
 // FileConvertProtoInCore converts a file model from the gRPC format to the application core.
-func FileConvertProtoInCore(fileModelProto grpc.File) *domain.File {
+func FileConvertProtoInCore(fileModelProto *grpc.File) *domain.File {
 	return &domain.File{
 		ID:       fileModelProto.Id,
 		FileId:   fileModelProto.FileId,

@@ -19,7 +19,7 @@ func TestSessionConvertDbInCore(t *testing.T) {
 		CsrfToken:    "csrf_token_123",
 	}
 
-	sessionCore := SessionConvertDbInCore(sessionModelDb)
+	sessionCore := SessionConvertDbInCore(&sessionModelDb)
 
 	expectedSessionCore := &domain.Session{
 		ID:           sessionModelDb.ID,
@@ -45,7 +45,7 @@ func TestSessionConvertCoreInDb(t *testing.T) {
 		CsrfToken:    "csrf_token_123",
 	}
 
-	sessionDb := SessionConvertCoreInDb(sessionModelCore)
+	sessionDb := SessionConvertCoreInDb(&sessionModelCore)
 
 	expectedSessionDb := &database.Session{
 		ID:           sessionModelCore.ID,

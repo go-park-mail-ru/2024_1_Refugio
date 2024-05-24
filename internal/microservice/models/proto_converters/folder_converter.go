@@ -8,7 +8,7 @@ import (
 )
 
 // FolderConvertCoreInProto converts a folder model from the application core to the gRPC format.
-func FolderConvertCoreInProto(folderModelCore domain.Folder) *grpc.Folder {
+func FolderConvertCoreInProto(folderModelCore *domain.Folder) *grpc.Folder {
 	return &grpc.Folder{
 		Id:        folderModelCore.ID,
 		Name:      folderModelCore.Name,
@@ -17,7 +17,7 @@ func FolderConvertCoreInProto(folderModelCore domain.Folder) *grpc.Folder {
 }
 
 // FolderConvertProtoInCore converts a folder model from the gRPC format to the application core.
-func FolderConvertProtoInCore(folderModelProto grpc.Folder) *domain.Folder {
+func FolderConvertProtoInCore(folderModelProto *grpc.Folder) *domain.Folder {
 	return &domain.Folder{
 		ID:        folderModelProto.Id,
 		Name:      folderModelProto.Name,
@@ -29,13 +29,13 @@ func FolderConvertProtoInCore(folderModelProto grpc.Folder) *domain.Folder {
 func FoldersConvertProtoInCore(folderModelProto *grpc.Folders) []*domain.Folder {
 	foldersCore := make([]*domain.Folder, 0, len(folderModelProto.Folders))
 	for _, folder := range folderModelProto.Folders {
-		foldersCore = append(foldersCore, FolderConvertProtoInCore(*folder))
+		foldersCore = append(foldersCore, FolderConvertProtoInCore(folder))
 	}
 	return foldersCore
 }
 
 // ObjectEmailConvertProtoInCore converts an email model from the gRPC format to the application core.
-func ObjectEmailConvertProtoInCore(folderEmailModelProto grpc.ObjectEmail) *domain.Email {
+func ObjectEmailConvertProtoInCore(folderEmailModelProto *grpc.ObjectEmail) *domain.Email {
 	return &domain.Email{
 		ID:             folderEmailModelProto.Id,
 		Topic:          folderEmailModelProto.Topic,
@@ -54,7 +54,7 @@ func ObjectEmailConvertProtoInCore(folderEmailModelProto grpc.ObjectEmail) *doma
 }
 
 // ObjectEmailConvertCoreInProto converts an email model from the application core to the gRPC format.
-func ObjectEmailConvertCoreInProto(folderEmailModelCore domain.Email) *grpc.ObjectEmail {
+func ObjectEmailConvertCoreInProto(folderEmailModelCore *domain.Email) *grpc.ObjectEmail {
 	return &grpc.ObjectEmail{
 		Id:             folderEmailModelCore.ID,
 		Topic:          folderEmailModelCore.Topic,
@@ -76,7 +76,7 @@ func ObjectEmailConvertCoreInProto(folderEmailModelCore domain.Email) *grpc.Obje
 func ObjectsEmailConvertProtoInCore(folderEmailsModelProto *grpc.ObjectsEmail) []*domain.Email {
 	emailsCore := make([]*domain.Email, 0, len(folderEmailsModelProto.Emails))
 	for _, email := range folderEmailsModelProto.Emails {
-		emailsCore = append(emailsCore, ObjectEmailConvertProtoInCore(*email))
+		emailsCore = append(emailsCore, ObjectEmailConvertProtoInCore(email))
 	}
 	return emailsCore
 }

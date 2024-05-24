@@ -563,7 +563,7 @@ func (r *EmailRepository) GetFilesByEmailID(emailID uint64, ctx context.Context)
 
 	var filesModelCore []*domain.File
 	for _, f := range filesModelDb {
-		filesModelCore = append(filesModelCore, converters.FileConvertDbInCore(*f))
+		filesModelCore = append(filesModelCore, converters.FileConvertDbInCore(f))
 	}
 
 	return filesModelCore, nil

@@ -25,14 +25,14 @@ func (es *FolderServer) CreateFolder(ctx context.Context, input *proto.Folder) (
 		return nil, fmt.Errorf("invalid folder format: %s", input)
 	}
 
-	id, folder, err := es.FolderUseCase.CreateFolder(converters.FolderConvertProtoInCore(*input), ctx)
+	id, folder, err := es.FolderUseCase.CreateFolder(converters.FolderConvertProtoInCore(input), ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed create folder")
 	}
 
 	folderWithId := new(proto.FolderWithID)
 	folderWithId.Id = id
-	folderWithId.Folder = converters.FolderConvertCoreInProto(*folder)
+	folderWithId.Folder = converters.FolderConvertCoreInProto(folder)
 	return folderWithId, nil
 }
 
@@ -52,7 +52,7 @@ func (es *FolderServer) GetAllFolders(ctx context.Context, input *proto.GetAllFo
 
 	foldersProto := make([]*proto.Folder, len(foldersCore))
 	for i, f := range foldersCore {
-		foldersProto[i] = converters.FolderConvertCoreInProto(*f)
+		foldersProto[i] = converters.FolderConvertCoreInProto(f)
 	}
 
 	folderProto := new(proto.Folders)
@@ -88,7 +88,7 @@ func (es *FolderServer) UpdateFolder(ctx context.Context, input *proto.Folder) (
 		return nil, fmt.Errorf("invalid folderID = %s or ProfileId = %s or Name = %s", strconv.Itoa(int(input.Id)), strconv.Itoa(int(input.ProfileId)), input.Name)
 	}
 
-	foldersCore, err := es.FolderUseCase.UpdateFolder(converters.FolderConvertProtoInCore(*input), ctx)
+	foldersCore, err := es.FolderUseCase.UpdateFolder(converters.FolderConvertProtoInCore(input), ctx)
 	folderProto := new(proto.FolderStatus)
 	folderProto.Status = foldersCore
 	if err != nil || !folderProto.Status {
@@ -194,7 +194,7 @@ func (es *FolderServer) GetAllEmailsInFolder(ctx context.Context, input *proto.G
 
 	emailsProto := make([]*proto.ObjectEmail, len(emailsCore))
 	for i, e := range emailsCore {
-		emailsProto[i] = converters.ObjectEmailConvertCoreInProto(*e)
+		emailsProto[i] = converters.ObjectEmailConvertCoreInProto(e)
 	}
 
 	emailProto := new(proto.ObjectsEmail)
@@ -218,7 +218,7 @@ func (es *FolderServer) GetAllNameFolders(ctx context.Context, input *proto.GetA
 
 	foldersProto := make([]*proto.Folder, len(foldersCore))
 	for i, f := range foldersCore {
-		foldersProto[i] = converters.FolderConvertCoreInProto(*f)
+		foldersProto[i] = converters.FolderConvertCoreInProto(f)
 	}
 
 	folderProto := new(proto.Folders)

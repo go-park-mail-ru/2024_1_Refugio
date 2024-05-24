@@ -74,7 +74,7 @@ func (uh *UserHandler) GetUserBySession(w http.ResponseWriter, r *http.Request) 
 		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
-	userData := proto_converters.UserConvertProtoInCore(*userDataProto.User)
+	userData := proto_converters.UserConvertProtoInCore(userDataProto.User)
 
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"user": converters.UserConvertCoreInApi(*userData)})
 }
@@ -121,13 +121,13 @@ func (uh *UserHandler) UpdateUserData(w http.ResponseWriter, r *http.Request) {
 	userUpdateProto, err := uh.UserServiceClient.UpdateUser(
 		metadata.NewOutgoingContext(r.Context(),
 			metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
-		&proto.UpdateUserRequest{User: proto_converters.UserConvertCoreInProto(*converters.UserConvertApiInCore(updatedUser))},
+		&proto.UpdateUserRequest{User: proto_converters.UserConvertCoreInProto(converters.UserConvertApiInCore(updatedUser))},
 	)
 	if err != nil {
 		response.HandleError(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
-	userUpdated := proto_converters.UserConvertProtoInCore(*userUpdateProto.User)
+	userUpdated := proto_converters.UserConvertProtoInCore(userUpdateProto.User)
 
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"user": converters.UserConvertCoreInApi(*userUpdated)})
 }

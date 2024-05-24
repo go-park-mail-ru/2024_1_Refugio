@@ -6,7 +6,7 @@ import (
 )
 
 // FileConvertDbInCore converts a file model from database representation to core domain representation.
-func FileConvertDbInCore(fileModelDb database.File) *domain.File {
+func FileConvertDbInCore(fileModelDb *database.File) *domain.File {
 	return &domain.File{
 		ID:       fileModelDb.ID,
 		FileId:   fileModelDb.FileId,
@@ -17,7 +17,7 @@ func FileConvertDbInCore(fileModelDb database.File) *domain.File {
 }
 
 // FileConvertCoreInDb converts a file model from core domain representation to database representation.
-func FileConvertCoreInDb(fileModelCore domain.File) *database.File {
+func FileConvertCoreInDb(fileModelCore *domain.File) *database.File {
 	return &database.File{
 		ID:       fileModelCore.ID,
 		FileId:   fileModelCore.FileId,

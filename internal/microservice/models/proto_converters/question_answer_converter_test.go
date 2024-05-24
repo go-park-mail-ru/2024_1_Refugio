@@ -26,7 +26,7 @@ func TestQuestionConvertCoreInProto(t *testing.T) {
 		DopQuestion: "What is your gender?",
 	}
 
-	actualProto := QuestionConvertCoreInProto(questionModelCore)
+	actualProto := QuestionConvertCoreInProto(&questionModelCore)
 	assert.Equal(t, expectedProto, actualProto)
 }
 
@@ -47,7 +47,7 @@ func TestQuestionConvertProtoInCore(t *testing.T) {
 		DopQuestion: "What is your gender?",
 	}
 
-	actualCore := QuestionConvertProtoInCore(questionModelProto)
+	actualCore := QuestionConvertProtoInCore(&questionModelProto)
 	assert.Equal(t, expectedCore, actualCore)
 }
 
@@ -68,7 +68,7 @@ func TestAnswerConvertCoreInProto(t *testing.T) {
 		Text:       "Good job!",
 	}
 
-	actualProto := AnswerConvertCoreInProto(answerModelCore)
+	actualProto := AnswerConvertCoreInProto(&answerModelCore)
 	assert.Equal(t, expectedProto, actualProto)
 }
 
@@ -89,7 +89,7 @@ func TestAnswerConvertProtoInCore(t *testing.T) {
 		Text:       "Good job!",
 	}
 
-	actualCore := AnswerConvertProtoInCore(answerModelProto)
+	actualCore := AnswerConvertProtoInCore(&answerModelProto)
 	assert.Equal(t, expectedCore, actualCore)
 }
 
@@ -104,6 +104,6 @@ func TestStatisticConvertCoreInProto(t *testing.T) {
 		Average: 30.5,
 	}
 
-	actualProto := StatisticConvertCoreInProto(statisticModelCore)
+	actualProto := StatisticConvertCoreInProto(&statisticModelCore)
 	assert.Equal(t, expectedProto, actualProto)
 }

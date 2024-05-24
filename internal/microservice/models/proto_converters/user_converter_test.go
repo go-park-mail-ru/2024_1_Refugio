@@ -41,7 +41,7 @@ func TestUserConvertCoreInProto(t *testing.T) {
 		Description: "Some description",
 	}
 
-	actualProto := UserConvertCoreInProto(userModelCore)
+	actualProto := UserConvertCoreInProto(&userModelCore)
 	assert.Equal(t, expectedProto, actualProto)
 }
 
@@ -59,6 +59,6 @@ func TestUserConvertProtoInCore(t *testing.T) {
 		Description: "Some description",
 	}
 
-	actualCore := UserConvertProtoInCore(userModelProto)
+	actualCore := UserConvertProtoInCore(&userModelProto)
 	assert.NotNil(t, actualCore)
 }

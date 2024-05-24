@@ -22,7 +22,7 @@ func TestFileConvertDbInCore(t *testing.T) {
 		FileType: "Photo",
 	}
 
-	actualCore := FileConvertDbInCore(fileModelDb)
+	actualCore := FileConvertDbInCore(&fileModelDb)
 	assert.Equal(t, expectedCore, actualCore)
 }
 
@@ -39,6 +39,6 @@ func TestFileConvertCoreInDb(t *testing.T) {
 		FileType: "Photo",
 	}
 
-	actualDb := FileConvertCoreInDb(fileModelCore)
+	actualDb := FileConvertCoreInDb(&fileModelCore)
 	assert.Equal(t, expectedDb, actualDb)
 }
