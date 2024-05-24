@@ -124,7 +124,11 @@ func (ah *OAuthHandler) AuthVK(w http.ResponseWriter, r *http.Request) {
 			VKId: uint32(1234567),
 		}
 		randToken := make([]byte, 16)
-		rand.Read(randToken)
+		_, err := rand.Read(randToken)
+		if err != nil {
+			fmt.Println("Error reading random numbers:", err)
+			return
+		}
 		authToken := fmt.Sprintf("%x", randToken)
 		mapVKIDToken[vkUser.VKId] = authToken
 		w.Header().Set("AuthToken", authToken)
