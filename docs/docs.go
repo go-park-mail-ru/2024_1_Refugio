@@ -1783,7 +1783,7 @@ const docTemplate = `{
         },
         "/api/v1/gmail/draft/update/{id}": {
             "put": {
-                "description": "UpdateDraft a update draft message to the system",
+                "description": "UpdateDraft an update draft message to the system",
                 "consumes": [
                     "application/json"
                 ],
@@ -1793,7 +1793,7 @@ const docTemplate = `{
                 "tags": [
                     "drafts-gmail"
                 ],
-                "summary": "UpdateDraft a update draft message",
+                "summary": "UpdateDraft an update draft message",
                 "parameters": [
                     {
                         "type": "string",
@@ -1849,14 +1849,14 @@ const docTemplate = `{
         },
         "/api/v1/gmail/draft/{id}": {
             "get": {
-                "description": "Get an draft message by its unique identifier",
+                "description": "Get a draft message by its unique identifier",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "drafts-gmail"
                 ],
-                "summary": "Get an draft message by ID",
+                "summary": "Get a draft message by ID",
                 "parameters": [
                     {
                         "type": "string",
@@ -2063,7 +2063,7 @@ const docTemplate = `{
         },
         "/api/v1/gmail/email/update/{id}": {
             "put": {
-                "description": "Update a update email message to the system",
+                "description": "Update an update email message to the system",
                 "consumes": [
                     "application/json"
                 ],
@@ -2073,7 +2073,7 @@ const docTemplate = `{
                 "tags": [
                     "emails-gmail"
                 ],
-                "summary": "Update a email draft message",
+                "summary": "Update an email draft message",
                 "parameters": [
                     {
                         "type": "string",
@@ -2324,7 +2324,7 @@ const docTemplate = `{
         },
         "/api/v1/gmail/label/add_email": {
             "post": {
-                "description": "AddEmailInLabel a email in label to the system",
+                "description": "AddEmailInLabel an email in label to the system",
                 "consumes": [
                     "application/json"
                 ],
@@ -2334,7 +2334,7 @@ const docTemplate = `{
                 "tags": [
                     "labels-gmail"
                 ],
-                "summary": "AddEmailInLabel a email om label",
+                "summary": "AddEmailInLabel an email in label",
                 "parameters": [
                     {
                         "type": "string",
@@ -2496,7 +2496,7 @@ const docTemplate = `{
         },
         "/api/v1/gmail/label/delete_email": {
             "delete": {
-                "description": "DeleteEmailInLabel a email in label to the system",
+                "description": "DeleteEmailInLabel an email in label to the system",
                 "consumes": [
                     "application/json"
                 ],
@@ -2506,7 +2506,7 @@ const docTemplate = `{
                 "tags": [
                     "labels-gmail"
                 ],
-                "summary": "DeleteEmailInLabel a email in label",
+                "summary": "DeleteEmailInLabel an email in label",
                 "parameters": [
                     {
                         "type": "string",
@@ -3749,7 +3749,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8080",
+	Host:             "mailhub.su",
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "API MailHub",
