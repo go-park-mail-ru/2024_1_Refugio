@@ -20,6 +20,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
 
+	migrate "github.com/rubenv/sql-migrate"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 	"mail/cmd/configs"
 	"mail/internal/models/microservice_ports"
 	"mail/internal/monitoring"
@@ -27,10 +29,6 @@ import (
 	"mail/internal/pkg/middleware"
 	"mail/internal/pkg/session"
 	"mail/internal/pkg/utils/connect_microservice"
-	"mail/internal/pkg/utils/constants"
-
-	migrate "github.com/rubenv/sql-migrate"
-	httpSwagger "github.com/swaggo/http-swagger/v2"
 
 	auth_proto "mail/internal/microservice/auth/proto"
 	email_proto "mail/internal/microservice/email/proto"
@@ -464,26 +462,29 @@ func startServer(router http.Handler) {
 func startSessionCleaner(interval time.Duration, sessionServiceClient session_proto.SessionServiceClient) {
 	ticker := time.NewTicker(interval)
 	go func() {
-		for range ticker.C {
-			f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-			if err != nil {
-				fmt.Println("Failed to create logfile" + "log.txt")
-			}
-			defer f.Close()
+		for {
+			select {
+			case <-ticker.C:
+				f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+				if err != nil {
+					fmt.Println("Failed to create logfile" + "log.txt")
+				}
+				defer f.Close()
 
-			c := context.WithValue(context.Background(), constants.LoggerKey, logger.InitializationBdLog(f))
-			ctx := context.WithValue(c, constants.RequestIDKey, "DeleteExpiredSessionsNULL")
+				c := context.WithValue(context.Background(), "logger", logger.InitializationBdLog(f))
+				ctx := context.WithValue(c, "requestID", "DeleteExpiredSessionsNULL")
 
-			req, err := sessionServiceClient.CleanupExpiredSessions(
-				metadata.NewOutgoingContext(ctx,
-					metadata.New(map[string]string{"requestID": ctx.Value("requestID").(string)})),
-				&session_proto.CleanupExpiredSessionsRequest{},
-			)
-			if err != nil {
-				fmt.Printf("Error cleaning expired sessions: %v\n", err)
-				return
+				req, err := sessionServiceClient.CleanupExpiredSessions(
+					metadata.NewOutgoingContext(ctx,
+						metadata.New(map[string]string{"requestID": ctx.Value("requestID").(string)})),
+					&session_proto.CleanupExpiredSessionsRequest{},
+				)
+				if err != nil {
+					fmt.Printf("Error cleaning expired sessions: %v\n", err)
+					return
+				}
+				fmt.Println(req)
 			}
-			fmt.Println(req)
 		}
 	}()
 }
