@@ -52,7 +52,7 @@ func TestGetEmailByID(t *testing.T) {
 	id := uint64(1)
 
 	domainEmails := &domain_models.Email{ID: 1, Topic: "Topic 1", Text: "Text 1"}
-	emailProto := converters.EmailConvertCoreInProto(*domainEmails)
+	emailProto := converters.EmailConvertCoreInProto(domainEmails)
 
 	t.Run("GetEmailByIDSuccessfully", func(t *testing.T) {
 		mockEmailUseCase.EXPECT().GetEmailByID(id, login, ctx).Return(domainEmails, nil)
@@ -98,7 +98,7 @@ func TestGetAllIncoming(t *testing.T) {
 
 	emailsProto := make([]*proto.Email, len(domainEmails))
 	for i, e := range domainEmails {
-		emailsProto[i] = converters.EmailConvertCoreInProto(*e)
+		emailsProto[i] = converters.EmailConvertCoreInProto(e)
 	}
 	emailProto := new(proto.Emails)
 	emailProto.Emails = emailsProto
@@ -147,7 +147,7 @@ func TestGetAllSent(t *testing.T) {
 
 	emailsProto := make([]*proto.Email, len(domainEmails))
 	for i, e := range domainEmails {
-		emailsProto[i] = converters.EmailConvertCoreInProto(*e)
+		emailsProto[i] = converters.EmailConvertCoreInProto(e)
 	}
 	emailProto := new(proto.Emails)
 	emailProto.Emails = emailsProto
@@ -196,7 +196,7 @@ func TestGetAllDraft(t *testing.T) {
 
 	emailsProto := make([]*proto.Email, len(domainEmails))
 	for i, e := range domainEmails {
-		emailsProto[i] = converters.EmailConvertCoreInProto(*e)
+		emailsProto[i] = converters.EmailConvertCoreInProto(e)
 	}
 	emailProto := new(proto.Emails)
 	emailProto.Emails = emailsProto
@@ -245,7 +245,7 @@ func TestGetAllSpam(t *testing.T) {
 
 	emailsProto := make([]*proto.Email, len(domainEmails))
 	for i, e := range domainEmails {
-		emailsProto[i] = converters.EmailConvertCoreInProto(*e)
+		emailsProto[i] = converters.EmailConvertCoreInProto(e)
 	}
 	emailProto := new(proto.Emails)
 	emailProto.Emails = emailsProto
@@ -286,7 +286,7 @@ func TestCreateEmail(t *testing.T) {
 	id := uint64(1)
 
 	domainEmail := &domain_models.Email{ID: 1, Topic: "Topic 1", Text: "Text 1"}
-	emailProto := converters.EmailConvertCoreInProto(*domainEmail)
+	emailProto := converters.EmailConvertCoreInProto(domainEmail)
 
 	emailWithID := &proto.EmailWithID{Email: emailProto, Id: id}
 
@@ -326,7 +326,7 @@ func TestUpdateEmail(t *testing.T) {
 	ctx := GetCTX()
 
 	domainEmail := &domain_models.Email{ID: 1, Topic: "Topic 1", Text: "Text 1"}
-	emailProto := converters.EmailConvertCoreInProto(*domainEmail)
+	emailProto := converters.EmailConvertCoreInProto(domainEmail)
 
 	t.Run("UpdateEmailSuccessfully", func(t *testing.T) {
 		mockEmailUseCase.EXPECT().UpdateEmail(domainEmail, ctx).Return(true, nil)

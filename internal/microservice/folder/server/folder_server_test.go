@@ -50,7 +50,7 @@ func TestCreateFolder(t *testing.T) {
 	ctx := GetCTX()
 
 	domainFolder := &domain_models.Folder{ID: 1, ProfileId: 1, Name: "Test"}
-	folderProto := converters.FolderConvertCoreInProto(*domainFolder)
+	folderProto := converters.FolderConvertCoreInProto(domainFolder)
 	id := uint32(1)
 	expectedFolder := &proto.FolderWithID{Folder: folderProto, Id: id}
 
@@ -95,7 +95,7 @@ func TestGetAllFolders(t *testing.T) {
 	}
 	foldersProto := make([]*proto.Folder, len(domainFolders))
 	for i, e := range domainFolders {
-		foldersProto[i] = converters.FolderConvertCoreInProto(*e)
+		foldersProto[i] = converters.FolderConvertCoreInProto(e)
 	}
 	folderProto := new(proto.Folders)
 	folderProto.Folders = foldersProto
@@ -142,7 +142,7 @@ func TestDeleteFolder(t *testing.T) {
 	}
 	foldersProto := make([]*proto.Folder, len(domainFolders))
 	for i, e := range domainFolders {
-		foldersProto[i] = converters.FolderConvertCoreInProto(*e)
+		foldersProto[i] = converters.FolderConvertCoreInProto(e)
 	}
 	folderProto := new(proto.Folders)
 	folderProto.Folders = foldersProto
@@ -190,7 +190,7 @@ func TestUpdateFolder(t *testing.T) {
 	}
 	foldersProto := make([]*proto.Folder, len(domainFolders))
 	for i, e := range domainFolders {
-		foldersProto[i] = converters.FolderConvertCoreInProto(*e)
+		foldersProto[i] = converters.FolderConvertCoreInProto(e)
 	}
 	folderProto := new(proto.Folders)
 	folderProto.Folders = foldersProto

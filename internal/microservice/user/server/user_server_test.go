@@ -230,15 +230,13 @@ func TestDeleteUserById_Success(t *testing.T) {
 
 	ctx := GetCTX()
 
-	expectedStatus := true
-
-	mockUserUseCase.EXPECT().DeleteUserByID(gomock.Any(), ctx).Return(expectedStatus, nil)
+	mockUserUseCase.EXPECT().DeleteUserByID(gomock.Any(), ctx).Return(true, nil)
 
 	reply, err := server.DeleteUserById(ctx, &proto.DeleteUserByIdRequest{Id: 1})
 
 	assert.NoError(t, err)
 	assert.NotNil(t, reply)
-	assert.Equal(t, expectedStatus, reply.Status)
+	assert.Equal(t, true, reply.Status)
 }
 
 func TestDeleteUserById_InvalidID(t *testing.T) {
