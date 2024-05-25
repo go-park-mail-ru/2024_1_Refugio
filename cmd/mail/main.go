@@ -7,8 +7,11 @@ import (
 	"fmt"
 	"google.golang.org/grpc/metadata"
 	"log"
+	"mail/internal/websocket"
 	"net/http"
 	"os"
+	"path/filepath"
+	"sync"
 	"time"
 	_ "time/tzdata"
 
@@ -28,10 +31,12 @@ import (
 	"mail/internal/pkg/session"
 	"mail/internal/pkg/utils/connect_microservice"
 	"mail/internal/pkg/utils/constants"
+	"text/template"
 
 	migrate "github.com/rubenv/sql-migrate"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 
+	_ "mail/docs"
 	auth_proto "mail/internal/microservice/auth/proto"
 	email_proto "mail/internal/microservice/email/proto"
 	folder_proto "mail/internal/microservice/folder/proto"
@@ -46,8 +51,6 @@ import (
 	oauthHand "mail/internal/pkg/oauth/delivery/http"
 	questionHand "mail/internal/pkg/questionnairy/delivery/http"
 	userHand "mail/internal/pkg/user/delivery/http"
-
-	_ "mail/docs"
 )
 
 // @title API MailHub
@@ -346,6 +349,11 @@ func setupAuthRouter(authHandler *authHand.AuthHandler, oauthHandler *oauthHand.
 	auth := mux.NewRouter().PathPrefix("/api/v1/auth").Subrouter()
 	auth.Use(logger.AccessLogMiddleware, middleware.PanicMiddleware)
 
+	r := websocket.NewRoom()
+	auth.Handle("/web/", &templateHandler{filename: "chat.html"})
+	auth.Handle("/web/websocket_connection", r)
+	go r.Run()
+
 	auth.HandleFunc("/login", authHandler.Login).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/signup", authHandler.Signup).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/logout", authHandler.Logout).Methods("POST", "OPTIONS")
@@ -359,6 +367,21 @@ func setupAuthRouter(authHandler *authHand.AuthHandler, oauthHandler *oauthHand.
 	//auth.HandleFunc("/auth-vk/signupVK", oauthHandler.SignupVK).Methods("GET", "OPTIONS")
 	//auth.HandleFunc("/auth-vk/loginVK", oauthHandler.LoginVK).Methods("GET", "OPTIONS")
 	return auth
+}
+
+// templ represents a single template
+type templateHandler struct {
+	once     sync.Once
+	filename string
+	templ    *template.Template
+}
+
+// ServeHTTP handles the HTTP request.
+func (t *templateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	t.once.Do(func() {
+		t.templ = template.Must(template.ParseFiles(filepath.Join("/home/sergey/mailhub/2024_1_Refugio/cmd/mail/templates", t.filename)))
+	})
+	t.templ.Execute(w, r)
 }
 
 // setupLogRouter configuring router with logger
