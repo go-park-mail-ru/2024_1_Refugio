@@ -127,11 +127,15 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 		return err
 	}
 
+	fmt.Println(bodyBytes)
+
 	var response EmailResponse
 	if err := json.Unmarshal(bodyBytes, &response); err != nil {
 		log.Println("Unmarshal failed:", err)
 		return err
 	}
+
+	fmt.Println(response)
 
 	email := response.Body
 	fmt.Printf("Received email with ID: %d, Topic: %s\n", email.ID, email.Topic)
