@@ -137,7 +137,9 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 	fmt.Printf("Received email with ID: %d, Topic: %s\n", email.ID, email.Topic)
 
 	for _, fileURL := range fileURLs {
-		err = addFileToEmail(email.ID, fileURL)
+		if err = addFileToEmail(email.ID, fileURL); err != nil {
+			log.Printf("Error adding file to email: %v\n", err)
+		}
 	}
 
 	return nil
