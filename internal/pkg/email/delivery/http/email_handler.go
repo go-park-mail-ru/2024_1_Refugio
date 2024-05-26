@@ -917,10 +917,10 @@ func (h *EmailHandler) AddAttachment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fileExt := filepath.Ext(handler.Filename)
+	fileExt := sanitizeString(filepath.Ext(handler.Filename))
 	contentType := handler.Header.Get("Content-Type")
 
-	fileType := check_file_type.GetFileType(contentType)
+	fileType := sanitizeString(check_file_type.GetFileType(contentType))
 
 	uniqueFileName := generate_filename.GenerateUniqueFileName(fileExt)
 
@@ -934,7 +934,7 @@ func (h *EmailHandler) AddAttachment(w http.ResponseWriter, r *http.Request) {
 
 	fileId, err := h.EmailServiceClient.AddAttachment(
 		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
-		&proto.AddAttachmentRequest{EmailId: id, FileId: fileURL, FileType: fileType, FileName: handler.Filename, FileSize: strconv.FormatInt(handler.Size, 10)},
+		&proto.AddAttachmentRequest{EmailId: id, FileId: fileURL, FileType: fileType, FileName: sanitizeString(handler.Filename), FileSize: strconv.FormatInt(handler.Size, 10)},
 	)
 	if err != nil {
 		response.HandleError(w, http.StatusNotFound, fmt.Sprintf("Failed to add attachment: %s", err.Error()))
@@ -1121,9 +1121,9 @@ func (h *EmailHandler) UpdateFileByID(w http.ResponseWriter, r *http.Request) {
 
 	updateProto, err := h.EmailServiceClient.UpdateFileByID(
 		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
-		&proto.UpdateFileByIDRequest{Id: fileProto.File.Id, NewFileId: fileProto.File.FileId, NewFileType: fileProto.File.FileType, NewFileName: handler.Filename, NewFileSize: strconv.FormatInt(handler.Size, 10)},
+		&proto.UpdateFileByIDRequest{Id: fileProto.File.Id, NewFileId: fileProto.File.FileId, NewFileType: fileProto.File.FileType, NewFileName: sanitizeString(handler.Filename), NewFileSize: strconv.FormatInt(handler.Size, 10)},
 	)
-	if !updateProto.Status {
+	if updateProto != nil && !updateProto.Status {
 		response.HandleError(w, http.StatusNotFound, "Failed to update file")
 	}
 	if err != nil {
@@ -1165,10 +1165,10 @@ func (h *EmailHandler) AddFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fileExt := filepath.Ext(handler.Filename)
+	fileExt := sanitizeString(filepath.Ext(handler.Filename))
 	contentType := handler.Header.Get("Content-Type")
 
-	fileType := check_file_type.GetFileType(contentType)
+	fileType := sanitizeString(check_file_type.GetFileType(contentType))
 
 	uniqueFileName := generate_filename.GenerateUniqueFileName(fileExt)
 
@@ -1182,7 +1182,7 @@ func (h *EmailHandler) AddFile(w http.ResponseWriter, r *http.Request) {
 
 	fileId, err := h.EmailServiceClient.AddFile(
 		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
-		&proto.AddFileRequest{FileId: fileURL, FileType: fileType, FileName: handler.Filename, FileSize: strconv.FormatInt(handler.Size, 10)},
+		&proto.AddFileRequest{FileId: fileURL, FileType: fileType, FileName: sanitizeString(handler.Filename), FileSize: strconv.FormatInt(handler.Size, 10)},
 	)
 	if err != nil {
 		response.HandleError(w, http.StatusNotFound, fmt.Sprintf("Failed to add file: %s", err.Error()))
@@ -1207,13 +1207,13 @@ func (h *EmailHandler) AddFile(w http.ResponseWriter, r *http.Request) {
 func (h *EmailHandler) AddFileToEmail(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	email_id, err := strconv.ParseUint(vars["id"], 10, 64)
+	emailId, err := strconv.ParseUint(vars["id"], 10, 64)
 	if err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad ID in request")
 		return
 	}
 
-	file_id, err := strconv.ParseUint(vars["file-id"], 10, 64)
+	fileId, err := strconv.ParseUint(vars["file-id"], 10, 64)
 	if err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad ID in request")
 		return
@@ -1221,7 +1221,7 @@ func (h *EmailHandler) AddFileToEmail(w http.ResponseWriter, r *http.Request) {
 
 	status, err := h.EmailServiceClient.AddFileToEmail(
 		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
-		&proto.AddFileToEmailRequest{EmailId: email_id, FileId: file_id},
+		&proto.AddFileToEmailRequest{EmailId: emailId, FileId: fileId},
 	)
 	if err != nil {
 		response.HandleError(w, http.StatusNotFound, fmt.Sprintf("Failed to add file: %s", err.Error()))
