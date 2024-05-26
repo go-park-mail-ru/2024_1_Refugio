@@ -138,6 +138,7 @@ func initializeDatabase() *sql.DB {
 	}
 
 	db.SetMaxOpenConns(10)
+	db.SetMaxIdleConns(10)
 
 	return db
 }
