@@ -1180,11 +1180,6 @@ func (h *EmailHandler) AddFile(w http.ResponseWriter, r *http.Request) {
 
 	fileURL := fmt.Sprintf(configs.PROTOCOL+"mailhub.su"+"/files/%s", uniqueFileName)
 
-	fmt.Println(fileURL)
-	fmt.Println(fileType)
-	fmt.Println(fileName)
-	fmt.Println(strconv.FormatInt(handler.Size, 10))
-
 	fileId, err := h.EmailServiceClient.AddFile(
 		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 		&proto.AddFileRequest{FileId: fileURL, FileType: fileType, FileName: fileName, FileSize: strconv.FormatInt(handler.Size, 10)},
@@ -1223,15 +1218,11 @@ func (h *EmailHandler) AddFileToEmail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(emailId)
-
 	fileId, err := strconv.ParseUint(vars["file-id"], 10, 64)
 	if err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad ID in request")
 		return
 	}
-
-	fmt.Println(fileId)
 
 	status, err := h.EmailServiceClient.AddFileToEmail(
 		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),

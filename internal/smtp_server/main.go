@@ -76,7 +76,7 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 	}
 	decodedBody := env.Text
 	if decodedBody == "" {
-		decodedBody = "Без текста"
+		decodedBody = "Пустое письмо"
 	}
 
 	log.Println(decodedTopic)
@@ -132,8 +132,6 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 		log.Println("Unmarshal failed:", err)
 		return err
 	}
-
-	fmt.Println(response.Body)
 
 	email := response.Body.Email
 	fmt.Printf("Received email with ID: %d, Topic: %s\n", email.ID, email.Topic)
