@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"mime"
+	"mime/multipart"
 	"net"
 	"net/http"
 	"net/mail"
@@ -16,6 +18,7 @@ import (
 )
 
 const sendEmailEndpoint = "https://mailhub.su/api/v1/auth/sendOther"
+const addFileEndpoint = "https://mailhub.su/api/v1/email/addFileOther"
 
 func main() {
 	err := smtpd.ListenAndServe("0.0.0.0:587", mailHandler, "MailHubSMTP", "")
@@ -73,6 +76,17 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 	log.Println(senderAddr.Address)
 	log.Println(recipientAddr.Address)
 
+	var fileURLs []string
+	for _, attachment := range env.Attachments {
+		log.Println(attachment.FileName)
+		fileURL, err := uploadFile(attachment.FileName, bytes.NewReader(attachment.Content))
+		if err != nil {
+			log.Printf("Ошибка при загрузке файла '%s': %v", attachment.FileName, err)
+			continue
+		}
+		fileURLs = append(fileURLs, fileURL)
+	}
+
 	emailData := EmailSMTP{
 		Topic:          decodedTopic,
 		Text:           decodedBody,
@@ -105,4 +119,48 @@ func isValidEmailFormat(email string) bool {
 	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@mailhub\.su$`)
 
 	return emailRegex.MatchString(email)
+}
+
+func uploadFile(fileName string, file io.Reader) (string, error) {
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreateFormFile("file", fileName)
+	if err != nil {
+		return "", err
+	}
+	_, err = io.Copy(part, file)
+	if err != nil {
+		return "", err
+	}
+	writer.Close()
+
+	req, err := http.NewRequest("POST", addFileEndpoint, body)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("неожиданный код состояния при загрузке файла: %d", resp.StatusCode)
+	}
+
+	var response map[string]interface{}
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	if err != nil {
+		return "", err
+	}
+
+	fileURL, ok := response["FileId"].(string)
+	if !ok {
+		return "", fmt.Errorf("ошибка при получении URL файла из ответа")
+	}
+
+	return fileURL, nil
 }

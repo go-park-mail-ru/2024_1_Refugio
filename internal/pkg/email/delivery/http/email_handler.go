@@ -1192,6 +1192,10 @@ func (h *EmailHandler) AddFile(w http.ResponseWriter, r *http.Request) {
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"FileId": fileId.FileId})
 }
 
+func (h *EmailHandler) AddFileFromAnotherDomain(w http.ResponseWriter, r *http.Request) {
+	h.AddFile(w, r)
+}
+
 // AddFileToEmail adds a file to an email message.
 // @Summary Add a file to an email message
 // @Description Adds a file as an attachment to a specified email message
