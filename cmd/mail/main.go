@@ -350,9 +350,9 @@ func setupAuthRouter(authHandler *authHand.AuthHandler, oauthHandler *oauthHand.
 	auth.Use(logger.AccessLogMiddleware, middleware.PanicMiddleware)
 
 	r := websocket.NewRoom()
-	auth.Handle("/web/sergey@mailhub.su", &templateHandler{filename: "chat.html"})
-	auth.Handle("/web/ivan@mailhub.su", &templateHandler{filename: "chat.html"})
-	auth.Handle("/web/user@mailhub.su", &templateHandler{filename: "chat.html"})
+	//auth.Handle("/web/sergey@mailhub.su", &templateHandler{filename: "chat.html"})
+	//auth.Handle("/web/ivan@mailhub.su", &templateHandler{filename: "chat.html"})
+	//auth.Handle("/web/user@mailhub.su", &templateHandler{filename: "chat.html"})
 	auth.Handle("/web/websocket_connection/{login}", r)
 	go r.Run()
 
