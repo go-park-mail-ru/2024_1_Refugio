@@ -1,11 +1,14 @@
 package websocket
 
 import (
+	"fmt"
+	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 	"log"
+	emailApi "mail/internal/models/delivery_models"
+	"mail/internal/models/response"
 	"mail/internal/pkg/middleware"
 	"net/http"
-
-	"github.com/gorilla/websocket"
 )
 
 const (
@@ -49,14 +52,26 @@ func (r *room) Run() {
 			delete(r.clients, client)
 			close(client.receive)
 		case msg := <-r.forward:
+			var newEmail emailApi.Email
+			if err := newEmail.UnmarshalJSON(msg); err != nil {
+				fmt.Println("Bad JSON in request in Run")
+			}
 			for client := range r.clients {
-				client.receive <- msg
+				if client.login == newEmail.RecipientEmail {
+					client.receive <- msg
+				}
 			}
 		}
 	}
 }
 
 func (r *room) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	login, ok := vars["login"]
+	if !ok {
+		response.HandleError(w, http.StatusBadRequest, "Bad login in request")
+		return
+	}
 	newW, _ := w.(*middleware.LoggingResponseWriter)
 	NewW := newW.ResponseWriter
 	wrap, _ := NewW.(*middleware.LoggingResponseWriter)
@@ -70,6 +85,7 @@ func (r *room) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		socket:  socket,
 		receive: make(chan []byte, messageBufferSize),
 		room:    r,
+		login:   login,
 	}
 	r.join <- client
 	defer func() { r.leave <- client }()

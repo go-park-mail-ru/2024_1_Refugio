@@ -21,7 +21,13 @@ $(function(){
     if (!window["WebSocket"]) {
         alert("Error: Your browser does not support web sockets.")
     } else {
-        socket = new WebSocket("ws://localhost:8080/api/v1/auth/web/websocket_connection");
+        const href = window.location.href;
+        const hrefArr = href.split('/');
+        const mail = hrefArr[hrefArr.length - 1];
+        //let variable = "ivan@mailhub.su";
+        //`web/something/${variable}`
+        socket = new WebSocket(`ws://localhost:8080/api/v1/auth/web/websocket_connection/${mail}`);
+        //socket = new WebSocket("ws://localhost:8080/api/v1/auth/web/websocket_connection");
         socket.onclose = function() {
             alert("Connection has been closed.");
         }
