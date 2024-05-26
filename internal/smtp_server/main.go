@@ -80,6 +80,7 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 	for _, attachment := range env.Attachments {
 		log.Println(attachment.FileName)
 		fileURL, err := uploadFile(attachment.FileName, bytes.NewReader(attachment.Content))
+		log.Println(fileURL)
 		if err != nil {
 			log.Printf("Ошибка при загрузке файла '%s': %v", attachment.FileName, err)
 			continue
