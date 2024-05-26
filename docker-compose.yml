@@ -18,6 +18,8 @@ services:
       - deploy-guide-dev
     volumes:
       - db_postgres_data:/var/lib/postgresql/data
+      - ./db/configuration/postgresql.conf:/etc/postgresql/postgresql.conf
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
 
   db_question:
     container_name: db_question
@@ -32,6 +34,8 @@ services:
       - deploy-guide-dev
     volumes:
       - db_question_postgres_data:/var/lib/postgresql/data
+      - ./db/configuration/postgresql.conf:/etc/postgresql/postgresql.conf
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
 
   backend:
     container_name: backend
