@@ -18,7 +18,7 @@ import (
 )
 
 const sendEmailEndpoint = "https://mailhub.su/api/v1/auth/sendOther"
-const addFileEndpoint = "https://mailhub.su/api/v1/email/addFileOther"
+const addFileEndpoint = "https://mailhub.su/api/v1/auth/addFileOther"
 
 func main() {
 	err := smtpd.ListenAndServe("0.0.0.0:587", mailHandler, "MailHubSMTP", "")
