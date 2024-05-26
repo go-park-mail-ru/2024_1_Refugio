@@ -133,9 +133,9 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 		return err
 	}
 
-	fmt.Println(*response.Body)
+	fmt.Println(response.Body)
 
-	email := response.Body
+	email := response.Body.Email
 	fmt.Printf("Received email with ID: %d, Topic: %s\n", email.ID, email.Topic)
 
 	for _, fileURL := range fileURLs {
@@ -212,7 +212,7 @@ func addFileToEmail(emailId uint64, fileId uint64) error {
 	return nil
 }
 
-type Email struct {
+type EmailSwag struct {
 	ID             uint64    `json:"id,omitempty"`
 	Topic          string    `json:"topic"`
 	Text           string    `json:"text"`
@@ -228,8 +228,10 @@ type Email struct {
 }
 
 type EmailResponse struct {
-	Status int    `json:"status"`
-	Body   *Email `json:"body"`
+	Status int `json:"status"`
+	Body   struct {
+		Email EmailSwag `json:"email"`
+	} `json:"body"`
 }
 
 type FileResponse struct {
