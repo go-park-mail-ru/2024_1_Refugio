@@ -1223,11 +1223,15 @@ func (h *EmailHandler) AddFileToEmail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fmt.Println(emailId)
+
 	fileId, err := strconv.ParseUint(vars["file-id"], 10, 64)
 	if err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad ID in request")
 		return
 	}
+
+	fmt.Println(fileId)
 
 	status, err := h.EmailServiceClient.AddFileToEmail(
 		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
