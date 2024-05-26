@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/mail"
 	"regexp"
+	"time"
 
 	"github.com/jhillyerd/enmime"
 	"github.com/mhale/smtpd"
@@ -210,17 +211,18 @@ func addFileToEmail(emailId uint64, fileId uint64) error {
 }
 
 type Email struct {
-	ID             uint64 `json:"id"`
-	Topic          string `json:"topic"`
-	Text           string `json:"text"`
-	PhotoID        string `json:"photoId"`
-	ReadStatus     bool   `json:"readStatus"`
-	Deleted        bool   `json:"deleted"`
-	DateOfDispatch string `json:"dateOfDispatch"`
-	DraftStatus    bool   `json:"draftStatus"`
-	SpamStatus     bool   `json:"spamStatus"`
-	SenderEmail    string `json:"senderEmail"`
-	RecipientEmail string `json:"recipientEmail"`
+	ID             uint64    `json:"id,omitempty"`
+	Topic          string    `json:"topic"`
+	Text           string    `json:"text"`
+	ReadStatus     bool      `json:"readStatus"`
+	Flag           bool      `json:"mark,omitempty"`
+	Deleted        bool      `json:"deleted"`
+	DateOfDispatch time.Time `json:"dateOfDispatch,omitempty"`
+	ReplyToEmailID uint64    `json:"replyToEmailId,omitempty"`
+	DraftStatus    bool      `json:"draftStatus"`
+	SpamStatus     bool      `json:"spamStatus"`
+	SenderEmail    string    `json:"senderEmail"`
+	RecipientEmail string    `json:"recipientEmail"`
 }
 
 type EmailResponse struct {
