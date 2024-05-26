@@ -342,7 +342,6 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 		response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*emailData)})
 		return
 	case !validators.IsValidEmailFormat(sender) && validators.IsValidEmailFormat(recipient):
-		fmt.Println("-----START_1----")
 		_, err = h.EmailServiceClient.CheckRecipientEmail(
 			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 			&proto.Recipient{Recipient: recipient},
@@ -352,8 +351,6 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		fmt.Println("-----START_2----")
-		fmt.Println(newEmail)
 		emailDataProto, err := h.EmailServiceClient.CreateEmail(
 			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 			&proto.Email{
@@ -379,7 +376,6 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 		emailData := proto_converters.EmailConvertProtoInCore(emailDataProto.Email)
 		emailData.ID = emailDataProto.Id
 
-		fmt.Println("-----START_3----")
 		_, err = h.EmailServiceClient.CreateProfileEmail(
 			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 			&proto.IdSenderRecipient{Id: emailData.ID, Sender: emailData.SenderEmail, Recipient: emailData.RecipientEmail},
@@ -923,6 +919,7 @@ func (h *EmailHandler) AddAttachment(w http.ResponseWriter, r *http.Request) {
 	fileType := sanitizeString(check_file_type.GetFileType(contentType))
 
 	uniqueFileName := generate_filename.GenerateUniqueFileName(fileExt)
+	fileName := sanitizeString(handler.Filename)
 
 	_, err = h.MinioClient.PutObject(r.Context(), "files", uniqueFileName, file, -1, minio.PutObjectOptions{ContentType: contentType})
 	if err != nil {
@@ -934,7 +931,7 @@ func (h *EmailHandler) AddAttachment(w http.ResponseWriter, r *http.Request) {
 
 	fileId, err := h.EmailServiceClient.AddAttachment(
 		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
-		&proto.AddAttachmentRequest{EmailId: id, FileId: fileURL, FileType: fileType, FileName: sanitizeString(handler.Filename), FileSize: strconv.FormatInt(handler.Size, 10)},
+		&proto.AddAttachmentRequest{EmailId: id, FileId: fileURL, FileType: fileType, FileName: fileName, FileSize: strconv.FormatInt(handler.Size, 10)},
 	)
 	if err != nil {
 		response.HandleError(w, http.StatusNotFound, fmt.Sprintf("Failed to add attachment: %s", err.Error()))
@@ -1119,9 +1116,11 @@ func (h *EmailHandler) UpdateFileByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fileName := sanitizeString(handler.Filename)
+
 	updateProto, err := h.EmailServiceClient.UpdateFileByID(
 		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
-		&proto.UpdateFileByIDRequest{Id: fileProto.File.Id, NewFileId: fileProto.File.FileId, NewFileType: fileProto.File.FileType, NewFileName: sanitizeString(handler.Filename), NewFileSize: strconv.FormatInt(handler.Size, 10)},
+		&proto.UpdateFileByIDRequest{Id: fileProto.File.Id, NewFileId: fileProto.File.FileId, NewFileType: fileProto.File.FileType, NewFileName: fileName, NewFileSize: strconv.FormatInt(handler.Size, 10)},
 	)
 	if updateProto != nil && !updateProto.Status {
 		response.HandleError(w, http.StatusNotFound, "Failed to update file")
@@ -1171,6 +1170,7 @@ func (h *EmailHandler) AddFile(w http.ResponseWriter, r *http.Request) {
 	fileType := sanitizeString(check_file_type.GetFileType(contentType))
 
 	uniqueFileName := generate_filename.GenerateUniqueFileName(fileExt)
+	fileName := sanitizeString(handler.Filename)
 
 	_, err = h.MinioClient.PutObject(r.Context(), "files", uniqueFileName, file, -1, minio.PutObjectOptions{ContentType: contentType})
 	if err != nil {
@@ -1180,10 +1180,16 @@ func (h *EmailHandler) AddFile(w http.ResponseWriter, r *http.Request) {
 
 	fileURL := fmt.Sprintf(configs.PROTOCOL+"mailhub.su"+"/files/%s", uniqueFileName)
 
+	fmt.Println(fileURL)
+	fmt.Println(fileType)
+	fmt.Println(fileName)
+	fmt.Println(strconv.FormatInt(handler.Size, 10))
+
 	fileId, err := h.EmailServiceClient.AddFile(
 		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
-		&proto.AddFileRequest{FileId: fileURL, FileType: fileType, FileName: sanitizeString(handler.Filename), FileSize: strconv.FormatInt(handler.Size, 10)},
+		&proto.AddFileRequest{FileId: fileURL, FileType: fileType, FileName: fileName, FileSize: strconv.FormatInt(handler.Size, 10)},
 	)
+	fmt.Println(fileId)
 	if err != nil {
 		response.HandleError(w, http.StatusNotFound, fmt.Sprintf("Failed to add file: %s", err.Error()))
 		return
