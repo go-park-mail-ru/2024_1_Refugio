@@ -122,6 +122,13 @@ func isValidEmailFormat(email string) bool {
 	return emailRegex.MatchString(email)
 }
 
+type Response struct {
+	Status int `json:"status"`
+	Body   struct {
+		FileId int `json:"FileId"`
+	} `json:"body"`
+}
+
 func uploadFile(fileName string, file io.Reader) (string, error) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
@@ -152,16 +159,13 @@ func uploadFile(fileName string, file io.Reader) (string, error) {
 		return "", fmt.Errorf("неожиданный код состояния при загрузке файла: %d", resp.StatusCode)
 	}
 
-	var response map[string]interface{}
+	var response Response
 	err = json.NewDecoder(resp.Body).Decode(&response)
 	if err != nil {
 		return "", err
 	}
 
-	fileURL, ok := response["FileId"].(string)
-	if !ok {
-		return "", fmt.Errorf("ошибка при получении URL файла из ответа")
-	}
+	fileId := fmt.Sprintf("%d", response.Body.FileId)
 
-	return fileURL, nil
+	return fileId, nil
 }
