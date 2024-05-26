@@ -1240,3 +1240,7 @@ func (h *EmailHandler) AddFileToEmail(w http.ResponseWriter, r *http.Request) {
 
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Status": status.Status})
 }
+
+func (h *EmailHandler) AddFileToEmailFromAnotherDomain(w http.ResponseWriter, r *http.Request) {
+	h.AddFileToEmail(w, r)
+}

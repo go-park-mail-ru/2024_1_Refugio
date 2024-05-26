@@ -19,6 +19,7 @@ import (
 
 const sendEmailEndpoint = "https://mailhub.su/api/v1/auth/sendOther"
 const addFileEndpoint = "https://mailhub.su/api/v1/auth/addFileOther"
+const addFileToEmailEndpoint = "https://mailhub.su/api/v1/auth/addFileToEmailOther"
 
 func main() {
 	err := smtpd.ListenAndServe("0.0.0.0:587", mailHandler, "MailHubSMTP", "")
@@ -63,6 +64,9 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 		log.Println("Error decoding the message subject:", err)
 		return err
 	}
+	if decodedTopic == "" {
+		decodedTopic = "Без темы"
+	}
 
 	env, err := enmime.ReadEnvelope(bytes.NewReader(data))
 	if err != nil {
@@ -70,19 +74,22 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 		return err
 	}
 	decodedBody := env.Text
+	if decodedBody == "" {
+		decodedBody = "Без текста"
+	}
 
 	log.Println(decodedTopic)
 	log.Println(decodedBody)
 	log.Println(senderAddr.Address)
 	log.Println(recipientAddr.Address)
 
-	var fileURLs []string
+	var fileURLs []uint64
 	for _, attachment := range env.Attachments {
 		log.Println(attachment.FileName)
 		fileURL, err := uploadFile(attachment.FileName, bytes.NewReader(attachment.Content))
 		log.Println(fileURL)
 		if err != nil {
-			log.Printf("Ошибка при загрузке файла '%s': %v", attachment.FileName, err)
+			log.Printf("Error uploading the file '%s': %v", attachment.FileName, err)
 			continue
 		}
 		fileURLs = append(fileURLs, fileURL)
@@ -113,6 +120,25 @@ func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
 		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Println("Read failed:", err)
+		return err
+	}
+
+	var response EmailResponse
+	if err := json.Unmarshal(bodyBytes, &response); err != nil {
+		log.Println("Unmarshal failed:", err)
+		return err
+	}
+
+	email := response.Body
+	fmt.Printf("Received email with ID: %d, Topic: %s\n", email.ID, email.Topic)
+
+	for _, fileURL := range fileURLs {
+		err = addFileToEmail(email.ID, fileURL)
+	}
+
 	return nil
 }
 
@@ -122,50 +148,89 @@ func isValidEmailFormat(email string) bool {
 	return emailRegex.MatchString(email)
 }
 
-type Response struct {
-	Status int `json:"status"`
-	Body   struct {
-		FileId int `json:"FileId"`
-	} `json:"body"`
-}
-
-func uploadFile(fileName string, file io.Reader) (string, error) {
+func uploadFile(fileName string, file io.Reader) (uint64, error) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	part, err := writer.CreateFormFile("file", fileName)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 	_, err = io.Copy(part, file)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 	writer.Close()
 
 	req, err := http.NewRequest("POST", addFileEndpoint, body)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("неожиданный код состояния при загрузке файла: %d", resp.StatusCode)
+		return 0, fmt.Errorf("unexpected status code when uploading a file: %d", resp.StatusCode)
 	}
 
-	var response Response
+	var response FileResponse
 	err = json.NewDecoder(resp.Body).Decode(&response)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 
-	fileId := fmt.Sprintf("%d", response.Body.FileId)
+	return response.Body.FileId, nil
+}
 
-	return fileId, nil
+func addFileToEmail(emailId uint64, fileId uint64) error {
+	url := fmt.Sprintf(addFileToEmailEndpoint+"/%d/file/%d", emailId, fileId)
+
+	client := &http.Client{}
+	req, err := http.NewRequest("POST", url, nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code when uploading a file: %d", resp.StatusCode)
+	}
+
+	return nil
+}
+
+type Email struct {
+	ID             uint64 `json:"id"`
+	Topic          string `json:"topic"`
+	Text           string `json:"text"`
+	PhotoID        string `json:"photoId"`
+	ReadStatus     bool   `json:"readStatus"`
+	Deleted        bool   `json:"deleted"`
+	DateOfDispatch string `json:"dateOfDispatch"`
+	DraftStatus    bool   `json:"draftStatus"`
+	SpamStatus     bool   `json:"spamStatus"`
+	SenderEmail    string `json:"senderEmail"`
+	RecipientEmail string `json:"recipientEmail"`
+}
+
+type EmailResponse struct {
+	Status int    `json:"status"`
+	Body   *Email `json:"body"`
+}
+
+type FileResponse struct {
+	Status int `json:"status"`
+	Body   struct {
+		FileId uint64 `json:"FileId"`
+	} `json:"body"`
 }

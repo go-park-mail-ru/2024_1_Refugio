@@ -349,6 +349,7 @@ func setupAuthRouter(authHandler *authHand.AuthHandler, oauthHandler *oauthHand.
 	auth.HandleFunc("/logout", authHandler.Logout).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/sendOther", emailHandler.SendFromAnotherDomain).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/addFileOther", emailHandler.AddFileFromAnotherDomain).Methods("POST", "OPTIONS")
+	auth.HandleFunc("/addFileToEmailOther/{id}/file/{file-id}", emailHandler.AddFileToEmailFromAnotherDomain).Methods("POST", "OPTIONS")
 
 	auth.HandleFunc("/getAuthURL", oauthGMailHandler.GetAuthURL).Methods("GET", "OPTIONS")
 	auth.HandleFunc("/gAuth", oauthGMailHandler.GoogleAuth).Methods("GET", "OPTIONS")
