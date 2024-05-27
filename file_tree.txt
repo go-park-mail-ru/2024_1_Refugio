@@ -1,13 +1,16 @@
 .
 ├── Dockerfile
+├── Makefile
 ├── README.md
-├── avatars
 ├── cmd
 │   ├── auth
 │   │   ├── Dockerfile
 │   │   └── main.go
 │   ├── configs
-│   │   └── config.go
+│   │   ├── config.go
+│   │   ├── config.json
+│   │   ├── credentials_deploy.json
+│   │   └── credentials_localhost.json
 │   ├── email
 │   │   ├── Dockerfile
 │   │   └── main.go
@@ -24,15 +27,19 @@
 │   ├── session
 │   │   ├── Dockerfile
 │   │   └── main.go
+│   ├── smtp
+│   │   ├── Dockerfile
+│   │   ├── emailSMTP.go
+│   │   └── main.go
 │   └── user
 │       ├── Dockerfile
 │       └── main.go
-├── coverprofile.tmp
 ├── db
 │   ├── migrations
 │   │   └── init.sql
 │   └── normalized
 │       └── relations.md
+├── docker-compose-cd.yml
 ├── docker-compose.yml
 ├── docs
 │   ├── docs.go
@@ -52,8 +59,7 @@
 │   │   │   │   └── auth_grpc.pb.go
 │   │   │   └── server
 │   │   │       ├── auth.go
-│   │   │       ├── auth_test.go
-│   │   │       └── log_test.txt
+│   │   │       └── auth_test.go
 │   │   ├── email
 │   │   │   ├── interface
 │   │   │   │   ├── iemail_repo.go
@@ -68,16 +74,13 @@
 │   │   │   │   └── email_grpc.pb.go
 │   │   │   ├── repository
 │   │   │   │   ├── email_repo.go
-│   │   │   │   ├── email_repo_test.go
-│   │   │   │   └── log_test.txt
+│   │   │   │   └── email_repo_test.go
 │   │   │   ├── server
 │   │   │   │   ├── email.go
-│   │   │   │   ├── email_server_test.go
-│   │   │   │   └── log_test.txt
+│   │   │   │   └── email_server_test.go
 │   │   │   └── usecase
 │   │   │       ├── email_service.go
-│   │   │       ├── email_service_test.go
-│   │   │       └── log_test.txt
+│   │   │       └── email_service_test.go
 │   │   ├── folder
 │   │   │   ├── interface
 │   │   │   │   ├── ifolder_repo.go
@@ -92,16 +95,13 @@
 │   │   │   │   └── folder_grpc.pb.go
 │   │   │   ├── repository
 │   │   │   │   ├── folder_repo.go
-│   │   │   │   ├── folder_repo_test.go
-│   │   │   │   └── log_test.txt
+│   │   │   │   └── folder_repo_test.go
 │   │   │   ├── server
 │   │   │   │   ├── folder.go
-│   │   │   │   ├── folder_server_test.go
-│   │   │   │   └── log_test.txt
+│   │   │   │   └── folder_server_test.go
 │   │   │   └── usecase
 │   │   │       ├── folder_service.go
-│   │   │       ├── folder_service_test.go
-│   │   │       └── log_test.txt
+│   │   │       └── folder_service_test.go
 │   │   ├── interceptors
 │   │   │   ├── interceptors.go
 │   │   │   └── interceptorsLog.go
@@ -115,10 +115,13 @@
 │   │   │   │   ├── question.go
 │   │   │   │   ├── session.go
 │   │   │   │   ├── statistics.go
-│   │   │   │   └── user.go
+│   │   │   │   ├── user.go
+│   │   │   │   └── vkUser.go
 │   │   │   ├── proto_converters
 │   │   │   │   ├── email_converter.go
 │   │   │   │   ├── email_converter_test.go
+│   │   │   │   ├── file_converter.go
+│   │   │   │   ├── file_converter_test.go
 │   │   │   │   ├── folder_converter.go
 │   │   │   │   ├── folder_converter_test.go
 │   │   │   │   ├── question_answer_converter.go
@@ -132,8 +135,10 @@
 │   │   │   │   ├── answer_converter_test.go
 │   │   │   │   ├── email_converter.go
 │   │   │   │   ├── email_converter_test.go
+│   │   │   │   ├── file_converter.go
+│   │   │   │   ├── file_converter_test.go
 │   │   │   │   ├── folder_converter.go
-│   │   │   │   ├── folser_converter_test.go
+│   │   │   │   ├── folder_converter_test.go
 │   │   │   │   ├── question_converter.go
 │   │   │   │   ├── question_converter_test.go
 │   │   │   │   ├── session_converter.go
@@ -143,6 +148,7 @@
 │   │   │   └── repository_models
 │   │   │       ├── answer.go
 │   │   │       ├── email.go
+│   │   │       ├── file.go
 │   │   │       ├── folder.go
 │   │   │       ├── profile_email.go
 │   │   │       ├── question.go
@@ -161,15 +167,12 @@
 │   │   │   │   ├── question-answer.proto
 │   │   │   │   └── question-answer_grpc.pb.go
 │   │   │   ├── repository
-│   │   │   │   ├── log_test.txt
 │   │   │   │   ├── question_repo.go
 │   │   │   │   └── question_repo_test.go
 │   │   │   ├── server
-│   │   │   │   ├── log_test.txt
 │   │   │   │   ├── questionnaire.go
 │   │   │   │   └── questionnaire_test.go
 │   │   │   └── usecase
-│   │   │       ├── log_test.txt
 │   │   │       ├── question_service.go
 │   │   │       └── question_service_test.go
 │   │   ├── session
@@ -185,15 +188,12 @@
 │   │   │   │   ├── session.proto
 │   │   │   │   └── session_grpc.pb.go
 │   │   │   ├── repository
-│   │   │   │   ├── log_test.txt
 │   │   │   │   ├── session_repo.go
 │   │   │   │   └── session_repo_test.go
 │   │   │   ├── server
-│   │   │   │   ├── log_test.txt
 │   │   │   │   ├── session.go
 │   │   │   │   └── session_server_test.go
 │   │   │   └── usecase
-│   │   │       ├── log_test.txt
 │   │   │       ├── session_service.go
 │   │   │       └── session_service_test.go
 │   │   └── user
@@ -209,15 +209,12 @@
 │   │       │   ├── user.proto
 │   │       │   └── user_grpc.pb.go
 │   │       ├── repository
-│   │       │   ├── log_test.txt
 │   │       │   ├── user_repo.go
 │   │       │   └── user_repo_test.go
 │   │       ├── server
-│   │       │   ├── log_test.txt
 │   │       │   ├── user.go
 │   │       │   └── user_server_test.go
 │   │       └── usecase
-│   │           ├── log_test.txt
 │   │           ├── user_service.go
 │   │           └── user_service_test.go
 │   ├── models
@@ -234,11 +231,25 @@
 │   │   │   └── user_converter_test.go
 │   │   ├── delivery_models
 │   │   │   ├── answer.go
+│   │   │   ├── answer_easyjson.go
 │   │   │   ├── email.go
+│   │   │   ├── email_easyjson.go
+│   │   │   ├── file.go
 │   │   │   ├── folder.go
+│   │   │   ├── folder_easyjson.go
+│   │   │   ├── otherEmail.go
+│   │   │   ├── otherEmail_easyjson.go
+│   │   │   ├── otherLabel.go
+│   │   │   ├── otherLabel_easyjson.go
+│   │   │   ├── otherUser.go
+│   │   │   ├── otherUser_easyjson.go
 │   │   │   ├── question.go
+│   │   │   ├── question_easyjson.go
 │   │   │   ├── session.go
-│   │   │   └── user.go
+│   │   │   ├── user.go
+│   │   │   ├── user_easyjson.go
+│   │   │   ├── vkUser.go
+│   │   │   └── vkUser_easyjson.go
 │   │   ├── microservice_ports
 │   │   │   └── ports.go
 │   │   └── response
@@ -261,14 +272,28 @@
 │   │   │       └── http
 │   │   │           ├── folder_handler.go
 │   │   │           └── folder_handler_test.go
+│   │   ├── gmail
+│   │   │   ├── gmail_auth
+│   │   │   │   └── delivery
+│   │   │   │       └── http
+│   │   │   │           └── gmail_auth_handler.go
+│   │   │   └── gmail_handler
+│   │   │       └── delivery
+│   │   │           └── http
+│   │   │               ├── gmail_draft_handler.go
+│   │   │               ├── gmail_email_handler.go
+│   │   │               └── gmail_label_handler.go
 │   │   ├── logger
 │   │   │   ├── log.txt
 │   │   │   ├── logger.go
 │   │   │   └── logger_test.go
 │   │   ├── middleware
-│   │   │   ├── log.txt
 │   │   │   ├── middleware.go
 │   │   │   └── middleware_test.go
+│   │   ├── oauth
+│   │   │   └── delivery
+│   │   │       └── http
+│   │   │           └── oauth_handler.go
 │   │   ├── questionnairy
 │   │   │   └── delivery
 │   │   │       └── http
@@ -287,10 +312,15 @@
 │   │   │           ├── user_handler.go
 │   │   │           └── user_handler_test.go
 │   │   └── utils
+│   │       ├── check_file_type
+│   │       │   ├── check_file_type.go
+│   │       │   └── check_file_type_test.go
 │   │       ├── check_image
 │   │       │   └── check_image.go
 │   │       ├── connect_microservice
 │   │       │   └── connect.go
+│   │       ├── constants
+│   │       │   └── constants.go
 │   │       ├── generate_filename
 │   │       │   ├── generate_filename.go
 │   │       │   └── generate_filename_test.go
@@ -307,11 +337,9 @@
 │       ├── go.mod
 │       ├── go.sum
 │       └── main.go
-├── log.txt
-├── logInterEmail.txt
-├── logInterFolder.txt
-└── monitoring
-    └── prometheus
-        └── prometheus.yml
+├── monitoring
+│   └── prometheus
+│       └── prometheus.yml
+└── token.json
 
-98 directories, 217 files
+110 directories, 233 files
