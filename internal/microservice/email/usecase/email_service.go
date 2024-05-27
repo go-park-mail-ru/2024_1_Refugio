@@ -131,11 +131,11 @@ func (uc *EmailUseCase) CreateEmail(newEmail *domain.Email, ctx context.Context)
 func (uc *EmailUseCase) CreateProfileEmail(emailId uint64, sender, recipient string, ctx context.Context) error {
 	if sender == recipient {
 		return uc.repo.AddProfileEmailMyself(emailId, sender, ctx)
-	} else if validators.IsValidEmailFormat(sender) == true && recipient == "" {
+	} else if validators.IsValidEmailFormat(sender) && recipient == "" {
 		return uc.repo.AddProfileEmailMyself(emailId, sender, ctx)
-	} else if validators.IsValidEmailFormat(sender) == true && validators.IsValidEmailFormat(recipient) == false {
+	} else if validators.IsValidEmailFormat(sender) && !validators.IsValidEmailFormat(recipient) {
 		return uc.repo.AddProfileEmailMyself(emailId, sender, ctx)
-	} else if validators.IsValidEmailFormat(sender) == false && validators.IsValidEmailFormat(recipient) == true {
+	} else if !validators.IsValidEmailFormat(sender) && validators.IsValidEmailFormat(recipient) {
 		return uc.repo.AddProfileEmailMyself(emailId, recipient, ctx)
 	}
 

@@ -5,35 +5,37 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"io"
-	auth_proto "mail/internal/microservice/auth/proto"
-	"mail/internal/microservice/models/domain_models"
-	domain "mail/internal/microservice/models/domain_models"
-	api "mail/internal/models/delivery_models"
-	"mail/internal/models/microservice_ports"
-	response "mail/internal/models/response"
-	domainSession "mail/internal/pkg/session/interface"
-	"mail/internal/pkg/utils/connect_microservice"
-	"mail/internal/pkg/utils/sanitize"
-	validUtil "mail/internal/pkg/utils/validators"
 	"net/http"
 	"time"
+
+	"github.com/gorilla/mux"
+
+	"mail/internal/microservice/models/domain_models"
+	"mail/internal/models/microservice_ports"
+	"mail/internal/pkg/utils/connect_microservice"
+	"mail/internal/pkg/utils/sanitize"
+
+	auth_proto "mail/internal/microservice/auth/proto"
+	domain "mail/internal/microservice/models/domain_models"
+	api "mail/internal/models/delivery_models"
+	response "mail/internal/models/response"
+	domainSession "mail/internal/pkg/session/interface"
+	validUtil "mail/internal/pkg/utils/validators"
 )
 
 var (
-	OAHandler                       = &OAuthHandler{}
-	requestIDContextKey interface{} = "requestid"
-	AUTH_URL                        = "https://oauth.vk.com/authorize?client_id=%s&redirect_uri=%s&response_type=code&scope=email"
-	APP_ID                          = "51916655"
-	APP_KEY                         = "oz3r7Pyakfeg25JpJsQV"
-	API_URL                         = "https://api.vk.com/method/users.get?fields=id,photo_max,email,sex,bdate&access_token=%s&v=5.131"
-	REDIRECT_URL_SIGNUP             = "https://mailhub.su/auth-vk/auth"
-	REDIRECT_URL_LOGIN              = "https://mailhub.su/auth-vk/loginVK"
-	mapVKIDToken                    = make(map[uint32]string)
+	OAHandler           = &OAuthHandler{}
+	AUTH_URL            = "https://oauth.vk.com/authorize?client_id=%s&redirect_uri=%s&response_type=code&scope=email"
+	APP_ID              = "51916655"
+	APP_KEY             = "oz3r7Pyakfeg25JpJsQV"
+	API_URL             = "https://api.vk.com/method/users.get?fields=id,photo_max,email,sex,bdate&access_token=%s&v=5.131"
+	REDIRECT_URL_SIGNUP = "https://mailhub.su/auth-vk/auth"
+	REDIRECT_URL_LOGIN  = "https://mailhub.su/auth-vk/loginVK"
+	mapVKIDToken        = make(map[uint32]string)
 )
 
 // https://oauth.vk.com/authorize?client_id=51916655&redirect_uri=https://mailhub.su/testAuth/auth-vk/loginVK&response_type=code&scope=email
@@ -122,7 +124,11 @@ func (ah *OAuthHandler) AuthVK(w http.ResponseWriter, r *http.Request) {
 			VKId: uint32(1234567),
 		}
 		randToken := make([]byte, 16)
-		rand.Read(randToken)
+		_, err := rand.Read(randToken)
+		if err != nil {
+			fmt.Println("Error reading random numbers:", err)
+			return
+		}
 		authToken := fmt.Sprintf("%x", randToken)
 		mapVKIDToken[vkUser.VKId] = authToken
 		w.Header().Set("AuthToken", authToken)

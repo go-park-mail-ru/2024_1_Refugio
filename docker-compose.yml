@@ -18,6 +18,7 @@ services:
       - deploy-guide-dev
     volumes:
       - db_postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
 
   db_question:
     container_name: db_question
@@ -32,6 +33,7 @@ services:
       - deploy-guide-dev
     volumes:
       - db_question_postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
 
   backend:
     container_name: backend
@@ -44,6 +46,7 @@ services:
       - deploy-guide-dev
     depends_on:
       - db
+    restart: unless-stopped
 
   smtp:
     container_name: smtp
@@ -54,6 +57,7 @@ services:
       - "25:587"
     networks:
       - deploy-guide-dev
+    restart: unless-stopped
 
   auth:
     container_name: auth
@@ -66,6 +70,7 @@ services:
       - deploy-guide-dev
     depends_on:
       - db
+    restart: unless-stopped
 
   email:
     container_name: email
@@ -78,6 +83,7 @@ services:
       - deploy-guide-dev
     depends_on:
       - db
+    restart: unless-stopped
 
   session:
     container_name: session
@@ -90,6 +96,7 @@ services:
       - deploy-guide-dev
     depends_on:
       - db
+    restart: unless-stopped
 
   user:
     container_name: user
@@ -102,6 +109,7 @@ services:
       - deploy-guide-dev
     depends_on:
       - db
+    restart: unless-stopped
 
   folder:
     container_name: folder
@@ -114,6 +122,7 @@ services:
       - deploy-guide-dev
     depends_on:
       - db
+    restart: unless-stopped
 
   questionnaire:
     container_name: questionnaire
@@ -126,6 +135,7 @@ services:
       - deploy-guide-dev
     depends_on:
       - db_question
+    restart: unless-stopped
 
   prometheus:
     image: prom/prometheus
@@ -138,6 +148,7 @@ services:
       - ./monitoring/prometheus:/etc/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
+    restart: unless-stopped
 
   grafana:
     image: grafana/grafana
@@ -150,6 +161,7 @@ services:
       - grafana_data:/var/lib/grafana
     depends_on:
       - prometheus
+    restart: unless-stopped
 
   node-exporter:
     image: prom/node-exporter
@@ -162,6 +174,7 @@ services:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
       - /:/rootfs:ro
+    restart: unless-stopped
 
   minio:
     image: minio/minio:latest
@@ -182,6 +195,7 @@ services:
       interval: 30s
       timeout: 20s
       retries: 3
+    restart: unless-stopped
 
 volumes:
   db_postgres_data:

@@ -2,16 +2,19 @@ package http
 
 import (
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/microcosm-cc/bluemonday"
 	"google.golang.org/api/gmail/v1"
 	"io"
 	"log"
-	apiModels "mail/internal/models/delivery_models"
-	"mail/internal/models/response"
-	"mail/internal/pkg/utils/validators"
 	"net/http"
 	"strings"
+
+	"github.com/gorilla/mux"
+	"github.com/microcosm-cc/bluemonday"
+
+	"mail/internal/models/response"
+	"mail/internal/pkg/utils/validators"
+
+	apiModels "mail/internal/models/delivery_models"
 )
 
 // GetLabels displays the list of label.
@@ -367,9 +370,9 @@ func (g *GMailEmailHandler) UpdateLabel(w http.ResponseWriter, r *http.Request) 
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": true})
 }
 
-// AddEmailInLabel adds a email in label.
-// @Summary AddEmailInLabel a email om label
-// @Description AddEmailInLabel a email in label to the system
+// AddEmailInLabel adds an email in label.
+// @Summary AddEmailInLabel an email in label
+// @Description AddEmailInLabel an email in label to the system
 // @Tags labels-gmail
 // @Accept json
 // @Produce json
@@ -423,8 +426,8 @@ func (g *GMailEmailHandler) AddEmailInLabel(w http.ResponseWriter, r *http.Reque
 }
 
 // DeleteEmailInLabel delete email in label.
-// @Summary DeleteEmailInLabel a email in label
-// @Description DeleteEmailInLabel a email in label to the system
+// @Summary DeleteEmailInLabel an email in label
+// @Description DeleteEmailInLabel an email in label to the system
 // @Tags labels-gmail
 // @Accept json
 // @Produce json

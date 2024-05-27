@@ -3,16 +3,19 @@ package http
 import (
 	"encoding/base64"
 	"fmt"
+	"google.golang.org/api/gmail/v1"
+	"io"
+	"net/http"
+	"strings"
+
 	"github.com/denisbrodbeck/striphtmltags"
 	"github.com/gorilla/mux"
 	"github.com/microcosm-cc/bluemonday"
-	"google.golang.org/api/gmail/v1"
-	"io"
-	apiModels "mail/internal/models/delivery_models"
+
 	"mail/internal/models/response"
 	"mail/internal/pkg/utils/validators"
-	"net/http"
-	"strings"
+
+	apiModels "mail/internal/models/delivery_models"
 )
 
 // AddDraft adds a new draft message.
@@ -158,8 +161,8 @@ func (g *GMailEmailHandler) SendDraft(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetByIdDraft returns an draft message by its ID.
-// @Summary Get an draft message by ID
-// @Description Get an draft message by its unique identifier
+// @Summary Get a draft message by ID
+// @Description Get a draft message by its unique identifier
 // @Tags drafts-gmail
 // @Produce json
 // @Param id path string true "ID of the draft message"
@@ -221,8 +224,8 @@ func (g *GMailEmailHandler) GetByIdDraft(w http.ResponseWriter, r *http.Request)
 }
 
 // UpdateDraft update a draft message.
-// @Summary UpdateDraft a update draft message
-// @Description UpdateDraft a update draft message to the system
+// @Summary UpdateDraft an update draft message
+// @Description UpdateDraft an update draft message to the system
 // @Tags drafts-gmail
 // @Accept json
 // @Produce json
@@ -299,7 +302,7 @@ func (g *GMailEmailHandler) UpdateDraft(w http.ResponseWriter, r *http.Request) 
 	}
 
 	var modifyRequest *gmail.ModifyMessageRequest
-	if newDraft.ReadStatus == false {
+	if !newDraft.ReadStatus {
 		modifyRequest = &gmail.ModifyMessageRequest{
 			AddLabelIds: []string{"UNREAD"},
 		}
@@ -383,7 +386,7 @@ func (g *GMailEmailHandler) GetDrafts(w http.ResponseWriter, r *http.Request) {
 		draftsApi[i] = email
 	}
 
-	for i, _ := range draftsApi {
+	for i := range draftsApi {
 		draftsApi[i].DraftStatus = true
 	}
 
@@ -442,7 +445,7 @@ func CreateEmailStructDraft(msg *gmail.Draft) *apiModels.OtherEmail {
 
 	fmt.Println(msg.Message.Payload.MimeType)
 	if msg.Message.Payload.MimeType == "text/plain" {
-		email = ParserMessageHeadresDraft(email, msg)
+		email = ParserMessageHeadersDraft(email, msg)
 		data, err := base64.URLEncoding.DecodeString(msg.Message.Payload.Body.Data)
 		if err != nil {
 			fmt.Println("Error: ", err)
@@ -454,7 +457,7 @@ func CreateEmailStructDraft(msg *gmail.Draft) *apiModels.OtherEmail {
 			fmt.Println("Error: ", err)
 		}
 		email.Text = string(data)
-		email = ParserMessageHeadresDraft(email, msg)
+		email = ParserMessageHeadersDraft(email, msg)
 	} else if len(msg.Message.Payload.Parts) != 0 {
 		for _, part := range msg.Message.Payload.Parts {
 			if part.MimeType == "text/html" {
@@ -463,7 +466,7 @@ func CreateEmailStructDraft(msg *gmail.Draft) *apiModels.OtherEmail {
 					fmt.Println("Error: ", err)
 				}
 				email.Text = string(data)
-				email = ParserMessageHeadresDraft(email, msg)
+				email = ParserMessageHeadersDraft(email, msg)
 			}
 		}
 	}
@@ -471,7 +474,7 @@ func CreateEmailStructDraft(msg *gmail.Draft) *apiModels.OtherEmail {
 	return email
 }
 
-func ParserMessageHeadresDraft(email *apiModels.OtherEmail, msg *gmail.Draft) *apiModels.OtherEmail {
+func ParserMessageHeadersDraft(email *apiModels.OtherEmail, msg *gmail.Draft) *apiModels.OtherEmail {
 	for _, mes := range msg.Message.Payload.Headers {
 		if mes.Name == "To" {
 			email.RecipientEmail = mes.Value

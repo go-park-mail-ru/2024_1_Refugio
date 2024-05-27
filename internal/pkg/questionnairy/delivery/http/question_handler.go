@@ -17,8 +17,7 @@ import (
 )
 
 var (
-	QHandler                        = &QuestionHandler{}
-	requestIDContextKey interface{} = "requestid"
+	QHandler = &QuestionHandler{}
 )
 
 // QuestionHandler handles user-related HTTP requests.

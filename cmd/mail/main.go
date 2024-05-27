@@ -7,21 +7,22 @@ import (
 	"fmt"
 	"google.golang.org/grpc/metadata"
 	"log"
-	"mail/internal/websocket"
 	"net/http"
 	"os"
 	"path/filepath"
 	"sync"
+	"text/template"
 	"time"
 	_ "time/tzdata"
 
 	"github.com/gorilla/mux"
-	_ "github.com/jackc/pgx/stdlib"
 	"github.com/kataras/requestid"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
+
+	_ "github.com/jackc/pgx/stdlib"
 
 	"mail/cmd/configs"
 	"mail/internal/models/microservice_ports"
@@ -30,13 +31,12 @@ import (
 	"mail/internal/pkg/middleware"
 	"mail/internal/pkg/session"
 	"mail/internal/pkg/utils/connect_microservice"
-	"mail/internal/pkg/utils/constants"
-	"text/template"
+	"mail/internal/websocket"
+
+	_ "mail/docs"
 
 	migrate "github.com/rubenv/sql-migrate"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
-
-	_ "mail/docs"
 	auth_proto "mail/internal/microservice/auth/proto"
 	email_proto "mail/internal/microservice/email/proto"
 	folder_proto "mail/internal/microservice/folder/proto"
@@ -57,7 +57,7 @@ import (
 // @version 1.0
 // @description API server for MailHub
 
-// @host localhost:8080
+// @host mailhub.su
 // @BasePath /
 func main() {
 	settingTime()
@@ -310,7 +310,7 @@ func initializeMiddlewareLogger() *middleware.Logger {
 		fmt.Println("Failed to create logfile" + "log.txt")
 	}
 
-	logrusAccess := logger.InitializationAccesLog(f)
+	logrusAccess := logger.InitializationAccessLog(f)
 	loggerAccess := new(middleware.Logger)
 	loggerAccess.Logger = logrusAccess
 
@@ -360,6 +360,8 @@ func setupAuthRouter(authHandler *authHand.AuthHandler, oauthHandler *oauthHand.
 	auth.HandleFunc("/signup", authHandler.Signup).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/logout", authHandler.Logout).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/sendOther", emailHandler.SendFromAnotherDomain).Methods("POST", "OPTIONS")
+	auth.HandleFunc("/addFileOther", emailHandler.AddFileFromAnotherDomain).Methods("POST", "OPTIONS")
+	auth.HandleFunc("/addFileToEmailOther/{id}/file/{file-id}", emailHandler.AddFileToEmailFromAnotherDomain).Methods("POST", "OPTIONS")
 
 	auth.HandleFunc("/getAuthURL", oauthGMailHandler.GetAuthURL).Methods("GET", "OPTIONS")
 	auth.HandleFunc("/gAuth", oauthGMailHandler.GoogleAuth).Methods("GET", "OPTIONS")
@@ -371,7 +373,7 @@ func setupAuthRouter(authHandler *authHand.AuthHandler, oauthHandler *oauthHand.
 	return auth
 }
 
-// templ represents a single template
+// templateHandler represents a single template
 type templateHandler struct {
 	once     sync.Once
 	filename string
@@ -498,8 +500,8 @@ func startSessionCleaner(interval time.Duration, sessionServiceClient session_pr
 				}
 				defer f.Close()
 
-				c := context.WithValue(context.Background(), constants.LoggerKey, logger.InitializationBdLog(f))
-				ctx := context.WithValue(c, constants.RequestIDKey, "DeleteExpiredSessionsNULL")
+				c := context.WithValue(context.Background(), "logger", logger.InitializationBdLog(f))
+				ctx := context.WithValue(c, "requestID", "DeleteExpiredSessionsNULL")
 
 				req, err := sessionServiceClient.CleanupExpiredSessions(
 					metadata.NewOutgoingContext(ctx,
