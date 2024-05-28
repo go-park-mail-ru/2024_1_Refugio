@@ -428,3 +428,53 @@ func TestGetAllEmailsInFolder(t *testing.T) {
 		assert.Nil(t, objectEmail)
 	})
 }
+
+func TestGetAllFolder(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockFolderUseCase := mock.NewMockFolderUseCase(ctrl)
+
+	server := NewFolderServer(mockFolderUseCase)
+
+	ctx := GetCTX()
+
+	data := &proto.GetAllFoldersData{Id: 1, Offset: 0, Limit: 0}
+	folders := []*domain_models.Folder{
+		{ID: 1, Name: "Folder 1"},
+		{ID: 2, Name: "Folder 2"},
+		{ID: 3, Name: "Folder 3"},
+	}
+
+	folderArr := []*proto.Folder{
+		{Id: 1, Name: "Folder 1"},
+		{Id: 2, Name: "Folder 2"},
+		{Id: 3, Name: "Folder 3"},
+	}
+
+	expectedFolders := &proto.Folders{Folders: folderArr}
+
+	t.Run("GetAllFolders_Successfully", func(t *testing.T) {
+		mockFolderUseCase.EXPECT().GetAllFolders(data.Id, data.Offset, data.Limit, ctx).Return(folders, nil)
+
+		foldersProto, err := server.GetAllFolders(ctx, data)
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedFolders, foldersProto)
+	})
+
+	t.Run("GetAllFolders_InvalidFolderFormat", func(t *testing.T) {
+		_, err := server.GetAllFolders(ctx, nil)
+
+		assert.Error(t, err)
+	})
+
+	t.Run("GetAllFolders_NotFound", func(t *testing.T) {
+		mockFolderUseCase.EXPECT().GetAllFolders(data.Id, data.Offset, data.Limit, ctx).Return(folders, fmt.Errorf("folders not found"))
+
+		foldersProto, err := server.GetAllFolders(ctx, data)
+
+		assert.Error(t, err)
+		assert.Nil(t, foldersProto)
+	})
+}

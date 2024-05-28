@@ -2,6 +2,8 @@ package usecase
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -216,4 +218,48 @@ func TestGetAllEmailsInFolder(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, expectedFolders, folders)
+}
+
+func TestGetAllFolderName(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockFolderRepository(ctrl)
+	useCase := NewFolderUseCase(mockRepo)
+
+	ctx := GetCTX()
+	emailID := uint32(123)
+
+	t.Run("GetAllFolderName_Success", func(t *testing.T) {
+		expectedFolders := []*domain.Folder{
+			{ID: 1, Name: "Inbox"},
+			{ID: 2, Name: "Sent"},
+			{ID: 3, Name: "Drafts"},
+		}
+
+		mockRepo.EXPECT().GetAllFolderName(emailID, ctx).Return(expectedFolders, nil)
+
+		folders, err := useCase.GetAllFolderName(emailID, ctx)
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedFolders, folders)
+	})
+
+	t.Run("GetAllFolderName_NoFolders", func(t *testing.T) {
+		mockRepo.EXPECT().GetAllFolderName(emailID, ctx).Return(nil, fmt.Errorf("DB no have folders"))
+
+		folders, err := useCase.GetAllFolderName(emailID, ctx)
+
+		assert.Error(t, err)
+		assert.Nil(t, folders)
+	})
+
+	t.Run("GetAllFolderName_DBError", func(t *testing.T) {
+		mockRepo.EXPECT().GetAllFolderName(emailID, ctx).Return(nil, errors.New("DB error"))
+
+		folders, err := useCase.GetAllFolderName(emailID, ctx)
+
+		assert.Error(t, err)
+		assert.Nil(t, folders)
+	})
 }

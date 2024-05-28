@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -1227,5 +1228,75 @@ func TestUpdateFileByID(t *testing.T) {
 		err := repo.UpdateFileByID(fileID, newFileID, newFileType, newFileName, newFileSize, ctx)
 
 		assert.Error(t, err)
+	})
+}
+
+func TestGetAvatarFileIDByLogin(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer mockDB.Close()
+
+	repo := EmailRepository{
+		DB: sqlx.NewDb(mockDB, "sqlmock"),
+	}
+
+	ctx := GetCTX()
+
+	t.Run("GetAvatarFileIDByLogin_AvatarExists", func(t *testing.T) {
+		login := "test_login"
+		expectedAvatarID := "avatar_id"
+
+		mock.ExpectQuery(`
+            SELECT f\.file_id
+            FROM file f
+            LEFT JOIN profile p ON p\.avatar_id = f\.id
+            WHERE p\.login = \$1
+        `).
+			WithArgs(login).
+			WillReturnRows(sqlmock.NewRows([]string{"file_id"}).AddRow(expectedAvatarID))
+
+		avatarID, err := repo.GetAvatarFileIDByLogin(login, ctx)
+		assert.NoError(t, err)
+		assert.Equal(t, expectedAvatarID, avatarID)
+	})
+
+	t.Run("GetAvatarFileIDByLogin_NoAvatar", func(t *testing.T) {
+		login := "test_login"
+
+		rows := sqlmock.NewRows([]string{"file_id"})
+		mock.ExpectQuery(`
+            SELECT f\.file_id
+            FROM file f
+            LEFT JOIN profile p ON p\.avatar_id = f\.id
+            WHERE p\.login = \$1
+        `).
+			WithArgs(login).
+			WillReturnRows(rows)
+
+		avatarID, err := repo.GetAvatarFileIDByLogin(login, ctx)
+		assert.Error(t, err)
+		assert.Empty(t, avatarID)
+	})
+
+	t.Run("GetAvatarFileIDByLogin_DBError", func(t *testing.T) {
+		login := "test_login"
+
+		mock.ExpectQuery(`
+            SELECT f\.file_id
+            FROM file f
+            LEFT JOIN profile p ON p\.avatar_id = f\.id
+            WHERE p\.login = \$1
+        `).
+			WithArgs(login).
+			WillReturnError(errors.New("DB error"))
+
+		avatarID, err := repo.GetAvatarFileIDByLogin(login, ctx)
+		assert.Error(t, err)
+		assert.Empty(t, avatarID)
 	})
 }

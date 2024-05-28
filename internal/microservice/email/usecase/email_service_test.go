@@ -785,3 +785,96 @@ func TestUpdateFileByID_ErrorUpdatingFile(t *testing.T) {
 	assert.Error(t, err)
 	assert.False(t, updated)
 }
+
+func TestAddFile(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mockRepository.NewMockEmailRepository(ctrl)
+	useCase := NewEmailUseCase(mockRepo)
+
+	fileID := "test_file_id"
+	fileType := "test_file_type"
+	fileName := "test_file_name"
+	fileSize := "test_file_size"
+	ctx := context.Background()
+
+	t.Run("AddFile_Success", func(t *testing.T) {
+		expectedID := uint64(123)
+
+		mockRepo.EXPECT().AddFile(fileID, fileType, fileName, fileSize, ctx).Return(expectedID, nil)
+
+		returnedID, err := useCase.AddFile(fileID, fileType, fileName, fileSize, ctx)
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedID, returnedID)
+	})
+
+	t.Run("AddFile_EmptyFileID", func(t *testing.T) {
+		_, err := useCase.AddFile("", fileType, fileName, fileSize, ctx)
+		assert.Error(t, err)
+	})
+
+	t.Run("AddFile_EmptyFileType", func(t *testing.T) {
+		_, err := useCase.AddFile(fileID, "", fileName, fileSize, ctx)
+		assert.Error(t, err)
+	})
+
+	t.Run("AddFile_EmptyFileName", func(t *testing.T) {
+		_, err := useCase.AddFile(fileID, fileType, "", fileSize, ctx)
+		assert.Error(t, err)
+	})
+
+	t.Run("AddFile_EmptyFileSize", func(t *testing.T) {
+		_, err := useCase.AddFile(fileID, fileType, fileName, "", ctx)
+		assert.Error(t, err)
+	})
+
+	t.Run("AddFile_DBError", func(t *testing.T) {
+		mockRepo.EXPECT().AddFile(fileID, fileType, fileName, fileSize, ctx).Return(uint64(0), errors.New("DB error"))
+
+		_, err := useCase.AddFile(fileID, fileType, fileName, fileSize, ctx)
+		assert.Error(t, err)
+	})
+}
+
+func TestAddFileToEmail(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mockRepository.NewMockEmailRepository(ctrl)
+	useCase := NewEmailUseCase(mockRepo)
+
+	emailID := uint64(123)
+	fileID := uint64(456)
+	ctx := context.Background()
+
+	t.Run("AddFileToEmail_Success", func(t *testing.T) {
+		mockRepo.EXPECT().AddAttachment(emailID, fileID, ctx).Return(nil)
+
+		err := useCase.AddFileToEmail(emailID, fileID, ctx)
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("AddFileToEmail_InvalidEmailID", func(t *testing.T) {
+		err := useCase.AddFileToEmail(0, fileID, ctx)
+		assert.Error(t, err)
+		assert.Equal(t, "invalid file id", err.Error())
+	})
+
+	t.Run("AddFileToEmail_InvalidFileID", func(t *testing.T) {
+		err := useCase.AddFileToEmail(emailID, 0, ctx)
+		assert.Error(t, err)
+		assert.Equal(t, "invalid file id", err.Error())
+	})
+
+	t.Run("AddFileToEmail_DBError", func(t *testing.T) {
+		mockRepo.EXPECT().AddAttachment(emailID, fileID, ctx).Return(errors.New("DB error"))
+
+		err := useCase.AddFileToEmail(emailID, fileID, ctx)
+
+		assert.Error(t, err)
+		assert.Equal(t, "failed to add attachment", err.Error())
+	})
+}

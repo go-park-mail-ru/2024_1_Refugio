@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -891,6 +892,220 @@ func TestUpdateFileByID(t *testing.T) {
 		}
 
 		reply, err := server.UpdateFileByID(ctx, request)
+
+		assert.Error(t, err)
+		assert.Nil(t, reply)
+	})
+}
+
+func TestAddEmailDraft(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockEmailUseCase := mock.NewMockEmailUseCase(ctrl)
+	server := NewEmailServer(mockEmailUseCase)
+	ctx := context.Background()
+
+	emailID := uint64(123)
+	createdEmail := &proto.Email{
+		SenderEmail:    "sender",
+		RecipientEmail: "recipient",
+		Topic:          "topic",
+		Text:           "text",
+	}
+
+	t.Run("AddEmailDraft_Success", func(t *testing.T) {
+		mockEmailUseCase.EXPECT().CreateEmail(converters.EmailConvertProtoInCore(createdEmail), ctx).Return(emailID, converters.EmailConvertProtoInCore(createdEmail), nil)
+		mockEmailUseCase.EXPECT().CreateProfileEmail(emailID, converters.EmailConvertProtoInCore(createdEmail).SenderEmail, "", ctx).Return(nil)
+
+		request := &proto.Email{
+			SenderEmail:    "sender",
+			RecipientEmail: "recipient",
+			Topic:          "topic",
+			Text:           "text",
+		}
+
+		reply, err := server.AddEmailDraft(ctx, request)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, reply)
+		assert.Equal(t, emailID, reply.Id)
+	})
+
+	t.Run("AddEmailDraft_NilInput", func(t *testing.T) {
+		reply, err := server.AddEmailDraft(ctx, nil)
+
+		assert.Error(t, err)
+		assert.Nil(t, reply)
+	})
+
+	t.Run("AddEmailDraft_FailedToCreateEmail", func(t *testing.T) {
+		mockEmailUseCase.EXPECT().CreateEmail(converters.EmailConvertProtoInCore(createdEmail), ctx).Return(uint64(0), nil, errors.New("failed create email"))
+
+		request := &proto.Email{
+			SenderEmail:    "sender",
+			RecipientEmail: "recipient",
+			Topic:          "topic",
+			Text:           "text",
+		}
+
+		reply, err := server.AddEmailDraft(ctx, request)
+
+		assert.Error(t, err)
+		assert.Nil(t, reply)
+	})
+
+	t.Run("AddEmailDraft_FailedToCreateProfileEmail", func(t *testing.T) {
+		mockEmailUseCase.EXPECT().CreateEmail(converters.EmailConvertProtoInCore(createdEmail), ctx).Return(emailID, converters.EmailConvertProtoInCore(createdEmail), nil)
+		mockEmailUseCase.EXPECT().CreateProfileEmail(emailID, converters.EmailConvertProtoInCore(createdEmail).SenderEmail, "", ctx).Return(errors.New("failed create profile email"))
+
+		request := &proto.Email{
+			SenderEmail:    "sender",
+			RecipientEmail: "recipient",
+			Topic:          "topic",
+			Text:           "text",
+		}
+
+		reply, err := server.AddEmailDraft(ctx, request)
+
+		assert.Error(t, err)
+		assert.Nil(t, reply)
+	})
+}
+
+func TestAddFile(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockEmailUseCase := mock.NewMockEmailUseCase(ctrl)
+	server := NewEmailServer(mockEmailUseCase)
+	ctx := context.Background()
+
+	fileId := "123"
+	fileType := "pdf"
+	fileName := "name"
+	fileSize := "size"
+
+	t.Run("AddFile_Success", func(t *testing.T) {
+		mockEmailUseCase.EXPECT().AddFile(fileId, fileType, fileName, fileSize, ctx).Return(uint64(1), nil)
+
+		request := &proto.AddFileRequest{
+			FileId:   fileId,
+			FileType: fileType,
+			FileName: fileName,
+			FileSize: fileSize,
+		}
+
+		reply, err := server.AddFile(ctx, request)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, reply)
+	})
+
+	t.Run("AddFile_NilInput", func(t *testing.T) {
+		reply, err := server.AddFile(ctx, nil)
+
+		assert.Error(t, err)
+		assert.Nil(t, reply)
+	})
+
+	t.Run("AddFile_EmptyFields", func(t *testing.T) {
+		request := &proto.AddFileRequest{
+			FileId:   "",
+			FileType: "",
+			FileName: "",
+			FileSize: "",
+		}
+
+		reply, err := server.AddFile(ctx, request)
+
+		assert.Error(t, err)
+		assert.Nil(t, reply)
+	})
+
+	t.Run("AddFile_FailedToAddFile", func(t *testing.T) {
+		mockEmailUseCase.EXPECT().AddFile(fileId, fileType, fileName, fileSize, ctx).Return(uint64(1), fmt.Errorf("failed to add file"))
+
+		request := &proto.AddFileRequest{
+			FileId:   fileId,
+			FileType: fileType,
+			FileName: fileName,
+			FileSize: fileSize,
+		}
+
+		reply, err := server.AddFile(ctx, request)
+
+		assert.Error(t, err)
+		assert.Nil(t, reply)
+	})
+}
+
+func TestAddFileToEmail(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockEmailUseCase := mock.NewMockEmailUseCase(ctrl)
+	server := NewEmailServer(mockEmailUseCase)
+	ctx := context.Background()
+
+	emailId := uint64(123)
+	fileId := uint64(234)
+
+	t.Run("AddFileToEmail_Success", func(t *testing.T) {
+		mockEmailUseCase.EXPECT().AddFileToEmail(emailId, fileId, ctx).Return(nil)
+
+		request := &proto.AddFileToEmailRequest{
+			EmailId: emailId,
+			FileId:  fileId,
+		}
+
+		reply, err := server.AddFileToEmail(ctx, request)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, reply)
+		assert.Equal(t, true, reply.Status)
+	})
+
+	t.Run("AddFileToEmail_NilInput", func(t *testing.T) {
+		reply, err := server.AddFileToEmail(ctx, nil)
+
+		assert.Error(t, err)
+		assert.Nil(t, reply)
+	})
+
+	t.Run("AddFileToEmail_InvalidEmailId", func(t *testing.T) {
+		request := &proto.AddFileToEmailRequest{
+			EmailId: 0,
+			FileId:  fileId,
+		}
+
+		reply, err := server.AddFileToEmail(ctx, request)
+
+		assert.Error(t, err)
+		assert.Nil(t, reply)
+	})
+
+	t.Run("AddFileToEmail_InvalidFileId", func(t *testing.T) {
+		request := &proto.AddFileToEmailRequest{
+			EmailId: emailId,
+			FileId:  0,
+		}
+
+		reply, err := server.AddFileToEmail(ctx, request)
+
+		assert.Error(t, err)
+		assert.Nil(t, reply)
+	})
+
+	t.Run("AddFileToEmail_FailedToAddFileToEmail", func(t *testing.T) {
+		mockEmailUseCase.EXPECT().AddFileToEmail(emailId, fileId, ctx).Return(fmt.Errorf("failed to add file to email"))
+
+		request := &proto.AddFileToEmailRequest{
+			EmailId: emailId,
+			FileId:  fileId,
+		}
+
+		reply, err := server.AddFileToEmail(ctx, request)
 
 		assert.Error(t, err)
 		assert.Nil(t, reply)
