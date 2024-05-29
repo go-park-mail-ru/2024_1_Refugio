@@ -36,7 +36,7 @@ func TestEmailConvertDbInCore(t *testing.T) {
 		RecipientEmail: "recipient@example.com",
 	}
 
-	actual := EmailConvertDbInCore(emailModelDb)
+	actual := EmailConvertDbInCore(&emailModelDb)
 
 	assert.Equal(t, expected, actual)
 }
@@ -56,7 +56,7 @@ func TestEmailConvertCoreInDb(t *testing.T) {
 		RecipientEmail: "recipient@example.com",
 	}
 
-	actual := EmailConvertCoreInDb(emailModelCore)
+	actual := EmailConvertCoreInDb(&emailModelCore)
 
 	assert.NotNil(t, actual)
 }

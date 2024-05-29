@@ -8,7 +8,7 @@ import (
 )
 
 // UserConvertCoreInProto converts a user model from the application core to the gRPC format.
-func UserConvertCoreInProto(userModelCore domain.User) *grpc.User {
+func UserConvertCoreInProto(userModelCore *domain.User) *grpc.User {
 	return &grpc.User{
 		Id:          userModelCore.ID,
 		Login:       userModelCore.Login,
@@ -25,7 +25,7 @@ func UserConvertCoreInProto(userModelCore domain.User) *grpc.User {
 }
 
 // UserConvertProtoInCore converts a user model from the gRPC format to the application core.
-func UserConvertProtoInCore(userModelProto grpc.User) *domain.User {
+func UserConvertProtoInCore(userModelProto *grpc.User) *domain.User {
 	return &domain.User{
 		ID:          userModelProto.Id,
 		Login:       userModelProto.Login,
@@ -38,5 +38,6 @@ func UserConvertProtoInCore(userModelProto grpc.User) *domain.User {
 		AvatarID:    userModelProto.Avatar,
 		PhoneNumber: userModelProto.PhoneNumber,
 		Description: userModelProto.Description,
+		VKId:        userModelProto.VkId,
 	}
 }

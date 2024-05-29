@@ -127,18 +127,33 @@ func (mr *MockFolderUseCaseMockRecorder) DeleteFolder(folderID, profileID, ctx i
 }
 
 // GetAllEmailsInFolder mocks base method.
-func (m *MockFolderUseCase) GetAllEmailsInFolder(folderID, profileId, limit, offset uint32, ctx context.Context) ([]*domain_models.Email, error) {
+func (m *MockFolderUseCase) GetAllEmailsInFolder(folderID, profileID, limit, offset uint32, login string, ctx context.Context) ([]*domain_models.Email, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAllEmailsInFolder", folderID, profileId, limit, offset, ctx)
+	ret := m.ctrl.Call(m, "GetAllEmailsInFolder", folderID, profileID, limit, offset, login, ctx)
 	ret0, _ := ret[0].([]*domain_models.Email)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAllEmailsInFolder indicates an expected call of GetAllEmailsInFolder.
-func (mr *MockFolderUseCaseMockRecorder) GetAllEmailsInFolder(folderID, profileId, limit, offset, ctx interface{}) *gomock.Call {
+func (mr *MockFolderUseCaseMockRecorder) GetAllEmailsInFolder(folderID, profileID, limit, offset, login, ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllEmailsInFolder", reflect.TypeOf((*MockFolderUseCase)(nil).GetAllEmailsInFolder), folderID, profileId, limit, offset, ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllEmailsInFolder", reflect.TypeOf((*MockFolderUseCase)(nil).GetAllEmailsInFolder), folderID, profileID, limit, offset, login, ctx)
+}
+
+// GetAllFolderName mocks base method.
+func (m *MockFolderUseCase) GetAllFolderName(emailID uint32, ctx context.Context) ([]*domain_models.Folder, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllFolderName", emailID, ctx)
+	ret0, _ := ret[0].([]*domain_models.Folder)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllFolderName indicates an expected call of GetAllFolderName.
+func (mr *MockFolderUseCaseMockRecorder) GetAllFolderName(emailID, ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllFolderName", reflect.TypeOf((*MockFolderUseCase)(nil).GetAllFolderName), emailID, ctx)
 }
 
 // GetAllFolders mocks base method.

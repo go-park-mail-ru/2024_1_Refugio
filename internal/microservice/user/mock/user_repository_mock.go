@@ -35,7 +35,7 @@ func (m *MockUserRepository) EXPECT() *MockUserRepositoryMockRecorder {
 	return m.recorder
 }
 
-// Add mock base method.
+// Add mocks base method.
 func (m *MockUserRepository) Add(user *domain_models.User, ctx context.Context) (*domain_models.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Add", user, ctx)
@@ -50,7 +50,7 @@ func (mr *MockUserRepositoryMockRecorder) Add(user, ctx interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Add", reflect.TypeOf((*MockUserRepository)(nil).Add), user, ctx)
 }
 
-// AddAvatar mock base method.
+// AddAvatar mocks base method.
 func (m *MockUserRepository) AddAvatar(id uint32, fileID, fileType string, ctx context.Context) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddAvatar", id, fileID, fileType, ctx)
@@ -65,7 +65,7 @@ func (mr *MockUserRepositoryMockRecorder) AddAvatar(id, fileID, fileType, ctx in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddAvatar", reflect.TypeOf((*MockUserRepository)(nil).AddAvatar), id, fileID, fileType, ctx)
 }
 
-// Delete mock base method.
+// Delete mocks base method.
 func (m *MockUserRepository) Delete(id uint32, ctx context.Context) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", id, ctx)
@@ -80,7 +80,7 @@ func (mr *MockUserRepositoryMockRecorder) Delete(id, ctx interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockUserRepository)(nil).Delete), id, ctx)
 }
 
-// DeleteAvatarByUserID mock base method.
+// DeleteAvatarByUserID mocks base method.
 func (m *MockUserRepository) DeleteAvatarByUserID(userID uint32, ctx context.Context) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteAvatarByUserID", userID, ctx)
@@ -94,7 +94,7 @@ func (mr *MockUserRepositoryMockRecorder) DeleteAvatarByUserID(userID, ctx inter
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAvatarByUserID", reflect.TypeOf((*MockUserRepository)(nil).DeleteAvatarByUserID), userID, ctx)
 }
 
-// GetAll mock base method.
+// GetAll mocks base method.
 func (m *MockUserRepository) GetAll(offset, limit int, ctx context.Context) ([]*domain_models.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAll", offset, limit, ctx)
@@ -109,7 +109,7 @@ func (mr *MockUserRepositoryMockRecorder) GetAll(offset, limit, ctx interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockUserRepository)(nil).GetAll), offset, limit, ctx)
 }
 
-// GetByID mock base method.
+// GetByID mocks base method.
 func (m *MockUserRepository) GetByID(id uint32, ctx context.Context) (*domain_models.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByID", id, ctx)
@@ -124,7 +124,37 @@ func (mr *MockUserRepositoryMockRecorder) GetByID(id, ctx interface{}) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockUserRepository)(nil).GetByID), id, ctx)
 }
 
-// GetUserByLogin mock base method.
+// GetByOnlyLogin mocks base method.
+func (m *MockUserRepository) GetByOnlyLogin(login string, ctx context.Context) (*domain_models.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByOnlyLogin", login, ctx)
+	ret0, _ := ret[0].(*domain_models.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByOnlyLogin indicates an expected call of GetByOnlyLogin.
+func (mr *MockUserRepositoryMockRecorder) GetByOnlyLogin(login, ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByOnlyLogin", reflect.TypeOf((*MockUserRepository)(nil).GetByOnlyLogin), login, ctx)
+}
+
+// GetByVKID mocks base method.
+func (m *MockUserRepository) GetByVKID(vkId uint32, ctx context.Context) (*domain_models.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByVKID", vkId, ctx)
+	ret0, _ := ret[0].(*domain_models.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByVKID indicates an expected call of GetByVKID.
+func (mr *MockUserRepositoryMockRecorder) GetByVKID(vkId, ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByVKID", reflect.TypeOf((*MockUserRepository)(nil).GetByVKID), vkId, ctx)
+}
+
+// GetUserByLogin mocks base method.
 func (m *MockUserRepository) GetUserByLogin(login, password string, ctx context.Context) (*domain_models.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUserByLogin", login, password, ctx)
@@ -139,7 +169,7 @@ func (mr *MockUserRepositoryMockRecorder) GetUserByLogin(login, password, ctx in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByLogin", reflect.TypeOf((*MockUserRepository)(nil).GetUserByLogin), login, password, ctx)
 }
 
-// InitAvatar mock base method.
+// InitAvatar mocks base method.
 func (m *MockUserRepository) InitAvatar(id uint32, fileID, fileType string, ctx context.Context) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "InitAvatar", id, fileID, fileType, ctx)
@@ -154,7 +184,7 @@ func (mr *MockUserRepositoryMockRecorder) InitAvatar(id, fileID, fileType, ctx i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitAvatar", reflect.TypeOf((*MockUserRepository)(nil).InitAvatar), id, fileID, fileType, ctx)
 }
 
-// Update mock base method.
+// Update mocks base method.
 func (m *MockUserRepository) Update(newUser *domain_models.User, ctx context.Context) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Update", newUser, ctx)

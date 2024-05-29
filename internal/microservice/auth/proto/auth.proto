@@ -10,13 +10,21 @@ import "google/protobuf/timestamp.proto";
 
 service AuthService {
   rpc Login(LoginRequest) returns(LoginReply) {}
+  rpc LoginVK(LoginVKRequest) returns(LoginReply) {}
   rpc Signup(SignupRequest) returns(SignupReply) {}
+  rpc SignupVK(SignupVKRequest) returns(SignupReply) {}
   rpc Logout(LogoutRequest) returns(LogoutReply) {}
+  rpc LoginOtherMail(LoginOtherMailRequest) returns(LoginReply) {}
+  rpc SignupOtherMail(SignupOtherMailRequest) returns(SignupReply) {}
 }
 
 message LoginRequest {
   string login = 1;
   string password = 2;
+}
+
+message LoginVKRequest {
+  uint32 vkId = 1;
 }
 
 message LoginReply {
@@ -37,6 +45,15 @@ message SignupRequest {
   string description = 10;
 }
 
+message SignupVKRequest {
+  string firstname = 1;
+  string surname = 2;
+  string gender = 4;
+  google.protobuf.Timestamp birthday = 5;
+  string login = 6;
+  uint32 vkId = 11;
+}
+
 message SignupReply {
   bool signup_status = 1;
 }
@@ -47,4 +64,20 @@ message LogoutRequest {
 
 message LogoutReply {
 
+}
+
+message LoginOtherMailRequest {
+  uint32 id = 1;
+}
+
+message SignupOtherMailRequest {
+  string firstname = 1;
+  string surname = 2;
+  string patronymic = 3;
+  string gender = 4;
+  google.protobuf.Timestamp birthday = 5;
+  string login = 6;
+  string avatar = 8;
+  string phone_number = 9;
+  string description = 10;
 }

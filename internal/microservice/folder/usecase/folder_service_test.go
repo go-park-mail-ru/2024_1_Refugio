@@ -2,25 +2,23 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"testing"
+
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+
+	"mail/internal/pkg/logger"
+	"mail/internal/pkg/utils/constants"
+
 	mock_repository "mail/internal/microservice/folder/mock"
 	domain "mail/internal/microservice/models/domain_models"
-	"mail/internal/pkg/logger"
-	"os"
-	"testing"
 )
 
 func GetCTX() context.Context {
-	f, err := os.OpenFile("log_test.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		fmt.Println("Failed to create logfile" + "log.txt")
-	}
-	defer f.Close()
-
-	ctx := context.WithValue(context.Background(), "logger", logger.InitializationBdLog(f))
-	ctx2 := context.WithValue(ctx, "requestID", []string{"testID"})
+	ctx := context.WithValue(context.Background(), constants.LoggerKey, logger.InitializationBdLog(nil))
+	ctx2 := context.WithValue(ctx, constants.RequestIDKey, []string{"testID"})
 
 	return ctx2
 }
@@ -207,6 +205,7 @@ func TestGetAllEmailsInFolder(t *testing.T) {
 	folder_id := uint32(1)
 	profile_id := uint32(1)
 	zero := uint32(0)
+	login := "loginUser"
 
 	expectedFolders := []*domain.Email{
 		{ID: 1, Topic: "Test topic 1", Text: "Test text 1"},
@@ -215,8 +214,52 @@ func TestGetAllEmailsInFolder(t *testing.T) {
 
 	mockRepo.EXPECT().GetAllEmails(folder_id, profile_id, zero, zero, ctx).Return(expectedFolders, nil)
 
-	folders, err := useCase.GetAllEmailsInFolder(folder_id, profile_id, zero, zero, ctx)
+	folders, err := useCase.GetAllEmailsInFolder(folder_id, profile_id, zero, zero, login, ctx)
 
 	assert.NoError(t, err)
 	assert.Equal(t, expectedFolders, folders)
+}
+
+func TestGetAllFolderName(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockFolderRepository(ctrl)
+	useCase := NewFolderUseCase(mockRepo)
+
+	ctx := GetCTX()
+	emailID := uint32(123)
+
+	t.Run("GetAllFolderName_Success", func(t *testing.T) {
+		expectedFolders := []*domain.Folder{
+			{ID: 1, Name: "Inbox"},
+			{ID: 2, Name: "Sent"},
+			{ID: 3, Name: "Drafts"},
+		}
+
+		mockRepo.EXPECT().GetAllFolderName(emailID, ctx).Return(expectedFolders, nil)
+
+		folders, err := useCase.GetAllFolderName(emailID, ctx)
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedFolders, folders)
+	})
+
+	t.Run("GetAllFolderName_NoFolders", func(t *testing.T) {
+		mockRepo.EXPECT().GetAllFolderName(emailID, ctx).Return(nil, fmt.Errorf("DB no have folders"))
+
+		folders, err := useCase.GetAllFolderName(emailID, ctx)
+
+		assert.Error(t, err)
+		assert.Nil(t, folders)
+	})
+
+	t.Run("GetAllFolderName_DBError", func(t *testing.T) {
+		mockRepo.EXPECT().GetAllFolderName(emailID, ctx).Return(nil, errors.New("DB error"))
+
+		folders, err := useCase.GetAllFolderName(emailID, ctx)
+
+		assert.Error(t, err)
+		assert.Nil(t, folders)
+	})
 }

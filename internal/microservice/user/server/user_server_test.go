@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -13,17 +12,12 @@ import (
 	"mail/internal/microservice/user/mock"
 	"mail/internal/microservice/user/proto"
 	"mail/internal/pkg/logger"
+	"mail/internal/pkg/utils/constants"
 )
 
 func GetCTX() context.Context {
-	f, err := os.OpenFile("log_test.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		fmt.Println("Failed to create logfile" + "log.txt")
-	}
-	defer f.Close()
-
-	ctx := context.WithValue(context.Background(), "logger", logger.InitializationBdLog(f))
-	ctx2 := context.WithValue(ctx, "requestID", []string{"testID"})
+	ctx := context.WithValue(context.Background(), constants.LoggerKey, logger.InitializationBdLog(nil))
+	ctx2 := context.WithValue(ctx, constants.RequestIDKey, []string{"testID"})
 
 	return ctx2
 }
@@ -236,15 +230,13 @@ func TestDeleteUserById_Success(t *testing.T) {
 
 	ctx := GetCTX()
 
-	expectedStatus := true
-
-	mockUserUseCase.EXPECT().DeleteUserByID(gomock.Any(), ctx).Return(expectedStatus, nil)
+	mockUserUseCase.EXPECT().DeleteUserByID(gomock.Any(), ctx).Return(true, nil)
 
 	reply, err := server.DeleteUserById(ctx, &proto.DeleteUserByIdRequest{Id: 1})
 
 	assert.NoError(t, err)
 	assert.NotNil(t, reply)
-	assert.Equal(t, expectedStatus, reply.Status)
+	assert.Equal(t, true, reply.Status)
 }
 
 func TestDeleteUserById_InvalidID(t *testing.T) {

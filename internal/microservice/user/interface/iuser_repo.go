@@ -36,4 +36,10 @@ type UserRepository interface {
 
 	// InitAvatar initializes the user's avatar by updating the corresponding entry in the database.
 	InitAvatar(id uint32, fileID, fileType string, ctx context.Context) (bool, error)
+
+	// GetByVKID returns the user by its unique identifier.
+	GetByVKID(vkId uint32, ctx context.Context) (*domain.User, error)
+
+	// GetByOnlyLogin returns the user by its unique identifier.
+	GetByOnlyLogin(login string, ctx context.Context) (*domain.User, error)
 }

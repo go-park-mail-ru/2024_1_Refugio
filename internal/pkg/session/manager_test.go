@@ -102,16 +102,16 @@ func TestSessionsManager_GetSession_Success(t *testing.T) {
 			},
 		}, nil)
 
-	session := sm.GetSession(req, context.WithValue(context.Background(), "requestID", "testID"))
+	sessionTest := sm.GetSession(req, context.WithValue(context.Background(), "requestID", "testID"))
 
-	if session == nil {
+	if sessionTest == nil {
 		t.Error("Expected session, got nil")
 	}
-	if session.ID != "123" {
-		t.Errorf("Unexpected session ID: got %s, want 123", session.ID)
+	if sessionTest != nil && sessionTest.ID != "123" {
+		t.Errorf("Unexpected session ID: got %s, want 123", sessionTest.ID)
 	}
-	if session.CsrfToken != "csrfToken" {
-		t.Errorf("Unexpected CSRF token: got %s, want csrfToken", session.CsrfToken)
+	if sessionTest != nil && sessionTest.CsrfToken != "csrfToken" {
+		t.Errorf("Unexpected CSRF token: got %s, want csrfToken", sessionTest.CsrfToken)
 	}
 }
 
@@ -132,9 +132,9 @@ func TestSessionsManager_GetSession_SessionNotFound(t *testing.T) {
 	mockSessionServiceClient.EXPECT().GetSession(gomock.Any(), gomock.Any()).
 		Return(nil, fmt.Errorf("session not found"))
 
-	session := sm.GetSession(req, context.WithValue(context.Background(), "requestID", "testID"))
+	sessionTest := sm.GetSession(req, context.WithValue(context.Background(), "requestID", "testID"))
 
-	if session != nil {
+	if sessionTest != nil {
 		t.Error("Expected nil session, got non-nil session")
 	}
 }
@@ -162,16 +162,16 @@ func TestSessionsManager_Check_Success(t *testing.T) {
 			},
 		}, nil)
 
-	session, err := sm.Check(req, context.WithValue(context.Background(), "requestID", "testID"))
+	sessionTest, err := sm.Check(req, context.WithValue(context.Background(), "requestID", "testID"))
 
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
-	if session == nil {
+	if sessionTest == nil {
 		t.Error("Expected session, got nil")
 	}
-	if session.ID != "123" {
-		t.Errorf("Unexpected session ID: got %s, want 123", session.ID)
+	if sessionTest != nil && sessionTest.ID != "123" {
+		t.Errorf("Unexpected session ID: got %s, want 123", sessionTest.ID)
 	}
 }
 
@@ -188,10 +188,10 @@ func TestSessionsManager_Check_NoCsrf(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	session, err := sm.Check(req, context.WithValue(context.Background(), "requestID", "testID"))
+	sessionTest, err := sm.Check(req, context.WithValue(context.Background(), "requestID", "testID"))
 
 	assert.Error(t, err)
-	assert.Nil(t, session)
+	assert.Nil(t, sessionTest)
 }
 
 func TestSessionsManager_Check_NoSession(t *testing.T) {
@@ -208,10 +208,10 @@ func TestSessionsManager_Check_NoSession(t *testing.T) {
 	}
 	req.Header.Set("X-Csrf-Token", "csrfToken")
 
-	session, err := sm.Check(req, context.WithValue(context.Background(), "requestID", "testID"))
+	sessionTest, err := sm.Check(req, context.WithValue(context.Background(), "requestID", "testID"))
 
 	assert.Error(t, err)
-	assert.Nil(t, session)
+	assert.Nil(t, sessionTest)
 }
 
 func TestSessionsManager_Check_ErrorNotSession(t *testing.T) {
@@ -233,10 +233,10 @@ func TestSessionsManager_Check_ErrorNotSession(t *testing.T) {
 		GetSession(gomock.Any(), gomock.Any()).
 		Return(nil, errors.New("session not found"))
 
-	session, err := sm.Check(req, context.WithValue(context.Background(), "requestID", "testID"))
+	sessionTest, err := sm.Check(req, context.WithValue(context.Background(), "requestID", "testID"))
 
 	assert.Error(t, err)
-	assert.Nil(t, session)
+	assert.Nil(t, sessionTest)
 }
 
 func TestSessionsManager_Check_ErrorCsrf(t *testing.T) {
@@ -262,10 +262,10 @@ func TestSessionsManager_Check_ErrorCsrf(t *testing.T) {
 			},
 		}, nil)
 
-	session, err := sm.Check(req, context.WithValue(context.Background(), "requestID", "testID"))
+	sessionTest, err := sm.Check(req, context.WithValue(context.Background(), "requestID", "testID"))
 
 	assert.Error(t, err)
-	assert.Nil(t, session)
+	assert.Nil(t, sessionTest)
 }
 
 func TestSessionsManager_CheckLogin_Success(t *testing.T) {
@@ -440,7 +440,7 @@ func TestSessionsManager_Create_Success(t *testing.T) {
 
 	ctx := context.WithValue(context.Background(), "requestID", "testID")
 
-	session, err := sm.Create(w, 123, ctx)
+	sessionTest, err := sm.Create(w, 123, ctx)
 
 	assert.NoError(t, err)
 
@@ -451,8 +451,8 @@ func TestSessionsManager_Create_Success(t *testing.T) {
 	assert.Equal(t, "123", cookie.Value)
 	assert.WithinDuration(t, time.Now().Add(24*time.Hour), cookie.Expires, 2*time.Second)
 
-	assert.Equal(t, "123", session.ID)
-	assert.Equal(t, "csrfToken", session.CsrfToken)
+	assert.Equal(t, "123", sessionTest.ID)
+	assert.Equal(t, "csrfToken", sessionTest.CsrfToken)
 }
 
 func TestSessionsManager_Create_SessionCreateError(t *testing.T) {
@@ -470,10 +470,10 @@ func TestSessionsManager_Create_SessionCreateError(t *testing.T) {
 
 	ctx := context.WithValue(context.Background(), "requestID", "testID")
 
-	session, err := sm.Create(w, 123, ctx)
+	sessionTest, err := sm.Create(w, 123, ctx)
 
 	assert.Error(t, err)
-	assert.Nil(t, session)
+	assert.Nil(t, sessionTest)
 }
 
 func TestSessionsManager_Create_SessionGetError(t *testing.T) {
@@ -498,10 +498,10 @@ func TestSessionsManager_Create_SessionGetError(t *testing.T) {
 
 	ctx := context.WithValue(context.Background(), "requestID", "testID")
 
-	session, err := sm.Create(w, 123, ctx)
+	sessionTest, err := sm.Create(w, 123, ctx)
 
 	assert.Error(t, err)
-	assert.Nil(t, session)
+	assert.Nil(t, sessionTest)
 }
 
 func TestSessionsManager_DestroyCurrent_Success(t *testing.T) {

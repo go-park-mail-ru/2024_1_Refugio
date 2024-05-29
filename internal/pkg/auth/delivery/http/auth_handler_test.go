@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"mail/internal/models/response"
+	"mail/internal/pkg/utils/constants"
 
 	auth_mock "mail/internal/microservice/auth/mock"
 	auth_proto "mail/internal/microservice/auth/proto"
@@ -34,7 +35,7 @@ func TestAuthHandler_Login_Success(t *testing.T) {
 	reqBody := `{"login": "user@mailhub.su", "password": "password123"}`
 
 	req := httptest.NewRequest("POST", "/api/v1/auth/login", strings.NewReader(reqBody))
-	ctx := context.WithValue(req.Context(), "requestID", "testID")
+	ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
@@ -72,7 +73,7 @@ func TestAuthHandler_Login_InvalidRequestJson(t *testing.T) {
 	reqBody := `{"invalid": json"}`
 
 	req := httptest.NewRequest("POST", "/api/v1/auth/login", strings.NewReader(reqBody))
-	ctx := context.WithValue(req.Context(), "requestID", "testID")
+	ctx := context.WithValue(req.Context(), constants.RequestIDKey, "testID")
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
@@ -102,7 +103,7 @@ func TestAuthHandler_Login_InvalidRequest(t *testing.T) {
 	reqBody := `{"invalid": "json"}`
 
 	req := httptest.NewRequest("POST", "/api/v1/auth/login", strings.NewReader(reqBody))
-	ctx := context.WithValue(req.Context(), "requestID", "testID")
+	ctx := context.WithValue(req.Context(), constants.RequestIDKey, "testID")
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
@@ -132,7 +133,7 @@ func TestAuthHandler_Login_InvalidRequestLogin(t *testing.T) {
 	reqBody := `{"login": "user@mail.ru", "password": "password123"}`
 
 	req := httptest.NewRequest("POST", "/api/v1/auth/login", strings.NewReader(reqBody))
-	ctx := context.WithValue(req.Context(), "requestID", "testID")
+	ctx := context.WithValue(req.Context(), constants.RequestIDKey, "testID")
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
@@ -162,7 +163,7 @@ func TestAuthHandler_Login_LoginFailed(t *testing.T) {
 	reqBody := `{"login": "user@mailhub.su", "password": "password123"}`
 
 	req := httptest.NewRequest("POST", "/api/v1/auth/login", strings.NewReader(reqBody))
-	ctx := context.WithValue(req.Context(), "requestID", "testID")
+	ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
@@ -196,7 +197,7 @@ func TestAuthHandler_Login_SessionFailed(t *testing.T) {
 	reqBody := `{"login": "user@mailhub.su", "password": "password123"}`
 
 	req := httptest.NewRequest("POST", "/api/v1/auth/login", strings.NewReader(reqBody))
-	ctx := context.WithValue(req.Context(), "requestID", "testID")
+	ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
@@ -234,7 +235,7 @@ func TestAuthHandler_Signup_Success(t *testing.T) {
 	reqBody := `{"login": "user@mailhub.su", "password": "password123", "firstName": "John", "surname": "Doe", "gender": "Male", "phoneNumber": "123456789"}`
 
 	req := httptest.NewRequest("POST", "/api/v1/auth/signup", strings.NewReader(reqBody))
-	ctx := context.WithValue(req.Context(), "requestID", "testID")
+	ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
@@ -268,7 +269,7 @@ func TestAuthHandler_Signup_InvalidRequestBody(t *testing.T) {
 	reqBody := `{"invalid": json"}`
 
 	req := httptest.NewRequest("POST", "/api/v1/auth/signup", strings.NewReader(reqBody))
-	ctx := context.WithValue(req.Context(), "requestID", "testID")
+	ctx := context.WithValue(req.Context(), constants.RequestIDKey, "testID")
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
@@ -298,7 +299,7 @@ func TestAuthHandler_Signup_InvalidRequestFields(t *testing.T) {
 	reqBody := `{"login": "", "password": "", "firstName": "", "surname": "", "gender": "", "phoneNumber": ""}`
 
 	req := httptest.NewRequest("POST", "/api/v1/auth/signup", strings.NewReader(reqBody))
-	ctx := context.WithValue(req.Context(), "requestID", "testID")
+	ctx := context.WithValue(req.Context(), constants.RequestIDKey, "testID")
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
@@ -328,7 +329,7 @@ func TestAuthHandler_Signup_InvalidLoginFormat(t *testing.T) {
 	reqBody := `{"login": "invalid_email", "password": "password123", "firstName": "John", "surname": "Doe", "gender": "Male", "phoneNumber": "123456789"}`
 
 	req := httptest.NewRequest("POST", "/api/v1/auth/signup", strings.NewReader(reqBody))
-	ctx := context.WithValue(req.Context(), "requestID", "testID")
+	ctx := context.WithValue(req.Context(), constants.RequestIDKey, "testID")
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
@@ -358,7 +359,7 @@ func TestAuthHandler_Signup_FailedToAddUser(t *testing.T) {
 	reqBody := `{"login": "user@mailhub.su", "password": "password123", "firstName": "John", "surname": "Doe", "gender": "Male", "phoneNumber": "123456789"}`
 
 	req := httptest.NewRequest("POST", "/api/v1/auth/signup", strings.NewReader(reqBody))
-	ctx := context.WithValue(req.Context(), "requestID", "testID")
+	ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
@@ -388,7 +389,7 @@ func TestAuthHandler_Logout_Success(t *testing.T) {
 	}
 
 	req := httptest.NewRequest("POST", "/api/v1/auth/logout", nil)
-	ctx := context.WithValue(req.Context(), "requestID", "testID")
+	ctx := context.WithValue(req.Context(), constants.RequestIDKey, "testID")
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
@@ -418,7 +419,7 @@ func TestAuthHandler_Logout_Unauthorized(t *testing.T) {
 	}
 
 	req := httptest.NewRequest("POST", "/api/v1/auth/logout", nil)
-	ctx := context.WithValue(req.Context(), "requestID", "testID")
+	ctx := context.WithValue(req.Context(), constants.RequestIDKey, "testID")
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()

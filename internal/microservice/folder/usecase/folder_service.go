@@ -2,6 +2,8 @@ package usecase
 
 import (
 	"context"
+	"mail/internal/pkg/utils/validators"
+
 	repository "mail/internal/microservice/folder/interface"
 	domain "mail/internal/microservice/models/domain_models"
 )
@@ -33,7 +35,7 @@ func (uc *FolderUseCase) DeleteFolder(folderID uint32, profileID uint32, ctx con
 	return uc.repo.Delete(folderID, profileID, ctx)
 }
 
-// DeleteFolder list all folders.
+// UpdateFolder update folder as user.
 func (uc *FolderUseCase) UpdateFolder(newUpFolder *domain.Folder, ctx context.Context) (bool, error) {
 	return uc.repo.Update(newUpFolder, ctx)
 }
@@ -58,6 +60,33 @@ func (uc *FolderUseCase) CheckEmailProfile(emailID uint32, profileID uint32, ctx
 	return uc.repo.CheckEmail(emailID, profileID, ctx)
 }
 
-func (uc *FolderUseCase) GetAllEmailsInFolder(folderID, profileID, limit, offset uint32, ctx context.Context) ([]*domain.Email, error) {
-	return uc.repo.GetAllEmails(folderID, profileID, limit, offset, ctx)
+// GetAllEmailsInFolder get all emails in folder as user.
+func (uc *FolderUseCase) GetAllEmailsInFolder(folderID, profileID, limit, offset uint32, login string, ctx context.Context) ([]*domain.Email, error) {
+	emails, err := uc.repo.GetAllEmails(folderID, profileID, limit, offset, ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, email := range emails {
+		if validators.IsValidEmailFormat(email.SenderEmail) && validators.IsValidEmailFormat(email.RecipientEmail) {
+			if email.SenderEmail == login {
+				email.PhotoID, err = uc.repo.GetAvatarFileIDByLogin(email.RecipientEmail, ctx)
+				if err != nil {
+					return nil, err
+				}
+			} else if email.RecipientEmail == login {
+				email.PhotoID, err = uc.repo.GetAvatarFileIDByLogin(email.SenderEmail, ctx)
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+	}
+
+	return emails, nil
+}
+
+// GetAllFolderName retrieves the names of all folders associated with a given email ID.
+func (uc *FolderUseCase) GetAllFolderName(emailID uint32, ctx context.Context) ([]*domain.Folder, error) {
+	return uc.repo.GetAllFolderName(emailID, ctx)
 }

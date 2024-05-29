@@ -6,7 +6,7 @@ import (
 )
 
 // QuestionConvertCoreInProto converts a question model from the application core to the gRPC format.
-func QuestionConvertCoreInProto(questionModelCore domain.Question) *grpc.Question {
+func QuestionConvertCoreInProto(questionModelCore *domain.Question) *grpc.Question {
 	return &grpc.Question{
 		Id:          questionModelCore.ID,
 		Text:        questionModelCore.Text,
@@ -17,7 +17,7 @@ func QuestionConvertCoreInProto(questionModelCore domain.Question) *grpc.Questio
 }
 
 // QuestionConvertProtoInCore converts a question model from the gRPC format to the application core.
-func QuestionConvertProtoInCore(questionModelProto grpc.Question) *domain.Question {
+func QuestionConvertProtoInCore(questionModelProto *grpc.Question) *domain.Question {
 	return &domain.Question{
 		ID:          questionModelProto.Id,
 		Text:        questionModelProto.Text,
@@ -28,7 +28,7 @@ func QuestionConvertProtoInCore(questionModelProto grpc.Question) *domain.Questi
 }
 
 // AnswerConvertCoreInProto converts an answer model from the application core to the gRPC format.
-func AnswerConvertCoreInProto(answerModelCore domain.Answer) *grpc.Answer {
+func AnswerConvertCoreInProto(answerModelCore *domain.Answer) *grpc.Answer {
 	return &grpc.Answer{
 		Id:         answerModelCore.ID,
 		QuestionId: answerModelCore.QuestionID,
@@ -39,7 +39,7 @@ func AnswerConvertCoreInProto(answerModelCore domain.Answer) *grpc.Answer {
 }
 
 // AnswerConvertProtoInCore converts an answer model from the gRPC format to the application core.
-func AnswerConvertProtoInCore(answerModelProto grpc.Answer) *domain.Answer {
+func AnswerConvertProtoInCore(answerModelProto *grpc.Answer) *domain.Answer {
 	return &domain.Answer{
 		ID:         answerModelProto.Id,
 		QuestionID: answerModelProto.QuestionId,
@@ -50,7 +50,7 @@ func AnswerConvertProtoInCore(answerModelProto grpc.Answer) *domain.Answer {
 }
 
 // StatisticConvertCoreInProto converts a statistic model from the application core to the gRPC format.
-func StatisticConvertCoreInProto(statisticModelCore domain.Statistics) *grpc.Statistic {
+func StatisticConvertCoreInProto(statisticModelCore *domain.Statistics) *grpc.Statistic {
 	return &grpc.Statistic{
 		Text:    statisticModelCore.Text,
 		Average: statisticModelCore.Average,

@@ -1,0 +1,20 @@
+{
+  "local": {
+    "IP_ADDRESS": "0.0.0.0",
+    "DSN": "user=postgres dbname=Mail password=postgres host=localhost port=5432 sslmode=disable",
+    "DSN_QUESTION": "user=postgres dbname=Question password=postgres host=localhost port=5432 sslmode=disable",
+    "ENDPOINT": "0.0.0.0:9000",
+    "ACCESSKEYID": "minioadmin",
+    "SECRETACCESSKEY": "minioadmin",
+    "PROTOCOL": "http://"
+  },
+  "prod": {
+    "IP_ADDRESS": "89.208.223.140",
+    "DSN": "user=postgres dbname=Mail password=postgres host=89.208.223.140 port=5432 sslmode=disable",
+    "DSN_QUESTION": "user=postgres dbname=Question password=postgres host=89.208.223.140 port=5433 sslmode=disable",
+    "ENDPOINT": "mailhub.su:9000",
+    "ACCESSKEYID": "minioadmin",
+    "SECRETACCESSKEY": "minioadmin",
+    "PROTOCOL": "https://"
+  }
+}

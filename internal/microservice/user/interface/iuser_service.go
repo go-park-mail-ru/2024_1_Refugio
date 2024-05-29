@@ -36,4 +36,10 @@ type UserUseCase interface {
 
 	// DeleteAvatarByUserID deletes a user's photo.
 	DeleteAvatarByUserID(userID uint32, ctx context.Context) error
+
+	// GetUserVkID get user by VK Id.
+	GetUserVkID(vkId uint32, ctx context.Context) (*domain.User, error)
+
+	// GetUserByOnlyLogin get user by login.
+	GetUserByOnlyLogin(login string, ctx context.Context) (*domain.User, error)
 }

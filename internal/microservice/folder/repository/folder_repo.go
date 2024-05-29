@@ -30,7 +30,7 @@ func (r *FolderRepository) Create(folderModelCore *domain.Folder, ctx context.Co
 		RETURNING id
 	`
 
-	folderModelDb := converters.FolderConvertCoreInDb(*folderModelCore)
+	folderModelDb := converters.FolderConvertCoreInDb(folderModelCore)
 
 	var id uint32
 
@@ -53,11 +53,12 @@ func (r *FolderRepository) GetAll(profileID uint32, offset, limit int64, ctx con
 		WHERE profile_id = $1
 	`
 
-	foldersModelDb := []repository_models.Folder{}
+	var foldersModelDb []repository_models.Folder
 
 	var err error
-	args := []interface{}{}
+	var args []interface{}
 	start := time.Now()
+
 	if offset >= 0 && limit > 0 {
 		query += " OFFSET $2 LIMIT $3"
 		args = []interface{}{profileID, offset, limit}
@@ -78,7 +79,7 @@ func (r *FolderRepository) GetAll(profileID uint32, offset, limit int64, ctx con
 
 	var foldersModelCore []*domain.Folder
 	for _, e := range foldersModelDb {
-		foldersModelCore = append(foldersModelCore, converters.FolderConvertDbInCore(e))
+		foldersModelCore = append(foldersModelCore, converters.FolderConvertDbInCore(&e))
 	}
 
 	return foldersModelCore, nil
@@ -122,7 +123,7 @@ func (r *FolderRepository) Update(folderModelCore *domain.Folder, ctx context.Co
             folder.id = $2 AND folder.profile_id = $3
     `
 
-	newUdFolderDb := converters.FolderConvertCoreInDb(*folderModelCore)
+	newUdFolderDb := converters.FolderConvertCoreInDb(folderModelCore)
 
 	start := time.Now()
 	result, err := r.DB.Exec(query, newUdFolderDb.Name, newUdFolderDb.ID, newUdFolderDb.ProfileId)
@@ -238,10 +239,8 @@ func (r *FolderRepository) CheckEmail(emailID uint32, profileID uint32, ctx cont
 
 func (r *FolderRepository) GetAllEmails(folderID, profileID, limit, offset uint32, ctx context.Context) ([]*domain.Email, error) {
 	query := `
-		SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+		SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important
 		FROM email e
-		LEFT JOIN email_file ef ON e.id = ef.email_id
-		LEFT JOIN file f ON ef.file_id = f.id
 		JOIN profile_email pe ON e.id = pe.email_id
 		JOIN profile p ON pe.profile_id = $1 
 		LEFT JOIN folder_email ON e.id = folder_email.email_id
@@ -249,12 +248,13 @@ func (r *FolderRepository) GetAllEmails(folderID, profileID, limit, offset uint3
 		ORDER BY e.date_of_dispatch DESC
 	`
 
-	emailsModelDb := []repository_models.Email{}
+	var emailsModelDb []repository_models.Email
 
 	var err error
-	args := []interface{}{}
+	var args []interface{}
 	start := time.Now()
-	if offset >= 0 && limit > 0 {
+
+	if offset > 0 && limit > 0 {
 		query += " OFFSET $3 LIMIT $4"
 		args = []interface{}{profileID, folderID, offset, limit}
 		err = r.DB.Select(&emailsModelDb, query, profileID, folderID, offset, limit)
@@ -274,8 +274,70 @@ func (r *FolderRepository) GetAllEmails(folderID, profileID, limit, offset uint3
 
 	var emailsModelCore []*domain.Email
 	for _, e := range emailsModelDb {
-		emailsModelCore = append(emailsModelCore, converters.EmailConvertDbInCore(e))
+		emailsModelCore = append(emailsModelCore, converters.EmailConvertDbInCore(&e))
 	}
 
 	return emailsModelCore, nil
+}
+
+// GetAvatarFileIDByLogin getting an avatar by login.
+func (r *FolderRepository) GetAvatarFileIDByLogin(login string, ctx context.Context) (string, error) {
+	query := `
+		SELECT f.file_id
+		FROM file f
+		LEFT JOIN profile p ON p.avatar_id = f.id
+		WHERE p.login = $1
+	`
+
+	var fileID sql.NullString
+	start := time.Now()
+	err := r.DB.Get(&fileID, query, login)
+
+	args := []interface{}{login}
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", fmt.Errorf("no avatar found for login %s", login)
+		}
+		return "", err
+	}
+
+	if !fileID.Valid {
+		return "", nil
+	}
+
+	return fileID.String, nil
+}
+
+// GetAllFolderName retrieves the names of all folders associated with a given email ID.
+func (r *FolderRepository) GetAllFolderName(emailID uint32, ctx context.Context) ([]*domain.Folder, error) {
+	query := `
+		SELECT f.id, f.name
+		FROM folder f
+		INNER JOIN folder_email fe ON f.id = fe.folder_id
+		WHERE fe.email_id = $1
+	`
+
+	foldersModelDb := []repository_models.Folder{}
+
+	var err error
+	args := []interface{}{emailID}
+	start := time.Now()
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
+
+	err = r.DB.Select(&foldersModelDb, query, emailID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("DB no have folders")
+		}
+		return nil, err
+	}
+
+	var foldersModelCore []*domain.Folder
+	for _, e := range foldersModelDb {
+		foldersModelCore = append(foldersModelCore, converters.FolderConvertDbInCore(&e))
+	}
+
+	return foldersModelCore, nil
 }

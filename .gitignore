@@ -6,6 +6,7 @@ message_smtp/*
 log.txt
 logInterEmail.txt
 logInterFolder.txt
+coverprofile.tmp
 
 # Created by https://www.toptal.com/developers/gitignore/api/go
 # Edit at https://www.toptal.com/developers/gitignore?templates=go

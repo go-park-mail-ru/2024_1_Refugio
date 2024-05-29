@@ -3,26 +3,23 @@ package server
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+
 	"mail/internal/microservice/folder/mock"
 	"mail/internal/microservice/folder/proto"
 	"mail/internal/microservice/models/domain_models"
-	converters "mail/internal/microservice/models/proto_converters"
 	"mail/internal/pkg/logger"
-	"os"
-	"testing"
+	"mail/internal/pkg/utils/constants"
+
+	converters "mail/internal/microservice/models/proto_converters"
 )
 
 func GetCTX() context.Context {
-	f, err := os.OpenFile("log_test.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		fmt.Println("Failed to create logfile" + "log.txt")
-	}
-	defer f.Close()
-
-	ctx := context.WithValue(context.Background(), "logger", logger.InitializationBdLog(f))
-	ctx2 := context.WithValue(ctx, "requestID", []string{"testID"})
+	ctx := context.WithValue(context.Background(), constants.LoggerKey, logger.InitializationBdLog(nil))
+	ctx2 := context.WithValue(ctx, constants.RequestIDKey, []string{"testID"})
 
 	return ctx2
 }
@@ -53,7 +50,7 @@ func TestCreateFolder(t *testing.T) {
 	ctx := GetCTX()
 
 	domainFolder := &domain_models.Folder{ID: 1, ProfileId: 1, Name: "Test"}
-	folderProto := converters.FolderConvertCoreInProto(*domainFolder)
+	folderProto := converters.FolderConvertCoreInProto(domainFolder)
 	id := uint32(1)
 	expectedFolder := &proto.FolderWithID{Folder: folderProto, Id: id}
 
@@ -98,7 +95,7 @@ func TestGetAllFolders(t *testing.T) {
 	}
 	foldersProto := make([]*proto.Folder, len(domainFolders))
 	for i, e := range domainFolders {
-		foldersProto[i] = converters.FolderConvertCoreInProto(*e)
+		foldersProto[i] = converters.FolderConvertCoreInProto(e)
 	}
 	folderProto := new(proto.Folders)
 	folderProto.Folders = foldersProto
@@ -145,7 +142,7 @@ func TestDeleteFolder(t *testing.T) {
 	}
 	foldersProto := make([]*proto.Folder, len(domainFolders))
 	for i, e := range domainFolders {
-		foldersProto[i] = converters.FolderConvertCoreInProto(*e)
+		foldersProto[i] = converters.FolderConvertCoreInProto(e)
 	}
 	folderProto := new(proto.Folders)
 	folderProto.Folders = foldersProto
@@ -193,7 +190,7 @@ func TestUpdateFolder(t *testing.T) {
 	}
 	foldersProto := make([]*proto.Folder, len(domainFolders))
 	for i, e := range domainFolders {
-		foldersProto[i] = converters.FolderConvertCoreInProto(*e)
+		foldersProto[i] = converters.FolderConvertCoreInProto(e)
 	}
 	folderProto := new(proto.Folders)
 	folderProto.Folders = foldersProto
@@ -388,7 +385,7 @@ func TestGetAllEmailsInFolder(t *testing.T) {
 
 	ctx := GetCTX()
 
-	data := &proto.GetAllEmailsInFolderData{FolderID: 1, ProfileID: 1, Limit: 0, Offset: 0}
+	data := &proto.GetAllEmailsInFolderData{FolderID: 1, ProfileID: 1, Limit: 0, Offset: 0, Login: "loginUser"}
 	emails := []*domain_models.Email{
 		{ID: 1, Topic: "Topic 1", Text: "Text 1"},
 		{ID: 2, Topic: "Topic 2", Text: "Text 2"},
@@ -403,15 +400,15 @@ func TestGetAllEmailsInFolder(t *testing.T) {
 
 	expectedObjectsEmail := &proto.ObjectsEmail{Emails: emailObArr}
 
-	t.Run("GetAllEmailsInFoldereSuccessfully", func(t *testing.T) {
-		mockFolderUseCase.EXPECT().GetAllEmailsInFolder(data.FolderID, data.ProfileID, data.Limit, data.Offset, ctx).Return(emails, nil)
+	t.Run("GetAllEmailsInFolderSuccessfully", func(t *testing.T) {
+		mockFolderUseCase.EXPECT().GetAllEmailsInFolder(data.FolderID, data.ProfileID, data.Limit, data.Offset, data.Login, ctx).Return(emails, nil)
 
 		objectEmail, err := server.GetAllEmailsInFolder(ctx, data)
 
 		assert.NoError(t, err)
-		for i, _ := range objectEmail.Emails {
+		for i := range objectEmail.Emails {
 			objectEmail.Emails[i].DateOfDispatch = nil
-			assert.Equal(t, *expectedObjectsEmail.Emails[i], *objectEmail.Emails[i])
+			assert.Equal(t, expectedObjectsEmail.Emails[i], objectEmail.Emails[i])
 		}
 	})
 
@@ -422,12 +419,62 @@ func TestGetAllEmailsInFolder(t *testing.T) {
 	})
 
 	t.Run("CheckEmailProfile failed create folder", func(t *testing.T) {
-		mockFolderUseCase.EXPECT().GetAllEmailsInFolder(data.FolderID, data.ProfileID, data.Limit, data.Offset, ctx).Return(emails, fmt.Errorf("emails not found"))
+		mockFolderUseCase.EXPECT().GetAllEmailsInFolder(data.FolderID, data.ProfileID, data.Limit, data.Offset, data.Login, ctx).Return(emails, fmt.Errorf("emails not found"))
 
 		objectEmail, err := server.GetAllEmailsInFolder(ctx, data)
 
 		assert.Error(t, err)
 		assert.Equal(t, fmt.Errorf("emails not found"), err)
 		assert.Nil(t, objectEmail)
+	})
+}
+
+func TestGetAllFolder(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockFolderUseCase := mock.NewMockFolderUseCase(ctrl)
+
+	server := NewFolderServer(mockFolderUseCase)
+
+	ctx := GetCTX()
+
+	data := &proto.GetAllFoldersData{Id: 1, Offset: 0, Limit: 0}
+	folders := []*domain_models.Folder{
+		{ID: 1, Name: "Folder 1"},
+		{ID: 2, Name: "Folder 2"},
+		{ID: 3, Name: "Folder 3"},
+	}
+
+	folderArr := []*proto.Folder{
+		{Id: 1, Name: "Folder 1"},
+		{Id: 2, Name: "Folder 2"},
+		{Id: 3, Name: "Folder 3"},
+	}
+
+	expectedFolders := &proto.Folders{Folders: folderArr}
+
+	t.Run("GetAllFolders_Successfully", func(t *testing.T) {
+		mockFolderUseCase.EXPECT().GetAllFolders(data.Id, data.Offset, data.Limit, ctx).Return(folders, nil)
+
+		foldersProto, err := server.GetAllFolders(ctx, data)
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedFolders, foldersProto)
+	})
+
+	t.Run("GetAllFolders_InvalidFolderFormat", func(t *testing.T) {
+		_, err := server.GetAllFolders(ctx, nil)
+
+		assert.Error(t, err)
+	})
+
+	t.Run("GetAllFolders_NotFound", func(t *testing.T) {
+		mockFolderUseCase.EXPECT().GetAllFolders(data.Id, data.Offset, data.Limit, ctx).Return(folders, fmt.Errorf("folders not found"))
+
+		foldersProto, err := server.GetAllFolders(ctx, data)
+
+		assert.Error(t, err)
+		assert.Nil(t, foldersProto)
 	})
 }

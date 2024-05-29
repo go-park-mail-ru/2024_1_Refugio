@@ -15,4 +15,5 @@ type User struct {
 	AvatarID    string     // AvatarID stores the identifier of the user's avatar image.
 	PhoneNumber string     // PhoneNumber stores the phone number of the user.
 	Description string     // Description stores additional information about the user.
+	VKId        uint32     // VKId uniquely identifies the user in VK.
 }

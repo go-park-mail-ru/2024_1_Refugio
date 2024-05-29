@@ -2,13 +2,13 @@ package repository
 
 import (
 	"context"
+	"crypto/rand"
 	"database/sql"
 	"encoding/binary"
 	"errors"
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	"golang.org/x/crypto/bcrypt"
-	"math/rand"
 	"time"
 
 	"mail/internal/pkg/logger"
@@ -63,7 +63,6 @@ var GenerateRandomID RandomIDGenerator = func() uint32 {
 
 	_, err := rand.Read(randBytes)
 	if err != nil {
-		// В случае ошибки вернуть ноль, но это можно обработать в вашем приложении по-разному.
 		return 0
 	}
 
@@ -91,12 +90,13 @@ func (r *UserRepository) GetAll(offset, limit int, ctx context.Context) ([]*doma
 	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
 
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 
 	usersCore := make([]*domain.User, 0, len(userModelsDb))
 	for _, userModelDb := range userModelsDb {
-		usersCore = append(usersCore, converters.UserConvertDbInCore(userModelDb))
+		usersCore = append(usersCore, converters.UserConvertDbInCore(&userModelDb))
 	}
 
 	return usersCore, nil
@@ -141,7 +141,7 @@ func (r *UserRepository) GetByID(id uint32, ctx context.Context) (*domain.User, 
 		return nil, err
 	}
 
-	return converters.UserConvertDbInCore(userModelDb), nil
+	return converters.UserConvertDbInCore(&userModelDb), nil
 }
 
 // GetUserByLogin returns the user by login.
@@ -170,7 +170,7 @@ func (r *UserRepository) GetUserByLogin(login, password string, ctx context.Cont
 	}
 
 	if CheckPasswordHash(password, userModelDb.Password) {
-		return converters.UserConvertDbInCore(userModelDb), nil
+		return converters.UserConvertDbInCore(&userModelDb), nil
 	} else {
 		err = fmt.Errorf("user with login %s not found", login)
 		return nil, err
@@ -179,12 +179,22 @@ func (r *UserRepository) GetUserByLogin(login, password string, ctx context.Cont
 
 // Add adds a new user to the storage and returns its assigned unique identifier.
 func (r *UserRepository) Add(userModelCore *domain.User, ctx context.Context) (*domain.User, error) {
+	/*q := `
+		ALTER TABLE profile
+		ADD vkid INTEGER;
+	`
+	_, err := r.DB.Exec(q)
+	if err != nil {
+		fmt.Println(err)
+		return nil, fmt.Errorf("user with login %s not create", "nn")
+	}*/
+
 	query := `
-		INSERT INTO profile (login, password_hash, firstname, surname, patronymic, gender, birthday, registration_date, phone_number, description)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+		INSERT INTO profile (login, password_hash, firstname, surname, patronymic, gender, birthday, registration_date, phone_number, description, vkId)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 	`
 
-	userModelDb := converters.UserConvertCoreInDb(*userModelCore)
+	userModelDb := converters.UserConvertCoreInDb(userModelCore)
 
 	password, status := HashPassword(userModelDb.Password)
 	if !status {
@@ -194,12 +204,13 @@ func (r *UserRepository) Add(userModelCore *domain.User, ctx context.Context) (*
 
 	start := time.Now()
 
-	_, err := r.DB.Exec(query, userModelDb.Login, userModelDb.Password, userModelDb.FirstName, userModelDb.Surname, userModelDb.Patronymic, userModelDb.Gender, userModelDb.Birthday, time.Now(), userModelDb.PhoneNumber, userModelDb.Description)
+	_, err := r.DB.Exec(query, userModelDb.Login, userModelDb.Password, userModelDb.FirstName, userModelDb.Surname, userModelDb.Patronymic, userModelDb.Gender, userModelDb.Birthday, time.Now(), userModelDb.PhoneNumber, userModelDb.Description, userModelDb.VKId)
 
-	args := []interface{}{userModelDb.Login, userModelDb.FirstName, userModelDb.Surname, userModelDb.Patronymic, userModelDb.Gender, userModelDb.Birthday, time.Now(), userModelDb.PhoneNumber, userModelDb.Description}
+	args := []interface{}{userModelDb.Login, userModelDb.FirstName, userModelDb.Surname, userModelDb.Patronymic, userModelDb.Gender, userModelDb.Birthday, time.Now(), userModelDb.PhoneNumber, userModelDb.Description, userModelDb.VKId}
 	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
 
 	if err != nil {
+		fmt.Println(err)
 		return nil, fmt.Errorf("user with login %s not create", userModelDb.Login)
 	}
 
@@ -208,7 +219,7 @@ func (r *UserRepository) Add(userModelCore *domain.User, ctx context.Context) (*
 
 // Update updates the information of a user in the storage based on the provided new user.
 func (r *UserRepository) Update(newUserCore *domain.User, ctx context.Context) (bool, error) {
-	newUserDb := converters.UserConvertCoreInDb(*newUserCore)
+	newUserDb := converters.UserConvertCoreInDb(newUserCore)
 
 	query := `
         UPDATE profile
@@ -359,4 +370,93 @@ func (r *UserRepository) InitAvatar(id uint32, fileID, fileType string, ctx cont
 	}
 
 	return true, nil
+}
+
+// GetByVKID returns the user by its unique identifier.
+func (r *UserRepository) GetByVKID(vkId uint32, ctx context.Context) (*domain.User, error) {
+	/*
+		qDelete := `ALTER TABLE profile DROP COLUMN vkid`
+		_, e := r.DB.Exec(qDelete)
+		fmt.Println("ErrorRepoDelete: ", e)
+
+		q := `ALTER TABLE profile ADD COLUMN vkid INTEGER DEFAULT 0`
+		_, er1 := r.DB.Exec(q)
+		fmt.Println("ErrorRepo: ", er1)
+
+		Q := `
+			INSERT INTO profile (login, password_hash, firstname, surname, patronymic, gender, birthday, registration_date, phone_number, description, avatar_id, vkid)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		`
+		_, er2 := r.DB.Exec(Q, "fedasov@mailhub.su", "$2a$10$4PcooWbEMRjvdk2cMFumO.ajWaAclawIljtlfu2.2f5/fV8LkgEZe", "Сергей", "Федасов", "Андреевич", "Male", "2003-10-20", time.Now(), "+79090007030", "Description", 4, 344167564)
+		if er2 != nil {
+			fmt.Println("ErrorRepo2: ", er2)
+		}
+	*/
+	query := `
+        SELECT p.id, p.login, p.firstname, p.surname, p.patronymic, p.gender, p.birthday, f.file_id AS avatar, p.phone_number, p.description
+        FROM profile p
+        LEFT JOIN file f ON p.avatar_id = f.id
+        WHERE p.vkid = $1
+    `
+
+	start := time.Now()
+
+	fmt.Println("VKID Repo:", vkId)
+	row := r.DB.QueryRowContext(ctx, query, vkId)
+
+	var userModelDb database.User
+
+	err := row.Scan(
+		&userModelDb.ID,
+		&userModelDb.Login,
+		&userModelDb.FirstName,
+		&userModelDb.Surname,
+		&userModelDb.Patronymic,
+		&userModelDb.Gender,
+		&userModelDb.Birthday,
+		&userModelDb.AvatarID,
+		&userModelDb.PhoneNumber,
+		&userModelDb.Description,
+	)
+
+	args := []interface{}{vkId}
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
+
+	if err != nil {
+		fmt.Println("Error bd: ", err)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("user with vkId %d not found", vkId)
+		}
+		return nil, err
+	}
+
+	return converters.UserConvertDbInCore(&userModelDb), nil
+}
+
+// GetByOnlyLogin returns the user by login.
+func (r *UserRepository) GetByOnlyLogin(login string, ctx context.Context) (*domain.User, error) {
+	query := `
+		SELECT p.id, p.login, p.password_hash, p.firstname, p.surname, p.patronymic, p.gender, p.birthday, p.phone_number, p.description 
+		FROM profile p
+		WHERE login = $1
+	`
+
+	var userModelDb database.User
+
+	start := time.Now()
+
+	err := r.DB.Get(&userModelDb, query, login)
+
+	args := []interface{}{login}
+	defer ctx.Value("logger").(*logger.LogrusLogger).DbLog(query, ctx.Value(requestIDContextKey).([]string)[0], start, &err, args)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("user with login %s not found", login)
+		}
+
+		return nil, err
+	}
+
+	return converters.UserConvertDbInCore(&userModelDb), nil
 }

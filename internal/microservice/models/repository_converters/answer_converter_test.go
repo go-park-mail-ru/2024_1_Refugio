@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	
+
 	domain "mail/internal/microservice/models/domain_models"
 	database "mail/internal/microservice/models/repository_models"
 )
@@ -26,7 +26,7 @@ func TestAnswerConvertDbInCore(t *testing.T) {
 		Text:       "Some text",
 	}
 
-	actualCore := AnswerConvertDbInCore(answerModelDb)
+	actualCore := AnswerConvertDbInCore(&answerModelDb)
 	assert.Equal(t, expectedCore, actualCore)
 }
 
@@ -47,6 +47,6 @@ func TestAnswerConvertCoreInDb(t *testing.T) {
 		Text:       "Some text",
 	}
 
-	actualDb := AnswerConvertCoreInDb(answerModelCore)
+	actualDb := AnswerConvertCoreInDb(&answerModelCore)
 	assert.Equal(t, expectedDb, actualDb)
 }

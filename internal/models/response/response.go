@@ -2,6 +2,7 @@ package response
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 )
@@ -25,7 +26,10 @@ func HandleSuccess(w http.ResponseWriter, status int, body interface{}) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(response)
+	err := json.NewEncoder(w).Encode(response)
+	if err != nil {
+		fmt.Println("Error encoding response")
+	}
 }
 
 // HandleError is a utility function to handle errors uniformly in the API responses.
@@ -36,7 +40,10 @@ func HandleError(w http.ResponseWriter, status int, message string) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(response)
+	err := json.NewEncoder(w).Encode(response)
+	if err != nil {
+		fmt.Println("Error encoding response")
+	}
 }
 
 type UserGenderSwag string
@@ -61,8 +68,46 @@ type UserSwag struct {
 	Description string         `json:"description,omitempty"`
 }
 
+type UserGoogleSwag struct {
+	ID          string         `json:"id,omitempty"`
+	FirstName   string         `json:"firstname,omitempty"`
+	Surname     string         `json:"surname,omitempty"`
+	Patronymic  string         `json:"middlename,omitempty"`
+	Gender      UserGenderSwag `json:"gender,omitempty"`
+	Birthday    time.Time      `json:"birthday,omitempty"`
+	Login       string         `json:"login"`
+	AvatarID    string         `json:"avatar,omitempty"`
+	PhoneNumber string         `json:"phonenumber,omitempty"`
+	Description string         `json:"description,omitempty"`
+}
+
+type UserVKSwag struct {
+	ID        uint32         `json:"id,omitempty"`
+	FirstName string         `json:"firstname,omitempty"`
+	Surname   string         `json:"surname,omitempty"`
+	Gender    UserGenderSwag `json:"gender,omitempty"`
+	Birthday  time.Time      `json:"birthday,omitempty"`
+	VKId      uint32         `json:"vkId"`
+	Login     string         `json:"login"`
+}
+
 type EmailSwag struct {
 	ID             uint64    `json:"id,omitempty"`
+	Topic          string    `json:"topic"`
+	Text           string    `json:"text"`
+	ReadStatus     bool      `json:"readStatus"`
+	Flag           bool      `json:"mark,omitempty"`
+	Deleted        bool      `json:"deleted"`
+	DateOfDispatch time.Time `json:"dateOfDispatch,omitempty"`
+	ReplyToEmailID uint64    `json:"replyToEmailId,omitempty"`
+	DraftStatus    bool      `json:"draftStatus"`
+	SpamStatus     bool      `json:"spamStatus"`
+	SenderEmail    string    `json:"senderEmail"`
+	RecipientEmail string    `json:"recipientEmail"`
+}
+
+type EmailOtherSwag struct {
+	ID             string    `json:"id,omitempty"`
 	Topic          string    `json:"topic"`
 	Text           string    `json:"text"`
 	ReadStatus     bool      `json:"readStatus"`
@@ -83,6 +128,11 @@ type FolderSwag struct {
 type FolderEmailSwag struct {
 	FolderID uint32 `json:"folderId"`
 	EmailID  uint32 `json:"emailId"`
+}
+
+type FolderEmailGoogleSwag struct {
+	FolderID string `json:"folderId"`
+	EmailID  string `json:"emailId"`
 }
 
 type QuestionSwag struct {

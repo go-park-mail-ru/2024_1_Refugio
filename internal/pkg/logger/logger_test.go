@@ -61,7 +61,7 @@ func TestInitializationAccesLog(t *testing.T) {
 		},
 	}
 
-	log := InitializationAccesLog(f)
+	log := InitializationAccessLog(f)
 
 	assert.Equal(t, *expectedLog, *log)
 }
@@ -167,7 +167,7 @@ func TestFormat(t *testing.T) {
 			fmt.Println("Failed to create logfile in session_repo" + "log.txt")
 		}
 		defer f.Close()
-		log := InitializationAccesLog(f)
+		log := InitializationAccessLog(f)
 
 		en := log.LogrusLogger.WithFields(logrus.Fields{
 			"method":     "GET",

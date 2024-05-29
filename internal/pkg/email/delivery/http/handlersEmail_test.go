@@ -5,17 +5,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
-	emailApi "mail/internal/models/delivery_models"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
+
+	"mail/internal/pkg/utils/constants"
 
 	email_mock "mail/internal/microservice/email/mock"
 	email_proto "mail/internal/microservice/email/proto"
+	emailApi "mail/internal/models/delivery_models"
 	mockSession "mail/internal/pkg/session/mock"
 )
 
@@ -47,7 +49,7 @@ func TestGelAllIncoming(t *testing.T) {
 		}
 
 		req := httptest.NewRequest("GET", "/api/v1/emails/incoming", bytes.NewReader([]byte(``)))
-		ctx := context.WithValue(req.Context(), "requestid", "testID")
+		ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 		r := req.WithContext(ctx)
 
 		w := httptest.NewRecorder()
@@ -62,7 +64,7 @@ func TestGelAllIncoming(t *testing.T) {
 
 	t.Run("GelAllIncoming Fail in GetLoginBySession", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/api/v1/emails/incoming", bytes.NewReader([]byte(``)))
-		ctx := context.WithValue(req.Context(), "requestid", "testID")
+		ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 		r := req.WithContext(ctx)
 
 		w := httptest.NewRecorder()
@@ -75,7 +77,7 @@ func TestGelAllIncoming(t *testing.T) {
 
 	t.Run("GelAllIncoming Fail in CheckLogin", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/api/v1/emails/incoming", bytes.NewReader([]byte(``)))
-		ctx := context.WithValue(req.Context(), "requestid", "testID")
+		ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 		r := req.WithContext(ctx)
 
 		w := httptest.NewRecorder()
@@ -101,7 +103,7 @@ func TestGelAllIncoming(t *testing.T) {
 		}
 
 		req := httptest.NewRequest("GET", "/api/v1/emails/incoming", bytes.NewReader([]byte(``)))
-		ctx := context.WithValue(req.Context(), "requestid", "testID")
+		ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 		r := req.WithContext(ctx)
 
 		w := httptest.NewRecorder()
@@ -143,7 +145,7 @@ func TestGelAllSent(t *testing.T) {
 		}
 
 		req := httptest.NewRequest("GET", "/api/v1/emails/sent", bytes.NewReader([]byte(``)))
-		ctx := context.WithValue(req.Context(), "requestid", "testID")
+		ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 		r := req.WithContext(ctx)
 
 		w := httptest.NewRecorder()
@@ -158,7 +160,7 @@ func TestGelAllSent(t *testing.T) {
 
 	t.Run("GelAllSent Fail in GetLoginBySession", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/api/v1/emails/sent", bytes.NewReader([]byte(``)))
-		ctx := context.WithValue(req.Context(), "requestid", "testID")
+		ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 		r := req.WithContext(ctx)
 
 		w := httptest.NewRecorder()
@@ -171,7 +173,7 @@ func TestGelAllSent(t *testing.T) {
 
 	t.Run("GelAllSent Fail in CheckLogin", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/api/v1/emails/sent", bytes.NewReader([]byte(``)))
-		ctx := context.WithValue(req.Context(), "requestid", "testID")
+		ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 		r := req.WithContext(ctx)
 
 		w := httptest.NewRecorder()
@@ -197,7 +199,7 @@ func TestGelAllSent(t *testing.T) {
 		}
 
 		req := httptest.NewRequest("GET", "/api/v1/emails/sent", bytes.NewReader([]byte(``)))
-		ctx := context.WithValue(req.Context(), "requestid", "testID")
+		ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 		r := req.WithContext(ctx)
 
 		w := httptest.NewRecorder()
@@ -227,7 +229,7 @@ func TestGetByID(t *testing.T) {
 
 	t.Run("GetByID Successs", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/api/v1/email/{id}", bytes.NewReader([]byte(``)))
-		ctx := context.WithValue(req.Context(), "requestid", "testID")
+		ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 		r := req.WithContext(ctx)
 		vars := map[string]string{"id": "1"}
 		r = mux.SetURLVars(r, vars)
@@ -244,7 +246,7 @@ func TestGetByID(t *testing.T) {
 
 	t.Run("GetByID Fail GetLoginBySession", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/api/v1/email/{id}", bytes.NewReader([]byte(``)))
-		ctx := context.WithValue(req.Context(), "requestid", "testID")
+		ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 		r := req.WithContext(ctx)
 		vars := map[string]string{"id": "1"}
 		r = mux.SetURLVars(r, vars)
@@ -259,7 +261,7 @@ func TestGetByID(t *testing.T) {
 
 	t.Run("GetByID CheckLogin", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/api/v1/email/{id}", bytes.NewReader([]byte(``)))
-		ctx := context.WithValue(req.Context(), "requestid", "testID")
+		ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 		r := req.WithContext(ctx)
 		vars := map[string]string{"id": "1"}
 		r = mux.SetURLVars(r, vars)
@@ -275,7 +277,7 @@ func TestGetByID(t *testing.T) {
 
 	t.Run("GetByID GetEmailByID", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/api/v1/email/{id}", bytes.NewReader([]byte(``)))
-		ctx := context.WithValue(req.Context(), "requestid", "testID")
+		ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 		r := req.WithContext(ctx)
 		vars := map[string]string{"id": "1"}
 		r = mux.SetURLVars(r, vars)
@@ -315,7 +317,7 @@ func TestUpdate(t *testing.T) {
 
 	t.Run("Update Success", func(t *testing.T) {
 		req := httptest.NewRequest("POST", "/api/v1/email/update/{id}", bytes.NewReader(requestBodyBytes))
-		ctx := context.WithValue(req.Context(), "requestid", "testID")
+		ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 		r := req.WithContext(ctx)
 		vars := map[string]string{"id": "1"}
 		r = mux.SetURLVars(r, vars)
@@ -332,7 +334,7 @@ func TestUpdate(t *testing.T) {
 
 	t.Run("Update Fail", func(t *testing.T) {
 		req := httptest.NewRequest("POST", "/api/v1/email/update/{id}", bytes.NewReader(requestBodyBytes))
-		ctx := context.WithValue(req.Context(), "requestid", "testID")
+		ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 		r := req.WithContext(ctx)
 		vars := map[string]string{"id": "1"}
 		r = mux.SetURLVars(r, vars)
@@ -348,7 +350,7 @@ func TestUpdate(t *testing.T) {
 
 	t.Run("Update UpdateEmail", func(t *testing.T) {
 		req := httptest.NewRequest("POST", "/api/v1/email/update/{id}", bytes.NewReader(requestBodyBytes))
-		ctx := context.WithValue(req.Context(), "requestid", "testID")
+		ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 		r := req.WithContext(ctx)
 		vars := map[string]string{"id": "1"}
 		r = mux.SetURLVars(r, vars)
@@ -380,7 +382,7 @@ func TestDelete(t *testing.T) {
 
 	t.Run("Delete Success", func(t *testing.T) {
 		req := httptest.NewRequest("POST", "/api/v1/email/delete/{id}", bytes.NewReader([]byte("")))
-		ctx := context.WithValue(req.Context(), "requestid", "testID")
+		ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 		r := req.WithContext(ctx)
 		vars := map[string]string{"id": "1"}
 		r = mux.SetURLVars(r, vars)
@@ -397,7 +399,7 @@ func TestDelete(t *testing.T) {
 
 	t.Run("Delete Fail GetLoginBySession", func(t *testing.T) {
 		req := httptest.NewRequest("POST", "/api/v1/email/delete/{id}", bytes.NewReader([]byte("")))
-		ctx := context.WithValue(req.Context(), "requestid", "testID")
+		ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 		r := req.WithContext(ctx)
 		vars := map[string]string{"id": "1"}
 		r = mux.SetURLVars(r, vars)
@@ -412,7 +414,7 @@ func TestDelete(t *testing.T) {
 
 	t.Run("Delete Fail CheckLogin", func(t *testing.T) {
 		req := httptest.NewRequest("POST", "/api/v1/email/delete/{id}", bytes.NewReader([]byte("")))
-		ctx := context.WithValue(req.Context(), "requestid", "testID")
+		ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 		r := req.WithContext(ctx)
 		vars := map[string]string{"id": "1"}
 		r = mux.SetURLVars(r, vars)
@@ -428,7 +430,7 @@ func TestDelete(t *testing.T) {
 
 	t.Run("Delete Fail DeleteEmail", func(t *testing.T) {
 		req := httptest.NewRequest("POST", "/api/v1/email/delete/{id}", bytes.NewReader([]byte("")))
-		ctx := context.WithValue(req.Context(), "requestid", "testID")
+		ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 		r := req.WithContext(ctx)
 		vars := map[string]string{"id": "1"}
 		r = mux.SetURLVars(r, vars)
@@ -472,7 +474,7 @@ func TestDraft(t *testing.T) {
 		}
 
 		req := httptest.NewRequest("GET", "/api/v1/emails/sent", bytes.NewReader([]byte(``)))
-		ctx := context.WithValue(req.Context(), "requestid", "testID")
+		ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 		r := req.WithContext(ctx)
 
 		w := httptest.NewRecorder()
@@ -487,7 +489,7 @@ func TestDraft(t *testing.T) {
 
 	t.Run("GelAllSent Fail in GetLoginBySession", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/api/v1/emails/sent", bytes.NewReader([]byte(``)))
-		ctx := context.WithValue(req.Context(), "requestid", "testID")
+		ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 		r := req.WithContext(ctx)
 
 		w := httptest.NewRecorder()
@@ -500,7 +502,7 @@ func TestDraft(t *testing.T) {
 
 	t.Run("GelAllSent Fail in CheckLogin", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/api/v1/emails/sent", bytes.NewReader([]byte(``)))
-		ctx := context.WithValue(req.Context(), "requestid", "testID")
+		ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 		r := req.WithContext(ctx)
 
 		w := httptest.NewRecorder()
@@ -526,7 +528,7 @@ func TestDraft(t *testing.T) {
 		}
 
 		req := httptest.NewRequest("GET", "/api/v1/emails/sent", bytes.NewReader([]byte(``)))
-		ctx := context.WithValue(req.Context(), "requestid", "testID")
+		ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 		r := req.WithContext(ctx)
 
 		w := httptest.NewRecorder()
@@ -568,7 +570,7 @@ func TestSpam(t *testing.T) {
 		}
 
 		req := httptest.NewRequest("GET", "/api/v1/emails/sent", bytes.NewReader([]byte(``)))
-		ctx := context.WithValue(req.Context(), "requestid", "testID")
+		ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 		r := req.WithContext(ctx)
 
 		w := httptest.NewRecorder()
@@ -583,7 +585,7 @@ func TestSpam(t *testing.T) {
 
 	t.Run("GelAllSent Fail in GetLoginBySession", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/api/v1/emails/sent", bytes.NewReader([]byte(``)))
-		ctx := context.WithValue(req.Context(), "requestid", "testID")
+		ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 		r := req.WithContext(ctx)
 
 		w := httptest.NewRecorder()
@@ -596,7 +598,7 @@ func TestSpam(t *testing.T) {
 
 	t.Run("GelAllSent Fail in CheckLogin", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/api/v1/emails/sent", bytes.NewReader([]byte(``)))
-		ctx := context.WithValue(req.Context(), "requestid", "testID")
+		ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 		r := req.WithContext(ctx)
 
 		w := httptest.NewRecorder()
@@ -622,7 +624,7 @@ func TestSpam(t *testing.T) {
 		}
 
 		req := httptest.NewRequest("GET", "/api/v1/emails/sent", bytes.NewReader([]byte(``)))
-		ctx := context.WithValue(req.Context(), "requestid", "testID")
+		ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 		r := req.WithContext(ctx)
 
 		w := httptest.NewRecorder()
@@ -662,7 +664,7 @@ func TestSend(t *testing.T) {
 		requestBodyBytes, _ := json.Marshal(newEmail)
 
 		req := httptest.NewRequest("POST", "/api/v1/email/send", bytes.NewReader(requestBodyBytes))
-		ctx := context.WithValue(req.Context(), "requestid", "testID")
+		ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 		req = req.WithContext(ctx)
 
 		w := httptest.NewRecorder()
@@ -690,7 +692,7 @@ func TestSend(t *testing.T) {
 		requestBodyBytes, _ := json.Marshal(newEmail)
 
 		req := httptest.NewRequest("POST", "/api/v1/email/send", bytes.NewReader(requestBodyBytes))
-		ctx := context.WithValue(req.Context(), "requestid", "testID")
+		ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 		r := req.WithContext(ctx)
 
 		w := httptest.NewRecorder()
@@ -712,7 +714,7 @@ func TestSend(t *testing.T) {
 		requestBodyBytes, _ := json.Marshal(newEmail)
 
 		req := httptest.NewRequest("POST", "/api/v1/email/send", bytes.NewReader(requestBodyBytes))
-		ctx := context.WithValue(req.Context(), "requestid", "testID")
+		ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 		r := req.WithContext(ctx)
 
 		w := httptest.NewRecorder()

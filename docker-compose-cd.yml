@@ -1,0 +1,190 @@
+version: '3'
+
+networks:
+  deploy-guide-dev:
+    driver: bridge
+
+services:
+  db:
+    container_name: db
+    image: postgres:16
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: Mail
+    networks:
+      - deploy-guide-dev
+    volumes:
+      - db_postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  db_question:
+    container_name: db_question
+    image: postgres:16
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: Question
+    networks:
+      - deploy-guide-dev
+    volumes:
+      - db_question_postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  backend:
+    container_name: backend
+    image: fedasov03/mailhub-mail:latest
+    ports:
+      - "8080:8080"
+    networks:
+      - deploy-guide-dev
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  smtp:
+    container_name: smtp
+    image: fedasov03/mailhub-smtp:latest
+    ports:
+      - "25:587"
+    networks:
+      - deploy-guide-dev
+    restart: unless-stopped
+
+  auth:
+    container_name: auth
+    image: fedasov03/mailhub-auth:latest
+    ports:
+      - "8004:8004"
+    networks:
+      - deploy-guide-dev
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  email:
+    container_name: email
+    image: fedasov03/mailhub-email:latest
+    ports:
+      - "8002:8002"
+    networks:
+      - deploy-guide-dev
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  session:
+    container_name: session
+    image: fedasov03/mailhub-session:latest
+    ports:
+      - "8003:8003"
+    networks:
+      - deploy-guide-dev
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  user:
+    container_name: user
+    image: fedasov03/mailhub-user:latest
+    ports:
+      - "8001:8001"
+    networks:
+      - deploy-guide-dev
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  folder:
+    container_name: folder
+    image: fedasov03/mailhub-folder:latest
+    ports:
+      - "8005:8005"
+    networks:
+      - deploy-guide-dev
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  questionnaire:
+    container_name: questionnaire
+    image: fedasov03/mailhub-questionnaire:latest
+    ports:
+      - "8006:8006"
+    networks:
+      - deploy-guide-dev
+    depends_on:
+      - db_question
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - deploy-guide-dev
+    volumes:
+      - ./monitoring/prometheus:/etc/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - deploy-guide-dev
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  node-exporter:
+    image: prom/node-exporter
+    container_name: node-exporter
+    ports:
+      - "9100:9100"
+    networks:
+      - deploy-guide-dev
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --address ":9000" --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    networks:
+      - deploy-guide-dev
+    volumes:
+      - ./minio/data:/data
+      - ./minio/config:/root/.minio
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  db_postgres_data:
+  db_question_postgres_data:
+  prometheus_data:
+  grafana_data:
+  minio_data:
+  minio_config:

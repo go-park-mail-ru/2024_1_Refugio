@@ -3,26 +3,24 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+	"testing"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/golang/mock/gomock"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
-	domain "mail/internal/microservice/models/domain_models"
+
 	"mail/internal/pkg/logger"
-	"os"
-	"testing"
+	"mail/internal/pkg/utils/constants"
+
+	domain "mail/internal/microservice/models/domain_models"
 )
 
 func GetCTX() context.Context {
-	f, err := os.OpenFile("log_test.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		fmt.Println("Failed to create logfile" + "log.txt")
-	}
-	defer f.Close()
-
-	ctx := context.WithValue(context.Background(), "logger", logger.InitializationBdLog(f))
-	ctx2 := context.WithValue(ctx, "requestID", []string{"testID"})
+	ctx := context.WithValue(context.Background(), interface{}(string(constants.LoggerKey)), logger.InitializationBdLog(nil))
+	ctx2 := context.WithValue(ctx, interface{}(string(constants.RequestIDKey)), []string{"testID"})
 
 	return ctx2
 }
@@ -523,10 +521,8 @@ func TestGetAllEmails(t *testing.T) {
 			AddRow(3, "Topic 3", "Text 3")
 
 		mock.ExpectQuery(`
-			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important
 			FROM email e
-			LEFT JOIN email_file ef ON e.id = ef.email_id
-			LEFT JOIN file f ON ef.file_id = f.id
 			JOIN profile_email pe ON e.id = pe.email_id
 			JOIN profile p ON pe.profile_id = \$1 
 			LEFT JOIN folder_email ON e.id = folder_email.email_id
@@ -550,10 +546,8 @@ func TestGetAllEmails(t *testing.T) {
 			AddRow(3, "Topic 3", "Text 3")
 
 		mock.ExpectQuery(`
-			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important
 			FROM email e
-			LEFT JOIN email_file ef ON e.id = ef.email_id
-			LEFT JOIN file f ON ef.file_id = f.id
 			JOIN profile_email pe ON e.id = pe.email_id
 			JOIN profile p ON pe.profile_id = \$1 
 			LEFT JOIN folder_email ON e.id = folder_email.email_id
@@ -569,10 +563,8 @@ func TestGetAllEmails(t *testing.T) {
 
 	t.Run("Error", func(t *testing.T) {
 		mock.ExpectQuery(`
-			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important, f.file_id AS photoid
+			SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important
 			FROM email e
-			LEFT JOIN email_file ef ON e.id = ef.email_id
-			LEFT JOIN file f ON ef.file_id = f.id
 			JOIN profile_email pe ON e.id = pe.email_id
 			JOIN profile p ON pe.profile_id = \$1 
 			LEFT JOIN folder_email ON e.id = folder_email.email_id
@@ -584,5 +576,135 @@ func TestGetAllEmails(t *testing.T) {
 		assert.Error(t, err)
 		assert.Equal(t, fmt.Errorf("DB no have emails in folder"), err)
 		assert.Nil(t, emails)
+	})
+}
+
+func TestGetAvatarFileIDByLogin(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer mockDB.Close()
+
+	repo := &FolderRepository{
+		DB: sqlx.NewDb(mockDB, "sqlmock"),
+	}
+
+	ctx := GetCTX()
+	login := "test"
+
+	t.Run("GetAvatarFileIDByLogin_Success", func(t *testing.T) {
+		fileId := "123"
+		rows := sqlmock.NewRows([]string{"file_id"}).AddRow(fileId)
+		mock.ExpectQuery(`
+            SELECT f.file_id
+            FROM file f
+            LEFT JOIN profile p ON p.avatar_id = f.id
+            WHERE p.login = \$1
+        `).WithArgs(login).WillReturnRows(rows)
+
+		_, err := repo.GetAvatarFileIDByLogin(login, ctx)
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("GetAvatarFileIDByLogin_NoAvatar", func(t *testing.T) {
+		mock.ExpectQuery(`
+            SELECT f.file_id
+            FROM file f
+            LEFT JOIN profile p ON p.avatar_id = f.id
+            WHERE p.login = \$1
+        `).WithArgs(login).WillReturnError(sql.ErrNoRows)
+
+		_, err := repo.GetAvatarFileIDByLogin(login, ctx)
+
+		assert.Error(t, err)
+	})
+
+	t.Run("GetAvatarFileIDByLogin_DBError", func(t *testing.T) {
+		mock.ExpectQuery(`
+            SELECT f.file_id
+            FROM file f
+            LEFT JOIN profile p ON p.avatar_id = f.id
+            WHERE p.login = \$1
+        `).WithArgs(login).WillReturnError(errors.New("DB error"))
+
+		_, err := repo.GetAvatarFileIDByLogin(login, ctx)
+
+		assert.Error(t, err)
+	})
+}
+
+func TestGetAllFolderName(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer mockDB.Close()
+
+	repo := &FolderRepository{
+		DB: sqlx.NewDb(mockDB, "sqlmock"),
+	}
+
+	ctx := GetCTX()
+	emailID := uint32(123)
+
+	t.Run("GetAllFolderName_Success", func(t *testing.T) {
+		expectedFolders := []*domain.Folder{
+			{ID: 1, Name: "Inbox"},
+			{ID: 2, Name: "Sent"},
+			{ID: 3, Name: "Drafts"},
+		}
+
+		rows := sqlmock.NewRows([]string{"id", "name"}).
+			AddRow(1, "Inbox").
+			AddRow(2, "Sent").
+			AddRow(3, "Drafts")
+
+		mock.ExpectQuery(`
+            SELECT f.id, f.name
+            FROM folder f
+            INNER JOIN folder_email fe ON f.id = fe.folder_id
+            WHERE fe.email_id = \$1
+        `).WithArgs(emailID).WillReturnRows(rows)
+
+		folders, err := repo.GetAllFolderName(emailID, ctx)
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedFolders, folders)
+	})
+
+	t.Run("GetAllFolderName_NoFolders", func(t *testing.T) {
+		mock.ExpectQuery(`
+            SELECT f.id, f.name
+            FROM folder f
+            INNER JOIN folder_email fe ON f.id = fe.folder_id
+            WHERE fe.email_id = \$1
+        `).WithArgs(emailID).WillReturnError(sql.ErrNoRows)
+
+		folders, err := repo.GetAllFolderName(emailID, ctx)
+
+		assert.Error(t, err)
+		assert.Nil(t, folders)
+	})
+
+	t.Run("GetAllFolderName_DBError", func(t *testing.T) {
+		mock.ExpectQuery(`
+            SELECT f.id, f.name
+            FROM folder f
+            INNER JOIN folder_email fe ON f.id = fe.folder_id
+            WHERE fe.email_id = \$1
+        `).WithArgs(emailID).WillReturnError(errors.New("DB error"))
+
+		folders, err := repo.GetAllFolderName(emailID, ctx)
+
+		assert.Error(t, err)
+		assert.Nil(t, folders)
 	})
 }

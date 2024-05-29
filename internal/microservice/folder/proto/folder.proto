@@ -18,6 +18,7 @@ service FolderService {
   rpc GetAllEmailsInFolder(GetAllEmailsInFolderData) returns(ObjectsEmail) {}
   rpc CheckFolderProfile(FolderProfile) returns(FolderEmailStatus) {}
   rpc CheckEmailProfile(EmailProfile) returns(FolderEmailStatus) {}
+  rpc GetAllNameFolders(GetAllNameFoldersRequest) returns(Folders) {}
 }
 
 message Folder {
@@ -69,6 +70,7 @@ message GetAllEmailsInFolderData {
   uint32 profileID = 2;
   uint32 limit = 3;
   uint32 offset = 4;
+  string login = 5;
 }
 
 message EmailProfile {
@@ -94,4 +96,8 @@ message ObjectEmail {
   bool spamStatus = 11;
   string senderEmail = 12;
   string recipientEmail = 13;
+}
+
+message GetAllNameFoldersRequest {
+  uint32 emailId = 1;
 }

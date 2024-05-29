@@ -29,6 +29,10 @@ func NewUserServer(userUseCase usecase.UserUseCase) *UserServer {
 
 // GetUsers retrieves information about users.
 func (us *UserServer) GetUsers(ctx context.Context, input *proto.GetUsersRequest) (*proto.GetUsersReply, error) {
+	if input == nil {
+		return &proto.GetUsersReply{Users: []*proto.User{}}, nil
+	}
+
 	users, err := us.UserUseCase.GetAllUsers(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("user not found: %v", err)
@@ -36,7 +40,7 @@ func (us *UserServer) GetUsers(ctx context.Context, input *proto.GetUsersRequest
 
 	usersProto := make([]*proto.User, 0, len(users))
 	for _, user := range users {
-		usersProto = append(usersProto, converters.UserConvertCoreInProto(*user))
+		usersProto = append(usersProto, converters.UserConvertCoreInProto(user))
 	}
 
 	return &proto.GetUsersReply{Users: usersProto}, nil
@@ -53,7 +57,7 @@ func (us *UserServer) GetUser(ctx context.Context, input *proto.GetUserRequest) 
 		return nil, fmt.Errorf("user not found")
 	}
 
-	return &proto.GetUserReply{User: converters.UserConvertCoreInProto(*user)}, nil
+	return &proto.GetUserReply{User: converters.UserConvertCoreInProto(user)}, nil
 }
 
 // GetUserByLogin retrieves information about a user by their login.
@@ -67,7 +71,7 @@ func (us *UserServer) GetUserByLogin(ctx context.Context, input *proto.GetUserBy
 		return nil, fmt.Errorf("user not found")
 	}
 
-	return &proto.GetUserByLoginReply{User: converters.UserConvertCoreInProto(*user)}, nil
+	return &proto.GetUserByLoginReply{User: converters.UserConvertCoreInProto(user)}, nil
 }
 
 // IsLoginUnique checks if the provided login is unique among all users.
@@ -86,7 +90,7 @@ func (us *UserServer) IsLoginUnique(ctx context.Context, input *proto.IsLoginUni
 
 // UpdateUser updates user information.
 func (us *UserServer) UpdateUser(ctx context.Context, input *proto.UpdateUserRequest) (*proto.UpdateUserReply, error) {
-	userDomain := converters.UserConvertProtoInCore(*input.User)
+	userDomain := converters.UserConvertProtoInCore(input.User)
 
 	userDomain.Login = sanitize.SanitizeString(userDomain.Login)
 	userDomain.FirstName = sanitize.SanitizeString(userDomain.FirstName)
@@ -101,7 +105,7 @@ func (us *UserServer) UpdateUser(ctx context.Context, input *proto.UpdateUserReq
 		return nil, fmt.Errorf("user with id %v update fail", userDomain.ID)
 	}
 
-	return &proto.UpdateUserReply{User: converters.UserConvertCoreInProto(*user)}, nil
+	return &proto.UpdateUserReply{User: converters.UserConvertCoreInProto(user)}, nil
 }
 
 // DeleteUserById deletes a user by their identifier.
@@ -159,7 +163,7 @@ func (us *UserServer) DeleteUserAvatar(ctx context.Context, input *proto.DeleteU
 
 // CreateUser creates user.
 func (us *UserServer) CreateUser(ctx context.Context, input *proto.CreateUserRequest) (*proto.CreateUserReply, error) {
-	userDomain := converters.UserConvertProtoInCore(*input.User)
+	userDomain := converters.UserConvertProtoInCore(input.User)
 
 	userDomain.Login = sanitize.SanitizeString(userDomain.Login)
 	userDomain.FirstName = sanitize.SanitizeString(userDomain.FirstName)
@@ -182,5 +186,58 @@ func (us *UserServer) CreateUser(ctx context.Context, input *proto.CreateUserReq
 		return nil, fmt.Errorf("user with login %s create fail", userDomain.Login)
 	}
 
-	return &proto.CreateUserReply{User: converters.UserConvertCoreInProto(*user)}, nil
+	return &proto.CreateUserReply{User: converters.UserConvertCoreInProto(user)}, nil
+}
+
+// GetUserByVKId get vkId.
+func (us *UserServer) GetUserByVKId(ctx context.Context, input *proto.GetUserVKIdRequest) (*proto.GetUserReply, error) {
+	if input.VkId <= 0 {
+		return nil, fmt.Errorf("bad vkId")
+	}
+
+	user, err := us.UserUseCase.GetUserVkID(input.VkId, ctx)
+	if err != nil {
+		fmt.Println("user with vkId create fail")
+		return nil, fmt.Errorf("user with vkId create fail")
+	}
+
+	return &proto.GetUserReply{User: converters.UserConvertCoreInProto(user)}, nil
+}
+
+// GetUserByOnlyLogin retrieves information about a user by their login.
+func (us *UserServer) GetUserByOnlyLogin(ctx context.Context, input *proto.GetUserByOnlyLoginRequest) (*proto.GetUserByOnlyLoginReply, error) {
+	if strings.TrimSpace(input.Login) == "" {
+		return nil, fmt.Errorf("invalid user login: %s", input.Login)
+	}
+
+	user, err := us.UserUseCase.GetUserByOnlyLogin(input.Login, ctx)
+	if err != nil {
+		return nil, fmt.Errorf("user not found")
+	}
+
+	return &proto.GetUserByOnlyLoginReply{User: converters.UserConvertCoreInProto(user)}, nil
+}
+
+// CreateUserOtherMail creates user.
+func (us *UserServer) CreateUserOtherMail(ctx context.Context, input *proto.CreateUserRequest) (*proto.CreateUserReply, error) {
+	userDomain := converters.UserConvertProtoInCore(input.User)
+
+	userDomain.Login = sanitize.SanitizeString(userDomain.Login)
+	userDomain.FirstName = sanitize.SanitizeString(userDomain.FirstName)
+	userDomain.Surname = sanitize.SanitizeString(userDomain.Surname)
+	userDomain.Patronymic = sanitize.SanitizeString(userDomain.Patronymic)
+	userDomain.AvatarID = sanitize.SanitizeString(userDomain.AvatarID)
+	userDomain.PhoneNumber = sanitize.SanitizeString(userDomain.PhoneNumber)
+	userDomain.Description = sanitize.SanitizeString(userDomain.Description)
+
+	if validUtil.IsEmpty(userDomain.Login) || validUtil.IsEmpty(userDomain.FirstName) || validUtil.IsEmpty(userDomain.Surname) {
+		return nil, fmt.Errorf("all fields must be filled in")
+	}
+
+	user, err := us.UserUseCase.CreateUser(userDomain, ctx)
+	if err != nil {
+		return nil, fmt.Errorf("user with login %s create fail", userDomain.Login)
+	}
+
+	return &proto.CreateUserReply{User: converters.UserConvertCoreInProto(user)}, nil
 }

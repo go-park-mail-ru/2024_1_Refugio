@@ -196,6 +196,26 @@ func (mr *MockFolderServiceClientMockRecorder) GetAllFolders(ctx, in interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllFolders", reflect.TypeOf((*MockFolderServiceClient)(nil).GetAllFolders), varargs...)
 }
 
+// GetAllNameFolders mocks base method.
+func (m *MockFolderServiceClient) GetAllNameFolders(ctx context.Context, in *proto.GetAllNameFoldersRequest, opts ...grpc.CallOption) (*proto.Folders, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetAllNameFolders", varargs...)
+	ret0, _ := ret[0].(*proto.Folders)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllNameFolders indicates an expected call of GetAllNameFolders.
+func (mr *MockFolderServiceClientMockRecorder) GetAllNameFolders(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllNameFolders", reflect.TypeOf((*MockFolderServiceClient)(nil).GetAllNameFolders), varargs...)
+}
+
 // UpdateFolder mocks base method.
 func (m *MockFolderServiceClient) UpdateFolder(ctx context.Context, in *proto.Folder, opts ...grpc.CallOption) (*proto.FolderStatus, error) {
 	m.ctrl.T.Helper()
@@ -357,6 +377,21 @@ func (m *MockFolderServiceServer) GetAllFolders(arg0 context.Context, arg1 *prot
 func (mr *MockFolderServiceServerMockRecorder) GetAllFolders(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllFolders", reflect.TypeOf((*MockFolderServiceServer)(nil).GetAllFolders), arg0, arg1)
+}
+
+// GetAllNameFolders mocks base method.
+func (m *MockFolderServiceServer) GetAllNameFolders(arg0 context.Context, arg1 *proto.GetAllNameFoldersRequest) (*proto.Folders, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllNameFolders", arg0, arg1)
+	ret0, _ := ret[0].(*proto.Folders)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllNameFolders indicates an expected call of GetAllNameFolders.
+func (mr *MockFolderServiceServerMockRecorder) GetAllNameFolders(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllNameFolders", reflect.TypeOf((*MockFolderServiceServer)(nil).GetAllNameFolders), arg0, arg1)
 }
 
 // UpdateFolder mocks base method.
