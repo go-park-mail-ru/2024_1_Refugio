@@ -20,7 +20,7 @@ mod:
 
 tests:
 	go test -json ./... -coverprofile coverprofile_.tmp -coverpkg=./... ; \
-    grep -v -e '_easyjson.go' -e 'gen_notes.go' -e 'cmd' -e 'docs' -e 'db' -e 'monitoring' -e 'proto' -e 'mock' coverprofile_.tmp > coverprofile.tmp ; \
+    grep -v -e '_easyjson.go' -e 'cmd' -e 'docs' -e 'db' -e 'monitoring' -e 'proto' -e 'mock' -e 'gmail' coverprofile_.tmp > coverprofile.tmp ; \
     rm coverprofile_.tmp ; \
     go tool cover -html coverprofile.tmp -o ../heatmap.html; \
     go tool cover -func coverprofile.tmp
