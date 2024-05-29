@@ -55,6 +55,7 @@ import (
 // @host mailhub.su
 // @BasePath /
 func main() {
+	fmt.Println("starting mail")
 	settingTime()
 
 	db := initializeDatabase()
