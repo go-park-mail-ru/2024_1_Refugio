@@ -2,10 +2,18 @@
 local wrk = require "wrk"
 
 wrk.method = "POST"
-wrk.body = '{"firstKey": "somedata", "secondKey": "somedata"}'
-wrk.body = '{"topic": "WRK","text": "WRK_Test","readStatus": false,"mark": false,"replyToEmailId": 0,"draftStatus": false,"spamStatus": false,"senderEmail": "wrk@mailhub.su","recipientEmail": "ivan@mailhub.su"}'
+wrk.body = '{"topic": "WRK","text": "WRK_Test","readStatus": false,"mark": false,"replyToEmailId": 0,"draftStatus": false,"spamStatus": false,"senderEmail": "senderWrk@mailhub.su","recipientEmail": "wrk@mailhub.su"}'
 wrk.headers["Content-Type"] = "application/json"
-wrk.headers["X-Csrf-Token"] = "e5bf01a0faf9177e583c49b0db26e10f"
-wrk.headers["session_id"] = "4ec9f9423c727e9e701ad2f2357503b7"
+wrk.headers["X-Csrf-Token"] = "3b718de1065efe9c8e578ea98452bea8"
+wrk.headers["Cookie"] = "session_id=dd001c65474c2617ef0be801e1439336"
 
-wrk.requests = 10
+-- Указать общее количество запросов
+wrk.requests = 100000
+
+-- Настроить параметры потоков
+wrk.thread = function()
+    -- Указать, что хотим отправить 1000 запросов на каждый поток
+    wrk.connections = 10 -- Количество одновременных подключений на поток
+    wrk.duration = "1000s" -- Длительность тестирования на поток
+    wrk.requests = 20000 -- Количество запросов на поток
+end
