@@ -128,18 +128,18 @@ func (uc *EmailUseCase) CreateEmail(newEmail *domain.Email, ctx context.Context)
 }
 
 // CreateProfileEmail creates a new profile_email
-func (uc *EmailUseCase) CreateProfileEmail(email_id uint64, sender, recipient string, ctx context.Context) error {
+func (uc *EmailUseCase) CreateProfileEmail(emailId uint64, sender, recipient string, ctx context.Context) error {
 	if sender == recipient {
-		return uc.repo.AddProfileEmailMyself(email_id, sender, ctx)
-	} else if validators.IsValidEmailFormat(sender) == true && recipient == "" {
-		return uc.repo.AddProfileEmailMyself(email_id, sender, ctx)
-	} else if validators.IsValidEmailFormat(sender) == true && validators.IsValidEmailFormat(recipient) == false {
-		return uc.repo.AddProfileEmailMyself(email_id, sender, ctx)
-	} else if validators.IsValidEmailFormat(sender) == false && validators.IsValidEmailFormat(recipient) == true {
-		return uc.repo.AddProfileEmailMyself(email_id, recipient, ctx)
+		return uc.repo.AddProfileEmailMyself(emailId, sender, ctx)
+	} else if validators.IsValidEmailFormat(sender) && recipient == "" {
+		return uc.repo.AddProfileEmailMyself(emailId, sender, ctx)
+	} else if validators.IsValidEmailFormat(sender) && !validators.IsValidEmailFormat(recipient) {
+		return uc.repo.AddProfileEmailMyself(emailId, sender, ctx)
+	} else if !validators.IsValidEmailFormat(sender) && validators.IsValidEmailFormat(recipient) {
+		return uc.repo.AddProfileEmailMyself(emailId, recipient, ctx)
 	}
 
-	return uc.repo.AddProfileEmail(email_id, sender, recipient, ctx)
+	return uc.repo.AddProfileEmail(emailId, sender, recipient, ctx)
 }
 
 // CheckRecipientEmail checking recipient email
@@ -161,26 +161,26 @@ func (uc *EmailUseCase) DeleteEmail(id uint64, login string, ctx context.Context
 }
 
 // AddAttachment adds an attachment to the specified email.
-func (uc *EmailUseCase) AddAttachment(fileID string, fileType string, emailID uint64, ctx context.Context) (uint64, error) {
-	if validators.IsEmpty(fileID) || validators.IsEmpty(fileType) {
-		return 0, fmt.Errorf("file id or file type is empty")
+func (uc *EmailUseCase) AddAttachment(fileID, fileType, fileName, fileSize string, emailID uint64, ctx context.Context) (uint64, error) {
+	if validators.IsEmpty(fileID) || validators.IsEmpty(fileType) || validators.IsEmpty(fileName) || validators.IsEmpty(fileSize) {
+		return 0, fmt.Errorf("file id or file type or file name or file size is empty")
 	}
 
 	if emailID <= 0 {
 		return 0, fmt.Errorf("invalid email id")
 	}
 
-	file_id, err := uc.repo.AddFile(fileID, fileType, ctx)
+	fileId, err := uc.repo.AddFile(fileID, fileType, fileName, fileSize, ctx)
 	if err != nil {
 		return 0, fmt.Errorf("failed to add file")
 	}
 
-	err = uc.repo.AddAttachment(emailID, file_id, ctx)
+	err = uc.repo.AddAttachment(emailID, fileId, ctx)
 	if err != nil {
 		return 0, fmt.Errorf("failed to add attachment")
 	}
 
-	return file_id, nil
+	return fileId, nil
 }
 
 // GetFileByID returns the file with the specified ID.
@@ -226,9 +226,9 @@ func (uc *EmailUseCase) DeleteFileByID(fileID uint64, ctx context.Context) (bool
 }
 
 // UpdateFileByID updates the information of the specified file.
-func (uc *EmailUseCase) UpdateFileByID(fileID uint64, newFileID string, newFileType string, ctx context.Context) (bool, error) {
-	if validators.IsEmpty(newFileID) || validators.IsEmpty(newFileType) {
-		return false, fmt.Errorf("file id or file type is empty")
+func (uc *EmailUseCase) UpdateFileByID(fileID uint64, newFileID, newFileType, newFileName, newFileSize string, ctx context.Context) (bool, error) {
+	if validators.IsEmpty(newFileID) || validators.IsEmpty(newFileType) || validators.IsEmpty(newFileName) || validators.IsEmpty(newFileSize) {
+		return false, fmt.Errorf("file id or file type or file name or file size is empty")
 	}
 
 	if fileID <= 0 {
@@ -246,8 +246,14 @@ func (uc *EmailUseCase) UpdateFileByID(fileID uint64, newFileID string, newFileT
 	if newFileType != "" && file.FileType != newFileType {
 		file.FileType = newFileType
 	}
+	if newFileName != "" && file.FileName != newFileName {
+		file.FileName = newFileName
+	}
+	if newFileSize != "" && file.FileSize != newFileSize {
+		file.FileSize = newFileSize
+	}
 
-	err = uc.repo.UpdateFileByID(fileID, file.FileId, file.FileType, ctx)
+	err = uc.repo.UpdateFileByID(fileID, file.FileId, file.FileType, file.FileName, file.FileSize, ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to update file")
 	}
@@ -256,17 +262,17 @@ func (uc *EmailUseCase) UpdateFileByID(fileID uint64, newFileID string, newFileT
 }
 
 // AddFile add an file to database.
-func (uc *EmailUseCase) AddFile(fileID string, fileType string, ctx context.Context) (uint64, error) {
-	if validators.IsEmpty(fileID) || validators.IsEmpty(fileType) {
-		return 0, fmt.Errorf("file id or file type is empty")
+func (uc *EmailUseCase) AddFile(fileID, fileType, fileName, fileSize string, ctx context.Context) (uint64, error) {
+	if validators.IsEmpty(fileID) || validators.IsEmpty(fileType) || validators.IsEmpty(fileName) || validators.IsEmpty(fileSize) {
+		return 0, fmt.Errorf("file id or file type or file name or file size is empty")
 	}
 
-	file_id, err := uc.repo.AddFile(fileID, fileType, ctx)
+	fileId, err := uc.repo.AddFile(fileID, fileType, fileName, fileSize, ctx)
 	if err != nil {
 		return 0, fmt.Errorf("failed to add file")
 	}
 
-	return file_id, nil
+	return fileId, nil
 }
 
 // AddFileToEmail add a file to an email.

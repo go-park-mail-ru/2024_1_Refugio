@@ -20,6 +20,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
 
+	migrate "github.com/rubenv/sql-migrate"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 	"mail/cmd/configs"
 	"mail/internal/models/microservice_ports"
 	"mail/internal/monitoring"
@@ -27,9 +29,6 @@ import (
 	"mail/internal/pkg/middleware"
 	"mail/internal/pkg/session"
 	"mail/internal/pkg/utils/connect_microservice"
-
-	migrate "github.com/rubenv/sql-migrate"
-	httpSwagger "github.com/swaggo/http-swagger/v2"
 
 	auth_proto "mail/internal/microservice/auth/proto"
 	email_proto "mail/internal/microservice/email/proto"
@@ -40,6 +39,8 @@ import (
 	authHand "mail/internal/pkg/auth/delivery/http"
 	emailHand "mail/internal/pkg/email/delivery/http"
 	folderHand "mail/internal/pkg/folder/delivery/http"
+	gmailAuthHand "mail/internal/pkg/gmail/gmail_auth/delivery/http"
+	gmailEmailHand "mail/internal/pkg/gmail/gmail_handler/delivery/http"
 	oauthHand "mail/internal/pkg/oauth/delivery/http"
 	questionHand "mail/internal/pkg/questionnairy/delivery/http"
 	userHand "mail/internal/pkg/user/delivery/http"
@@ -63,48 +64,42 @@ func main() {
 
 	loggerMiddlewareAccess := initializeMiddlewareLogger()
 
-	sessionManagerServiceConn, err := connect_microservice.
-		OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.SessionService))
+	sessionManagerServiceConn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.SessionService))
 	if err != nil {
 		log.Fatalf("connection with microservice auth fail")
 	}
 	defer sessionManagerServiceConn.Close()
 	sessionsManager := initializeSessionsManager(session_proto.NewSessionServiceClient(sessionManagerServiceConn))
 
-	authServiceConn, err := connect_microservice.
-		OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.AuthService))
+	authServiceConn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.AuthService))
 	if err != nil {
 		log.Fatalf("connection with microservice auth fail")
 	}
 	defer authServiceConn.Close()
 	authHandler := initializeAuthHandler(sessionsManager, auth_proto.NewAuthServiceClient(authServiceConn))
 
-	userServiceConn, err := connect_microservice.
-		OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.UserService))
+	userServiceConn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.UserService))
 	if err != nil {
 		log.Fatalf("connection with microservice user fail")
 	}
 	defer userServiceConn.Close()
 	userHandler := initializeUserHandler(sessionsManager, user_proto.NewUserServiceClient(userServiceConn))
 
-	emailServiceConn, err := connect_microservice.
-		OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.EmailService))
+	emailServiceConn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.EmailService))
 	if err != nil {
 		log.Fatalf("connection with microservice user fail")
 	}
 	defer emailServiceConn.Close()
 	emailHandler := initializeEmailHandler(sessionsManager, email_proto.NewEmailServiceClient(emailServiceConn))
 
-	folderServiceConn, err := connect_microservice.
-		OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.FolderService))
+	folderServiceConn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.FolderService))
 	if err != nil {
 		log.Fatalf("connection with microservice user fail")
 	}
 	defer folderServiceConn.Close()
 	folderHandler := initializeFolderHandler(sessionsManager, folder_proto.NewFolderServiceClient(folderServiceConn))
 
-	questionServiceConn, err := connect_microservice.
-		OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.QuestionService))
+	questionServiceConn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.QuestionService))
 	if err != nil {
 		log.Fatalf("connection with microservice question fail")
 	}
@@ -113,7 +108,9 @@ func main() {
 
 	oauthHandler := initializeOAuthHandler(sessionsManager)
 
-	router := setupRouter(authHandler, oauthHandler, userHandler, emailHandler, folderHandler, questionHandler, loggerMiddlewareAccess)
+	oauthGMailHandler := initializeGMailAuthHandler(sessionsManager, auth_proto.NewAuthServiceClient(authServiceConn), user_proto.NewUserServiceClient(userServiceConn))
+	emailGMailHandler := initializeEmailGMailHandler(sessionsManager)
+	router := setupRouter(authHandler, oauthHandler, oauthGMailHandler, userHandler, emailHandler, folderHandler, questionHandler, emailGMailHandler, loggerMiddlewareAccess)
 
 	startServer(router)
 }
@@ -266,6 +263,20 @@ func initializeUserHandler(sessionsManager *session.SessionsManager, userService
 	}
 }
 
+func initializeGMailAuthHandler(sessionsManager *session.SessionsManager, authServiceClient auth_proto.AuthServiceClient, userServiceClient user_proto.UserServiceClient) *gmailAuthHand.GMailAuthHandler {
+	return &gmailAuthHand.GMailAuthHandler{
+		Sessions:          sessionsManager,
+		AuthServiceClient: authServiceClient,
+		UserServiceClient: userServiceClient,
+	}
+}
+
+func initializeEmailGMailHandler(sessionsManager *session.SessionsManager) *gmailEmailHand.GMailEmailHandler {
+	return &gmailEmailHand.GMailEmailHandler{
+		Sessions: sessionsManager,
+	}
+}
+
 // generatePolicy policy generation for minio
 func generatePolicy(bucketName string) string {
 	return fmt.Sprintf(`{"Version": "2012-10-17","Statement": [{"Effect": "Allow","Principal": {"AWS": ["*"]},"Action": ["s3:GetBucketLocation"],"Resource": ["arn:aws:s3:::%s"]},{"Effect": "Allow","Principal": {"AWS": ["*"]},"Action": ["s3:GetObject"],"Resource": ["arn:aws:s3:::%s/*"]}]}`, bucketName, bucketName)
@@ -294,7 +305,7 @@ func initializeMiddlewareLogger() *middleware.Logger {
 		fmt.Println("Failed to create logfile" + "log.txt")
 	}
 
-	logrusAccess := logger.InitializationAccesLog(f)
+	logrusAccess := logger.InitializationAccessLog(f)
 	loggerAccess := new(middleware.Logger)
 	loggerAccess.Logger = logrusAccess
 
@@ -302,19 +313,19 @@ func initializeMiddlewareLogger() *middleware.Logger {
 }
 
 // setupRouter configuring routers
-func setupRouter(authHandler *authHand.AuthHandler, oauthHandler *oauthHand.OAuthHandler, userHandler *userHand.UserHandler, emailHandler *emailHand.EmailHandler, folderHandler *folderHand.FolderHandler, questionHandler *questionHand.QuestionHandler, logger *middleware.Logger) http.Handler {
+func setupRouter(authHandler *authHand.AuthHandler, oauthHandler *oauthHand.OAuthHandler, oauthGMailHandler *gmailAuthHand.GMailAuthHandler, userHandler *userHand.UserHandler, emailHandler *emailHand.EmailHandler, folderHandler *folderHand.FolderHandler, questionHandler *questionHand.QuestionHandler, emailGMailHandler *gmailEmailHand.GMailEmailHandler, logger *middleware.Logger) http.Handler {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/api/v1/testAuth/auth-vk/getAuthUrlSignUpVK", oauthHandler.GetSignUpURLVK).Methods("GET", "OPTIONS")
 	router.HandleFunc("/api/v1/testAuth/auth-vk/getAuthUrlLoginVK", oauthHandler.GetLoginURLVK).Methods("GET", "OPTIONS")
-	router.HandleFunc("/api/v1/testAuth/auth-vk/auth", oauthHandler.AuthVK).Methods("GET", "OPTIONS")
-	router.HandleFunc("/api/v1/testAuth/auth-vk/loginVK", oauthHandler.LoginVK).Methods("GET", "OPTIONS")
+	router.HandleFunc("/api/v1/testAuth/auth-vk/auth/{code}", oauthHandler.AuthVK).Methods("GET", "OPTIONS")
+	router.HandleFunc("/api/v1/testAuth/auth-vk/loginVK/{code}", oauthHandler.LoginVK).Methods("GET", "OPTIONS")
 	router.HandleFunc("/api/v1/testAuth/auth-vk/signupVK", oauthHandler.SignupVK).Methods("POST", "OPTIONS")
 
-	auth := setupAuthRouter(authHandler, oauthHandler, emailHandler, logger)
+	auth := setupAuthRouter(authHandler, oauthHandler, oauthGMailHandler, emailHandler, logger)
 	router.PathPrefix("/api/v1/auth").Handler(auth)
 
-	logRouter := setupLogRouter(emailHandler, userHandler, folderHandler, questionHandler, logger)
+	logRouter := setupLogRouter(emailHandler, userHandler, folderHandler, questionHandler, emailGMailHandler, logger)
 	router.PathPrefix("/api/v1").Handler(logRouter)
 
 	staticDir := "/media/"
@@ -329,7 +340,7 @@ func setupRouter(authHandler *authHand.AuthHandler, oauthHandler *oauthHand.OAut
 }
 
 // setupAuthRouter configuring authorization router
-func setupAuthRouter(authHandler *authHand.AuthHandler, oauthHandler *oauthHand.OAuthHandler, emailHandler *emailHand.EmailHandler, logger *middleware.Logger) http.Handler {
+func setupAuthRouter(authHandler *authHand.AuthHandler, oauthHandler *oauthHand.OAuthHandler, oauthGMailHandler *gmailAuthHand.GMailAuthHandler, emailHandler *emailHand.EmailHandler, logger *middleware.Logger) http.Handler {
 	auth := mux.NewRouter().PathPrefix("/api/v1/auth").Subrouter()
 	auth.Use(logger.AccessLogMiddleware, middleware.PanicMiddleware)
 
@@ -337,6 +348,12 @@ func setupAuthRouter(authHandler *authHand.AuthHandler, oauthHandler *oauthHand.
 	auth.HandleFunc("/signup", authHandler.Signup).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/logout", authHandler.Logout).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/sendOther", emailHandler.SendFromAnotherDomain).Methods("POST", "OPTIONS")
+	auth.HandleFunc("/addFileOther", emailHandler.AddFileFromAnotherDomain).Methods("POST", "OPTIONS")
+	auth.HandleFunc("/addFileToEmailOther/{id}/file/{file-id}", emailHandler.AddFileToEmailFromAnotherDomain).Methods("POST", "OPTIONS")
+
+	auth.HandleFunc("/getAuthURL", oauthGMailHandler.GetAuthURL).Methods("GET", "OPTIONS")
+	auth.HandleFunc("/gAuth", oauthGMailHandler.GoogleAuth).Methods("GET", "OPTIONS")
+	auth.HandleFunc("/signupGMailUser", oauthGMailHandler.SugnupGMail).Methods("POST", "OPTIONS")
 
 	//auth.HandleFunc("/getAuthUrlVK", oauthHandler.GetSignUpURLVK).Methods("GET", "OPTIONS")
 	//auth.HandleFunc("/auth-vk/signupVK", oauthHandler.SignupVK).Methods("GET", "OPTIONS")
@@ -345,7 +362,7 @@ func setupAuthRouter(authHandler *authHand.AuthHandler, oauthHandler *oauthHand.
 }
 
 // setupLogRouter configuring router with logger
-func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.UserHandler, folderHandler *folderHand.FolderHandler, questionHandler *questionHand.QuestionHandler, logger *middleware.Logger) http.Handler {
+func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.UserHandler, folderHandler *folderHand.FolderHandler, questionHandler *questionHand.QuestionHandler, emailGMailHandler *gmailEmailHand.GMailEmailHandler, logger *middleware.Logger) http.Handler {
 	logRouter := mux.NewRouter().PathPrefix("/api/v1").Subrouter()
 	logRouter.Use(logger.AccessLogMiddleware, middleware.PanicMiddleware, middleware.AuthMiddleware)
 
@@ -389,6 +406,30 @@ func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.
 	logRouter.HandleFunc("/folder/all_emails/{id}", folderHandler.GetAllEmailsInFolder).Methods("GET", "OPTIONS")
 	logRouter.HandleFunc("/folder/allname/{id}", folderHandler.GetAllName).Methods("GET", "OPTIONS")
 
+	logRouter.HandleFunc("/gmail/emails/incoming", emailGMailHandler.GetIncoming).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/gmail/emails/sent", emailGMailHandler.GetSent).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/gmail/emails/spam", emailGMailHandler.GetSpam).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/gmail/email/{id}", emailGMailHandler.GetById).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/gmail/email/update/{id}", emailGMailHandler.Update).Methods("PUT", "OPTIONS")
+	logRouter.HandleFunc("/gmail/email/delete/{id}", emailGMailHandler.Delete).Methods("DELETE", "OPTIONS")
+	logRouter.HandleFunc("/gmail/email/send", emailGMailHandler.Send).Methods("POST", "OPTIONS")
+
+	logRouter.HandleFunc("/gmail/drafts", emailGMailHandler.GetDrafts).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/gmail/draft/adddraft", emailGMailHandler.AddDraft).Methods("POST", "OPTIONS")
+	logRouter.HandleFunc("/gmail/draft/sendDraft", emailGMailHandler.SendDraft).Methods("POST", "OPTIONS")
+	logRouter.HandleFunc("/gmail/draft/{id}", emailGMailHandler.GetByIdDraft).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/gmail/draft/update/{id}", emailGMailHandler.UpdateDraft).Methods("PUT", "OPTIONS")
+	logRouter.HandleFunc("/gmail/draft/delete/{id}", emailGMailHandler.DeleteDraft).Methods("DELETE", "OPTIONS")
+
+	logRouter.HandleFunc("/gmail/labels", emailGMailHandler.GetLabels).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/gmail/labels/email/{id}", emailGMailHandler.GetAllNameLabels).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/gmail/label/{name}/emails", emailGMailHandler.GetAllEmailsInLabel).Methods("GET", "OPTIONS")
+	logRouter.HandleFunc("/gmail/label/create", emailGMailHandler.CreateLabel).Methods("POST", "OPTIONS")
+	logRouter.HandleFunc("/gmail/label/delete/{id}", emailGMailHandler.DeleteLabel).Methods("DELETE", "OPTIONS")
+	logRouter.HandleFunc("/gmail/label/update/{id}", emailGMailHandler.UpdateLabel).Methods("PUT", "OPTIONS")
+	logRouter.HandleFunc("/gmail/label/add_email", emailGMailHandler.AddEmailInLabel).Methods("POST", "OPTIONS")
+	logRouter.HandleFunc("/gmail/label/delete_email", emailGMailHandler.DeleteEmailInLabel).Methods("DELETE", "OPTIONS")
+
 	return logRouter
 }
 
@@ -401,8 +442,8 @@ func startServer(router http.Handler) {
 			"https://127.0.0.1", "https://89.208.223.140", "https://mailhub.su", "https://mailhub.su", "https://localhost", "https://localhost", "https://89.208.223.140"},
 		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodDelete, http.MethodPut, http.MethodOptions},
 		AllowCredentials: true,
-		AllowedHeaders:   []string{"X-Csrf-Token", "Content-Type"},
-		ExposedHeaders:   []string{"X-Csrf-Token"},
+		AllowedHeaders:   []string{"X-Csrf-Token", "Content-Type", "AuthToken"},
+		ExposedHeaders:   []string{"X-Csrf-Token", "AuthToken"},
 	})
 
 	corsHandler := c.Handler(router)

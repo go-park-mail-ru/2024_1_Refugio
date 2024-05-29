@@ -74,9 +74,9 @@ func (sm *SessionsManager) GetSession(r *http.Request, ctx context.Context) *api
 		return nil
 	}
 
-	sessionCore := proto_converters.SessionConvertProtoInCore(*sessionProto.Session)
+	sessionCore := proto_converters.SessionConvertProtoInCore(sessionProto.Session)
 
-	return converters.SessionConvertCoreInApi(*sessionCore)
+	return converters.SessionConvertCoreInApi(sessionCore)
 }
 
 // Check checks the validity of the session and CSRF token in the request.
@@ -100,13 +100,13 @@ func (sm *SessionsManager) Check(r *http.Request, ctx context.Context) (*api.Ses
 		return nil, fmt.Errorf("no session found")
 	}
 
-	sessionCore := proto_converters.SessionConvertProtoInCore(*sessionProto.Session)
+	sessionCore := proto_converters.SessionConvertProtoInCore(sessionProto.Session)
 
 	if r.URL.Path != "/api/v1/verify-auth" && sessionCore.CsrfToken != csrfToken {
 		return nil, fmt.Errorf("CSRF token mismatch")
 	}
 
-	return converters.SessionConvertCoreInApi(*sessionCore), nil
+	return converters.SessionConvertCoreInApi(sessionCore), nil
 }
 
 // CheckLogin checks if the login associated with the session matches the provided login.
@@ -196,9 +196,9 @@ func (sm *SessionsManager) Create(w http.ResponseWriter, userID uint32, ctx cont
 	}
 	http.SetCookie(w, sessionCookie)
 
-	sessionCore := proto_converters.SessionConvertProtoInCore(*sess.Session)
+	sessionCore := proto_converters.SessionConvertProtoInCore(sess.Session)
 
-	return converters.SessionConvertCoreInApi(*sessionCore), nil
+	return converters.SessionConvertCoreInApi(sessionCore), nil
 }
 
 // DestroyCurrent destroys the current session by deleting the session ID cookie from the response.

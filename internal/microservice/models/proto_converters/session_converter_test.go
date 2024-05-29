@@ -31,7 +31,7 @@ func TestSessionConvertCoreInProto(t *testing.T) {
 		CsrfToken:    "csrf_token",
 	}
 
-	actualProto := SessionConvertCoreInProto(sessionModelCore)
+	actualProto := SessionConvertCoreInProto(&sessionModelCore)
 	assert.Equal(t, expectedProto, actualProto)
 }
 
@@ -44,6 +44,6 @@ func TestSessionConvertProtoInCore(t *testing.T) {
 		CsrfToken: "csrf_token",
 	}
 
-	actualCore := SessionConvertProtoInCore(sessionModelProto)
+	actualCore := SessionConvertProtoInCore(&sessionModelProto)
 	assert.NotNil(t, actualCore)
 }

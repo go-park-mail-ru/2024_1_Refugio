@@ -31,7 +31,7 @@ func (es *EmailServer) GetEmailByID(ctx context.Context, input *proto.EmailIdAnd
 		return nil, fmt.Errorf("email not found")
 	}
 
-	return converters.EmailConvertCoreInProto(*email), nil
+	return converters.EmailConvertCoreInProto(email), nil
 }
 
 func (es *EmailServer) GetAllIncoming(ctx context.Context, input *proto.LoginOffsetLimit) (*proto.Emails, error) {
@@ -46,7 +46,7 @@ func (es *EmailServer) GetAllIncoming(ctx context.Context, input *proto.LoginOff
 
 	emailsProto := make([]*proto.Email, len(emailsCore))
 	for i, e := range emailsCore {
-		emailsProto[i] = converters.EmailConvertCoreInProto(*e)
+		emailsProto[i] = converters.EmailConvertCoreInProto(e)
 	}
 
 	emailProto := new(proto.Emails)
@@ -66,7 +66,7 @@ func (es *EmailServer) GetAllSent(ctx context.Context, input *proto.LoginOffsetL
 
 	emailsProto := make([]*proto.Email, len(emailsCore))
 	for i, e := range emailsCore {
-		emailsProto[i] = converters.EmailConvertCoreInProto(*e)
+		emailsProto[i] = converters.EmailConvertCoreInProto(e)
 	}
 
 	emailProto := new(proto.Emails)
@@ -86,7 +86,7 @@ func (es *EmailServer) GetDraftEmails(ctx context.Context, input *proto.LoginOff
 
 	emailsProto := make([]*proto.Email, len(emailsCore))
 	for i, e := range emailsCore {
-		emailsProto[i] = converters.EmailConvertCoreInProto(*e)
+		emailsProto[i] = converters.EmailConvertCoreInProto(e)
 	}
 
 	emailProto := new(proto.Emails)
@@ -106,7 +106,7 @@ func (es *EmailServer) GetSpamEmails(ctx context.Context, input *proto.LoginOffs
 
 	emailsProto := make([]*proto.Email, len(emailsCore))
 	for i, e := range emailsCore {
-		emailsProto[i] = converters.EmailConvertCoreInProto(*e)
+		emailsProto[i] = converters.EmailConvertCoreInProto(e)
 	}
 
 	emailProto := new(proto.Emails)
@@ -119,14 +119,14 @@ func (es *EmailServer) CreateEmail(ctx context.Context, input *proto.Email) (*pr
 		return nil, fmt.Errorf("invalid email format: %s", input)
 	}
 
-	id, email, err := es.EmailUseCase.CreateEmail(converters.EmailConvertProtoInCore(*input), ctx)
+	id, email, err := es.EmailUseCase.CreateEmail(converters.EmailConvertProtoInCore(input), ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed create email")
 	}
 
 	emailWithId := new(proto.EmailWithID)
 	emailWithId.Id = id
-	emailWithId.Email = converters.EmailConvertCoreInProto(*email)
+	emailWithId.Email = converters.EmailConvertCoreInProto(email)
 	return emailWithId, nil
 }
 
@@ -135,7 +135,7 @@ func (es *EmailServer) UpdateEmail(ctx context.Context, input *proto.Email) (*pr
 		return nil, fmt.Errorf("invalid email format: %s", input)
 	}
 
-	okStatus, err := es.EmailUseCase.UpdateEmail(converters.EmailConvertProtoInCore(*input), ctx)
+	okStatus, err := es.EmailUseCase.UpdateEmail(converters.EmailConvertProtoInCore(input), ctx)
 
 	if err != nil {
 		return nil, fmt.Errorf("email not found")
@@ -190,7 +190,7 @@ func (es *EmailServer) CheckRecipientEmail(ctx context.Context, input *proto.Rec
 
 	err := es.EmailUseCase.CheckRecipientEmail(input.Recipient, ctx)
 	if err != nil {
-		return nil, fmt.Errorf("Recipient login not found")
+		return nil, fmt.Errorf("recipient login not found")
 	}
 
 	emailEmpty := new(proto.EmptyEmail)
@@ -202,7 +202,7 @@ func (es *EmailServer) AddEmailDraft(ctx context.Context, input *proto.Email) (*
 		return nil, fmt.Errorf("invalid email format: %s", input)
 	}
 
-	id, email, err := es.EmailUseCase.CreateEmail(converters.EmailConvertProtoInCore(*input), ctx)
+	id, email, err := es.EmailUseCase.CreateEmail(converters.EmailConvertProtoInCore(input), ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed create email")
 	}
@@ -214,7 +214,7 @@ func (es *EmailServer) AddEmailDraft(ctx context.Context, input *proto.Email) (*
 
 	emailWithId := new(proto.EmailWithID)
 	emailWithId.Id = id
-	emailWithId.Email = converters.EmailConvertCoreInProto(*email)
+	emailWithId.Email = converters.EmailConvertCoreInProto(email)
 	return emailWithId, nil
 }
 
@@ -223,20 +223,20 @@ func (es *EmailServer) AddAttachment(ctx context.Context, input *proto.AddAttach
 		return nil, fmt.Errorf("invalid file format: %s", input)
 	}
 
-	if validators.IsEmpty(input.FileId) || validators.IsEmpty(input.FileType) {
-		return nil, fmt.Errorf("file id or file type is empty")
+	if validators.IsEmpty(input.FileId) || validators.IsEmpty(input.FileType) || validators.IsEmpty(input.FileName) || validators.IsEmpty(input.FileSize) {
+		return nil, fmt.Errorf("file id or file type or file name or file size is empty")
 	}
 
 	if input.EmailId <= 0 {
 		return nil, fmt.Errorf("invalid email id")
 	}
 
-	fileId, err := es.EmailUseCase.AddAttachment(input.FileId, input.FileType, input.EmailId, ctx)
+	fileID, err := es.EmailUseCase.AddAttachment(input.FileId, input.FileType, input.FileName, input.FileSize, input.EmailId, ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed add attachment")
 	}
 
-	return &proto.AddAttachmentReply{FileId: fileId}, nil
+	return &proto.AddAttachmentReply{FileId: fileID}, nil
 }
 
 func (es *EmailServer) GetFileByID(ctx context.Context, input *proto.GetFileByIDRequest) (*proto.GetFileByIDReply, error) {
@@ -253,7 +253,7 @@ func (es *EmailServer) GetFileByID(ctx context.Context, input *proto.GetFileByID
 		return nil, fmt.Errorf("failed get file by id")
 	}
 
-	return &proto.GetFileByIDReply{File: converters.FileConvertCoreInProto(*file)}, nil
+	return &proto.GetFileByIDReply{File: converters.FileConvertCoreInProto(file)}, nil
 }
 
 func (es *EmailServer) GetFilesByEmailID(ctx context.Context, input *proto.GetFilesByEmailIDRequest) (*proto.GetFilesByEmailIDReply, error) {
@@ -272,7 +272,7 @@ func (es *EmailServer) GetFilesByEmailID(ctx context.Context, input *proto.GetFi
 
 	filesProto := make([]*proto.File, 0, len(files))
 	for _, file := range files {
-		filesProto = append(filesProto, converters.FileConvertCoreInProto(*file))
+		filesProto = append(filesProto, converters.FileConvertCoreInProto(file))
 	}
 
 	return &proto.GetFilesByEmailIDReply{Files: filesProto}, nil
@@ -303,15 +303,15 @@ func (es *EmailServer) UpdateFileByID(ctx context.Context, input *proto.UpdateFi
 		return nil, fmt.Errorf("invalid file format: %s", input)
 	}
 
-	if validators.IsEmpty(input.NewFileId) || validators.IsEmpty(input.NewFileType) {
-		return nil, fmt.Errorf("file id or file type is empty")
+	if validators.IsEmpty(input.NewFileId) || validators.IsEmpty(input.NewFileType) || validators.IsEmpty(input.NewFileName) || validators.IsEmpty(input.NewFileSize) {
+		return nil, fmt.Errorf("file id or file type or file name or file size is empty")
 	}
 
 	if input.Id <= 0 {
 		return nil, fmt.Errorf("invalid file id")
 	}
 
-	updated, err := es.EmailUseCase.UpdateFileByID(input.Id, input.NewFileId, input.NewFileType, ctx)
+	updated, err := es.EmailUseCase.UpdateFileByID(input.Id, input.NewFileId, input.NewFileType, input.NewFileName, input.NewFileSize, ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed update file by id")
 	}
@@ -327,11 +327,11 @@ func (es *EmailServer) AddFile(ctx context.Context, input *proto.AddFileRequest)
 		return nil, fmt.Errorf("invalid file format: %s", input)
 	}
 
-	if validators.IsEmpty(input.FileId) || validators.IsEmpty(input.FileType) {
-		return nil, fmt.Errorf("file id or file type is empty")
+	if validators.IsEmpty(input.FileId) || validators.IsEmpty(input.FileType) || validators.IsEmpty(input.FileName) || validators.IsEmpty(input.FileSize) {
+		return nil, fmt.Errorf("file id or file type or file name or file size is empty")
 	}
 
-	fileId, err := es.EmailUseCase.AddFile(input.FileId, input.FileType, ctx)
+	fileId, err := es.EmailUseCase.AddFile(input.FileId, input.FileType, input.FileName, input.FileSize, ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed add attachment")
 	}

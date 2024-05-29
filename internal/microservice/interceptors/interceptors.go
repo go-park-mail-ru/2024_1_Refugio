@@ -3,14 +3,17 @@ package interceptors
 import (
 	"context"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"log"
-	"mail/internal/pkg/logger"
 	"os"
 	"runtime/debug"
 	"time"
+
+	"github.com/sirupsen/logrus"
+
+	"mail/internal/pkg/logger"
+	"mail/internal/pkg/utils/constants"
 )
 
 type Logger struct {
@@ -30,11 +33,11 @@ func (log *Logger) AccessLogInterceptor(ctx context.Context, req interface{}, in
 	}
 	defer f.Close()
 
-	ctx2 := context.WithValue(ctx, "logger", logger.InitializationBdLog(f))
-	ctx3 := context.WithValue(ctx2, "requestID", md.Get("requestID"))
+	ctxWithLogger := context.WithValue(ctx, interface{}(string(constants.LoggerKey)), logger.InitializationBdLog(f))
+	ctxWithRequestID := context.WithValue(ctxWithLogger, interface{}(string(constants.RequestIDKey)), md.Get("requestID"))
 
 	start := time.Now()
-	data, err := handler(ctx3, req)
+	data, err := handler(ctxWithRequestID, req)
 
 	en := log.Logger.InterceptorsLogger.WithFields(logrus.Fields{
 		"user-agent": md.Get("user-agent"),

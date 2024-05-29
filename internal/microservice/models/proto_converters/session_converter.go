@@ -8,7 +8,7 @@ import (
 )
 
 // SessionConvertCoreInProto converts a session model from the application core to the gRPC format.
-func SessionConvertCoreInProto(sessionModelCore domain.Session) *grpc.Session {
+func SessionConvertCoreInProto(sessionModelCore *domain.Session) *grpc.Session {
 	return &grpc.Session{
 		SessionId:    sessionModelCore.ID,
 		UserId:       sessionModelCore.UserID,
@@ -20,7 +20,7 @@ func SessionConvertCoreInProto(sessionModelCore domain.Session) *grpc.Session {
 }
 
 // SessionConvertProtoInCore converts a session model from the gRPC format to the application core.
-func SessionConvertProtoInCore(sessionModelProto grpc.Session) *domain.Session {
+func SessionConvertProtoInCore(sessionModelProto *grpc.Session) *domain.Session {
 	return &domain.Session{
 		ID:           sessionModelProto.SessionId,
 		UserID:       sessionModelProto.UserId,

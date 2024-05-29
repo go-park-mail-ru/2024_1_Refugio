@@ -2,10 +2,10 @@ package http
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"io"
 	"net"
 	"net/http"
 	"net/mail"
@@ -15,7 +15,6 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-	"github.com/gorilla/schema"
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/minio/minio-go/v7"
 
@@ -24,6 +23,7 @@ import (
 	"mail/internal/microservice/models/proto_converters"
 	"mail/internal/models/response"
 	"mail/internal/pkg/utils/check_file_type"
+	"mail/internal/pkg/utils/constants"
 	"mail/internal/pkg/utils/generate_filename"
 	"mail/internal/pkg/utils/validators"
 
@@ -35,7 +35,7 @@ import (
 
 var (
 	EHandler                        = &EmailHandler{}
-	requestIDContextKey interface{} = "requestid"
+	requestIDContextKey interface{} = string(constants.RequestIDKey)
 )
 
 // EmailHandler represents the handler for email operations.
@@ -76,7 +76,7 @@ func (h *EmailHandler) Incoming(w http.ResponseWriter, r *http.Request) {
 	}
 
 	emailDataProto, err := h.EmailServiceClient.GetAllIncoming(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 		&proto.LoginOffsetLimit{Login: login, Offset: 0, Limit: 0},
 	)
 	if err != nil {
@@ -119,7 +119,7 @@ func (h *EmailHandler) Sent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	emailDataProto, err := h.EmailServiceClient.GetAllSent(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 		&proto.LoginOffsetLimit{Login: login, Offset: 0, Limit: 0},
 	)
 	if err != nil {
@@ -170,14 +170,14 @@ func (h *EmailHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	emailDataProto, err := h.EmailServiceClient.GetEmailByID(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 		&proto.EmailIdAndLogin{Id: id, Login: login},
 	)
 	if err != nil {
 		response.HandleError(w, http.StatusNotFound, "Email not found")
 		return
 	}
-	emailData := proto_converters.EmailConvertProtoInCore(*emailDataProto)
+	emailData := proto_converters.EmailConvertProtoInCore(emailDataProto)
 
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*emailData)})
 }
@@ -196,11 +196,13 @@ func (h *EmailHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} response.Response "Failed to add email message"
 // @Router /api/v1/email/send [post]
 func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
-	var newEmail emailApi.Email
-	decoder := schema.NewDecoder()
-	decoder.IgnoreUnknownKeys(true)
-	err := json.NewDecoder(r.Body).Decode(&newEmail)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Invalid input body")
+		return
+	}
+	var newEmail emailApi.Email
+	if err := newEmail.UnmarshalJSON(body); err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
 		return
 	}
@@ -228,7 +230,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 		}
 
 		_, err = h.EmailServiceClient.CheckRecipientEmail(
-			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 			&proto.Recipient{Recipient: recipient},
 		)
 		if err != nil {
@@ -237,7 +239,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 		}
 
 		emailDataProto, err := h.EmailServiceClient.CreateEmail(
-			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 			&proto.Email{
 				Id:             newEmail.ID,
 				Topic:          newEmail.Topic,
@@ -258,11 +260,11 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 			response.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
 			return
 		}
-		emailData := proto_converters.EmailConvertProtoInCore(*emailDataProto.Email)
+		emailData := proto_converters.EmailConvertProtoInCore(emailDataProto.Email)
 		emailData.ID = emailDataProto.Id
 
 		_, err = h.EmailServiceClient.CreateProfileEmail(
-			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 			&proto.IdSenderRecipient{Id: emailData.ID, Sender: emailData.SenderEmail, Recipient: emailData.RecipientEmail},
 		)
 		if err != nil {
@@ -272,7 +274,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 
 		response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*emailData)})
 		return
-	case validators.IsValidEmailFormat(sender) == true && validators.IsValidEmailFormat(recipient) == false:
+	case validators.IsValidEmailFormat(sender) && !validators.IsValidEmailFormat(recipient):
 		err = h.Sessions.CheckLogin(sender, r, r.Context())
 		if err != nil {
 			response.HandleError(w, http.StatusBadRequest, "Bad sender login")
@@ -304,7 +306,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 		}
 
 		emailDataProto, err := h.EmailServiceClient.CreateEmail(
-			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 			&proto.Email{
 				Id:             newEmail.ID,
 				Topic:          newEmail.Topic,
@@ -325,11 +327,11 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 			response.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
 			return
 		}
-		emailData := proto_converters.EmailConvertProtoInCore(*emailDataProto.Email)
+		emailData := proto_converters.EmailConvertProtoInCore(emailDataProto.Email)
 		emailData.ID = emailDataProto.Id
 
 		_, err = h.EmailServiceClient.CreateProfileEmail(
-			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 			&proto.IdSenderRecipient{Id: emailData.ID, Sender: emailData.SenderEmail, Recipient: emailData.RecipientEmail},
 		)
 		if err != nil {
@@ -339,10 +341,9 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 
 		response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*emailData)})
 		return
-	case validators.IsValidEmailFormat(sender) == false && validators.IsValidEmailFormat(recipient) == true:
-		fmt.Println("-----START_1----")
+	case !validators.IsValidEmailFormat(sender) && validators.IsValidEmailFormat(recipient):
 		_, err = h.EmailServiceClient.CheckRecipientEmail(
-			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 			&proto.Recipient{Recipient: recipient},
 		)
 		if err != nil {
@@ -350,10 +351,8 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		fmt.Println("-----START_2----")
-		fmt.Println(newEmail)
 		emailDataProto, err := h.EmailServiceClient.CreateEmail(
-			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 			&proto.Email{
 				Id:             newEmail.ID,
 				Topic:          newEmail.Topic,
@@ -374,12 +373,11 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 			response.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
 			return
 		}
-		emailData := proto_converters.EmailConvertProtoInCore(*emailDataProto.Email)
+		emailData := proto_converters.EmailConvertProtoInCore(emailDataProto.Email)
 		emailData.ID = emailDataProto.Id
 
-		fmt.Println("-----START_3----")
 		_, err = h.EmailServiceClient.CreateProfileEmail(
-			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 			&proto.IdSenderRecipient{Id: emailData.ID, Sender: emailData.SenderEmail, Recipient: emailData.RecipientEmail},
 		)
 		if err != nil {
@@ -416,7 +414,6 @@ func getMXRecord(to string) (mx string, err error) {
 	return
 }
 
-// Never fails, tries to format the address if possible
 func formatEmailAddress(addr string) string {
 	e, err := mail.ParseAddress(addr)
 	if err != nil {
@@ -471,11 +468,13 @@ func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var updatedEmail emailApi.Email
-	decoder := schema.NewDecoder()
-	decoder.IgnoreUnknownKeys(true)
-	err = json.NewDecoder(r.Body).Decode(&updatedEmail)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Invalid input body")
+		return
+	}
+	var updatedEmail emailApi.Email
+	if err := updatedEmail.UnmarshalJSON(body); err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
 		return
 	}
@@ -496,7 +495,7 @@ func (h *EmailHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	emailDataProto, err := h.EmailServiceClient.UpdateEmail(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 		&proto.Email{
 			Id:             updatedEmail.ID,
 			Topic:          updatedEmail.Topic,
@@ -554,7 +553,7 @@ func (h *EmailHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	emailDataProto, err := h.EmailServiceClient.DeleteEmail(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 		&proto.LoginWithID{Id: id, Login: login},
 	)
 	if err != nil || !emailDataProto.Status {
@@ -590,7 +589,7 @@ func (h *EmailHandler) Draft(w http.ResponseWriter, r *http.Request) {
 	}
 
 	emailDataProto, err := h.EmailServiceClient.GetDraftEmails(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 		&proto.LoginOffsetLimit{Login: login, Offset: 0, Limit: 0},
 	)
 	if err != nil {
@@ -633,7 +632,7 @@ func (h *EmailHandler) Spam(w http.ResponseWriter, r *http.Request) {
 	}
 
 	emailDataProto, err := h.EmailServiceClient.GetSpamEmails(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 		&proto.LoginOffsetLimit{Login: login, Offset: 0, Limit: 0},
 	)
 	if err != nil {
@@ -669,11 +668,13 @@ func (h *EmailHandler) SendFromAnotherDomain(w http.ResponseWriter, r *http.Requ
 // @Failure 500 {object} response.Response "Failed to add email message"
 // @Router /api/v1/email/adddraft [post]
 func (h *EmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
-	var newEmail emailApi.Email
-	decoder := schema.NewDecoder()
-	decoder.IgnoreUnknownKeys(true)
-	err := json.NewDecoder(r.Body).Decode(&newEmail)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Invalid input body")
+		return
+	}
+	var newEmail emailApi.Email
+	if err := newEmail.UnmarshalJSON(body); err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad JSON in request")
 		return
 	}
@@ -700,7 +701,7 @@ func (h *EmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
 		}
 
 		emailDataProto, err := h.EmailServiceClient.AddEmailDraft(
-			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 			&proto.Email{
 				Id:             newEmail.ID,
 				Topic:          newEmail.Topic,
@@ -721,7 +722,7 @@ func (h *EmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
 			response.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
 			return
 		}
-		emailData := proto_converters.EmailConvertProtoInCore(*emailDataProto.Email)
+		emailData := proto_converters.EmailConvertProtoInCore(emailDataProto.Email)
 		emailData.ID = emailDataProto.Id
 
 		response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*emailData)})
@@ -736,7 +737,7 @@ func (h *EmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
 			}
 
 			_, err = h.EmailServiceClient.CheckRecipientEmail(
-				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 				&proto.Recipient{Recipient: recipient},
 			)
 			if err != nil {
@@ -745,7 +746,7 @@ func (h *EmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
 			}
 
 			emailDataProto, err := h.EmailServiceClient.CreateEmail(
-				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 				&proto.Email{
 					Id:             newEmail.ID,
 					Topic:          newEmail.Topic,
@@ -766,11 +767,11 @@ func (h *EmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
 				response.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
 				return
 			}
-			emailData := proto_converters.EmailConvertProtoInCore(*emailDataProto.Email)
+			emailData := proto_converters.EmailConvertProtoInCore(emailDataProto.Email)
 			emailData.ID = emailDataProto.Id
 
 			_, err = h.EmailServiceClient.CreateProfileEmail(
-				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 				&proto.IdSenderRecipient{Id: emailData.ID, Sender: emailData.SenderEmail, Recipient: emailData.RecipientEmail},
 			)
 			if err != nil {
@@ -780,7 +781,7 @@ func (h *EmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
 
 			response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*emailData)})
 			return
-		case validators.IsValidEmailFormat(sender) == true && validators.IsValidEmailFormat(recipient) == false:
+		case validators.IsValidEmailFormat(sender) && !validators.IsValidEmailFormat(recipient):
 			err = h.Sessions.CheckLogin(sender, r, r.Context())
 			if err != nil {
 				response.HandleError(w, http.StatusBadRequest, "Bad sender login")
@@ -788,7 +789,7 @@ func (h *EmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
 			}
 
 			emailDataProto, err := h.EmailServiceClient.CreateEmail(
-				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 				&proto.Email{
 					Id:             newEmail.ID,
 					Topic:          newEmail.Topic,
@@ -809,11 +810,11 @@ func (h *EmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
 				response.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
 				return
 			}
-			emailData := proto_converters.EmailConvertProtoInCore(*emailDataProto.Email)
+			emailData := proto_converters.EmailConvertProtoInCore(emailDataProto.Email)
 			emailData.ID = emailDataProto.Id
 
 			_, err = h.EmailServiceClient.CreateProfileEmail(
-				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 				&proto.IdSenderRecipient{Id: emailData.ID, Sender: emailData.SenderEmail, Recipient: emailData.RecipientEmail},
 			)
 			if err != nil {
@@ -823,9 +824,9 @@ func (h *EmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
 
 			response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"email": converters.EmailConvertCoreInApi(*emailData)})
 			return
-		case validators.IsValidEmailFormat(sender) == false && validators.IsValidEmailFormat(recipient) == true:
+		case !validators.IsValidEmailFormat(sender) && validators.IsValidEmailFormat(recipient):
 			_, err = h.EmailServiceClient.CheckRecipientEmail(
-				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 				&proto.Recipient{Recipient: recipient},
 			)
 			if err != nil {
@@ -834,7 +835,7 @@ func (h *EmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
 			}
 
 			emailDataProto, err := h.EmailServiceClient.CreateEmail(
-				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 				&proto.Email{
 					Id:             newEmail.ID,
 					Topic:          newEmail.Topic,
@@ -855,11 +856,11 @@ func (h *EmailHandler) AddDraft(w http.ResponseWriter, r *http.Request) {
 				response.HandleError(w, http.StatusInternalServerError, "Failed to add email message")
 				return
 			}
-			emailData := proto_converters.EmailConvertProtoInCore(*emailDataProto.Email)
+			emailData := proto_converters.EmailConvertProtoInCore(emailDataProto.Email)
 			emailData.ID = emailDataProto.Id
 
 			_, err = h.EmailServiceClient.CreateProfileEmail(
-				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+				metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 				&proto.IdSenderRecipient{Id: emailData.ID, Sender: emailData.SenderEmail, Recipient: emailData.RecipientEmail},
 			)
 			if err != nil {
@@ -912,12 +913,13 @@ func (h *EmailHandler) AddAttachment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fileExt := filepath.Ext(handler.Filename)
+	fileExt := sanitizeString(filepath.Ext(handler.Filename))
 	contentType := handler.Header.Get("Content-Type")
 
-	fileType := check_file_type.GetFileType(contentType)
+	fileType := sanitizeString(check_file_type.GetFileType(contentType))
 
 	uniqueFileName := generate_filename.GenerateUniqueFileName(fileExt)
+	fileName := sanitizeString(handler.Filename)
 
 	_, err = h.MinioClient.PutObject(r.Context(), "files", uniqueFileName, file, -1, minio.PutObjectOptions{ContentType: contentType})
 	if err != nil {
@@ -928,8 +930,8 @@ func (h *EmailHandler) AddAttachment(w http.ResponseWriter, r *http.Request) {
 	fileURL := fmt.Sprintf(configs.PROTOCOL+"mailhub.su"+"/files/%s", uniqueFileName)
 
 	fileId, err := h.EmailServiceClient.AddAttachment(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
-		&proto.AddAttachmentRequest{EmailId: id, FileId: fileURL, FileType: fileType},
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
+		&proto.AddAttachmentRequest{EmailId: id, FileId: fileURL, FileType: fileType, FileName: fileName, FileSize: strconv.FormatInt(handler.Size, 10)},
 	)
 	if err != nil {
 		response.HandleError(w, http.StatusNotFound, fmt.Sprintf("Failed to add attachment: %s", err.Error()))
@@ -959,7 +961,7 @@ func (h *EmailHandler) GetFileByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fileProto, err := h.EmailServiceClient.GetFileByID(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 		&proto.GetFileByIDRequest{FileId: id},
 	)
 	if err != nil {
@@ -971,6 +973,8 @@ func (h *EmailHandler) GetFileByID(w http.ResponseWriter, r *http.Request) {
 		ID:       fileProto.File.Id,
 		FileId:   fileProto.File.FileId,
 		FileType: fileProto.File.FileType,
+		FileName: fileProto.File.FileName,
+		FileSize: fileProto.File.FileSize,
 	}
 
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"file": fileApi})
@@ -996,7 +1000,7 @@ func (h *EmailHandler) GetFilesByEmailID(w http.ResponseWriter, r *http.Request)
 	}
 
 	filesProto, err := h.EmailServiceClient.GetFilesByEmailID(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 		&proto.GetFilesByEmailIDRequest{EmailId: id},
 	)
 	if err != nil {
@@ -1010,6 +1014,8 @@ func (h *EmailHandler) GetFilesByEmailID(w http.ResponseWriter, r *http.Request)
 			ID:       file.Id,
 			FileId:   file.FileId,
 			FileType: file.FileType,
+			FileName: file.FileName,
+			FileSize: file.FileSize,
 		})
 	}
 
@@ -1036,7 +1042,7 @@ func (h *EmailHandler) DeleteFileByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	status, err := h.EmailServiceClient.DeleteFileByID(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 		&proto.DeleteFileByIDRequest{FileId: id},
 	)
 	if err != nil {
@@ -1090,7 +1096,7 @@ func (h *EmailHandler) UpdateFileByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fileProto, err := h.EmailServiceClient.GetFileByID(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 		&proto.GetFileByIDRequest{FileId: id},
 	)
 	if err != nil {
@@ -1107,6 +1113,20 @@ func (h *EmailHandler) UpdateFileByID(w http.ResponseWriter, r *http.Request) {
 	_, err = h.MinioClient.PutObject(r.Context(), "files", fileProto.File.FileId[strings.LastIndex(fileProto.File.FileId, "/")+1:], file, -1, minio.PutObjectOptions{})
 	if err != nil {
 		response.HandleError(w, http.StatusInternalServerError, "Failed to update file in MinIO")
+		return
+	}
+
+	fileName := sanitizeString(handler.Filename)
+
+	updateProto, err := h.EmailServiceClient.UpdateFileByID(
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
+		&proto.UpdateFileByIDRequest{Id: fileProto.File.Id, NewFileId: fileProto.File.FileId, NewFileType: fileProto.File.FileType, NewFileName: fileName, NewFileSize: strconv.FormatInt(handler.Size, 10)},
+	)
+	if updateProto != nil && !updateProto.Status {
+		response.HandleError(w, http.StatusNotFound, "Failed to update file")
+	}
+	if err != nil {
+		response.HandleError(w, http.StatusNotFound, "Failed to get file")
 		return
 	}
 
@@ -1144,12 +1164,13 @@ func (h *EmailHandler) AddFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fileExt := filepath.Ext(handler.Filename)
+	fileExt := sanitizeString(filepath.Ext(handler.Filename))
 	contentType := handler.Header.Get("Content-Type")
 
-	fileType := check_file_type.GetFileType(contentType)
+	fileType := sanitizeString(check_file_type.GetFileType(contentType))
 
 	uniqueFileName := generate_filename.GenerateUniqueFileName(fileExt)
+	fileName := sanitizeString(handler.Filename)
 
 	_, err = h.MinioClient.PutObject(r.Context(), "files", uniqueFileName, file, -1, minio.PutObjectOptions{ContentType: contentType})
 	if err != nil {
@@ -1160,15 +1181,20 @@ func (h *EmailHandler) AddFile(w http.ResponseWriter, r *http.Request) {
 	fileURL := fmt.Sprintf(configs.PROTOCOL+"mailhub.su"+"/files/%s", uniqueFileName)
 
 	fileId, err := h.EmailServiceClient.AddFile(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
-		&proto.AddFileRequest{FileId: fileURL, FileType: fileType},
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
+		&proto.AddFileRequest{FileId: fileURL, FileType: fileType, FileName: fileName, FileSize: strconv.FormatInt(handler.Size, 10)},
 	)
+	fmt.Println(fileId)
 	if err != nil {
 		response.HandleError(w, http.StatusNotFound, fmt.Sprintf("Failed to add file: %s", err.Error()))
 		return
 	}
 
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"FileId": fileId.FileId})
+}
+
+func (h *EmailHandler) AddFileFromAnotherDomain(w http.ResponseWriter, r *http.Request) {
+	h.AddFile(w, r)
 }
 
 // AddFileToEmail adds a file to an email message.
@@ -1186,21 +1212,21 @@ func (h *EmailHandler) AddFile(w http.ResponseWriter, r *http.Request) {
 func (h *EmailHandler) AddFileToEmail(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	email_id, err := strconv.ParseUint(vars["id"], 10, 64)
+	emailId, err := strconv.ParseUint(vars["id"], 10, 64)
 	if err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad ID in request")
 		return
 	}
 
-	file_id, err := strconv.ParseUint(vars["file-id"], 10, 64)
+	fileId, err := strconv.ParseUint(vars["file-id"], 10, 64)
 	if err != nil {
 		response.HandleError(w, http.StatusBadRequest, "Bad ID in request")
 		return
 	}
 
 	status, err := h.EmailServiceClient.AddFileToEmail(
-		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{"requestID": r.Context().Value(requestIDContextKey).(string)})),
-		&proto.AddFileToEmailRequest{EmailId: email_id, FileId: file_id},
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
+		&proto.AddFileToEmailRequest{EmailId: emailId, FileId: fileId},
 	)
 	if err != nil {
 		response.HandleError(w, http.StatusNotFound, fmt.Sprintf("Failed to add file: %s", err.Error()))
@@ -1208,4 +1234,8 @@ func (h *EmailHandler) AddFileToEmail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Status": status.Status})
+}
+
+func (h *EmailHandler) AddFileToEmailFromAnotherDomain(w http.ResponseWriter, r *http.Request) {
+	h.AddFileToEmail(w, r)
 }

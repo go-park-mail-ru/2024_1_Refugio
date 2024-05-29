@@ -2,17 +2,16 @@ package repository
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
-	"math/rand"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 
-	"mail/internal/pkg/logger"
-
 	domain "mail/internal/microservice/models/domain_models"
 	converters "mail/internal/microservice/models/repository_converters"
 	database "mail/internal/microservice/models/repository_models"
+	"mail/internal/pkg/logger"
 )
 
 // requestIDContextKey is the context key for the request ID.
@@ -36,7 +35,10 @@ type SessionGenerate func() string
 // SessionGenerateRandomID generates a random session ID using cryptographic random numbers.
 var SessionGenerateRandomID SessionGenerate = func() string {
 	randID := make([]byte, 16)
-	rand.Read(randID)
+	_, err := rand.Read(randID)
+	if err != nil {
+		return "qwerty"
+	}
 
 	return fmt.Sprintf("%x", randID)
 }
@@ -81,7 +83,7 @@ func (repo *SessionRepository) GetSessionByID(sessionID string, ctx context.Cont
 		return nil, fmt.Errorf("failed to get session: %v", err)
 	}
 
-	return converters.SessionConvertDbInCore(session), nil
+	return converters.SessionConvertDbInCore(&session), nil
 }
 
 // GetLoginBySessionID retrieves the login associated with the given session ID.

@@ -139,6 +139,21 @@ func (mr *MockUserUseCaseMockRecorder) GetUserByLogin(login, password, ctx inter
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByLogin", reflect.TypeOf((*MockUserUseCase)(nil).GetUserByLogin), login, password, ctx)
 }
 
+// GetUserByOnlyLogin mocks base method.
+func (m *MockUserUseCase) GetUserByOnlyLogin(login string, ctx context.Context) (*domain_models.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserByOnlyLogin", login, ctx)
+	ret0, _ := ret[0].(*domain_models.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserByOnlyLogin indicates an expected call of GetUserByOnlyLogin.
+func (mr *MockUserUseCaseMockRecorder) GetUserByOnlyLogin(login, ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByOnlyLogin", reflect.TypeOf((*MockUserUseCase)(nil).GetUserByOnlyLogin), login, ctx)
+}
+
 // GetUserVkID mocks base method.
 func (m *MockUserUseCase) GetUserVkID(vkId uint32, ctx context.Context) (*domain_models.User, error) {
 	m.ctrl.T.Helper()

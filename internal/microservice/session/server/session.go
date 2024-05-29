@@ -33,7 +33,7 @@ func (ss *SessionServer) GetSession(ctx context.Context, input *proto.GetSession
 		return nil, fmt.Errorf("session not found")
 	}
 
-	return &proto.GetSessionReply{Session: proto_converters.SessionConvertCoreInProto(*sessionCore)}, nil
+	return &proto.GetSessionReply{Session: proto_converters.SessionConvertCoreInProto(sessionCore)}, nil
 }
 
 // GetLoginBySession retrieves the login associated with the session.

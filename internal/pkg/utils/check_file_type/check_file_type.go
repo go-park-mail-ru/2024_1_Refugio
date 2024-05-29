@@ -15,8 +15,6 @@ func GetFileType(contentType string) string {
 	} else if strings.HasPrefix(contentType, "text/plain") {
 		return "Text Document"
 	} else {
-		return "Archive"
+		return "Unknown"
 	}
-
-	return "Unknown"
 }
