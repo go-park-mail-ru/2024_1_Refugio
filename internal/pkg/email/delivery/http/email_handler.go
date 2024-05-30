@@ -404,33 +404,22 @@ func formatEmailAddress(addr string) string {
 
 func encodeRFC2047(str string) string {
 	addr := mail.Address{Address: str}
-	return strings.Trim(addr.String(), " <>")
+	return strings.Trim(strings.Trim(addr.String(), " <>"), " @")
 }
 
-func downloadFile(URL string) ([]byte, string, error) {
+func downloadFile(URL string) ([]byte, error) {
 	resp, err := http.Get(URL)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
-	contentType := resp.Header.Get("Content-Type")
-	_, params, err := mime.ParseMediaType(contentType)
-	if err != nil {
-		return nil, "", err
-	}
-
-	fileName := params["filename"]
-	if fileName == "" {
-		fileName = filepath.Base(URL)
-	}
-
-	return body, fileName, nil
+	return body, nil
 }
 
 func addAttachment(writer *multipart.Writer, fileName string, fileData []byte) error {
@@ -491,91 +480,6 @@ func composeMimeMail(to string, from string, subject string, body string, attach
 	return msg.Bytes(), nil
 }
 
-/*
-func downloadFile(URL string) ([]byte, string, error) {
-	resp, err := http.Get(URL)
-	if err != nil {
-		return nil, "", err
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, "", err
-	}
-
-	contentType := resp.Header.Get("Content-Type")
-	_, params, err := mime.ParseMediaType(contentType)
-	if err != nil {
-		return nil, "", err
-	}
-
-	fileName := params["filename"]
-	if fileName == "" {
-		fileName = filepath.Base(URL)
-	}
-
-	return body, fileName, nil
-}
-
-func addAttachment(writer *multipart.Writer, fileName string, fileData []byte) error {
-	part, err := writer.CreatePart(textproto.MIMEHeader{
-		"Content-Type":              {mime.TypeByExtension(filepath.Ext(fileName))},
-		"Content-Transfer-Encoding": {"base64"},
-		"Content-Disposition":       {fmt.Sprintf(`attachment; filename="%s"`, fileName)},
-	})
-	if err != nil {
-		return err
-	}
-
-	encoder := base64.NewEncoder(base64.StdEncoding, part)
-	defer encoder.Close()
-
-	_, err = encoder.Write(fileData)
-	return err
-}
-
-func composeMimeMail(to string, from string, subject string, body string, attachments map[string][]byte) ([]byte, error) {
-	header := make(map[string]string)
-	header["From"] = formatEmailAddress(from)
-	header["To"] = formatEmailAddress(to)
-	header["Subject"] = encodeRFC2047(subject)
-	header["MIME-Version"] = "1.0"
-
-	var msg strings.Builder
-	for k, v := range header {
-		msg.WriteString(fmt.Sprintf("%s: %s\r\n", k, v))
-	}
-
-	bodyWriter := multipart.NewWriter(&msg)
-	header["Content-Type"] = fmt.Sprintf("multipart/mixed; boundary=%s", bodyWriter.Boundary())
-
-	msg.WriteString("\r\n")
-
-	bodyPart, err := bodyWriter.CreatePart(textproto.MIMEHeader{
-		"Content-Type":              {"text/plain; charset=utf-8"},
-		"Content-Transfer-Encoding": {"base64"},
-	})
-	if err != nil {
-		return nil, err
-	}
-	bodyPart.Write([]byte(base64.StdEncoding.EncodeToString([]byte(body))))
-
-	for fileName, fileData := range attachments {
-		err := addAttachment(bodyWriter, fileName, fileData)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	err = bodyWriter.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	return []byte(msg.String()), nil
-}*/
-
 // SendEmailToOtherDomains send an email a third-party domain.
 // @Summary SendEmailToOtherDomains send an email a third-party domain
 // @Description SendEmailToOtherDomains send an email a third-party domain
@@ -631,15 +535,15 @@ func (h *EmailHandler) SendEmailToOtherDomains(w http.ResponseWriter, r *http.Re
 	}
 
 	var attachments map[string][]byte
-	if len(attachmentURLs) != 0 {
+	if len(filesProto.Files) != 0 {
 		attachments = make(map[string][]byte)
-		for _, url := range attachmentURLs {
-			fileData, fileName, err := downloadFile(url)
+		for _, file := range filesProto.Files {
+			fileData, err := downloadFile(file.FileId)
 			if err != nil {
 				response.HandleError(w, http.StatusBadRequest, "Failed to download file")
 				return
 			}
-			attachments[fileName] = fileData
+			attachments[file.FileName] = fileData
 		}
 	}
 
