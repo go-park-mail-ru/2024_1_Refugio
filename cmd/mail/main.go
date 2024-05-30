@@ -386,6 +386,7 @@ func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.
 	logRouter.HandleFunc("/email/delete/{id}", emailHandler.Delete).Methods("DELETE", "OPTIONS")
 	logRouter.HandleFunc("/email/send", emailHandler.Send).Methods("POST", "OPTIONS")
 	logRouter.HandleFunc("/email/adddraft", emailHandler.AddDraft).Methods("POST", "OPTIONS")
+	logRouter.HandleFunc("/email/sendToOtherDomain/{id}", emailHandler.SendEmailToOtherDomains).Methods("POST", "OPTIONS")
 
 	logRouter.HandleFunc("/email/{id}/addattachment", emailHandler.AddAttachment).Methods("POST", "OPTIONS")
 	logRouter.HandleFunc("/email/addfile", emailHandler.AddFile).Methods("POST", "OPTIONS")

@@ -1,15 +1,19 @@
 package http
 
 import (
+	"bytes"
 	"encoding/base64"
 	"fmt"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"io"
+	"mime"
+	"mime/multipart"
 	"net"
 	"net/http"
 	"net/mail"
 	"net/smtp"
+	"net/textproto"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -281,30 +285,6 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		var mx string
-		var err error
-
-		// Connect to the server, authenticate, set the sender and recipient,
-		// and send the email all in one step.
-		//from := "sergey@mailhub.su"
-		//to := "fedasovsergey00@gmail.com"
-		//subject := "Test Email"
-		//body := "This is the email body at " + time.Now().String()
-
-		msg := composeMimeMail(recipient, sender, newEmail.Topic, newEmail.Text)
-
-		mx, err = getMXRecord(recipient)
-		if err != nil {
-			response.HandleError(w, http.StatusBadRequest, "Bad request to login")
-			return
-		}
-
-		err = smtp.SendMail(mx+":25", nil, sender, []string{recipient}, msg)
-		if err != nil {
-			response.HandleError(w, http.StatusInternalServerError, "Error send email")
-			return
-		}
-
 		emailDataProto, err := h.EmailServiceClient.CreateEmail(
 			metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
 			&proto.Email{
@@ -423,27 +403,273 @@ func formatEmailAddress(addr string) string {
 }
 
 func encodeRFC2047(str string) string {
-	// use mail's rfc2047 to encode any string
 	addr := mail.Address{Address: str}
-	return strings.Trim(addr.String(), " <>")
+	encodedName := mime.QEncoding.Encode("utf-8", addr.Address)
+	str2 := strings.Trim(encodedName, " <>")
+	return str2
+	// return strings.Trim(addr.String(), " <>")
 }
 
-func composeMimeMail(to string, from string, subject string, body string) []byte {
+func downloadFile(URL string) ([]byte, string, error) {
+	resp, err := http.Get(URL)
+	if err != nil {
+		return nil, "", err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, "", err
+	}
+
+	contentType := resp.Header.Get("Content-Type")
+	_, params, err := mime.ParseMediaType(contentType)
+	if err != nil {
+		return nil, "", err
+	}
+
+	fileName := params["filename"]
+	if fileName == "" {
+		fileName = filepath.Base(URL)
+	}
+
+	return body, fileName, nil
+}
+
+func addAttachment(writer *multipart.Writer, fileName string, fileData []byte) error {
+	part, err := writer.CreatePart(textproto.MIMEHeader{
+		"Content-Type":              {fmt.Sprintf("%s; name=\"%s\"", mime.TypeByExtension(filepath.Ext(fileName)), fileName)},
+		"Content-Transfer-Encoding": {"base64"},
+		"Content-Disposition":       {fmt.Sprintf(`attachment; filename="%s"`, fileName)},
+	})
+	if err != nil {
+		return err
+	}
+
+	encoder := base64.NewEncoder(base64.StdEncoding, part)
+	defer encoder.Close()
+
+	_, err = encoder.Write(fileData)
+	return err
+}
+
+func composeMimeMail(to string, from string, subject string, body string, attachments map[string][]byte) ([]byte, error) {
+	var msg bytes.Buffer
+	writer := multipart.NewWriter(&msg)
+	boundary := writer.Boundary()
+
 	header := make(map[string]string)
 	header["From"] = formatEmailAddress(from)
 	header["To"] = formatEmailAddress(to)
 	header["Subject"] = encodeRFC2047(subject)
 	header["MIME-Version"] = "1.0"
-	header["Content-Type"] = "text/plain; charset=\"utf-8\""
-	header["Content-Transfer-Encoding"] = "base64"
+	header["Content-Type"] = fmt.Sprintf(`multipart/mixed; boundary="%s"`, boundary)
 
-	message := ""
 	for k, v := range header {
-		message += fmt.Sprintf("%s: %s\r\n", k, v)
+		msg.WriteString(fmt.Sprintf("%s: %s\r\n", k, v))
 	}
-	message += "\r\n" + base64.StdEncoding.EncodeToString([]byte(body))
+	msg.WriteString("\r\n")
 
-	return []byte(message)
+	bodyPart, err := writer.CreatePart(textproto.MIMEHeader{
+		"Content-Type":              {"text/plain; charset=utf-8"},
+		"Content-Transfer-Encoding": {"base64"},
+	})
+	if err != nil {
+		return nil, err
+	}
+	bodyPart.Write([]byte(base64.StdEncoding.EncodeToString([]byte(body))))
+
+	for fileName, fileData := range attachments {
+		err := addAttachment(writer, fileName, fileData)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err = writer.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	return msg.Bytes(), nil
+}
+
+/*
+func downloadFile(URL string) ([]byte, string, error) {
+	resp, err := http.Get(URL)
+	if err != nil {
+		return nil, "", err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, "", err
+	}
+
+	contentType := resp.Header.Get("Content-Type")
+	_, params, err := mime.ParseMediaType(contentType)
+	if err != nil {
+		return nil, "", err
+	}
+
+	fileName := params["filename"]
+	if fileName == "" {
+		fileName = filepath.Base(URL)
+	}
+
+	return body, fileName, nil
+}
+
+func addAttachment(writer *multipart.Writer, fileName string, fileData []byte) error {
+	part, err := writer.CreatePart(textproto.MIMEHeader{
+		"Content-Type":              {mime.TypeByExtension(filepath.Ext(fileName))},
+		"Content-Transfer-Encoding": {"base64"},
+		"Content-Disposition":       {fmt.Sprintf(`attachment; filename="%s"`, fileName)},
+	})
+	if err != nil {
+		return err
+	}
+
+	encoder := base64.NewEncoder(base64.StdEncoding, part)
+	defer encoder.Close()
+
+	_, err = encoder.Write(fileData)
+	return err
+}
+
+func composeMimeMail(to string, from string, subject string, body string, attachments map[string][]byte) ([]byte, error) {
+	header := make(map[string]string)
+	header["From"] = formatEmailAddress(from)
+	header["To"] = formatEmailAddress(to)
+	header["Subject"] = encodeRFC2047(subject)
+	header["MIME-Version"] = "1.0"
+
+	var msg strings.Builder
+	for k, v := range header {
+		msg.WriteString(fmt.Sprintf("%s: %s\r\n", k, v))
+	}
+
+	bodyWriter := multipart.NewWriter(&msg)
+	header["Content-Type"] = fmt.Sprintf("multipart/mixed; boundary=%s", bodyWriter.Boundary())
+
+	msg.WriteString("\r\n")
+
+	bodyPart, err := bodyWriter.CreatePart(textproto.MIMEHeader{
+		"Content-Type":              {"text/plain; charset=utf-8"},
+		"Content-Transfer-Encoding": {"base64"},
+	})
+	if err != nil {
+		return nil, err
+	}
+	bodyPart.Write([]byte(base64.StdEncoding.EncodeToString([]byte(body))))
+
+	for fileName, fileData := range attachments {
+		err := addAttachment(bodyWriter, fileName, fileData)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err = bodyWriter.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(msg.String()), nil
+}*/
+
+// SendEmailToOtherDomains send an email a third-party domain.
+// @Summary SendEmailToOtherDomains send an email a third-party domain
+// @Description SendEmailToOtherDomains send an email a third-party domain
+// @Tags emails
+// @Accept json
+// @Produce json
+// @Param id path integer true "ID of the email message"
+// @Param X-Csrf-Token header string true "CSRF Token"
+// @Success 200 {object} response.Response "ID of the send email message"
+// @Failure 400 {object} response.Response "Bad JSON in request"
+// @Failure 401 {object} response.Response "Not Authorized"
+// @Failure 500 {object} response.Response "Failed to add email message"
+// @Router /api/v1/email/sendToOtherDomain/{id} [post]
+func (h *EmailHandler) SendEmailToOtherDomains(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.ParseUint(vars["id"], 10, 64)
+	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Bad id in request")
+		return
+	}
+
+	login, err := h.Sessions.GetLoginBySession(r, r.Context())
+	if err != nil {
+		response.HandleError(w, http.StatusBadRequest, "Failed to get login from session")
+		return
+	}
+
+	emailDataProto, err := h.EmailServiceClient.GetEmailByID(
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
+		&proto.EmailIdAndLogin{
+			Id:    id,
+			Login: login,
+		},
+	)
+	if err != nil {
+		response.HandleError(w, http.StatusInternalServerError, "Failed to get email data")
+		return
+	}
+
+	filesProto, err := h.EmailServiceClient.GetFilesByEmailID(
+		metadata.NewOutgoingContext(r.Context(), metadata.New(map[string]string{string(constants.RequestIDKey): r.Context().Value(requestIDContextKey).(string)})),
+		&proto.GetFilesByEmailIDRequest{EmailId: emailDataProto.Id},
+	)
+	if err != nil {
+		response.HandleError(w, http.StatusNotFound, fmt.Sprintf("Failed to get files: %s", err.Error()))
+		return
+	}
+
+	attachmentURLs := make([]string, 0)
+	for _, file := range filesProto.Files {
+		attachmentURLs = append(attachmentURLs, file.FileId)
+		fmt.Println(attachmentURLs)
+	}
+
+	var attachments map[string][]byte
+	if len(attachmentURLs) != 0 {
+		attachments = make(map[string][]byte)
+		for _, url := range attachmentURLs {
+			fileData, fileName, err := downloadFile(url)
+			if err != nil {
+				response.HandleError(w, http.StatusBadRequest, "Failed to download file")
+				return
+			}
+			attachments[fileName] = fileData
+		}
+	}
+
+	if validators.IsValidEmailFormat(emailDataProto.SenderEmail) && validators.IsValidEmailFormat(emailDataProto.RecipientEmail) {
+		var mx string
+
+		mx, err = getMXRecord(emailDataProto.RecipientEmail)
+		if err != nil {
+			response.HandleError(w, http.StatusBadRequest, "Bad request to login")
+			return
+		}
+
+		msg, err := composeMimeMail(emailDataProto.RecipientEmail, emailDataProto.SenderEmail, emailDataProto.Topic, emailDataProto.Text, attachments)
+		if err != nil {
+			response.HandleError(w, http.StatusBadRequest, "Failed to compose mail")
+			return
+		}
+
+		err = smtp.SendMail(mx+":25", nil, emailDataProto.SenderEmail, []string{emailDataProto.RecipientEmail}, msg)
+		if err != nil {
+			response.HandleError(w, http.StatusInternalServerError, "Error send email")
+			return
+		}
+
+		response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "true"})
+		return
+	}
 }
 
 // Update updates an existing email message.

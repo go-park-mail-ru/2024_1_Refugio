@@ -747,6 +747,44 @@ paths:
       summary: Send a new email message
       tags:
       - emails
+  /api/v1/email/sendToOtherDomain/{id}:
+    post:
+      consumes:
+      - application/json
+      description: SendEmailToOtherDomains send an email a third-party domain
+      parameters:
+      - description: ID of the email message
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: CSRF Token
+        in: header
+        name: X-Csrf-Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ID of the send email message
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad JSON in request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Not Authorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Failed to add email message
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: SendEmailToOtherDomains send an email a third-party domain
+      tags:
+      - emails
   /api/v1/email/update/{id}:
     put:
       consumes:
