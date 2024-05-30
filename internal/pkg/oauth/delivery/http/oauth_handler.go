@@ -10,6 +10,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 
@@ -104,6 +105,7 @@ func (ah *OAuthHandler) GetLoginURLVK(w http.ResponseWriter, r *http.Request) {
 func (ah *OAuthHandler) AuthVK(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	code, ok := vars["code"]
+	fmt.Println("Code: ", code)
 	if !ok {
 		response.HandleError(w, http.StatusBadRequest, "Bad id in request")
 		return
@@ -147,6 +149,8 @@ func (ah *OAuthHandler) AuthVK(w http.ResponseWriter, r *http.Request) {
 		response.HandleError(w, status, "failed get user data")
 		return
 	}
+
+	fmt.Println(vkUser.Birthday)
 
 	randToken := make([]byte, 16)
 	_, err = rand.Read(randToken)
@@ -280,6 +284,7 @@ func (ah *OAuthHandler) SignupVK(w http.ResponseWriter, r *http.Request) {
 func (ah *OAuthHandler) LoginVK(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	code, ok := vars["code"]
+	fmt.Println("Code: ", code)
 	if !ok || code == "" {
 		response.HandleError(w, http.StatusBadRequest, "Bad code in request")
 		return
@@ -290,6 +295,10 @@ func (ah *OAuthHandler) LoginVK(w http.ResponseWriter, r *http.Request) {
 	var userVK *api.VKUser
 	if code == "855ab871bba885204e" {
 		userVK = &api.VKUser{
+			FirstName: "Max",
+			Surname:   "Frelih",
+			Gender:    domain_models.GetGenderTypeInt(2),
+			// Birthday:  birthdayTime,
 			VKId: 1234567,
 		}
 	} else {
@@ -301,11 +310,6 @@ func (ah *OAuthHandler) LoginVK(w http.ResponseWriter, r *http.Request) {
 		userVK = userVk
 	}
 
-	/*
-		userVK := &api.VKUser{
-			VKId: 344167564,
-		}
-	*/
 	if userVK.VKId <= 0 {
 		response.HandleError(w, http.StatusBadRequest, "bad VKId")
 		return
@@ -325,7 +329,16 @@ func (ah *OAuthHandler) LoginVK(w http.ResponseWriter, r *http.Request) {
 		&auth_proto.LoginVKRequest{VkId: userVK.VKId},
 	)
 	if errStatus != nil {
-		response.HandleError(w, http.StatusUnauthorized, "Login failed")
+		randToken := make([]byte, 16)
+		_, err = rand.Read(randToken)
+		if err != nil {
+			response.HandleError(w, http.StatusInternalServerError, "failed to generate random token")
+			return
+		}
+		authToken := fmt.Sprintf("%x", randToken)
+		mapVKIDToken[userVK.VKId] = authToken
+		w.Header().Set("AuthToken", authToken)
+		response.HandleSuccess(w, http.StatusUnauthorized, map[string]interface{}{"VKUser": userVK})
 		return
 	}
 
@@ -359,8 +372,6 @@ func GetDataUser(conf oauth2.Config, code string, ctx context.Context) (*api.VKU
 		return &api.VKUser{}, 400, fmt.Errorf("cannot exchange")
 	}
 
-	fmt.Println("TOKEN OK")
-
 	client := conf.Client(ctx, token)
 	resp, err := client.Get(fmt.Sprintf(API_URL, token.AccessToken))
 	if err != nil {
@@ -383,20 +394,18 @@ func GetDataUser(conf oauth2.Config, code string, ctx context.Context) (*api.VKU
 
 	fmt.Println("Data: ", data.Response[0].BirthDate)
 
-	/*
-		birthdayTime, err := time.Parse("2006-01-02", data.Response[0].BirthDate)
-		if err != nil {
-			fmt.Println("bad BirthDate")
-			return &api.VKUser{}, 500, fmt.Errorf("bad BirthDate")
-		}
-	*/
+	date, err := time.Parse("2.1.2006", data.Response[0].BirthDate)
+	if err != nil {
+		fmt.Println(err)
+		return &api.VKUser{}, 400, fmt.Errorf("failed to parse date")
+	}
 
 	vkUser := &api.VKUser{
 		FirstName: data.Response[0].Name,
 		Surname:   data.Response[0].LastName,
 		Gender:    domain_models.GetGenderTypeInt(data.Response[0].Sex),
-		// Birthday:  birthdayTime,
-		VKId: uint32(data.Response[0].VKId),
+		Birthday:  date,
+		VKId:      uint32(data.Response[0].VKId),
 	}
 
 	return vkUser, 200, nil

@@ -9,19 +9,21 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
+	"sync"
+	"text/template"
 	"time"
 	_ "time/tzdata"
 
 	"github.com/gorilla/mux"
-	_ "github.com/jackc/pgx/stdlib"
 	"github.com/kataras/requestid"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
 
-	migrate "github.com/rubenv/sql-migrate"
-	httpSwagger "github.com/swaggo/http-swagger/v2"
+	_ "github.com/jackc/pgx/stdlib"
+
 	"mail/cmd/configs"
 	"mail/internal/models/microservice_ports"
 	"mail/internal/monitoring"
@@ -29,7 +31,12 @@ import (
 	"mail/internal/pkg/middleware"
 	"mail/internal/pkg/session"
 	"mail/internal/pkg/utils/connect_microservice"
+	"mail/internal/websocket"
 
+	_ "mail/docs"
+
+	migrate "github.com/rubenv/sql-migrate"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 	auth_proto "mail/internal/microservice/auth/proto"
 	email_proto "mail/internal/microservice/email/proto"
 	folder_proto "mail/internal/microservice/folder/proto"
@@ -44,8 +51,6 @@ import (
 	oauthHand "mail/internal/pkg/oauth/delivery/http"
 	questionHand "mail/internal/pkg/questionnairy/delivery/http"
 	userHand "mail/internal/pkg/user/delivery/http"
-
-	_ "mail/docs"
 )
 
 // @title API MailHub
@@ -347,6 +352,13 @@ func setupAuthRouter(authHandler *authHand.AuthHandler, oauthHandler *oauthHand.
 	auth := mux.NewRouter().PathPrefix("/api/v1/auth").Subrouter()
 	auth.Use(logger.AccessLogMiddleware, middleware.PanicMiddleware)
 
+	r := websocket.NewRoom()
+	//auth.Handle("/web/sergey@mailhub.su", &templateHandler{filename: "chat.html"})
+	//auth.Handle("/web/ivan@mailhub.su", &templateHandler{filename: "chat.html"})
+	//auth.Handle("/web/user@mailhub.su", &templateHandler{filename: "chat.html"})
+	auth.Handle("/web/websocket_connection/{login}", r)
+	go r.Run()
+
 	auth.HandleFunc("/login", authHandler.Login).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/signup", authHandler.Signup).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/logout", authHandler.Logout).Methods("POST", "OPTIONS")
@@ -362,6 +374,21 @@ func setupAuthRouter(authHandler *authHand.AuthHandler, oauthHandler *oauthHand.
 	//auth.HandleFunc("/auth-vk/signupVK", oauthHandler.SignupVK).Methods("GET", "OPTIONS")
 	//auth.HandleFunc("/auth-vk/loginVK", oauthHandler.LoginVK).Methods("GET", "OPTIONS")
 	return auth
+}
+
+// templateHandler represents a single template
+type templateHandler struct {
+	once     sync.Once
+	filename string
+	templ    *template.Template
+}
+
+// ServeHTTP handles the HTTP request.
+func (t *templateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	t.once.Do(func() {
+		t.templ = template.Must(template.ParseFiles(filepath.Join("/home/sergey/mailhub/2024_1_Refugio/cmd/mail/templates", t.filename)))
+	})
+	t.templ.Execute(w, r)
 }
 
 // setupLogRouter configuring router with logger
