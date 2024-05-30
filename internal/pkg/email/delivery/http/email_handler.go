@@ -643,7 +643,7 @@ func (h *EmailHandler) SendEmailToOtherDomains(w http.ResponseWriter, r *http.Re
 		}
 	}
 
-	if validators.IsValidEmailFormat(emailDataProto.SenderEmail) && validators.IsValidEmailFormat(emailDataProto.RecipientEmail) {
+	if validators.IsValidEmailFormat(emailDataProto.SenderEmail) && !validators.IsValidEmailFormat(emailDataProto.RecipientEmail) {
 		var mx string
 
 		mx, err = getMXRecord(emailDataProto.RecipientEmail)
