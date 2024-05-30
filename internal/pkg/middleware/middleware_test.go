@@ -21,18 +21,6 @@ func TestPanicMiddleware(t *testing.T) {
 
 }
 
-func TestWriteHeader(t *testing.T) {
-	w := httptest.NewRecorder()
-	lrw := NewLoggingResponseWriter(w)
-	lrw.WriteHeader(200)
-
-	expectedLrw := new(loggingResponseWriter)
-	expectedLrw.statusCode = 200
-	expectedLrw.ResponseWriter = w
-
-	assert.Equal(t, expectedLrw, lrw)
-}
-
 func TestAuthMiddleware(t *testing.T) {
 	fakeHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)

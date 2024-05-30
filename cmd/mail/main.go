@@ -57,7 +57,7 @@ import (
 // @version 1.0
 // @description API server for MailHub
 
-// @host localhost:8080
+// @host mailhub.su
 // @BasePath /
 func main() {
 	fmt.Println("starting mail")
