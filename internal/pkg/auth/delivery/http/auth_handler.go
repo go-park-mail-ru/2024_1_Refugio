@@ -10,6 +10,7 @@ import (
 
 	auth_proto "mail/internal/microservice/auth/proto"
 	domain "mail/internal/microservice/models/domain_models"
+	user_proto "mail/internal/microservice/user/proto"
 	api "mail/internal/models/delivery_models"
 	response "mail/internal/models/response"
 	domainSession "mail/internal/pkg/session/interface"
@@ -24,6 +25,7 @@ var (
 type AuthHandler struct {
 	Sessions          domainSession.SessionsManager
 	AuthServiceClient auth_proto.AuthServiceClient
+	UserServiceClient user_proto.UserServiceClient
 }
 
 // Login handles user login.
@@ -121,6 +123,18 @@ func (ah *AuthHandler) Signup(w http.ResponseWriter, r *http.Request) {
 
 	if !validUtil.IsValidEmailFormat(newUser.Login) {
 		response.HandleError(w, http.StatusBadRequest, "Domain in the login is not suitable")
+		return
+	}
+
+	userExists, err := ah.UserServiceClient.GetUserByOnlyLogin(
+		metadata.NewOutgoingContext(r.Context(),
+			metadata.New(map[string]string{"requestID": r.Context().Value("requestID").(string)})),
+		&user_proto.GetUserByOnlyLoginRequest{
+			Login: newUser.Login,
+		},
+	)
+	if userExists != nil || err == nil {
+		response.HandleError(w, http.StatusBadRequest, "User already exists")
 		return
 	}
 

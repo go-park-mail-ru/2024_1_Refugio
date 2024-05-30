@@ -52,7 +52,7 @@ import (
 // @version 1.0
 // @description API server for MailHub
 
-// @host mailhub.su
+// @host localhost:8080
 // @BasePath /
 func main() {
 	fmt.Println("starting mail")
@@ -77,13 +77,13 @@ func main() {
 		log.Fatalf("connection with microservice auth fail")
 	}
 	defer authServiceConn.Close()
-	authHandler := initializeAuthHandler(sessionsManager, auth_proto.NewAuthServiceClient(authServiceConn))
 
 	userServiceConn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.UserService))
 	if err != nil {
 		log.Fatalf("connection with microservice user fail")
 	}
 	defer userServiceConn.Close()
+	authHandler := initializeAuthHandler(sessionsManager, auth_proto.NewAuthServiceClient(authServiceConn), user_proto.NewUserServiceClient(userServiceConn))
 	userHandler := initializeUserHandler(sessionsManager, user_proto.NewUserServiceClient(userServiceConn))
 
 	emailServiceConn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.EmailService))
@@ -107,7 +107,7 @@ func main() {
 	defer questionServiceConn.Close()
 	questionHandler := initializeQuestionHandler(sessionsManager, question_proto.NewQuestionServiceClient(questionServiceConn))
 
-	oauthHandler := initializeOAuthHandler(sessionsManager)
+	oauthHandler := initializeOAuthHandler(sessionsManager, user_proto.NewUserServiceClient(userServiceConn))
 
 	oauthGMailHandler := initializeGMailAuthHandler(sessionsManager, auth_proto.NewAuthServiceClient(authServiceConn), user_proto.NewUserServiceClient(userServiceConn))
 	emailGMailHandler := initializeEmailGMailHandler(sessionsManager)
@@ -166,17 +166,19 @@ func initializeSessionsManager(sessionServiceClient session_proto.SessionService
 }
 
 // initializeAuthHandler initializing authorization handler
-func initializeAuthHandler(sessionsManager *session.SessionsManager, authServiceClient auth_proto.AuthServiceClient) *authHand.AuthHandler {
+func initializeAuthHandler(sessionsManager *session.SessionsManager, authServiceClient auth_proto.AuthServiceClient, userServiceClient user_proto.UserServiceClient) *authHand.AuthHandler {
 	return &authHand.AuthHandler{
 		Sessions:          sessionsManager,
 		AuthServiceClient: authServiceClient,
+		UserServiceClient: userServiceClient,
 	}
 }
 
 // initializeOAuthHandler initializing authorization handler
-func initializeOAuthHandler(sessionsManager *session.SessionsManager) *oauthHand.OAuthHandler {
+func initializeOAuthHandler(sessionsManager *session.SessionsManager, userServiceClient user_proto.UserServiceClient) *oauthHand.OAuthHandler {
 	return &oauthHand.OAuthHandler{
-		Sessions: sessionsManager,
+		Sessions:          sessionsManager,
+		UserServiceClient: userServiceClient,
 	}
 }
 

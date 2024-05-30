@@ -20,6 +20,7 @@ import (
 
 	auth_proto "mail/internal/microservice/auth/proto"
 	domain "mail/internal/microservice/models/domain_models"
+	user_proto "mail/internal/microservice/user/proto"
 	api "mail/internal/models/delivery_models"
 	response "mail/internal/models/response"
 	domainSession "mail/internal/pkg/session/interface"
@@ -51,9 +52,10 @@ type Response struct {
 	}
 }
 
-// AuthHandler handles user-related HTTP requests.
+// OAuthHandler handles user-related HTTP requests.
 type OAuthHandler struct {
-	Sessions domainSession.SessionsManager
+	Sessions          domainSession.SessionsManager
+	UserServiceClient user_proto.UserServiceClient
 }
 
 // InitializationOAuthHandler initializes the user handler with the provided user handler.
@@ -204,6 +206,18 @@ func (ah *OAuthHandler) SignupVK(w http.ResponseWriter, r *http.Request) {
 
 	if !validUtil.IsValidEmailFormat(newUser.Login) {
 		response.HandleError(w, http.StatusBadRequest, "Domain in the login is not suitable")
+		return
+	}
+
+	userExists, err := ah.UserServiceClient.GetUserByOnlyLogin(
+		metadata.NewOutgoingContext(r.Context(),
+			metadata.New(map[string]string{"requestID": r.Context().Value("requestID").(string)})),
+		&user_proto.GetUserByOnlyLoginRequest{
+			Login: newUser.Login,
+		},
+	)
+	if userExists != nil || err == nil {
+		response.HandleError(w, http.StatusBadRequest, "User already exists")
 		return
 	}
 
