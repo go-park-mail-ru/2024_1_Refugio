@@ -103,6 +103,7 @@ func (ah *OAuthHandler) GetLoginURLVK(w http.ResponseWriter, r *http.Request) {
 func (ah *OAuthHandler) AuthVK(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	code, ok := vars["code"]
+	fmt.Println("Code: ", code)
 	if !ok {
 		response.HandleError(w, http.StatusBadRequest, "Bad id in request")
 		return
@@ -269,6 +270,7 @@ func (ah *OAuthHandler) SignupVK(w http.ResponseWriter, r *http.Request) {
 func (ah *OAuthHandler) LoginVK(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	code, ok := vars["code"]
+	fmt.Println("Code: ", code)
 	if !ok || code == "" {
 		response.HandleError(w, http.StatusBadRequest, "Bad code in request")
 		return
