@@ -380,7 +380,7 @@ func GetDataUser(conf oauth2.Config, code string, ctx context.Context) (*api.VKU
 
 	fmt.Println("Data: ", data.Response[0].BirthDate)
 
-	date, err := time.Parse("1.1.2006", data.Response[0].BirthDate)
+	date, err := time.Parse("2.1.2006", data.Response[0].BirthDate)
 	if err != nil {
 		fmt.Println(err)
 		return &api.VKUser{}, 400, fmt.Errorf("failed to parse date")
