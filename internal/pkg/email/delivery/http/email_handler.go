@@ -404,10 +404,7 @@ func formatEmailAddress(addr string) string {
 
 func encodeRFC2047(str string) string {
 	addr := mail.Address{Address: str}
-	encodedName := mime.QEncoding.Encode("utf-8", addr.Address)
-	str2 := strings.Trim(encodedName, " <>")
-	return str2
-	// return strings.Trim(addr.String(), " <>")
+	return strings.Trim(addr.String(), " <>")
 }
 
 func downloadFile(URL string) ([]byte, string, error) {
