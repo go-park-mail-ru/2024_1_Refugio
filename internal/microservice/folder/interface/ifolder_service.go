@@ -34,7 +34,7 @@ type FolderUseCase interface {
 	// GetAllEmailsInFolder get all emails in folder as user.
 	GetAllEmailsInFolder(folderID, profileID, limit, offset uint32, login string, ctx context.Context) ([]*folderCore.Email, error)
 
-// DeleteEmailInFolder delete email in folder.
+	// DeleteEmailInFolder delete email in folder.
 	DeleteEmailInFolder(folderID uint32, emailID uint32, ctx context.Context) (bool, error)
 
 	// GetAllFolderName retrieves the names of all folders associated with a given email ID.

@@ -63,7 +63,6 @@ func PanicRecoveryInterceptor(ctx context.Context, req interface{}, info *grpc.U
 			log.Println(
 				"Panic, ",
 				"Method: ", info.FullMethod,
-				//"Error: ", errPanic.(string),
 				"Message: ", string(debug.Stack()),
 			)
 		}
@@ -79,7 +78,6 @@ func PanicRecoveryWithoutLoggerInterceptor(ctx context.Context, req interface{},
 			log.Println(
 				"Panic, ",
 				"Method: ", info.FullMethod,
-				//"Error: ", errPanic.(string),
 				"Message: ", string(debug.Stack()),
 			)
 		}

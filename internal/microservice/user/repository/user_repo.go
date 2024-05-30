@@ -7,9 +7,10 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"github.com/jmoiron/sqlx"
 	"golang.org/x/crypto/bcrypt"
 	"time"
+
+	"github.com/jmoiron/sqlx"
 
 	"mail/internal/pkg/logger"
 

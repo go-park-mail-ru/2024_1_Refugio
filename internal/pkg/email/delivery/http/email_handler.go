@@ -370,6 +370,7 @@ func (h *EmailHandler) Send(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// getMXRecord retrieves the MX (Mail Exchange) record for the given email address.
 func getMXRecord(to string) (mx string, err error) {
 	var e *mail.Address
 	e, err = mail.ParseAddress(to)
@@ -394,6 +395,7 @@ func getMXRecord(to string) (mx string, err error) {
 	return
 }
 
+// formatEmailAddress parses and formats an email address into a standard string format.
 func formatEmailAddress(addr string) string {
 	e, err := mail.ParseAddress(addr)
 	if err != nil {
@@ -402,11 +404,13 @@ func formatEmailAddress(addr string) string {
 	return e.String()
 }
 
+// encodeRFC2047 encodes a string in RFC 2047 format for email headers.
 func encodeRFC2047(str string) string {
 	addr := mail.Address{Address: str}
 	return strings.Trim(strings.Trim(addr.String(), " <>"), " @")
 }
 
+// downloadFile downloads a file from the given URL and returns its content as a byte slice.
 func downloadFile(URL string) ([]byte, error) {
 	resp, err := http.Get(URL)
 	if err != nil {
@@ -422,6 +426,7 @@ func downloadFile(URL string) ([]byte, error) {
 	return body, nil
 }
 
+// addAttachment adds a file attachment to the email being composed.
 func addAttachment(writer *multipart.Writer, fileName string, fileData []byte) error {
 	part, err := writer.CreatePart(textproto.MIMEHeader{
 		"Content-Type":              {fmt.Sprintf("%s; name=\"%s\"", mime.TypeByExtension(filepath.Ext(fileName)), fileName)},
@@ -439,6 +444,7 @@ func addAttachment(writer *multipart.Writer, fileName string, fileData []byte) e
 	return err
 }
 
+// composeMimeMail creates a MIME email with attachments.
 func composeMimeMail(to string, from string, subject string, body string, attachments map[string][]byte) ([]byte, error) {
 	var msg bytes.Buffer
 	writer := multipart.NewWriter(&msg)
@@ -571,6 +577,8 @@ func (h *EmailHandler) SendEmailToOtherDomains(w http.ResponseWriter, r *http.Re
 		response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "true"})
 		return
 	}
+
+	response.HandleSuccess(w, http.StatusInternalServerError, map[string]interface{}{"Success": "false"})
 }
 
 // Update updates an existing email message.

@@ -33,8 +33,6 @@ import (
 	"mail/internal/pkg/utils/connect_microservice"
 	"mail/internal/websocket"
 
-	_ "mail/docs"
-
 	migrate "github.com/rubenv/sql-migrate"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 	auth_proto "mail/internal/microservice/auth/proto"
@@ -51,6 +49,8 @@ import (
 	oauthHand "mail/internal/pkg/oauth/delivery/http"
 	questionHand "mail/internal/pkg/questionnairy/delivery/http"
 	userHand "mail/internal/pkg/user/delivery/http"
+
+	_ "mail/docs"
 )
 
 // @title API MailHub
@@ -271,6 +271,7 @@ func initializeUserHandler(sessionsManager *session.SessionsManager, userService
 	}
 }
 
+// initializeGMailAuthHandler initializes the GMail authentication handler
 func initializeGMailAuthHandler(sessionsManager *session.SessionsManager, authServiceClient auth_proto.AuthServiceClient, userServiceClient user_proto.UserServiceClient) *gmailAuthHand.GMailAuthHandler {
 	return &gmailAuthHand.GMailAuthHandler{
 		Sessions:          sessionsManager,
@@ -279,6 +280,7 @@ func initializeGMailAuthHandler(sessionsManager *session.SessionsManager, authSe
 	}
 }
 
+// initializeEmailGMailHandler initializes the GMail email handler using
 func initializeEmailGMailHandler(sessionsManager *session.SessionsManager) *gmailEmailHand.GMailEmailHandler {
 	return &gmailEmailHand.GMailEmailHandler{
 		Sessions: sessionsManager,
@@ -353,9 +355,6 @@ func setupAuthRouter(authHandler *authHand.AuthHandler, oauthHandler *oauthHand.
 	auth.Use(logger.AccessLogMiddleware, middleware.PanicMiddleware)
 
 	r := websocket.NewRoom()
-	//auth.Handle("/web/sergey@mailhub.su", &templateHandler{filename: "chat.html"})
-	//auth.Handle("/web/ivan@mailhub.su", &templateHandler{filename: "chat.html"})
-	//auth.Handle("/web/user@mailhub.su", &templateHandler{filename: "chat.html"})
 	auth.Handle("/web/websocket_connection/{login}", r)
 	go r.Run()
 
@@ -370,9 +369,6 @@ func setupAuthRouter(authHandler *authHand.AuthHandler, oauthHandler *oauthHand.
 	auth.HandleFunc("/gAuth", oauthGMailHandler.GoogleAuth).Methods("GET", "OPTIONS")
 	auth.HandleFunc("/signupGMailUser", oauthGMailHandler.SugnupGMail).Methods("POST", "OPTIONS")
 
-	//auth.HandleFunc("/getAuthUrlVK", oauthHandler.GetSignUpURLVK).Methods("GET", "OPTIONS")
-	//auth.HandleFunc("/auth-vk/signupVK", oauthHandler.SignupVK).Methods("GET", "OPTIONS")
-	//auth.HandleFunc("/auth-vk/loginVK", oauthHandler.LoginVK).Methods("GET", "OPTIONS")
 	return auth
 }
 
@@ -491,7 +487,7 @@ func startServer(router http.Handler) {
 	}
 }
 
-// StartSessionCleaner starting session cleanup
+// startSessionCleaner starting session cleanup
 func startSessionCleaner(interval time.Duration, sessionServiceClient session_proto.SessionServiceClient) {
 	ticker := time.NewTicker(interval)
 	go func() {

@@ -8,10 +8,11 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
+	"mail/internal/pkg/logger"
+
 	domain "mail/internal/microservice/models/domain_models"
 	converters "mail/internal/microservice/models/repository_converters"
 	database "mail/internal/microservice/models/repository_models"
-	"mail/internal/pkg/logger"
 )
 
 // requestIDContextKey is the context key for the request ID.

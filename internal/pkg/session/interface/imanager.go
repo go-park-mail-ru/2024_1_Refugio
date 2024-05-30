@@ -1,4 +1,5 @@
 //go:generate mockgen -source=./imanager.go -destination=../mock/manager_mock.go -package=mock
+
 package _interface
 
 import (

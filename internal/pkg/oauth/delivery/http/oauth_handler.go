@@ -39,9 +39,6 @@ var (
 	mapVKIDToken        = make(map[uint32]string)
 )
 
-// https://oauth.vk.com/authorize?client_id=51916655&redirect_uri=https://mailhub.su/testAuth/auth-vk/loginVK&response_type=code&scope=email
-// https://oauth.vk.com/authorize?client_id=51916655&redirect_uri=https://mailhub.su/testAuth/auth-vk/auth&response_type=code&scope=email
-
 type Response struct {
 	Response []struct {
 		VKId      int    `json:"id"`
@@ -49,7 +46,6 @@ type Response struct {
 		LastName  string `json:"last_name"`
 		Sex       int    `json:"sex"`
 		BirthDate string `json:"bdate"`
-		//Photo     string `json:"photo_max"`
 	}
 }
 
@@ -111,10 +107,7 @@ func (ah *OAuthHandler) AuthVK(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ctx := r.Context()
-	/*
-		fmt.Println("AuthVK")
-		code := r.FormValue("code")
-	*/
+
 	conf := GetConfOauth2(REDIRECT_URL_SIGNUP)
 
 	// vk_mock
@@ -123,8 +116,7 @@ func (ah *OAuthHandler) AuthVK(w http.ResponseWriter, r *http.Request) {
 			FirstName: "Max",
 			Surname:   "Frelih",
 			Gender:    domain_models.GetGenderTypeInt(2),
-			// Birthday:  birthdayTime,
-			VKId: uint32(1234567),
+			VKId:      uint32(1234567),
 		}
 		randToken := make([]byte, 16)
 		_, err := rand.Read(randToken)
@@ -190,8 +182,6 @@ func (ah *OAuthHandler) SignupVK(w http.ResponseWriter, r *http.Request) {
 		response.HandleError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
-
-	//mepVKIDToken[123] = "123"
 
 	authToken := r.Header.Get("AuthToken")
 	if authToken != mapVKIDToken[newUser.VKId] {
@@ -298,8 +288,7 @@ func (ah *OAuthHandler) LoginVK(w http.ResponseWriter, r *http.Request) {
 			FirstName: "Max",
 			Surname:   "Frelih",
 			Gender:    domain_models.GetGenderTypeInt(2),
-			// Birthday:  birthdayTime,
-			VKId: 1234567,
+			VKId:      1234567,
 		}
 	} else {
 		userVk, status, err := GetDataUser(*conf, code, ctx)
