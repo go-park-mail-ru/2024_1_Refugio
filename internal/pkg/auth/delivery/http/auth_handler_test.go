@@ -17,6 +17,7 @@ import (
 
 	auth_mock "mail/internal/microservice/auth/mock"
 	auth_proto "mail/internal/microservice/auth/proto"
+	user_mock "mail/internal/microservice/user/mock"
 	session_mock "mail/internal/pkg/session/mock"
 )
 
@@ -226,19 +227,25 @@ func TestAuthHandler_Signup_Success(t *testing.T) {
 
 	mockAuthServiceClient := auth_mock.NewMockAuthServiceClient(ctrl)
 	mockSessionsManager := session_mock.NewMockSessionsManager(ctrl)
+	mockUserServiceClient := user_mock.NewMockUserServiceClient(ctrl)
 
 	ah := &AuthHandler{
 		Sessions:          mockSessionsManager,
 		AuthServiceClient: mockAuthServiceClient,
+		UserServiceClient: mockUserServiceClient,
 	}
 
-	reqBody := `{"login": "user@mailhub.su", "password": "password123", "firstName": "John", "surname": "Doe", "gender": "Male", "phoneNumber": "123456789"}`
+	reqBody := `{"login": "user@mailhub.su", "password": "password123", "firstname": "John", "surname": "Doe", "gender": "Male", "phoneNumber": "123456789"}`
 
 	req := httptest.NewRequest("POST", "/api/v1/auth/signup", strings.NewReader(reqBody))
 	ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
+
+	mockUserServiceClient.EXPECT().
+		GetUserByOnlyLogin(gomock.Any(), gomock.Any()).
+		Return(nil, errors.New("login failed"))
 
 	mockAuthServiceClient.EXPECT().
 		Signup(gomock.Any(), gomock.Any()).
@@ -350,19 +357,25 @@ func TestAuthHandler_Signup_FailedToAddUser(t *testing.T) {
 
 	mockAuthServiceClient := auth_mock.NewMockAuthServiceClient(ctrl)
 	mockSessionsManager := session_mock.NewMockSessionsManager(ctrl)
+	mockUserServiceClient := user_mock.NewMockUserServiceClient(ctrl)
 
 	ah := &AuthHandler{
 		Sessions:          mockSessionsManager,
 		AuthServiceClient: mockAuthServiceClient,
+		UserServiceClient: mockUserServiceClient,
 	}
 
-	reqBody := `{"login": "user@mailhub.su", "password": "password123", "firstName": "John", "surname": "Doe", "gender": "Male", "phoneNumber": "123456789"}`
+	reqBody := `{"login": "user@mailhub.su", "password": "password123", "firstname": "John", "surname": "Doe", "gender": "Male", "phoneNumber": "123456789"}`
 
 	req := httptest.NewRequest("POST", "/api/v1/auth/signup", strings.NewReader(reqBody))
 	ctx := context.WithValue(req.Context(), interface{}(string(constants.RequestIDKey)), "testID")
 	req = req.WithContext(ctx)
 
 	w := httptest.NewRecorder()
+
+	mockUserServiceClient.EXPECT().
+		GetUserByOnlyLogin(gomock.Any(), gomock.Any()).
+		Return(nil, errors.New("login failed"))
 
 	mockAuthServiceClient.EXPECT().
 		Signup(gomock.Any(), gomock.Any()).

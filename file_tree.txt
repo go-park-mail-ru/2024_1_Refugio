@@ -18,7 +18,11 @@
 │   │   ├── Dockerfile
 │   │   └── main.go
 │   ├── mail
-│   │   └── main.go
+│   │   ├── main.go
+│   │   └── templates
+│   │       ├── chat.html
+│   │       └── js
+│   │           └── chat.js
 │   ├── questionnaire
 │   │   ├── Dockerfile
 │   │   ├── main.go
@@ -330,16 +334,20 @@
 │   │       └── validators
 │   │           ├── validator.go
 │   │           └── validator_test.go
-│   └── smtp_server
-│       ├── Dockerfile
-│       ├── docker-compose.yml
-│       ├── emailSMTP.go
-│       ├── go.mod
-│       ├── go.sum
-│       └── main.go
+│   ├── smtp_server
+│   │   ├── Dockerfile
+│   │   ├── docker-compose.yml
+│   │   ├── emailSMTP.go
+│   │   ├── go.mod
+│   │   ├── go.sum
+│   │   └── main.go
+│   └── websocket
+│       ├── client.go
+│       ├── room.go
+│       └── websocket.go
 ├── monitoring
 │   └── prometheus
 │       └── prometheus.yml
 └── token.json
 
-110 directories, 233 files
+113 directories, 238 files

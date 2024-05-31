@@ -9,19 +9,21 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
+	"sync"
+	"text/template"
 	"time"
 	_ "time/tzdata"
 
 	"github.com/gorilla/mux"
-	_ "github.com/jackc/pgx/stdlib"
 	"github.com/kataras/requestid"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
 
-	migrate "github.com/rubenv/sql-migrate"
-	httpSwagger "github.com/swaggo/http-swagger/v2"
+	_ "github.com/jackc/pgx/stdlib"
+
 	"mail/cmd/configs"
 	"mail/internal/models/microservice_ports"
 	"mail/internal/monitoring"
@@ -29,7 +31,10 @@ import (
 	"mail/internal/pkg/middleware"
 	"mail/internal/pkg/session"
 	"mail/internal/pkg/utils/connect_microservice"
+	"mail/internal/websocket"
 
+	migrate "github.com/rubenv/sql-migrate"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 	auth_proto "mail/internal/microservice/auth/proto"
 	email_proto "mail/internal/microservice/email/proto"
 	folder_proto "mail/internal/microservice/folder/proto"
@@ -77,13 +82,13 @@ func main() {
 		log.Fatalf("connection with microservice auth fail")
 	}
 	defer authServiceConn.Close()
-	authHandler := initializeAuthHandler(sessionsManager, auth_proto.NewAuthServiceClient(authServiceConn))
 
 	userServiceConn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.UserService))
 	if err != nil {
 		log.Fatalf("connection with microservice user fail")
 	}
 	defer userServiceConn.Close()
+	authHandler := initializeAuthHandler(sessionsManager, auth_proto.NewAuthServiceClient(authServiceConn), user_proto.NewUserServiceClient(userServiceConn))
 	userHandler := initializeUserHandler(sessionsManager, user_proto.NewUserServiceClient(userServiceConn))
 
 	emailServiceConn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.EmailService))
@@ -107,7 +112,7 @@ func main() {
 	defer questionServiceConn.Close()
 	questionHandler := initializeQuestionHandler(sessionsManager, question_proto.NewQuestionServiceClient(questionServiceConn))
 
-	oauthHandler := initializeOAuthHandler(sessionsManager)
+	oauthHandler := initializeOAuthHandler(sessionsManager, user_proto.NewUserServiceClient(userServiceConn))
 
 	oauthGMailHandler := initializeGMailAuthHandler(sessionsManager, auth_proto.NewAuthServiceClient(authServiceConn), user_proto.NewUserServiceClient(userServiceConn))
 	emailGMailHandler := initializeEmailGMailHandler(sessionsManager)
@@ -166,17 +171,19 @@ func initializeSessionsManager(sessionServiceClient session_proto.SessionService
 }
 
 // initializeAuthHandler initializing authorization handler
-func initializeAuthHandler(sessionsManager *session.SessionsManager, authServiceClient auth_proto.AuthServiceClient) *authHand.AuthHandler {
+func initializeAuthHandler(sessionsManager *session.SessionsManager, authServiceClient auth_proto.AuthServiceClient, userServiceClient user_proto.UserServiceClient) *authHand.AuthHandler {
 	return &authHand.AuthHandler{
 		Sessions:          sessionsManager,
 		AuthServiceClient: authServiceClient,
+		UserServiceClient: userServiceClient,
 	}
 }
 
 // initializeOAuthHandler initializing authorization handler
-func initializeOAuthHandler(sessionsManager *session.SessionsManager) *oauthHand.OAuthHandler {
+func initializeOAuthHandler(sessionsManager *session.SessionsManager, userServiceClient user_proto.UserServiceClient) *oauthHand.OAuthHandler {
 	return &oauthHand.OAuthHandler{
-		Sessions: sessionsManager,
+		Sessions:          sessionsManager,
+		UserServiceClient: userServiceClient,
 	}
 }
 
@@ -264,6 +271,7 @@ func initializeUserHandler(sessionsManager *session.SessionsManager, userService
 	}
 }
 
+// initializeGMailAuthHandler initializes the GMail authentication handler
 func initializeGMailAuthHandler(sessionsManager *session.SessionsManager, authServiceClient auth_proto.AuthServiceClient, userServiceClient user_proto.UserServiceClient) *gmailAuthHand.GMailAuthHandler {
 	return &gmailAuthHand.GMailAuthHandler{
 		Sessions:          sessionsManager,
@@ -272,6 +280,7 @@ func initializeGMailAuthHandler(sessionsManager *session.SessionsManager, authSe
 	}
 }
 
+// initializeEmailGMailHandler initializes the GMail email handler using
 func initializeEmailGMailHandler(sessionsManager *session.SessionsManager) *gmailEmailHand.GMailEmailHandler {
 	return &gmailEmailHand.GMailEmailHandler{
 		Sessions: sessionsManager,
@@ -345,6 +354,10 @@ func setupAuthRouter(authHandler *authHand.AuthHandler, oauthHandler *oauthHand.
 	auth := mux.NewRouter().PathPrefix("/api/v1/auth").Subrouter()
 	auth.Use(logger.AccessLogMiddleware, middleware.PanicMiddleware)
 
+	r := websocket.NewRoom()
+	auth.Handle("/web/websocket_connection/{login}", r)
+	go r.Run()
+
 	auth.HandleFunc("/login", authHandler.Login).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/signup", authHandler.Signup).Methods("POST", "OPTIONS")
 	auth.HandleFunc("/logout", authHandler.Logout).Methods("POST", "OPTIONS")
@@ -356,10 +369,24 @@ func setupAuthRouter(authHandler *authHand.AuthHandler, oauthHandler *oauthHand.
 	auth.HandleFunc("/gAuth", oauthGMailHandler.GoogleAuth).Methods("GET", "OPTIONS")
 	auth.HandleFunc("/signupGMailUser", oauthGMailHandler.SugnupGMail).Methods("POST", "OPTIONS")
 
-	//auth.HandleFunc("/getAuthUrlVK", oauthHandler.GetSignUpURLVK).Methods("GET", "OPTIONS")
-	//auth.HandleFunc("/auth-vk/signupVK", oauthHandler.SignupVK).Methods("GET", "OPTIONS")
-	//auth.HandleFunc("/auth-vk/loginVK", oauthHandler.LoginVK).Methods("GET", "OPTIONS")
 	return auth
+}
+
+// templateHandler represents a single template
+type templateHandler struct {
+	once     sync.Once
+	filename string
+	templ    *template.Template
+}
+
+// ServeHTTP handles the HTTP request.
+func (t *templateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	t.once.Do(func() {
+		t.templ = template.Must(template.ParseFiles(filepath.Join("/home/sergey/mailhub/2024_1_Refugio/cmd/mail/templates", t.filename)))
+	})
+	if err := t.templ.Execute(w, r); err != nil {
+		fmt.Println("Error executing template:", err)
+	}
 }
 
 // setupLogRouter configuring router with logger
@@ -384,6 +411,7 @@ func setupLogRouter(emailHandler *emailHand.EmailHandler, userHandler *userHand.
 	logRouter.HandleFunc("/email/delete/{id}", emailHandler.Delete).Methods("DELETE", "OPTIONS")
 	logRouter.HandleFunc("/email/send", emailHandler.Send).Methods("POST", "OPTIONS")
 	logRouter.HandleFunc("/email/adddraft", emailHandler.AddDraft).Methods("POST", "OPTIONS")
+	logRouter.HandleFunc("/email/sendToOtherDomain/{id}", emailHandler.SendEmailToOtherDomains).Methods("POST", "OPTIONS")
 
 	logRouter.HandleFunc("/email/{id}/addattachment", emailHandler.AddAttachment).Methods("POST", "OPTIONS")
 	logRouter.HandleFunc("/email/addfile", emailHandler.AddFile).Methods("POST", "OPTIONS")
@@ -461,7 +489,7 @@ func startServer(router http.Handler) {
 	}
 }
 
-// StartSessionCleaner starting session cleanup
+// startSessionCleaner starting session cleanup
 func startSessionCleaner(interval time.Duration, sessionServiceClient session_proto.SessionServiceClient) {
 	ticker := time.NewTicker(interval)
 	go func() {

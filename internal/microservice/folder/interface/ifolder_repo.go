@@ -4,7 +4,7 @@ package _interface
 
 import (
 	"context"
-	
+
 	domain "mail/internal/microservice/models/domain_models"
 )
 
@@ -16,7 +16,7 @@ type FolderRepository interface {
 	// GetAll get list folder user.
 	GetAll(profileID uint32, offset, limit int64, ctx context.Context) ([]*domain.Folder, error)
 
-	// Delete delete folder as user
+	// Delete delete folder as user.
 	Delete(folderID uint32, profileID uint32, ctx context.Context) (bool, error)
 
 	// Update folder as user.

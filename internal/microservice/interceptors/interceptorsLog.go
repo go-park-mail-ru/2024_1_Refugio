@@ -2,15 +2,16 @@ package interceptors
 
 import (
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/sirupsen/logrus"
 	"io"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/fatih/color"
+	"github.com/sirupsen/logrus"
 )
 
-// LogrusLogger provides a structure for logging using Logrus.
+// InterceptorsLogger provides a structure for logging using Logrus.
 type InterceptorsLogger struct {
 	InterceptorsLogger *logrus.Logger
 }
@@ -63,7 +64,7 @@ func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
 	return []byte(output), nil
 }
 
-// InitializationAccesLog initializes the logger for accessing resources.
+// InitializationAccessLogInterceptor initializes the logger for accessing resources.
 func InitializationAccessLogInterceptor(f *os.File) *InterceptorsLogger {
 	log := new(InterceptorsLogger)
 	log.InterceptorsLogger = &logrus.Logger{

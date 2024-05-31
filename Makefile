@@ -49,3 +49,6 @@ swag:
 lint:
 	go get github.com/golangci/golangci-lint/cmd/golangci-lint
 	golangci-lint run
+
+tree:
+	tree  > file_tree.txt

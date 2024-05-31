@@ -2,14 +2,15 @@ package logger
 
 import (
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/sirupsen/logrus"
 	"io"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 	_ "time/tzdata"
+
+	"github.com/fatih/color"
+	"github.com/sirupsen/logrus"
 )
 
 // LogrusLogger provides a structure for logging using Logrus.

@@ -5,12 +5,15 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/jmoiron/sqlx"
-	domain "mail/internal/microservice/models/domain_models"
-	converters "mail/internal/microservice/models/repository_converters"
+
 	"mail/internal/microservice/models/repository_models"
 	"mail/internal/pkg/logger"
-	"time"
+
+	domain "mail/internal/microservice/models/domain_models"
+	converters "mail/internal/microservice/models/repository_converters"
 )
 
 var requestIDContextKey interface{} = "requestID"
@@ -23,6 +26,7 @@ func NewFolderRepository(db *sqlx.DB) *FolderRepository {
 	return &FolderRepository{DB: db}
 }
 
+// Create adds a new folder to the storage and returns its assigned unique identifier.
 func (r *FolderRepository) Create(folderModelCore *domain.Folder, ctx context.Context) (uint32, *domain.Folder, error) {
 	insertFolderQuery := `
 		INSERT INTO folder (profile_id, name)
@@ -47,6 +51,7 @@ func (r *FolderRepository) Create(folderModelCore *domain.Folder, ctx context.Co
 	return id, folderModelCore, nil
 }
 
+// GetAll get list folder user.
 func (r *FolderRepository) GetAll(profileID uint32, offset, limit int64, ctx context.Context) ([]*domain.Folder, error) {
 	query := `
 		SELECT folder.id, folder.name, folder.profile_id FROM folder
@@ -85,6 +90,7 @@ func (r *FolderRepository) GetAll(profileID uint32, offset, limit int64, ctx con
 	return foldersModelCore, nil
 }
 
+// Delete delete folder as user.
 func (r *FolderRepository) Delete(folderID uint32, profileID uint32, ctx context.Context) (bool, error) {
 	query := `
 		DELETE FROM folder
@@ -114,6 +120,7 @@ func (r *FolderRepository) Delete(folderID uint32, profileID uint32, ctx context
 	return true, nil
 }
 
+// Update folder as user.
 func (r *FolderRepository) Update(folderModelCore *domain.Folder, ctx context.Context) (bool, error) {
 	query := `
         UPDATE folder
@@ -148,6 +155,7 @@ func (r *FolderRepository) Update(folderModelCore *domain.Folder, ctx context.Co
 	return true, nil
 }
 
+// AddEmailFolder adds a new email in folder to the storage and returns its assigned unique identifier.
 func (r *FolderRepository) AddEmailFolder(folderID, emailID uint32, ctx context.Context) (bool, error) {
 	insertFolderEmailQuery := `
 		INSERT INTO folder_email (folder_id, email_id)
@@ -166,6 +174,7 @@ func (r *FolderRepository) AddEmailFolder(folderID, emailID uint32, ctx context.
 	return true, nil
 }
 
+// DeleteEmailFolder adds a new email in folder to the storage and returns its assigned unique identifier.
 func (r *FolderRepository) DeleteEmailFolder(folderID uint32, emailID uint32, ctx context.Context) (bool, error) {
 	query := `
 		DELETE FROM folder_email
@@ -195,6 +204,7 @@ func (r *FolderRepository) DeleteEmailFolder(folderID uint32, emailID uint32, ct
 	return true, nil
 }
 
+// CheckFolder checking that the folder belongs to the user.
 func (r *FolderRepository) CheckFolder(folderID uint32, profileID uint32, ctx context.Context) (bool, error) {
 	query := `
 		SELECT id, profile_id, name 
@@ -216,6 +226,7 @@ func (r *FolderRepository) CheckFolder(folderID uint32, profileID uint32, ctx co
 	return true, nil
 }
 
+// CheckEmail checking that the email belongs to the user.
 func (r *FolderRepository) CheckEmail(emailID uint32, profileID uint32, ctx context.Context) (bool, error) {
 	query := `
 		SELECT profile_id, email_id 
@@ -237,6 +248,7 @@ func (r *FolderRepository) CheckEmail(emailID uint32, profileID uint32, ctx cont
 	return true, nil
 }
 
+// GetAllEmails get list emails folder user.
 func (r *FolderRepository) GetAllEmails(folderID, profileID, limit, offset uint32, ctx context.Context) ([]*domain.Email, error) {
 	query := `
 		SELECT DISTINCT e.id, e.topic, e.text, e.date_of_dispatch, e.sender_email, e.recipient_email, e.isRead, e.isDeleted, e.isDraft, e.reply_to_email_id, e.is_important

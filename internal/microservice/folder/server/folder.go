@@ -3,11 +3,12 @@ package server
 import (
 	"context"
 	"fmt"
-	"mail/internal/pkg/utils/validators"
 	"strconv"
 
-	usecase "mail/internal/microservice/folder/interface"
 	"mail/internal/microservice/folder/proto"
+	"mail/internal/pkg/utils/validators"
+
+	usecase "mail/internal/microservice/folder/interface"
 	converters "mail/internal/microservice/models/proto_converters"
 )
 
