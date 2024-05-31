@@ -29,15 +29,18 @@ import (
 )
 
 var (
-	OAHandler           = &OAuthHandler{}
-	AUTH_URL            = "https://oauth.vk.com/authorize?client_id=%s&redirect_uri=%s&response_type=code&scope=email"
-	APP_ID              = "51916655"
-	APP_KEY             = "oz3r7Pyakfeg25JpJsQV"
-	API_URL             = "https://api.vk.com/method/users.get?fields=id,photo_max,email,sex,bdate&access_token=%s&v=5.131"
-	REDIRECT_URL_SIGNUP = "https://mailhub.su/auth-vk/auth"
-	REDIRECT_URL_LOGIN  = "https://mailhub.su/auth-vk/loginVK"
-	mapVKIDToken        = make(map[uint32]string)
+	OAHandler    = &OAuthHandler{}
+	mapVKIDToken = make(map[uint32]string)
 )
+
+type Config struct {
+	AUTH_URL            string `yaml:"AUTH_URL"`
+	APP_ID              string `yaml:"APP_ID"`
+	APP_KEY             string `yaml:"APP_KEY"`
+	API_URL             string `yaml:"API_URL"`
+	REDIRECT_URL_SIGNUP string `yaml:"REDIRECT_URL_SIGNUP"`
+	REDIRECT_URL_LOGIN  string `yaml:"REDIRECT_URL_LOGIN"`
+}
 
 type Response struct {
 	Response []struct {
@@ -53,6 +56,7 @@ type Response struct {
 type OAuthHandler struct {
 	Sessions          domainSession.SessionsManager
 	UserServiceClient user_proto.UserServiceClient
+	ConfigOAuth       Config
 }
 
 // InitializationOAuthHandler initializes the user handler with the provided user handler.
@@ -70,7 +74,8 @@ func InitializationOAuthHandler(oauthHandler *OAuthHandler) {
 // @Failure 500 {object} response.ErrorResponse "Failed to get url"
 // @Router /api/v1/testAuth/auth-vk/getAuthUrlSignUpVK [get]
 func (ah *OAuthHandler) GetSignUpURLVK(w http.ResponseWriter, r *http.Request) {
-	url := fmt.Sprintf(AUTH_URL, APP_ID, REDIRECT_URL_SIGNUP)
+	cfg := ah.ConfigOAuth
+	url := fmt.Sprintf(cfg.AUTH_URL, cfg.APP_ID, cfg.REDIRECT_URL_SIGNUP)
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"AuthURL": url})
 }
 
@@ -84,7 +89,8 @@ func (ah *OAuthHandler) GetSignUpURLVK(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} response.ErrorResponse "Failed to get url"
 // @Router /api/v1/testAuth/auth-vk/getAuthUrlLoginVK [get]
 func (ah *OAuthHandler) GetLoginURLVK(w http.ResponseWriter, r *http.Request) {
-	url := fmt.Sprintf(AUTH_URL, APP_ID, REDIRECT_URL_LOGIN)
+	cfg := ah.ConfigOAuth
+	url := fmt.Sprintf(cfg.AUTH_URL, cfg.APP_ID, cfg.REDIRECT_URL_LOGIN)
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"AuthURL": url})
 }
 
@@ -108,7 +114,7 @@ func (ah *OAuthHandler) AuthVK(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx := r.Context()
 
-	conf := GetConfOauth2(REDIRECT_URL_SIGNUP)
+	conf := GetConfOauth2(ah.ConfigOAuth.REDIRECT_URL_SIGNUP, ah.ConfigOAuth)
 
 	// vk_mock
 	if code == "855ab871bba885204e" {
@@ -136,7 +142,7 @@ func (ah *OAuthHandler) AuthVK(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vkUser, status, err := GetDataUser(*conf, code, ctx)
+	vkUser, status, err := GetDataUser(*conf, code, ctx, ah.ConfigOAuth)
 	if err != nil {
 		response.HandleError(w, status, "failed get user data")
 		return
@@ -280,7 +286,7 @@ func (ah *OAuthHandler) LoginVK(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ctx := r.Context()
-	conf := GetConfOauth2(REDIRECT_URL_LOGIN)
+	conf := GetConfOauth2(ah.ConfigOAuth.REDIRECT_URL_LOGIN, ah.ConfigOAuth)
 
 	var userVK *api.VKUser
 	if code == "855ab871bba885204e" {
@@ -291,7 +297,7 @@ func (ah *OAuthHandler) LoginVK(w http.ResponseWriter, r *http.Request) {
 			VKId:      1234567,
 		}
 	} else {
-		userVk, status, err := GetDataUser(*conf, code, ctx)
+		userVk, status, err := GetDataUser(*conf, code, ctx, ah.ConfigOAuth)
 		if err != nil {
 			response.HandleError(w, status, "failed get user data")
 			return
@@ -340,10 +346,10 @@ func (ah *OAuthHandler) LoginVK(w http.ResponseWriter, r *http.Request) {
 	response.HandleSuccess(w, http.StatusOK, map[string]interface{}{"Success": "Login successful"})
 }
 
-func GetConfOauth2(redirectUrl string) *oauth2.Config {
+func GetConfOauth2(redirectUrl string, cfg Config) *oauth2.Config {
 	return &oauth2.Config{
-		ClientID:     APP_ID,
-		ClientSecret: APP_KEY,
+		ClientID:     cfg.APP_ID,
+		ClientSecret: cfg.APP_KEY,
 		RedirectURL:  redirectUrl,
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  "https://oauth.vk.com/authorize",
@@ -353,7 +359,7 @@ func GetConfOauth2(redirectUrl string) *oauth2.Config {
 	}
 }
 
-func GetDataUser(conf oauth2.Config, code string, ctx context.Context) (*api.VKUser, int, error) {
+func GetDataUser(conf oauth2.Config, code string, ctx context.Context, cfg Config) (*api.VKUser, int, error) {
 	token, err := conf.Exchange(ctx, code)
 	fmt.Println("Token: ", token)
 	if err != nil {
@@ -362,7 +368,7 @@ func GetDataUser(conf oauth2.Config, code string, ctx context.Context) (*api.VKU
 	}
 
 	client := conf.Client(ctx, token)
-	resp, err := client.Get(fmt.Sprintf(API_URL, token.AccessToken))
+	resp, err := client.Get(fmt.Sprintf(cfg.API_URL, token.AccessToken))
 	if err != nil {
 		fmt.Println("cannot request data")
 		return &api.VKUser{}, 400, fmt.Errorf("cannot request data")

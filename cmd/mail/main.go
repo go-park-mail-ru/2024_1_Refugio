@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"fmt"
 	"google.golang.org/grpc/metadata"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -21,6 +22,7 @@ import (
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
+	"gopkg.in/yaml.v2"
 
 	_ "github.com/jackc/pgx/stdlib"
 
@@ -57,7 +59,7 @@ import (
 // @version 1.0
 // @description API server for MailHub
 
-// @host mailhub.su
+// @host localhost:8080
 // @BasePath /
 func main() {
 	fmt.Println("starting mail")
@@ -181,9 +183,20 @@ func initializeAuthHandler(sessionsManager *session.SessionsManager, authService
 
 // initializeOAuthHandler initializing authorization handler
 func initializeOAuthHandler(sessionsManager *session.SessionsManager, userServiceClient user_proto.UserServiceClient) *oauthHand.OAuthHandler {
+	data, err := ioutil.ReadFile("cmd/configs/config_oauthVK.yaml")
+	if err != nil {
+		log.Fatalf("error: %v", err)
+	}
+
+	var cfg oauthHand.Config
+	err = yaml.Unmarshal(data, &cfg)
+	if err != nil {
+		log.Fatalf("error: %v", err)
+	}
 	return &oauthHand.OAuthHandler{
 		Sessions:          sessionsManager,
 		UserServiceClient: userServiceClient,
+		ConfigOAuth:       cfg,
 	}
 }
 
