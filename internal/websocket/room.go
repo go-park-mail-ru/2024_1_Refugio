@@ -1,13 +1,22 @@
 package websocket
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+	"google.golang.org/grpc/metadata"
 	"log"
+	"mail/internal/microservice/email/proto"
+	email_proto "mail/internal/microservice/email/proto"
+	"mail/internal/microservice/models/proto_converters"
 	emailApi "mail/internal/models/delivery_models"
+	"mail/internal/models/microservice_ports"
 	"mail/internal/models/response"
 	"mail/internal/pkg/middleware"
+	"mail/internal/pkg/utils/connect_microservice"
+	"mail/internal/pkg/utils/constants"
 	"net/http"
 )
 
@@ -16,7 +25,10 @@ const (
 	messageBufferSize = 256
 )
 
-var upgrader = &websocket.Upgrader{ReadBufferSize: socketBufferSize, WriteBufferSize: socketBufferSize}
+var (
+	upgrader                        = &websocket.Upgrader{ReadBufferSize: socketBufferSize, WriteBufferSize: socketBufferSize}
+	requestIDContextKey interface{} = string(constants.RequestIDKey)
+)
 
 type room struct {
 	// clients holds all current clients in this room.
@@ -56,9 +68,29 @@ func (r *room) Run() {
 			if err := newEmail.UnmarshalJSON(msg); err != nil {
 				fmt.Println("Bad JSON in request in Run")
 			}
+			emailServiceConn, err := connect_microservice.OpenGRPCConnection(microservice_ports.GetPorts(microservice_ports.EmailService))
+			if err != nil {
+				log.Fatalf("connection with microservice user fail")
+			}
+			defer emailServiceConn.Close()
 			for login, client := range r.clients {
 				if login == newEmail.RecipientEmail {
-					client.receive <- msg
+					email_p := email_proto.NewEmailServiceClient(emailServiceConn)
+					emailDataProto, err := email_p.GetEmailByID(
+						metadata.NewOutgoingContext(context.Background(), metadata.New(map[string]string{string(constants.RequestIDKey): "requestIDContextKey"})),
+						&proto.EmailIdAndLogin{Id: newEmail.ID, Login: login},
+					)
+					if err != nil {
+						fmt.Println("Error: ", err)
+						continue
+					}
+					emailData := proto_converters.EmailConvertProtoInCore(emailDataProto)
+					email_byte, err := json.Marshal(emailData)
+					if err != nil {
+						fmt.Println("Error: ", err)
+						continue
+					}
+					client.receive <- email_byte
 				}
 			}
 		}
