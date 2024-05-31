@@ -384,7 +384,9 @@ func (t *templateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	t.once.Do(func() {
 		t.templ = template.Must(template.ParseFiles(filepath.Join("/home/sergey/mailhub/2024_1_Refugio/cmd/mail/templates", t.filename)))
 	})
-	t.templ.Execute(w, r)
+	if err := t.templ.Execute(w, r); err != nil {
+		fmt.Println("Error executing template:", err)
+	}
 }
 
 // setupLogRouter configuring router with logger

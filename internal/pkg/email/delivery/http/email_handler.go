@@ -469,7 +469,9 @@ func composeMimeMail(to string, from string, subject string, body string, attach
 	if err != nil {
 		return nil, err
 	}
-	bodyPart.Write([]byte(base64.StdEncoding.EncodeToString([]byte(body))))
+	if _, err := bodyPart.Write([]byte(base64.StdEncoding.EncodeToString([]byte(body)))); err != nil {
+		return nil, err
+	}
 
 	for fileName, fileData := range attachments {
 		err := addAttachment(writer, fileName, fileData)
