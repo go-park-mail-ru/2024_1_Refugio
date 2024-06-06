@@ -35,7 +35,7 @@ type GMailAuthHandler struct {
 	Sessions          domainSession.SessionsManager
 	AuthServiceClient auth_proto.AuthServiceClient
 	UserServiceClient user_proto.UserServiceClient
-}
+} // struct
 
 // GoogleAuth handles user auth.
 // @Summary GoogleAuth User
