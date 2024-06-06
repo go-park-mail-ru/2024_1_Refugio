@@ -30,12 +30,12 @@ import (
 
 var (
 	OAHandler           = &OAuthHandler{}
-	AUTH_URL            = "https://oauth.vk.com/authorize?client_id=%s&redirect_uri=%s&response_type=code&scope=email"
-	APP_ID              = "51916655"
-	APP_KEY             = "oz3r7Pyakfeg25JpJsQV"
-	API_URL             = "https://api.vk.com/method/users.get?fields=id,photo_max,email,sex,bdate&access_token=%s&v=5.131"
-	REDIRECT_URL_SIGNUP = "https://mailhub.su/auth-vk/auth"
-	REDIRECT_URL_LOGIN  = "https://mailhub.su/auth-vk/loginVK"
+	AUTH_URL            = ""
+	APP_ID              = ""
+	APP_KEY             = ""
+	API_URL             = ""
+	REDIRECT_URL_SIGNUP = ""
+	REDIRECT_URL_LOGIN  = ""
 	mapVKIDToken        = make(map[uint32]string)
 )
 
